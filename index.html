@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v2.0 – Grupo El Reloj</title>
+<title>RelojTurnos v2.1 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -392,7 +392,7 @@ select option{background:var(--dark)}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v2.0</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v2.1</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#b8cad9cdd496dfddcbccd1d7d6d4d7dbd9d4f8dfd5d9d1d496dbd7d5" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="fd8f9c8891d39a988e8994929391929e9c91bd9a909c9491d39e9290">[email&#160;protected]</span></a>
 </div>
 
@@ -625,9 +625,64 @@ function goStep(n){
 
 function nextStep(from){
   if(from===1){if(!getLocal()){alert('Selecciona un local');return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
-  else if(from===2){goStep(3);if(empleados.length===0)initDef(getLocal());renderEmpleados();}
+  else if(from===2){goStep(3);cargarEmpleadosBD();}
   else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});renderTurnosAsig();goStep(4);}
-  else if(from===4){initPaso5();goStep(5);}
+  else if(from===4){initPaso5();goStep(5);cargarCuadrantePrevio().then(function(id){if(id)showToast('✓ Cuadrante previo encontrado — se cargará al generar','green');});}
+}
+
+async function cargarEmpleadosBD(){
+  var local = getLocal();
+  var localId = localIdMap[local];
+  if(!localId){ 
+    // Sin conexión BD — usar empleados por defecto
+    if(empleados.length===0) initDef(local);
+    renderEmpleados();
+    return;
+  }
+  try{
+    showToast('⏳ Cargando equipo...','orange');
+    var emps = await sbGet('empleados','local_id=eq.'+localId+'&activo=eq.true&order=id.asc');
+    if(emps.length){
+      empleados=[];
+      empCounter=0;
+      // Cargar salarios de una vez
+      var sals = await sbGet('salarios','order=id.asc');
+      var salMap={};
+      sals.forEach(function(s){ salMap[s.empleado_id]=s; });
+
+      emps.forEach(function(e){
+        empCounter++;
+        var sal = salMap[e.id]||null;
+        empleados.push({
+          id:empCounter,
+          bdId:e.id,  // ID real en Supabase
+          nombre:e.nombre,
+          rol:e.rol||'Cam. Ma\u00f1ana',
+          turno:e.turno_habitual||'manana',
+          turnos:Array(7).fill(e.turno_habitual||'manana')
+        });
+        // Cargar salario si existe
+        if(sal){
+          salariosBrutos[empCounter]={
+            brutoMes:sal.bruto_mes||'',
+            hContrato:sal.horas_contrato||40
+          };
+        }
+        // Mapear id local → id BD
+        empIdMap[empCounter]=e.id;
+      });
+      showToast('✓ Equipo cargado desde BD ('+emps.length+' empleados)','green');
+    } else {
+      // No hay empleados en BD — usar por defecto
+      if(empleados.length===0) initDef(local);
+      showToast('ℹ Sin empleados en BD — usando equipo por defecto','orange');
+    }
+  } catch(err){
+    console.error(err);
+    if(empleados.length===0) initDef(local);
+    showToast('⚠ Error cargando BD — usando equipo por defecto','orange');
+  }
+  renderEmpleados();
 }
 
 function buildTurnosConfig(){
@@ -848,6 +903,47 @@ function toggleHoras(){
   var btn=document.getElementById('btn-toggle-horas');
   if(btn)btn.textContent=(mostrarHoras?'\ud83d\udc41 Ocultar horas':'\ud83d\udc41 Mostrar horas');
   document.querySelectorAll('.col-horas').forEach(function(el){el.style.display=mostrarHoras?'':'none';});
+}
+
+async function cargarCuadrantePrevio(){
+  var local=getLocal();
+  var localId=localIdMap[local];
+  if(!localId) return null;
+  var semana=getSemanaLabel();
+  try{
+    var cuads=await sbGet('cuadrantes','local_id=eq.'+localId+'&semana_label=eq.'+encodeURIComponent(semana)+'&order=id.desc&limit=1');
+    if(!cuads.length) return null;
+    var cuadId=cuads[0].id;
+    currentCuadranteId=cuadId;
+    // Cargar turnos
+    var turnos=await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuadId+'&order=empleado_id.asc,dia.asc');
+    // Mapear por empleado bdId
+    var turnoMap={};
+    turnos.forEach(function(t){
+      if(!turnoMap[t.empleado_id]) turnoMap[t.empleado_id]=Array(7).fill('fiesta');
+      turnoMap[t.empleado_id][t.dia]=(t.turno||'fiesta').toLowerCase();
+    });
+    // Aplicar a empleados
+    empleados.forEach(function(emp){
+      var bdId=empIdMap[emp.id];
+      if(bdId && turnoMap[bdId]) emp.turnos=turnoMap[bdId];
+    });
+    // Cargar extras
+    var extras=await sbGet('extras_dia','cuadrante_id=eq.'+cuadId);
+    extrasDia=[];extraCounter=0;
+    extras.forEach(function(ex){
+      extraCounter++;
+      // Buscar empId local desde bdId
+      var localEmpId=null;
+      Object.keys(empIdMap).forEach(function(k){if(empIdMap[k]===ex.empleado_id)localEmpId=parseInt(k);});
+      extrasDia.push({id:extraCounter,empId:localEmpId||ex.empleado_id,dia:ex.dia,
+                      horas:ex.horas||'',precioHora:ex.precio_hora||'',motivo:ex.motivo||''});
+    });
+    return cuadId;
+  }catch(e){
+    console.error('cargarCuadrantePrevio:',e);
+    return null;
+  }
 }
 
 function generarCuadrante(){
@@ -1357,7 +1453,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+totSem.toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v2.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v2.1 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
