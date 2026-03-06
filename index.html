@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos – Grupo El Reloj</title>
+<title>RelojTurnos v1.9 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -21,13 +21,12 @@ header{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24
 .header-info span{color:var(--accent);font-weight:600}
 .container{max-width:980px;margin:0 auto;padding:24px 16px}
 .steps{display:flex;margin-bottom:28px;background:var(--dark);border-radius:12px;padding:5px;border:1px solid var(--border)}
-.step{flex:1;padding:7px 2px;border-radius:8px;text-align:center;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.step{flex:1;padding:9px 4px;border-radius:8px;text-align:center;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
 .step.active{background:var(--accent);color:var(--darker);font-weight:700}
 .step.done{color:var(--accent)}
-.step-num{display:inline-flex;width:20px;height:20px;background:var(--border);border-radius:50%;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.step-num{display:inline-flex;width:18px;height:18px;background:var(--border);border-radius:50%;align-items:center;justify-content:center;font-size:10px;margin-right:3px}
 .step.active .step-num{background:var(--darker)}
 .step.done .step-num{background:var(--accent);color:var(--darker)}
-.step-text{font-size:9px;line-height:1.2}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px}
 .card-title{font-size:17px;font-weight:700;margin-bottom:5px}
 .card-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
@@ -105,12 +104,20 @@ select option{background:var(--dark)}
 .toggle-btn.on .tog-dot::after{left:17px}
 .otro-input{width:100%;background:var(--darker);border:1px solid var(--accent);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;outline:none;margin-top:7px}
 .otro-input::placeholder{color:var(--muted)}
-@media(max-width:640px){
-  .form-row,.form-row.three{grid-template-columns:1fr}
-  .turno-config-grid{grid-template-columns:1fr}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .dias-grid-header,.dias-grid-row{grid-template-columns:70px repeat(7,1fr);gap:3px}
-}
+.schedule-table th,.schedule-table td{font-size:10px}
+.tab-bar{display:flex;gap:6px;margin-bottom:18px;background:var(--darker);border-radius:10px;padding:4px;border:1px solid var(--border)}
+.tab-btn{flex:1;padding:8px 10px;border-radius:7px;border:none;background:none;color:var(--muted);font-family:Arial,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+.tab-btn.active{background:var(--accent);color:var(--darker)}
+.tab-btn:not(.active):hover{color:var(--text)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.costes-emp-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.extra-dia-row{display:grid;grid-template-columns:90px 70px 70px 1fr 28px;gap:7px;align-items:center;margin-bottom:7px}
+.inp-sm{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:Arial,sans-serif;font-size:12px;width:100%;outline:none}
+.inp-sm:focus{border-color:var(--accent)}
+.badge-extra-real{background:#3d2000;border:1px solid var(--orange);color:var(--orange);padding:3px 7px;border-radius:5px;font-size:10px;font-weight:700}
+.kpi-2{grid-template-columns:repeat(2,1fr)}
+.kpi-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:640px){.extra-dia-row{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -130,6 +137,7 @@ select option{background:var(--dark)}
     <div class="step" id="step4" onclick="goStep(4)"><span class="step-num">4</span><span class="step-text">Asignar</span></div>
     <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text">Eventos</span></div>
     <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text">Cuadrante</span></div>
+    <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text">Costes</span></div>
   </div>
 
   <!-- PASO 1 -->
@@ -314,15 +322,76 @@ select option{background:var(--dark)}
       <button class="btn btn-secondary" onclick="goStep(4)">&#8592; Editar</button>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()">&#128065; Ocultar horas</button>
-<button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()">&#128424; Imprimir</button>
-        <button class="btn btn-primary btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()">&#128424; Imprimir</button>
+        <button class="btn btn-primary btn-sm" onclick="goStep(7)">&#128182; Ver costes</button>
+        <button class="btn btn-ghost btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 7: COSTES -->
+  <div class="screen" id="screen7">
+    <div class="card">
+      <div class="card-title">&#128182; Costes de personal</div>
+      <div class="card-sub" id="costes-subtitulo">Cuadrante · Bruto nómina + SS empresa + Extras reales</div>
+
+      <!-- Aviso datos pendientes -->
+      <div id="costes-aviso" style="display:none;background:#2d1a0a;border:1px solid #6b3a00;border-radius:8px;padding:11px 15px;margin-bottom:16px;font-size:12px;color:#ffaa40">
+        &#9888; Hay empleados sin datos salariales. Introdúcelos en la pestaña "Salarios" para ver el informe completo.
+      </div>
+
+      <!-- Pestañas -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-planif" onclick="switchTab('planif')">&#128197; Planificación</button>
+        <button class="tab-btn" id="tab-extras" onclick="switchTab('extras')">&#9889; Extras del día</button>
+        <button class="tab-btn" id="tab-salarios" onclick="switchTab('salarios')">&#9999;&#65039; Salarios</button>
+      </div>
+
+      <!-- PESTAÑA 1: PLANIFICACIÓN -->
+      <div class="tab-panel active" id="panel-planif">
+        <div class="stats-grid" id="costes-kpis" style="margin-bottom:18px"></div>
+        <div id="costes-cards" style="margin-bottom:14px"></div>
+        <!-- Totales -->
+        <div id="costes-totales" style="margin-bottom:14px"></div>
+        <div style="background:#1a1a2d;border:1px solid #2a2a5a;border-radius:7px;padding:10px 14px;font-size:10px;color:#8888cc;line-height:1.8;margin-bottom:14px">
+          <strong style="color:#aaaaee">Cálculo:</strong>
+          &nbsp;Coste/sem = (Bruto × 1,33 SS) ÷ 4,33 &nbsp;·&nbsp;
+          H.Pact. = días trabajados × jornada &nbsp;·&nbsp;
+          Total sem. = Coste/sem + extras reales anotadas
+        </div>
+      </div>
+
+      <!-- PESTAÑA 2: EXTRAS DEL DÍA -->
+      <div class="tab-panel" id="panel-extras">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:16px;padding:10px 14px;background:var(--darker);border-radius:8px;border:1px solid var(--border)">
+          &#128221; Anota aquí las horas extra puntuales fuera del acuerdo habitual. El responsable del local las registra el mismo día que ocurren.
+        </div>
+        <div id="extras-lista"></div>
+        <button class="btn btn-ghost btn-sm" onclick="addExtraDia()" style="margin-top:4px">&#65291; Añadir horas extra</button>
+        <div id="extras-resumen" style="margin-top:16px"></div>
+      </div>
+
+      <!-- PESTAÑA 3: SALARIOS -->
+      <div class="tab-panel" id="panel-salarios">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;padding:10px 14px;background:var(--darker);border-radius:8px;border:1px solid var(--border)">
+          &#128274; Datos salariales introducidos por la dirección o responsable del local. En el futuro vendrán automáticamente del módulo de contratos/nóminas.
+        </div>
+        <div id="costes-editor"></div>
+      </div>
+
+      <div class="btn-row space" style="margin-top:18px">
+        <button class="btn btn-secondary" onclick="goStep(6)">&#8592; Cuadrante</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="imprimirCostes()">&#128424; Imprimir informe</button>
+          <button class="btn btn-primary btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v1.4 Beta</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v1.9 Beta</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#b8cad9cdd496dfddcbccd1d7d6d4d7dbd9d4f8dfd5d9d1d496dbd7d5" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="fd8f9c8891d39a988e8994929391929e9c91bd9a909c9491d39e9290">[email&#160;protected]</span></a>
 </div>
 
@@ -397,11 +466,12 @@ function onLocalChange(){
 }
 
 function goStep(n){
-  for(var i=1;i<=6;i++){
+  for(var i=1;i<=7;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
   }
+  if(n===7) renderCostes();
   window.scrollTo(0,0);
 }
 
@@ -415,11 +485,8 @@ function nextStep(from){
 function buildTurnosConfig(){
   var ap=document.getElementById('hora-apertura').value;
   var ci=document.getElementById('hora-cierre').value;
-  var s=toMin(ap),e=toMin(ci);if(e<=s)e+=1440;
-  var third=Math.round((e-s)/3/30)*30;
-  var mid1=toStr(s+third),mid2=toStr(s+third*2);
-  var iS=toStr(s+Math.round(third*0.7/30)*30),iE=toStr(s+Math.round(third*1.7/30)*30);
   var local=getLocal();
+  // Horarios predeterminados por local
   if(local==='La Cala'){
     turnosConfig=[
       {id:'manana',nome:'Ma\u00f1ana',emoji:'\u2600\ufe0f',ini:'07:30',fin:'16:30',badge:'badge-manana',color:'#2ecc71',active:true},
@@ -428,6 +495,10 @@ function buildTurnosConfig(){
       {id:'intermedio',nome:'Intermedio',emoji:'\ud83d\udd04',ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
     ];
   } else {
+    var s=toMin(ap),e=toMin(ci);if(e<=s)e+=1440;
+    var third=Math.round((e-s)/3/30)*30;
+    var mid1=toStr(s+third),mid2=toStr(s+third*2);
+    var iS=toStr(s+Math.round(third*0.7/30)*30),iE=toStr(s+Math.round(third*1.7/30)*30);
     turnosConfig=[
       {id:'manana',nome:'Ma\u00f1ana',emoji:'\u2600\ufe0f',ini:ap,fin:mid1,badge:'badge-manana',color:'#2ecc71',active:true},
       {id:'tarde',nome:'Tarde',emoji:'\ud83c\udf05',ini:mid1,fin:mid2,badge:'badge-tarde',color:'#e67e22',active:false},
@@ -826,6 +897,371 @@ function imprimirCuadrante(){
     +'<script>window.onload=function(){setTimeout(function(){window.print();window.close();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
+}
+
+// ========== PASO 7: COSTES v1.8 ==========
+var salariosBrutos = {};
+var extrasDia = [];
+var extraCounter = 0;
+var SS_EMPRESA = 0.33;
+
+var MOTIVOS_EXTRA = [
+  '⚡ Evento especial',
+  '🔄 Sustitución compañero',
+  '🙋 Refuerzo ocasional',
+  '⚽ Partido fútbol',
+  '📅 Festivo / día especial',
+  '🌧️ Mal tiempo / baja afluencia',
+  '🎵 Concierto cercano',
+  '🏃 Maratón / carrera popular',
+  '📦 Recepción mercancía',
+  '🔧 Otro motivo'
+];
+
+function getSalario(empId){
+  return salariosBrutos[empId]||{brutoMes:'',hContrato:40};
+}
+
+function updSalario(empId,campo,valor){
+  if(!salariosBrutos[empId]) salariosBrutos[empId]={brutoMes:'',hContrato:40};
+  if(campo==='hContrato') salariosBrutos[empId][campo]=parseInt(valor)||40;
+  else salariosBrutos[empId][campo]=valor===''?'':parseFloat(valor);
+  renderCostes();
+}
+
+function getHorasPactadas(emp){
+  var hJornada=+document.getElementById('horas-jornada').value||9;
+  var hMF=+document.getElementById('horas-media-fiesta').value||5;
+  var hPact=0;
+  (emp.turnos||[]).forEach(function(t){
+    if(t==='fiesta') return;
+    if(t==='mediafiesta'){hPact+=hMF;return;}
+    hPact+=hJornada;
+  });
+  return hPact;
+}
+
+function getTotalExtrasEmp(empId){
+  return extrasDia.filter(function(e){return e.empId===empId;})
+    .reduce(function(s,e){return s+(parseFloat(e.horas)||0)*(parseFloat(e.precioHora)||0);},0);
+}
+
+function calcEmp(emp){
+  var s=getSalario(emp.id);
+  var hCuad=(emp.turnos||[]).reduce(function(sum,t){return sum+getTInfo(t).horas;},0);
+  var hPact=getHorasPactadas(emp);
+  var bruto=s.brutoMes!==''?parseFloat(s.brutoMes):null;
+  var costeFijoSem=bruto!==null?(bruto*(1+SS_EMPRESA))/4.33:null;
+  var costeFijoMes=bruto!==null?bruto*(1+SS_EMPRESA):null;
+  var costeExtras=getTotalExtrasEmp(emp.id);
+  var totalSem=costeFijoSem!==null?costeFijoSem+costeExtras:null;
+  return{hCuad:hCuad,hPact:hPact,bruto:bruto,
+         costeFijoSem:costeFijoSem,costeFijoMes:costeFijoMes,
+         costeExtras:costeExtras,totalSem:totalSem};
+}
+
+function switchTab(tab){
+  ['planif','extras','salarios'].forEach(function(t){
+    document.getElementById('tab-'+t).className='tab-btn'+(t===tab?' active':'');
+    document.getElementById('panel-'+t).className='tab-panel'+(t===tab?' active':'');
+  });
+  renderCostes();
+}
+
+// ---- EXTRAS DEL DÍA ----
+function addExtraDia(){
+  extraCounter++;
+  extrasDia.push({id:extraCounter,empId:empleados.length?empleados[0].id:0,
+                  dia:0,horas:'',precioHora:'',motivo:MOTIVOS_EXTRA[1]});
+  renderExtras();
+}
+
+function removeExtra(id){
+  extrasDia=extrasDia.filter(function(e){return e.id!==id;});
+  renderExtras(); renderCostes();
+}
+
+function updExtra(id,campo,valor){
+  var e=extrasDia.find(function(x){return x.id===id;});
+  if(e){if(campo==='empId')e[campo]=parseInt(valor);else e[campo]=valor;}
+  renderCostes();
+}
+
+function renderExtras(){
+  var cont=document.getElementById('extras-lista');
+  if(!cont) return;
+  if(!extrasDia.length){
+    cont.innerHTML='<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;background:var(--darker);border-radius:8px;border:1px dashed var(--border)">Sin extras registradas esta semana</div>';
+    renderResumenExtras(); return;
+  }
+  var empOpts=empleados.map(function(e){
+    return'<option value="'+e.id+'">'+(e.nombre||'Emp '+e.id)+'</option>';
+  }).join('');
+  var diaOpts=DIAS.map(function(d,i){return'<option value="'+i+'">'+d+'</option>';}).join('');
+
+  cont.innerHTML=extrasDia.map(function(ex){
+    var motivoOpts=MOTIVOS_EXTRA.map(function(m){
+      return'<option value="'+m+'"'+(m===ex.motivo?' selected':'')+'>'+m+'</option>';
+    }).join('');
+    var empOptsEx=empleados.map(function(e){
+      return'<option value="'+e.id+'"'+(e.id===ex.empId?' selected':'')+'>'+( e.nombre||'Emp '+e.id)+'</option>';
+    }).join('');
+    var diaOptsEx=DIAS.map(function(d,i){
+      return'<option value="'+i+'"'+(i===ex.dia?' selected':'')+'>'+d+'</option>';
+    }).join('');
+    var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+    return'<div style="background:var(--darker);border:1px solid #4a2800;border-radius:9px;padding:13px;margin-bottom:9px">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+      +'<div><label>Empleado</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'empId\',this.value)">'+empOptsEx+'</select></div>'
+      +'<div><label>Día</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'dia\',this.value)">'+diaOptsEx+'</select></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+      +'<div><label>Horas extra</label><input type="number" min="0.5" step="0.5" placeholder="ej: 2" value="'+ex.horas+'" oninput="updExtra('+ex.id+',\'horas\',this.value)" class="inp-sm"></div>'
+      +'<div><label>€ / hora extra</label><input type="number" min="0" step="0.5" placeholder="ej: 10" value="'+ex.precioHora+'" oninput="updExtra('+ex.id+',\'precioHora\',this.value)" class="inp-sm"></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:end">'
+      +'<div><label>Motivo</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'motivo\',this.value)">'+motivoOpts+'</select></div>'
+      +'<button class="remove-btn" onclick="removeExtra('+ex.id+')" style="margin-bottom:2px;font-size:18px">&#10005;</button>'
+      +'</div>'
+      +(coste>0?'<div style="margin-top:10px;padding:8px 12px;background:#2d1a00;border-radius:6px;font-size:13px;font-weight:700;color:var(--orange)">⚡ Coste extra: '+coste.toFixed(2)+' €</div>':'')
+      +'</div>';
+  }).join('');
+  renderResumenExtras();
+}
+
+function renderResumenExtras(){
+  var cont=document.getElementById('extras-resumen'); if(!cont) return;
+  if(!extrasDia.length){cont.innerHTML='';return;}
+  var totH=extrasDia.reduce(function(s,e){return s+(parseFloat(e.horas)||0);},0);
+  var totE=extrasDia.reduce(function(s,e){return s+(parseFloat(e.horas)||0)*(parseFloat(e.precioHora)||0);},0);
+  cont.innerHTML='<div style="background:#2d1a00;border:1px solid var(--orange);border-radius:8px;padding:12px 16px;display:flex;gap:24px;flex-wrap:wrap">'
+    +'<div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+totH.toFixed(1)+'h</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Total h. extra</div></div>'
+    +'<div><div style="font-size:20px;font-weight:700;color:var(--accent)">'+totE.toFixed(2)+' €</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Coste extras semana</div></div>'
+    +'</div>';
+}
+
+// ---- RENDER COSTES PRINCIPAL ----
+function renderCostes(){
+  renderExtras();
+  var calcs=empleados.map(function(emp){return calcEmp(emp);});
+  var faltanDatos=calcs.some(function(c){return c.bruto===null;});
+  document.getElementById('costes-aviso').style.display=faltanDatos?'block':'none';
+
+  var totHCuad=calcs.reduce(function(s,c){return s+c.hCuad;},0);
+  var totHPact=calcs.reduce(function(s,c){return s+c.hPact;},0);
+  var tieneDatos=calcs.some(function(c){return c.bruto!==null;});
+  var totFijoSem=tieneDatos?calcs.reduce(function(s,c){return s+(c.costeFijoSem||0);},0):null;
+  var totExtras=calcs.reduce(function(s,c){return s+c.costeExtras;},0);
+  var totSem=totFijoSem!==null?totFijoSem+totExtras:null;
+  var totMes=totSem!==null?totSem*4.33:null;
+
+  // KPIs
+  document.getElementById('costes-kpis').innerHTML=
+    '<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">Empleados</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+totHPact.toFixed(0)+'h</div><div class="stat-label">H. pactadas</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totFijoSem!==null?totFijoSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">Coste fijo sem.</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totExtras>0?'+'+totExtras.toFixed(0)+' €':'0 €')+'</div><div class="stat-label">Extras sem.</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null?totSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">Total semana</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totMes!==null?totMes.toFixed(0)+' €':'—')+'</div><div class="stat-label">Total mes est.</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null&&totHCuad?(totSem/totHCuad).toFixed(2)+' €':'—')+'</div><div class="stat-label">€/hora real</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+extrasDia.length+'</div><div class="stat-label">Extras anotadas</div></div>';
+
+  // TARJETAS por empleado (sin tabla, sin desbordamiento)
+  var cards=document.getElementById('costes-cards');
+  if(cards){
+    cards.innerHTML=empleados.map(function(emp,idx){
+      var c=calcs[idx], color=COLORS[idx%COLORS.length];
+      var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+      var extrasEmp=extrasDia.filter(function(e){return e.empId===emp.id;});
+      return'<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:9px">'
+        // Cabecera empleado
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+        +'<div style="display:flex;align-items:center;gap:9px">'
+        +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">'+init+'</div>'
+        +'<div><div style="font-weight:700;font-size:13px;color:'+color+'">'+( emp.nombre||'Empleado '+emp.id)+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+emp.rol+'</div></div></div>'
+        +'<div style="font-size:20px;font-weight:700;color:'+(c.totalSem!==null?'var(--accent2)':'var(--muted)')+'>'
+        +(c.totalSem!==null?c.totalSem.toFixed(2)+' €':'sin datos')+'</div>'
+        +'</div>'
+        // Fila de datos
+        +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
+        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
+        +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+c.hPact.toFixed(0)+'h</div></div>'
+        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
+        +'<div style="font-size:15px;font-weight:700;color:var(--green)">'+(c.costeFijoSem!==null?c.costeFijoSem.toFixed(2)+' €':'—')+'</div></div>'
+        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
+        +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+(c.costeFijoMes!==null?c.costeFijoMes.toFixed(0)+' €':'—')+'</div></div>'
+        +'</div>'
+        // Extras de este empleado si las hay
+        +(extrasEmp.length?
+          '<div style="margin-top:9px;padding:8px 10px;background:#2d1a00;border:1px solid #6b3a00;border-radius:7px">'
+          +'<div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:5px">⚡ EXTRAS REGISTRADAS</div>'
+          +extrasEmp.map(function(ex){
+            var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+            return'<div style="font-size:11px;color:var(--text);display:flex;justify-content:space-between;margin-bottom:2px">'
+              +'<span>'+DIAS[ex.dia]+' · '+ex.horas+'h · '+ex.motivo+'</span>'
+              +'<span style="color:var(--orange);font-weight:700">'+coste.toFixed(2)+' €</span></div>';
+          }).join('')
+          +(c.costeExtras>0?'<div style="font-size:11px;font-weight:700;color:var(--orange);margin-top:4px;text-align:right">Total extras: '+c.costeExtras.toFixed(2)+' €</div>':'')
+          +'</div>'
+        :'')
+        // Sin datos aviso
+        +(c.bruto===null?'<div style="margin-top:8px;font-size:11px;color:var(--red);padding:6px 10px;background:#2d1515;border-radius:6px">⚠ Sin datos salariales — introduce en pestaña Salarios</div>':'')
+        +'</div>';
+    }).join('');
+  }
+
+  // Totales
+  var tot=document.getElementById('costes-totales');
+  if(tot && tieneDatos){
+    tot.innerHTML='<div style="background:var(--card);border:1px solid var(--accent);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">COSTE FIJO SEMANA</div><div style="font-size:22px;font-weight:700;color:var(--green)">'+(totFijoSem!==null?totFijoSem.toFixed(2)+' €':'—')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">EXTRAS SEMANA</div><div style="font-size:22px;font-weight:700;color:var(--orange)">'+(totExtras>0?'+'+totExtras.toFixed(2)+' €':'0 €')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">TOTAL REAL SEMANA</div><div style="font-size:26px;font-weight:700;color:var(--accent2)">'+(totSem!==null?totSem.toFixed(2)+' €':'—')+'</div></div>'
+      +'</div>';
+  }
+
+  // Editor salarios — solo bruto/mes y horas contrato, sin más
+  document.getElementById('costes-editor').innerHTML=empleados.map(function(emp,idx){
+    var color=COLORS[idx%COLORS.length], s=getSalario(emp.id), c=calcs[idx];
+    return'<div class="costes-emp-card">'
+      +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||'Empleado '+emp.id)
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+emp.rol+'</span></div>'
+      +'<div class="form-row three">'
+      +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
+      +'<input type="number" min="0" step="50" placeholder="ej: 1500" value="'+(s.brutoMes!==''?s.brutoMes:'')+'" oninput="updSalario('+emp.id+',\'brutoMes\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Horas contrato / semana</label>'
+      +'<input type="number" min="1" max="48" step="1" value="'+s.hContrato+'" oninput="updSalario('+emp.id+',\'hContrato\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Resultado calculado</label>'
+      +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+      +(c.costeFijoSem!==null
+        ?'<span style="color:var(--green);font-weight:700">'+c.costeFijoSem.toFixed(2)+' € / sem</span><br>'
+        +'<span style="color:var(--muted);font-size:11px">'+c.costeFijoMes.toFixed(0)+' € / mes (con SS)</span>'
+        :'<span style="color:var(--muted)">Introduce el bruto</span>')
+      +'</div></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function imprimirCostes(){
+  var local=getLocal()||'Local', semana=getSemanaLabel();
+  var calcs=empleados.map(function(emp){return calcEmp(emp);});
+  var totFijo=calcs.reduce(function(s,c){return s+(c.costeFijoSem||0);},0);
+  var totExtras=calcs.reduce(function(s,c){return s+c.costeExtras;},0);
+  var totSem=totFijo+totExtras, totMes=totSem*4.33;
+  var totHCuad=calcs.reduce(function(s,c){return s+c.hCuad;},0);
+
+  var rows=empleados.map(function(emp,i){
+    var c=calcs[i];
+    return'<tr><td>'+(emp.nombre||'Emp '+emp.id)+'</td><td>'+emp.rol+'</td>'
+      +'<td>'+c.hPact.toFixed(0)+'h</td><td>'+c.hCuad.toFixed(1)+'h</td>'
+      +'<td>'+(c.bruto!==null?c.bruto.toFixed(0)+' €':'sin dato')+'</td>'
+      +'<td>'+(c.costeFijoSem!==null?c.costeFijoSem.toFixed(2)+' €':'—')+'</td>'
+      +'<td>'+(c.costeFijoMes!==null?c.costeFijoMes.toFixed(0)+' €':'—')+'</td>'
+      +'<td>'+(c.costeExtras>0?c.costeExtras.toFixed(2)+' €':'—')+'</td>'
+      +'<td style="font-weight:700">'+(c.totalSem!==null?c.totalSem.toFixed(2)+' €':'sin dato')+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var extrasRows=extrasDia.length?extrasDia.map(function(ex){
+    var emp=empleados.find(function(e){return e.id===ex.empId;})||{};
+    var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+    return'<tr><td>'+(emp.nombre||'?')+'</td><td>'+(DIAS[ex.dia]||'')+'</td>'
+      +'<td>'+ex.horas+'h</td><td>'+(ex.precioHora?ex.precioHora+' €/h':'—')+'</td>'
+      +'<td>'+coste.toFixed(2)+' €</td><td>'+ex.motivo+'</td></tr>';
+  }).join(''):'';
+
+  var ventana=window.open('','_blank','width=1100,height=750');
+  if(!ventana){alert('Permite ventanas emergentes');return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>Costes – '+local+' – '+semana+'</title>'
+    +'<style>@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;font-size:10px;color:#111;padding:14px}'
+    +'h1{font-size:15px;margin-bottom:2px}h2{font-size:11px;color:#444;margin:14px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}'
+    +'p.sub{color:#666;font-size:10px;margin-bottom:12px}'
+    +'.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}'
+    +'.stat{background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:7px;text-align:center}'
+    +'.sv{font-size:16px;font-weight:700;color:#c07010}.sl{font-size:8px;color:#666;text-transform:uppercase;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:12px}'
+    +'th{background:#eee;padding:5px;text-align:center;border:1px solid #ccc;font-size:8px;text-transform:uppercase}'
+    +'th:first-child,th:nth-child(2){text-align:left}'
+    +'td{padding:4px 5px;border:1px solid #ddd;font-size:9px;text-align:center}'
+    +'td:first-child,td:nth-child(2){text-align:left}tfoot td{background:#f0f0f0;font-weight:700}'
+    +'.footer{font-size:8px;color:#999;text-align:center;margin-top:10px}'
+    +'body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'</style></head><body>'
+    +'<h1>&#128182; Informe de Costes · '+local+'</h1><p class="sub">'+semana+'</p>'
+    +'<div class="stats">'
+    +'<div class="stat"><div class="sv">'+empleados.length+'</div><div class="sl">Empleados</div></div>'
+    +'<div class="stat"><div class="sv">'+totHCuad.toFixed(0)+'h</div><div class="sl">Horas cuadrante</div></div>'
+    +'<div class="stat"><div class="sv">'+totSem.toFixed(0)+' €</div><div class="sl">Total semana</div></div>'
+    +'<div class="stat"><div class="sv">'+totMes.toFixed(0)+' €</div><div class="sl">Estimado mes</div></div>'
+    +'</div>'
+    +'<h2>Personal</h2>'
+    +'<table><thead><tr><th>Empleado</th><th>Rol</th><th>H.Pact</th><th>H.Cuad</th><th>Bruto/mes</th><th>Coste/sem</th><th>Coste/mes</th><th>Extras €</th><th>Total sem</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'<tfoot><tr><td colspan="2">TOTALES</td><td></td><td>'+totHCuad.toFixed(1)+'h</td><td></td>'
+    +'<td>'+totFijo.toFixed(2)+' €</td><td></td>'
+    +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
+    +'<td>'+totSem.toFixed(2)+' €</td></tr></tfoot></table>'
+    +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
+    +'<p class="footer">RelojTurnos v1.9 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
+    +'</body></html>');
+  ventana.document.close();
+}
+
+// INIT - runs directly, works in all environments including local files
+
+function getSalario(empId){
+  return salariosBrutos[empId] || {brutoMes:'', hContrato:40};
+}
+
+function updSalario(empId, campo, valor){
+  if(!salariosBrutos[empId]) salariosBrutos[empId]={brutoMes:'',hContrato:40};
+  if(campo==='hContrato') salariosBrutos[empId][campo]=parseInt(valor)||40;
+  else salariosBrutos[empId][campo]=valor===''?'':parseFloat(valor);
+  renderCostes();
+}
+
+function getHorasPactadas(emp){
+  // Horas pactadas = calculadas automáticamente desde cuadrante y config
+  // días trabajados × jornada completa + medias fiestas × horas media fiesta
+  var hJornada = +document.getElementById('horas-jornada').value || 9;
+  var hMF = +document.getElementById('horas-media-fiesta').value || 5;
+  var hPact = 0;
+  (emp.turnos||[]).forEach(function(t){
+    if(t==='fiesta') return;
+    if(t==='mediafiesta'){ hPact += hMF; return; }
+    hPact += hJornada;
+  });
+  return hPact;
+}
+
+function getTotalExtrasEmp(empId){
+  return extrasDia.filter(function(e){return e.empId===empId;})
+    .reduce(function(s,e){
+      var h=parseFloat(e.horas)||0, p=parseFloat(e.precioHora)||0;
+      return s+(h*p);
+    },0);
+}
+
+function calcEmp(emp){
+  var s = getSalario(emp.id);
+  var hCuad = (emp.turnos||[]).reduce(function(sum,t){return sum+getTInfo(t).horas;},0);
+  var hPact = getHorasPactadas(emp);
+  var bruto = s.brutoMes!==''?parseFloat(s.brutoMes):null;
+  var costeFijoSem = bruto!==null?(bruto*(1+SS_EMPRESA))/4.33:null;
+  var costeFijoMes = bruto!==null?bruto*(1+SS_EMPRESA):null;
+  var costeExtras = getTotalExtrasEmp(emp.id);
+  var totalSem = costeFijoSem!==null?costeFijoSem+costeExtras:null;
+  return {hCuad:hCuad, hPact:hPact, bruto:bruto,
+          costeFijoSem:costeFijoSem, costeFijoMes:costeFijoMes,
+          costeExtras:costeExtras, totalSem:totalSem};
 }
 
 // INIT - runs directly, works in all environments including local files
