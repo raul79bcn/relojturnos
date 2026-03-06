@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RelojTurnos – Grupo El Reloj</title>
+<style>
+:root {
+  --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
+  --accent:#e8a020;--accent2:#f0c060;--text:#e8edf2;--muted:#6b8299;
+  --green:#2ecc71;--red:#e74c3c;--blue:#3498db;--purple:#9b59b6;--orange:#e67e22;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--darker);color:var(--text);min-height:100vh}
+header{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:19px;font-weight:700;color:var(--accent)}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.header-info{font-size:12px;color:var(--muted)}
+.header-info span{color:var(--accent);font-weight:600}
+.container{max-width:980px;margin:0 auto;padding:24px 16px}
+.steps{display:flex;margin-bottom:28px;background:var(--dark);border-radius:12px;padding:5px;border:1px solid var(--border)}
+.step{flex:1;padding:9px 4px;border-radius:8px;text-align:center;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
+.step.active{background:var(--accent);color:var(--darker);font-weight:700}
+.step.done{color:var(--accent)}
+.step-num{display:inline-flex;width:18px;height:18px;background:var(--border);border-radius:50%;align-items:center;justify-content:center;font-size:10px;margin-right:3px}
+.step.active .step-num{background:var(--darker)}
+.step.done .step-num{background:var(--accent);color:var(--darker)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px}
+.card-title{font-size:17px;font-weight:700;margin-bottom:5px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+select,input[type=text]{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;outline:none;transition:border-color .2s;cursor:pointer}
+select:focus,input[type=text]:focus{border-color:var(--accent)}
+select option{background:var(--dark)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row.three{grid-template-columns:1fr 1fr 1fr}
+.form-group{margin-bottom:0}
+.empleado-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.empleado-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.emp-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.emp-name-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-family:Arial,sans-serif;font-size:14px;font-weight:600}
+.emp-name-input:focus{outline:none;border-color:var(--accent)}
+.remove-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px;padding:3px;transition:color .2s}
+.remove-btn:hover{color:var(--red)}
+.dias-grid-header{display:grid;grid-template-columns:140px repeat(7,1fr);gap:5px;margin-bottom:5px}
+.dias-grid-row{display:grid;grid-template-columns:140px repeat(7,1fr);gap:5px;margin-bottom:7px;align-items:center}
+.dia-label-top{text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.dia-select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:5px 2px;color:var(--text);font-size:10px;font-family:Arial,sans-serif;text-align:center;cursor:pointer}
+.dia-select:focus{outline:none;border-color:var(--accent)}
+.dia-select.fiesta{background:#2d1515;border-color:#5a2020;color:var(--red)}
+.dia-select.mediafiesta{background:#2d2015;border-color:#5a4020;color:var(--orange)}
+.dia-select.manana{background:#1a2d1a;border-color:#2a5a2a;color:var(--green)}
+.dia-select.noche{background:#1a1a2d;border-color:#2a2a5a;color:var(--blue)}
+.dia-select.intermedio{background:#2a1a2d;border-color:#4a2a5a;color:var(--purple)}
+.dia-select.tarde{background:#2d2a1a;border-color:#5a4a1a;color:var(--orange)}
+.btn{padding:11px 22px;border-radius:9px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--accent);color:var(--darker)}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-secondary{background:var(--border);color:var(--text)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.btn-row.space{justify-content:space-between}
+.turno-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.turno-config-item{background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:12px}
+.turno-config-label{font-size:12px;font-weight:700;margin-bottom:8px}
+.turno-config-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.schedule-table{width:100%;border-collapse:collapse;font-size:11px}
+.schedule-table th{background:var(--darker);padding:9px 5px;text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border)}
+.schedule-table th.emp-col{text-align:left;min-width:100px}
+.schedule-table td{padding:7px 5px;border:1px solid var(--border);text-align:center;vertical-align:middle}
+.schedule-table td.emp-name{text-align:left;font-weight:600;font-size:11px;padding-left:8px}
+.turno-badge{display:inline-block;padding:2px 5px;border-radius:4px;font-size:9px;font-weight:700;line-height:1.5;text-align:center}
+.badge-fiesta{background:#3d1515;color:#ff6b6b}
+.badge-mediafiesta{background:#3d2d10;color:#ffaa40}
+.badge-manana{background:#152d15;color:#5ddb5d}
+.badge-noche{background:#15152d;color:#6b8fff}
+.badge-intermedio{background:#25152d;color:#c080ff}
+.badge-tarde{background:#2d2515;color:#ffa040}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat-card{background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:12px;text-align:center}
+.stat-val{font-size:22px;font-weight:700;color:var(--accent)}
+.stat-label{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:1px}
+.cob-ok{color:var(--green);font-weight:700;font-size:13px}
+.cob-warn{color:var(--orange);font-weight:700;font-size:13px}
+.cob-low{color:var(--red);font-weight:700;font-size:13px}
+.evento-item{display:flex;align-items:center;gap:9px;background:var(--darker);border:1px solid #3d3000;border-radius:7px;padding:9px 12px;margin-bottom:7px}
+.turno-legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;padding:10px;background:var(--darker);border-radius:7px;border:1px solid var(--border)}
+.info-box{background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#8ddb8d}
+.screen{display:none}
+.screen.active{display:block}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.footer-credits{font-size:10px;color:var(--muted);text-align:center;line-height:2;margin-top:6px}
+.footer-credits a{color:var(--accent);text-decoration:none}
+.footer-credits strong{color:var(--accent)}
+.toggle-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:var(--darker);color:var(--muted);cursor:pointer;font-family:Arial,sans-serif;font-size:11px;font-weight:600;transition:all .2s;user-select:none}
+.toggle-btn.on{background:#1a2d1a;border-color:#2a5a2a;color:var(--green)}
+.toggle-btn .tog-dot{width:30px;height:16px;border-radius:8px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0}
+.toggle-btn.on .tog-dot{background:var(--green)}
+.toggle-btn .tog-dot::after{content:'';position:absolute;width:10px;height:10px;border-radius:50%;background:white;top:3px;left:3px;transition:left .2s}
+.toggle-btn.on .tog-dot::after{left:17px}
+.otro-input{width:100%;background:var(--darker);border:1px solid var(--accent);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;outline:none;margin-top:7px}
+.otro-input::placeholder{color:var(--muted)}
+@media(max-width:640px){
+  .form-row,.form-row.three{grid-template-columns:1fr}
+  .turno-config-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .dias-grid-header,.dias-grid-row{grid-template-columns:70px repeat(7,1fr);gap:3px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">&#9201;</div>
+    <div><div class="logo-text">RelojTurnos</div><div class="logo-sub">Grupo El Reloj</div></div>
+  </div>
+  <div class="header-info">Local: <span id="header-local">&#8212;</span> &nbsp;&middot;&nbsp; Semana: <span id="header-semana">&#8212;</span></div>
+</header>
+
+<div class="container">
+  <div class="steps">
+    <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text">Local</span></div>
+    <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text">Turnos</span></div>
+    <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text">Equipo</span></div>
+    <div class="step" id="step4" onclick="goStep(4)"><span class="step-num">4</span><span class="step-text">Asignar</span></div>
+    <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text">Eventos</span></div>
+    <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text">Cuadrante</span></div>
+  </div>
+
+  <!-- PASO 1 -->
+  <div class="screen active" id="screen1">
+    <div class="card">
+      <div class="card-title">&#191;Qu&#233; local y semana vamos a planificar?</div>
+      <div class="card-sub">Selecciona el restaurante, la semana y la configuraci&#243;n b&#225;sica</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Local</label>
+          <select id="local-select" onchange="onLocalChange()">
+            <option value="">Selecciona local...</option>
+            <option value="La Cala">Restaurante La Cala</option>
+            <option value="Roto's Burguer">Roto's Burguer</option>
+            <option value="Otro">Otro local</option>
+          </select>
+          <div id="otro-local-wrap" style="display:none">
+            <input class="otro-input" id="otro-local-input" type="text" placeholder="Escribe el nombre del local...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Semana que empieza el</label>
+          <select id="fecha-inicio"></select>
+        </div>
+      </div>
+      <div class="form-row three">
+        <div class="form-group"><label>Hora apertura</label><select id="hora-apertura"></select></div>
+        <div class="form-group"><label>Hora cierre</label><select id="hora-cierre"></select></div>
+        <div class="form-group">
+          <label>M&#237;nimo personas/d&#237;a</label>
+          <select id="min-personas">
+            <option value="1">1 persona</option>
+            <option value="2" selected>2 personas</option>
+            <option value="3">3 personas</option>
+            <option value="4">4 personas</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>D&#237;as de menor afluencia (fiesta sugerida)</label>
+        <select id="dias-flojos" multiple style="height:82px">
+          <option value="0" selected>Lunes</option>
+          <option value="1">Martes</option>
+          <option value="2" selected>Mi&#233;rcoles</option>
+          <option value="3">Jueves</option>
+          <option value="4">Viernes</option>
+          <option value="5">S&#225;bado</option>
+          <option value="6">Domingo</option>
+        </select>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">Mant&#233;n Ctrl para seleccionar varios</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="nextStep(1)">Siguiente &#8594; Configurar turnos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2 -->
+  <div class="screen" id="screen2">
+    <div class="card">
+      <div class="card-title">Configura los turnos del local</div>
+      <div class="card-sub">Turnos calculados autom&#225;ticamente. Activa solo los que usa este local.</div>
+      <div class="info-box" id="info-box-turnos"></div>
+      <div class="turno-config-grid" id="turnos-config-grid"></div>
+      <hr class="divider">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Duraci&#243;n media fiesta (horas trabajadas)</label>
+          <select id="horas-media-fiesta">
+            <option value="4">4 horas</option>
+            <option value="4.5">4,5 horas</option>
+            <option value="5" selected>5 horas</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Horas jornada completa</label>
+          <select id="horas-jornada">
+            <option value="8">8 horas</option>
+            <option value="8.5">8,5 horas</option>
+            <option value="9" selected>9 horas</option>
+            <option value="9.5">9,5 horas</option>
+            <option value="10">10 horas</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(1)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="nextStep(2)">Siguiente &#8594; Equipo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 3 -->
+  <div class="screen" id="screen3">
+    <div class="card">
+      <div class="card-title">&#191;Qui&#233;n trabaja en este local?</div>
+      <div class="card-sub">Empleados y su turno habitual. Las horas se calculan solas seg&#250;n los turnos asignados.</div>
+      <div id="empleados-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addEmpleado()" style="margin-top:4px">&#65291; A&#241;adir empleado</button>
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(2)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="nextStep(3)">Siguiente &#8594; Asignar turnos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 4 -->
+  <div class="screen" id="screen4">
+    <div class="card">
+      <div class="card-title">Asigna los turnos de la semana</div>
+      <div class="card-sub">Turnos y fiestas sugeridos autom&#225;ticamente. Ajusta lo que necesites.</div>
+      <div class="turno-legend" id="turno-legend"></div>
+      <div id="turnos-asignacion"></div>
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(3)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="nextStep(4)">Siguiente &#8594; Eventos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 5 -->
+  <div class="screen" id="screen5">
+    <div class="card">
+      <div class="card-title">&#191;Hay eventos especiales esta semana?</div>
+      <div class="card-sub">Partidos, eventos, festivos que necesiten refuerzo de personal</div>
+      <div id="eventos-list"><div id="no-eventos" style="color:var(--muted);font-size:12px;padding:18px 0;text-align:center">No hay eventos a&#241;adidos</div></div>
+      <hr class="divider">
+      <div class="form-row three">
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="evento-tipo">
+            <option value="&#9917;">&#9917; Partido f&#250;tbol</option>
+            <option value="&#127881;">&#127881; Evento especial</option>
+            <option value="&#128197;">&#128197; Festivo local</option>
+            <option value="&#127783;">&#127783; Mal tiempo</option>
+            <option value="&#127939;">&#127939; Marat&#243;n / Carrera popular</option>
+            <option value="&#127925;">&#127925; Concierto cercano</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>D&#237;a</label>
+          <select id="evento-dia">
+            <option value="0">Lunes</option><option value="1">Martes</option>
+            <option value="2">Mi&#233;rcoles</option><option value="3">Jueves</option>
+            <option value="4">Viernes</option><option value="5">S&#225;bado</option>
+            <option value="6">Domingo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Descripci&#243;n</label>
+          <select id="evento-desc-sel">
+            <option value="">Selecciona...</option>
+            <option value="Bar&#231;a vs Madrid">Bar&#231;a vs Madrid</option>
+            <option value="Selecci&#243;n espa&#241;ola">Selecci&#243;n espa&#241;ola</option>
+            <option value="Champions League">Champions League</option>
+            <option value="Concierto Forum">Concierto Forum</option>
+            <option value="Festivo local Barcelona">Festivo local Barcelona</option>
+            <option value="Sant Jordi">Sant Jordi</option>
+            <option value="Marat&#243;n Barcelona">Marat&#243;n Barcelona</option>
+            <option value="Cursa Popular">Cursa Popular</option>
+            <option value="Evento especial">Evento especial</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Personas de refuerzo</div>
+      <div id="refuerzo-personas-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addRefuerzoPersona()" style="margin-bottom:14px">&#65291; A&#241;adir persona de refuerzo</button>
+      <div style="margin-bottom:14px">
+        <button class="btn btn-primary btn-sm" onclick="addEvento()">&#10003; Confirmar y a&#241;adir evento</button>
+      </div>
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(4)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="generarCuadrante()">&#9889; Generar cuadrante</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 6 -->
+  <div class="screen" id="screen6">
+    <div id="cuadrante-output"></div>
+    <div class="btn-row space">
+      <button class="btn btn-secondary" onclick="goStep(4)">&#8592; Editar</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()">&#128065; Ocultar horas</button>
+        <button class="btn btn-ghost btn-sm" onclick="guardarImagen()">&#128247; Guardar imagen</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()">&#128424; Imprimir</button>
+        <button class="btn btn-primary btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v1.4 Beta</span>
+  &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#b8cad9cdd496dfddcbccd1d7d6d4d7dbd9d4f8dfd5d9d1d496dbd7d5" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="fd8f9c8891d39a988e8994929391929e9c91bd9a909c9491d39e9290">[email&#160;protected]</span></a>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
+var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
+var COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800'];
+var ROLES=['Resp. Ma\u00f1ana','Resp. Noche','Cam. Ma\u00f1ana','Cam. Noche','Cam. Tarde','Cam. Intermedio','Cocinero','Ayud. Cocina','Encargado','Barman'];
+
+var empleados=[], eventos=[], empCounter=0, turnosConfig=[];
+var refuerzoPersonas=[], refuerzoCounter=0;
+var mostrarHoras=true, lastLocal='';
+
+function toMin(t){var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
+function toStr(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+function diffH(s,e){var sm=toMin(s),em=toMin(e);if(em<=sm)em+=1440;return(em-sm)/60;}
+
+function horaOpts(selId,defVal){
+  var el=document.getElementById(selId);if(!el)return;
+  el.innerHTML='';
+  for(var h=0;h<24;h++){for(var m=0;m<60;m+=30){
+    var str=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    var o=document.createElement('option');o.value=str;o.textContent=str;
+    if(str===defVal)o.selected=true;el.appendChild(o);
+  }}
+}
+
+function buildFechas(){
+  var sel=document.getElementById('fecha-inicio');if(!sel)return;sel.innerHTML='';
+  var today=new Date(),d=new Date(today);
+  d.setDate(d.getDate()+((1+7-d.getDay())%7||7));
+  for(var i=-2;i<10;i++){
+    var dd=new Date(d);dd.setDate(dd.getDate()+i*7);
+    var val=dd.toISOString().split('T')[0];
+    var label=dd.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+    var o=document.createElement('option');o.value=val;o.textContent='Lunes '+label;
+    if(i===0)o.selected=true;sel.appendChild(o);
+  }
+}
+
+function getLocal(){
+  var sel=document.getElementById('local-select');if(!sel)return'';
+  var v=sel.value;
+  if(v==='Otro'){var inp=document.getElementById('otro-local-input');return inp?(inp.value||'Nuevo local'):'Nuevo local';}
+  return v;
+}
+
+function getSemanaLabel(){
+  var fi=document.getElementById('fecha-inicio');if(!fi||!fi.value)return'';
+  var d=new Date(fi.value+'T12:00:00');
+  var fin=new Date(d);fin.setDate(fin.getDate()+6);
+  var fmt=function(dt){return dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});};
+  return fmt(d)+' \u2013 '+fmt(fin);
+}
+
+function updateHeader(){
+  var hl=document.getElementById('header-local'),hs=document.getElementById('header-semana');
+  if(hl)hl.textContent=getLocal()||'\u2014';
+  if(hs)hs.textContent=getSemanaLabel()||'\u2014';
+}
+
+function onLocalChange(){
+  var sel=document.getElementById('local-select');if(!sel)return;
+  var v=sel.value;
+  var wrap=document.getElementById('otro-local-wrap');
+  if(wrap)wrap.style.display=(v==='Otro')?'block':'none';
+  var ap=document.getElementById('hora-apertura');
+  var ci=document.getElementById('hora-cierre');
+  if(v==='La Cala'){if(ap)ap.value='07:30';if(ci)ci.value='03:00';}
+  else if(v==="Roto's Burguer"){if(ap)ap.value='11:00';if(ci)ci.value='00:00';}
+  if(v!==lastLocal){empleados=[];empCounter=0;lastLocal=v;}
+}
+
+function goStep(n){
+  for(var i=1;i<=6;i++){
+    var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
+    if(sc)sc.className='screen'+(i===n?' active':'');
+    if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
+  }
+  window.scrollTo(0,0);
+}
+
+function nextStep(from){
+  if(from===1){if(!getLocal()){alert('Selecciona un local');return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
+  else if(from===2){goStep(3);if(empleados.length===0)initDef(getLocal());renderEmpleados();}
+  else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});renderTurnosAsig();goStep(4);}
+  else if(from===4){initPaso5();goStep(5);}
+}
+
+function buildTurnosConfig(){
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  var s=toMin(ap),e=toMin(ci);if(e<=s)e+=1440;
+  var third=Math.round((e-s)/3/30)*30;
+  var mid1=toStr(s+third),mid2=toStr(s+third*2);
+  var iS=toStr(s+Math.round(third*0.7/30)*30),iE=toStr(s+Math.round(third*1.7/30)*30);
+  turnosConfig=[
+    {id:'manana',nome:'Ma\u00f1ana',emoji:'\u2600\ufe0f',ini:ap,fin:mid1,badge:'badge-manana',color:'#2ecc71',active:true},
+    {id:'tarde',nome:'Tarde',emoji:'\ud83c\udf05',ini:mid1,fin:mid2,badge:'badge-tarde',color:'#e67e22',active:false},
+    {id:'noche',nome:'Noche',emoji:'\ud83c\udf19',ini:mid2,fin:ci,badge:'badge-noche',color:'#3498db',active:true},
+    {id:'intermedio',nome:'Intermedio',emoji:'\ud83d\udd04',ini:iS,fin:iE,badge:'badge-intermedio',color:'#9b59b6',active:false},
+  ];
+}
+
+function toggleTurno(id){
+  var t=turnosConfig.find(function(x){return x.id===id;});
+  if(t){t.active=!t.active;renderTurnosConfigGrid();}
+}
+
+function renderTurnosConfigGrid(){
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  document.getElementById('info-box-turnos').innerHTML='&#10003; Apertura <strong>'+ap+'</strong> &middot; Cierre <strong>'+ci+'</strong> &middot; Activa solo los turnos que usa este local.';
+  var grid=document.getElementById('turnos-config-grid');grid.innerHTML='';
+  turnosConfig.forEach(function(t){
+    var opts=function(def){return Array.from({length:48},function(_,i){
+      var h=Math.floor(i/2),m=i%2===0?'00':'30';
+      var str=String(h).padStart(2,'0')+':'+m;
+      return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
+    }).join('');};
+    var dis=t.active?'':'opacity:0.45';
+    grid.innerHTML+='<div class="turno-config-item" style="'+dis+'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">'
+      +'<div class="turno-config-label" style="color:'+t.color+';margin-bottom:0">'+t.emoji+' Turno '+t.nome+' <small style="color:var(--muted);font-weight:400">'+t.ini+'\u2013'+t.fin+'</small></div>'
+      +'<button onclick="toggleTurno(\''+t.id+'\')" class="toggle-btn '+(t.active?'on':'')+'">'
+      +'<div class="tog-dot"></div><span>'+(t.active?'Activo':'Inactivo')+'</span></button></div>'
+      +'<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
+      +'<div><label>Desde</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
+      +'<div><label>Hasta</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
+      +'</div></div>';
+  });
+}
+
+function updTC(id,f,v){var t=turnosConfig.find(function(x){return x.id===id;});if(t)t[f]=v;}
+
+function initDef(local){
+  empleados=[];
+  var d=local==='La Cala'?[
+    {nombre:'MARILYN',rol:'Resp. Ma\u00f1ana',turno:'manana'},
+    {nombre:'SONNY',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+    {nombre:'ALEX',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+    {nombre:'CONNY',rol:'Cam. Intermedio',turno:'intermedio'},
+    {nombre:'IRENE',rol:'Resp. Noche',turno:'noche'},
+    {nombre:'SANTIAGO',rol:'Cam. Noche',turno:'noche'},
+    {nombre:'LENY',rol:'Cam. Noche',turno:'noche'},
+  ]:local==="Roto's Burguer"?[
+    {nombre:'ARTUR',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+    {nombre:'ALLAN (CAM.)',rol:'Cam. Tarde',turno:'tarde'},
+    {nombre:'ALLAN (COC.)',rol:'Cocinero',turno:'manana'},
+    {nombre:'ARLENE',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+  ]:[];
+  d.forEach(function(x){empCounter++;empleados.push({id:empCounter,nombre:x.nombre,rol:x.rol,turno:x.turno,turnos:Array(7).fill(x.turno)});});
+}
+
+function addEmpleado(){empCounter++;empleados.push({id:empCounter,nombre:'',rol:'Cam. Ma\u00f1ana',turno:'manana',turnos:Array(7).fill('manana')});renderEmpleados();}
+function removeEmpleado(id){empleados=empleados.filter(function(e){return e.id!==id;});renderEmpleados();}
+
+function renderEmpleados(){
+  var cont=document.getElementById('empleados-list');cont.innerHTML='';
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=emp.nombre?emp.nombre.substring(0,2).toUpperCase():'??';
+    var rOpts=ROLES.map(function(r){return'<option value="'+r+'"'+(emp.rol===r?' selected':'')+'>'+r+'</option>';}).join('');
+    var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+    var tOpts=activeTurnos.map(function(t){return'<option value="'+t.id+'"'+(emp.turno===t.id?' selected':'')+'>'+t.emoji+' '+t.nome+'</option>';}).join('');
+    cont.innerHTML+='<div class="empleado-card" id="ec-'+emp.id+'">'
+      +'<div class="empleado-header">'
+      +'<div class="emp-avatar" style="background:'+color+'20;color:'+color+'" id="ea-'+emp.id+'">'+init+'</div>'
+      +'<input class="emp-name-input" type="text" placeholder="Nombre empleado" value="'+emp.nombre+'" oninput="updNom('+emp.id+',this.value)">'
+      +'<button class="remove-btn" onclick="removeEmpleado('+emp.id+')">&#10005;</button></div>'
+      +'<div class="form-row">'
+      +'<div class="form-group"><label>Rol</label><select onchange="updEmp('+emp.id+',\'rol\',this.value)">'+rOpts+'</select></div>'
+      +'<div class="form-group"><label>Turno habitual</label><select onchange="updEmp('+emp.id+',\'turno\',this.value)">'+tOpts+'</select></div>'
+      +'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; Las horas semanales se calculan autom\u00e1ticamente seg\u00fan los turnos asignados</div>'
+      +'</div>';
+  });
+}
+
+function updNom(id,v){var e=empleados.find(function(x){return x.id===id;});if(e)e.nombre=v;var av=document.getElementById('ea-'+id);if(av)av.textContent=v?v.substring(0,2).toUpperCase():'??';}
+function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(e)e[f]=v;}
+
+function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
+
+function sugerirTurnos(){
+  var df=getDiasFlojos();
+  var fiestaIdx=0;
+  empleados.forEach(function(emp){
+    emp.turnos=Array(7).fill(emp.turno);
+    var diasFiesta=Math.floor(7/empleados.length*1.5)||1;
+    for(var k=0;k<diasFiesta&&fiestaIdx<df.length;k++){emp.turnos[df[fiestaIdx%df.length]]='fiesta';fiestaIdx++;}
+  });
+}
+
+function renderTurnosAsig(){
+  sugerirTurnos();
+  var df=getDiasFlojos();
+  var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+  var leg=document.getElementById('turno-legend');
+  leg.innerHTML=activeTurnos.map(function(t){return'<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span class="turno-badge '+t.badge+'">'+t.emoji+' '+t.nome+'</span> '+t.ini+'\u2013'+t.fin+'</span>';}).join('')
+    +'<span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd Media fiesta</span></span>'
+    +'<span style="font-size:10px"><span class="turno-badge badge-fiesta">\ud83c\udfd6 Fiesta</span></span>';
+
+  var html='<div class="dias-grid-header"><div></div>';
+  DIAS_SHORT.forEach(function(d,i){html+='<div class="dia-label-top" style="'+(df.includes(i)?'color:var(--red)':'')+'">'+(df.includes(i)?'\ud83c\udfd6 ':'')+d+'</div>';});
+  html+='</div>';
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    html+='<div class="dias-grid-row"><div style="font-size:11px;font-weight:700;color:'+color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( emp.nombre||'Emp '+emp.id)+'</div>';
+    DIAS.forEach(function(_,di){
+      var tv=emp.turnos?emp.turnos[di]:emp.turno;
+      var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+'</option>';}).join('')
+        +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>\u00bd Media fiesta</option>'
+        +'<option value="fiesta"'+(tv==='fiesta'?' selected':'')+'>\ud83c\udfd6 Fiesta</option>';
+      html+='<div><select class="dia-select '+tv+'" onchange="updTurno('+emp.id+','+di+',this.value,this)">'+opts+'</select></div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('turnos-asignacion').innerHTML=html;
+}
+
+function updTurno(empId,di,v,el){var e=empleados.find(function(x){return x.id===empId;});if(e){if(!e.turnos)e.turnos=Array(7).fill(e.turno);e.turnos[di]=v;}el.className='dia-select '+v;}
+
+function initPaso5(){refuerzoPersonas=[];refuerzoCounter=0;renderRefuerzoPersonas();}
+
+function addRefuerzoPersona(){
+  refuerzoCounter++;
+  refuerzoPersonas.push({id:refuerzoCounter,nombre:'',desde:'18:00',hasta:'23:00'});
+  renderRefuerzoPersonas();
+}
+
+function removeRefuerzoPersona(id){
+  refuerzoPersonas=refuerzoPersonas.filter(function(p){return p.id!==id;});
+  renderRefuerzoPersonas();
+}
+
+function updRefuerzoPersona(id,field,val){var p=refuerzoPersonas.find(function(x){return x.id===id;});if(p)p[field]=val;}
+
+function renderRefuerzoPersonas(){
+  var cont=document.getElementById('refuerzo-personas-list');if(!cont)return;
+  if(refuerzoPersonas.length===0){
+    cont.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:7px;background:var(--darker);border-radius:5px;border:1px dashed var(--border)">\u00c1\u00f1ade al menos una persona de refuerzo para este evento</div>';
+    return;
+  }
+  var allOpts=function(def){return Array.from({length:48},function(_,i){var h=Math.floor(i/2),m=i%2===0?'00':'30';var str=String(h).padStart(2,'0')+':'+m;return'<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';}).join('');};
+  cont.innerHTML=refuerzoPersonas.map(function(p){
+    return'<div style="display:grid;grid-template-columns:1fr 90px 90px 30px;gap:7px;align-items:end;margin-bottom:7px;background:var(--darker);padding:9px;border-radius:7px;border:1px solid #3d3000">'
+      +'<div><label>Nombre</label><input type="text" placeholder="Ej: JUAN" value="'+p.nombre+'" oninput="updRefuerzoPersona('+p.id+',\'nombre\',this.value)" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;font-weight:600;outline:none"></div>'
+      +'<div><label>Desde</label><select onchange="updRefuerzoPersona('+p.id+',\'desde\',this.value)">'+allOpts(p.desde)+'</select></div>'
+      +'<div><label>Hasta</label><select onchange="updRefuerzoPersona('+p.id+',\'hasta\',this.value)">'+allOpts(p.hasta)+'</select></div>'
+      +'<div><button class="remove-btn" onclick="removeRefuerzoPersona('+p.id+')" style="margin-top:17px">&#10005;</button></div>'
+      +'</div>';
+  }).join('');
+}
+
+function addEvento(){
+  var tipo=document.getElementById('evento-tipo').value;
+  var dia=+document.getElementById('evento-dia').value;
+  var desc=document.getElementById('evento-desc-sel').value;
+  if(!desc){alert('Selecciona una descripci\u00f3n del evento');return;}
+  if(refuerzoPersonas.length===0){alert('A\u00f1ade al menos una persona de refuerzo');return;}
+  var inv=refuerzoPersonas.filter(function(p){return!p.nombre.trim();});
+  if(inv.length>0){alert('Pon el nombre de cada persona de refuerzo');return;}
+  eventos.push({tipo:tipo,dia:dia,desc:desc,personas:refuerzoPersonas.map(function(p){return{id:p.id,nombre:p.nombre,desde:p.desde,hasta:p.hasta};})});
+  refuerzoPersonas=[];refuerzoCounter=0;
+  document.getElementById('evento-desc-sel').value='';
+  renderRefuerzoPersonas();renderEventos();
+}
+
+function removeEvento(i){eventos.splice(i,1);renderEventos();}
+
+function renderEventos(){
+  var cont=document.getElementById('eventos-list');
+  cont.innerHTML=eventos.map(function(ev,i){
+    return'<div class="evento-item">'
+      +'<div style="font-size:18px">'+ev.tipo+'</div>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:600">'+ev.desc+' \u00b7 '+DIAS[ev.dia]+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+ev.personas.map(function(p){return p.nombre+' ('+p.desde+'\u2013'+p.hasta+')';}).join(' \u00b7 ')+'</div></div>'
+      +'<button class="remove-btn" onclick="removeEvento('+i+')">&#10005;</button></div>';
+  }).join('')+'<div id="no-eventos" style="display:'+(eventos.length?'none':'block')+';color:var(--muted);font-size:12px;padding:18px 0;text-align:center">No hay eventos a\u00f1adidos</div>';
+}
+
+function getTInfo(v){
+  if(v==='fiesta')return{label:'\ud83c\udfd6 FIESTA',badge:'badge-fiesta',horas:0};
+  var hMF=+document.getElementById('horas-media-fiesta').value;
+  if(v==='mediafiesta')return{label:'\u00bd Media fiesta',badge:'badge-mediafiesta',horas:hMF};
+  var t=turnosConfig.find(function(x){return x.id===v;});
+  if(t)return{label:t.emoji+' '+t.ini+'\u2013'+t.fin,badge:t.badge,horas:diffH(t.ini,t.fin)};
+  return{label:v,badge:'badge-manana',horas:0};
+}
+
+function toggleHoras(){
+  mostrarHoras=!mostrarHoras;
+  var btn=document.getElementById('btn-toggle-horas');
+  if(btn)btn.textContent=(mostrarHoras?'\ud83d\udc41 Ocultar horas':'\ud83d\udc41 Mostrar horas');
+  document.querySelectorAll('.col-horas').forEach(function(el){el.style.display=mostrarHoras?'':'none';});
+}
+
+function generarCuadrante(){
+  updateHeader();
+  var local=getLocal(),semana=getSemanaLabel();
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  var minP=+document.getElementById('min-personas').value;
+  var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+  var epd=Array(7).fill(null).map(function(_,i){return eventos.filter(function(ev){return ev.dia===i;});});
+  var horasE=empleados.map(function(emp){return(emp.turnos||[]).reduce(function(s,t){return s+getTInfo(t).horas;},0);});
+  var cob=Array(7).fill(0).map(function(_,di){return empleados.filter(function(e){return e.turnos&&e.turnos[di]!=='fiesta';}).length;});
+  var totalH=horasE.reduce(function(a,b){return a+b;},0);
+  var numEventos=eventos.length;
+
+  var tbodyRows=empleados.map(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+    var cells=(emp.turnos||[]).map(function(t,di){
+      var info=getTInfo(t);
+      return'<td><span class="turno-badge '+info.badge+'">'+info.label+'</span></td>';
+    }).join('');
+    return'<tr>'
+      +'<td class="emp-name"><div style="display:flex;align-items:center;gap:7px">'
+      +'<div style="width:24px;height:24px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">'+init+'</div>'
+      +(emp.nombre||'Empleado '+emp.id)+'</div></td>'
+      +'<td style="font-size:10px;color:var(--muted)">'+emp.rol+'</td>'
+      +cells
+      +'<td class="col-horas" style="font-weight:700;color:var(--accent);font-size:12px">'+horasE[idx].toFixed(1)+'h</td></tr>';
+  }).join('');
+
+  var refRows='';
+  eventos.forEach(function(ev){
+    (ev.personas||[]).forEach(function(p){
+      var horas=diffH(p.desde,p.hasta);
+      var cells=DIAS.map(function(_,di){
+        if(di===ev.dia)return'<td><span class="turno-badge" style="background:#3d2d00;color:#ffd040;border:1px solid #6b5000">'+p.desde+'\u2013'+p.hasta+'</span><br><span style="font-size:8px;color:#aaa">'+ev.desc+'</span></td>';
+        return'<td style="color:var(--muted);font-size:10px;text-align:center">\u2014</td>';
+      }).join('');
+      refRows+='<tr style="background:#1a1500">'
+        +'<td class="emp-name"><div style="display:flex;align-items:center;gap:7px">'
+        +'<div style="width:24px;height:24px;border-radius:50%;background:#ffd04020;color:#ffd040;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">\u26a1</div>'
+        +(p.nombre||'REFUERZO')+'</div></td>'
+        +'<td style="font-size:10px;color:#ffd040">'+ev.tipo+' Evento</td>'
+        +cells
+        +'<td class="col-horas" style="font-weight:700;color:#ffd040;font-size:12px">'+horas.toFixed(1)+'h</td></tr>';
+    });
+  });
+
+  var cobRow=cob.map(function(c){
+    var cl=c>=minP?'cob-ok':c===minP-1?'cob-warn':'cob-low';
+    return'<td style="border:1px solid var(--border);padding:5px;text-align:center"><span class="'+cl+'">'+c+'</span><br><span style="font-size:9px;color:var(--muted)">pers.</span></td>';
+  }).join('');
+
+  var eventosHtml='';
+  if(numEventos>0){
+    eventosHtml='<hr class="divider"><div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--accent)">\u26a1 Eventos especiales de la semana</div>'
+      +eventos.map(function(ev){
+        return'<div class="evento-item"><div style="font-size:18px">'+ev.tipo+'</div>'
+          +'<div><div style="font-size:12px;font-weight:600">'+ev.desc+' \u00b7 '+DIAS[ev.dia]+'</div>'
+          +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+(ev.personas||[]).map(function(p){return p.nombre+' \u00b7 '+p.desde+'\u2013'+p.hasta+' ('+diffH(p.desde,p.hasta).toFixed(1)+'h)';}).join(' &nbsp;\u00b7&nbsp; ')+'</div></div></div>';
+      }).join('');
+  }
+
+  var legendaHtml=activeTurnos.map(function(t){return'<span style="font-size:10px"><span class="turno-badge '+t.badge+'">'+t.emoji+' '+t.nome+'</span> '+t.ini+'\u2013'+t.fin+'</span>';}).join(' ')
+    +' <span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd Media fiesta</span></span>';
+
+  var html='<div class="card">'
+    +'<div style="margin-bottom:16px"><div class="card-title">\ud83d\udccb Cuadrante generado</div>'
+    +'<div class="card-sub">'+local+' \u00b7 '+semana+' \u00b7 '+ap+' \u2013 '+ci+'</div></div>'
+    +'<div class="stats-grid">'
+    +'<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">Empleados</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+totalH.toFixed(0)+'h</div><div class="stat-label">Horas totales</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+Math.min.apply(null,cob)+'\u2013'+Math.max.apply(null,cob)+'</div><div class="stat-label">Cobertura/d\u00eda</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+numEventos+'</div><div class="stat-label">Eventos</div></div>'
+    +'</div>'
+    +'<div style="overflow-x:auto"><table class="schedule-table">'
+    +'<thead><tr><th class="emp-col">EMPLEADO</th><th>ROL</th>'
+    +DIAS_SHORT.map(function(d,i){return'<th>'+d+(epd[i].length?' '+epd[i].map(function(e){return e.tipo;}).join(''):'')+'</th>';}).join('')
+    +'<th class="col-horas">HORAS</th></tr></thead>'
+    +'<tbody>'+tbodyRows+refRows+'</tbody>'
+    +'<tfoot><tr style="background:var(--darker)">'
+    +'<td colspan="2" style="padding:7px;font-weight:700;font-size:10px;color:var(--muted);border:1px solid var(--border)">COBERTURA</td>'
+    +cobRow
+    +'<td class="col-horas" style="border:1px solid var(--border)"></td>'
+    +'</tr></tfoot>'
+    +'</table></div>'
+    +'<hr class="divider">'
+    +'<div style="display:flex;gap:7px;flex-wrap:wrap">'+legendaHtml+'</div>'
+    +eventosHtml
+    +'<hr class="divider">'
+    +'<div class="footer-credits">Generado por <strong>RelojTurnos</strong> \u00b7 Grupo El Reloj \u00b7 '+new Date().toLocaleDateString('es-ES')+'<br>'
+    +'Desarrollado por <strong>Raul H.B.</strong> \u00b7 <a href="mailto:raul.gestionlocal@gmail.com">raul.gestionlocal@gmail.com</a> \u00b7 Todos los derechos reservados</div>'
+    +'</div>';
+
+  document.getElementById('cuadrante-output').innerHTML=html;
+  mostrarHoras=true;
+  var btn=document.getElementById('btn-toggle-horas');if(btn)btn.textContent='\ud83d\udc41 Ocultar horas';
+  goStep(6);
+}
+
+function guardarImagen(){
+  var el=document.getElementById('cuadrante-output');
+  var local=(getLocal()||'cuadrante').replace(/\s+/g,'_');
+  var semana=getSemanaLabel().replace(/\s/g,'').replace(/\u2013/g,'-');
+  var ventana=window.open('','_blank','width=1000,height=750');
+  if(!ventana){alert('Permite las ventanas emergentes para esta p\u00e1gina y vuelve a intentarlo.');return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1.0">'
+    +'<title>RelojTurnos_'+local+'_'+semana+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;background:#0f1923;color:#e8edf2;padding:14px}'
+    +'.card{background:#162030;border:1px solid #1e3048;border-radius:10px;padding:18px}'
+    +'.card-title{font-size:15px;font-weight:700;margin-bottom:3px}'
+    +'.card-sub{font-size:11px;color:#6b8299;margin-bottom:14px}'
+    +'.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}'
+    +'.stat-card{background:#080e14;border:1px solid #1e3048;border-radius:7px;padding:9px;text-align:center}'
+    +'.stat-val{font-size:20px;font-weight:700;color:#e8a020}'
+    +'.stat-label{font-size:9px;color:#6b8299;text-transform:uppercase;letter-spacing:1px;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;font-size:10px}'
+    +'th{background:#080e14;padding:7px 4px;text-align:center;font-size:8px;font-weight:700;color:#6b8299;text-transform:uppercase;letter-spacing:1px;border:1px solid #1e3048}'
+    +'th.emp-col{text-align:left}'
+    +'td{padding:5px 4px;border:1px solid #1e3048;text-align:center;vertical-align:middle}'
+    +'td.emp-name{text-align:left;font-weight:600;padding-left:7px}'
+    +'.turno-badge{display:inline-block;padding:2px 5px;border-radius:4px;font-size:8px;font-weight:700;line-height:1.4}'
+    +'.badge-fiesta{background:#3d1515;color:#ff6b6b}'
+    +'.badge-mediafiesta{background:#3d2d10;color:#ffaa40}'
+    +'.badge-manana{background:#152d15;color:#5ddb5d}'
+    +'.badge-noche{background:#15152d;color:#6b8fff}'
+    +'.badge-intermedio{background:#25152d;color:#c080ff}'
+    +'.badge-tarde{background:#2d2515;color:#ffa040}'
+    +'.cob-ok{color:#2ecc71;font-weight:700;font-size:12px}'
+    +'.cob-warn{color:#e67e22;font-weight:700;font-size:12px}'
+    +'.cob-low{color:#e74c3c;font-weight:700;font-size:12px}'
+    +'.col-horas{}'
+    +'.evento-item{display:flex;align-items:center;gap:7px;background:#1a1500;border:1px solid #3d3000;border-radius:6px;padding:7px 10px;margin-bottom:5px}'
+    +'.footer-credits{font-size:9px;color:#6b8299;text-align:center;line-height:2;margin-top:8px}'
+    +'.footer-credits strong,.footer-credits a{color:#e8a020;text-decoration:none}'
+    +'hr{border:none;border-top:1px solid #1e3048;margin:10px 0}'
+    +'.divider{border:none;border-top:1px solid #1e3048;margin:10px 0}'
+    +'.hint{background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px;margin-bottom:14px;font-size:11px;color:#8ddb8d;text-align:center}'
+    +'@media print{.hint{display:none}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+    +'</style></head><body>'
+    +'<div class="hint">&#128247; <strong>iOS Safari:</strong> Pulsa compartir &#10132; "A\u00f1adir a Fotos" o haz captura &nbsp;&nbsp; <strong>Android/PC:</strong> Men\u00fa &#10132; Guardar como PDF o captura</div>'
+    +el.innerHTML
+    +'</body></html>');
+  ventana.document.close();
+}
+
+function imprimirCuadrante(){
+  var original=document.getElementById('cuadrante-output');
+  var clon=original.cloneNode(true);
+  if(!mostrarHoras)clon.querySelectorAll('.col-horas').forEach(function(el){el.remove();});
+  var contenido=clon.innerHTML;
+  var ventana=window.open('','_blank','width=1200,height=800');
+  if(!ventana){alert('Permite las ventanas emergentes y vuelve a intentarlo.');return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>RelojTurnos \u2013 Cuadrante</title>'
+    +'<style>'
+    +'@page{size:A4 landscape;margin:8mm 10mm}'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;background:white;color:#111;font-size:10px}'
+    +'.card{border:1px solid #ccc;border-radius:5px;padding:10px}'
+    +'.card-title{font-size:14px;font-weight:700;margin-bottom:3px;color:#111}'
+    +'.card-sub{font-size:10px;color:#666;margin-bottom:10px}'
+    +'.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}'
+    +'.stat-card{background:#f5f5f5;border:1px solid #ddd;border-radius:5px;padding:7px;text-align:center}'
+    +'.stat-val{font-size:18px;font-weight:700;color:#c07010}'
+    +'.stat-label{font-size:8px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;font-size:9px}'
+    +'th{background:#eee;padding:5px 3px;text-align:center;font-size:8px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:1px;border:1px solid #ccc}'
+    +'th.emp-col{text-align:left}'
+    +'td{padding:4px 3px;border:1px solid #ddd;text-align:center;vertical-align:middle}'
+    +'td.emp-name{text-align:left;font-weight:600;padding-left:6px}'
+    +'.turno-badge{display:inline-block;padding:2px 4px;border-radius:3px;font-size:8px;font-weight:700;line-height:1.4}'
+    +'.badge-fiesta{background:#ffe0e0;color:#c00}'
+    +'.badge-mediafiesta{background:#fff0d0;color:#a06000}'
+    +'.badge-manana{background:#e0ffe0;color:#050}'
+    +'.badge-noche{background:#e0e8ff;color:#003}'
+    +'.badge-intermedio{background:#f0e0ff;color:#404}'
+    +'.badge-tarde{background:#fff0e0;color:#840}'
+    +'.cob-ok{color:#050;font-weight:700;font-size:11px}'
+    +'.cob-warn{color:#840;font-weight:700;font-size:11px}'
+    +'.cob-low{color:#c00;font-weight:700;font-size:11px}'
+    +'.evento-item{display:flex;align-items:center;gap:6px;background:#fffbe0;border:1px solid #ddc000;border-radius:4px;padding:5px 8px;margin-bottom:4px}'
+    +'.footer-credits{font-size:8px;color:#888;text-align:center;line-height:2;margin-top:7px}'
+    +'.footer-credits strong,.footer-credits a{color:#c07010;text-decoration:none}'
+    +'hr,.divider{border:none;border-top:1px solid #ddd;margin:8px 0}'
+    +'[style*="background:#1a1500"]{background:#fffbe0!important}'
+    +'[style*="color:#ffd040"]{color:#c07010!important}'
+    +'[style*="background:#3d2d00"]{background:#fff0d0!important}'
+    +'body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'</style></head><body>'+contenido
+    +'<script>window.onload=function(){setTimeout(function(){window.print();window.close();},350);};<\/script>'
+    +'</body></html>');
+  ventana.document.close();
+}
+
+// INIT - runs directly, works in all environments including local files
+buildFechas();
+horaOpts('hora-apertura','07:30');
+horaOpts('hora-cierre','03:00');
+</script>
+</body>
+</html>
