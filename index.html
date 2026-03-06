@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v1.9 – Grupo El Reloj</title>
+<title>RelojTurnos v2.0 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -323,6 +323,7 @@ select option{background:var(--dark)}
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()">&#128065; Ocultar horas</button>
         <button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()">&#128424; Imprimir</button>
+        <button class="btn btn-ghost btn-sm" id="btn-guardar-bd" onclick="guardarCuadranteEnBD()" style="border-color:var(--green);color:var(--green)">&#128190; Guardar en BD</button>
         <button class="btn btn-primary btn-sm" onclick="goStep(7)">&#128182; Ver costes</button>
         <button class="btn btn-ghost btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
       </div>
@@ -391,7 +392,7 @@ select option{background:var(--dark)}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v1.9 Beta</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v2.0</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#b8cad9cdd496dfddcbccd1d7d6d4d7dbd9d4f8dfd5d9d1d496dbd7d5" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="fd8f9c8891d39a988e8994929391929e9c91bd9a909c9491d39e9290">[email&#160;protected]</span></a>
 </div>
 
@@ -400,6 +401,153 @@ var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Do
 var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
 var COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800'];
 var ROLES=['Resp. Ma\u00f1ana','Resp. Noche','Cam. Ma\u00f1ana','Cam. Noche','Cam. Tarde','Cam. Intermedio','Cocinero','Ayud. Cocina','Encargado','Barman'];
+
+// ========== SUPABASE CONFIG ==========
+const SUPA_URL = 'https://ttewezdnroiqtetmgyrh.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0ZXdlemRucm9pcXRldG1neXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTExMDIsImV4cCI6MjA4ODM2NzEwMn0.mA5tWItknmHmBe7-8AZpN9579RRwEaM3ZybYpQBc2Pw';
+
+async function sbGet(table, filters){
+  var url = SUPA_URL+'/rest/v1/'+table+'?'+( filters||'order=id.asc');
+  var r = await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'}});
+  if(!r.ok) throw new Error('GET '+table+' error '+r.status);
+  return r.json();
+}
+
+async function sbPost(table, data){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table,{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(data)
+  });
+  if(!r.ok){var e=await r.text();throw new Error('POST '+table+' error '+r.status+': '+e);}
+  return r.json();
+}
+
+async function sbPatch(table, id, data){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table+'?id=eq.'+id,{
+    method:'PATCH',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(data)
+  });
+  if(!r.ok) throw new Error('PATCH '+table+' error '+r.status);
+  return r.json();
+}
+
+async function sbDelete(table, filters){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table+'?'+filters,{
+    method:'DELETE',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  if(!r.ok) throw new Error('DELETE '+table+' error '+r.status);
+}
+
+// Cache local→id de Supabase
+var localIdMap = {};   // {'La Cala': 1, "Roto's Burguer": 2}
+var empIdMap   = {};   // {empCounter_local_id: supabase_id}
+var currentCuadranteId = null;
+
+async function initSupabase(){
+  try{
+    var locs = await sbGet('locales');
+    locs.forEach(function(l){ localIdMap[l.nombre]=l.id; });
+    showToast('✓ Conectado a base de datos','green');
+  }catch(e){
+    showToast('⚠ Sin conexión BD — modo local','orange');
+  }
+}
+
+function showToast(msg, color){
+  var t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:12px;font-weight:700;z-index:9999;transition:opacity .5s';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.background=color==='green'?'#1a4a2a':color==='orange'?'#3d2a00':'#3d1a1a';
+  t.style.border='1px solid '+(color==='green'?'#2ecc71':color==='orange'?'var(--orange)':'var(--red)');
+  t.style.color=color==='green'?'#2ecc71':color==='orange'?'var(--orange)':'var(--red)';
+  t.style.opacity='1';
+  setTimeout(function(){t.style.opacity='0';},3000);
+}
+
+// ========== GUARDAR CUADRANTE EN BD ==========
+async function guardarCuadranteEnBD(){
+  var local = getLocal();
+  var localId = localIdMap[local];
+  if(!localId){ showToast('Local no encontrado en BD','red'); return; }
+
+  var semana = getSemanaLabel();
+  var btn = document.getElementById('btn-guardar-bd');
+  if(btn){ btn.textContent='⏳ Guardando...'; btn.disabled=true; }
+
+  try{
+    // 1. Crear cuadrante
+    var cArr = await sbPost('cuadrantes',{local_id:localId, semana_label:semana});
+    currentCuadranteId = cArr[0].id;
+
+    // 2. Guardar/actualizar empleados en BD
+    for(var i=0;i<empleados.length;i++){
+      var emp = empleados[i];
+      // Buscar si ya existe por nombre+local
+      var existing = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(emp.nombre));
+      var empBdId;
+      if(existing.length){
+        empBdId = existing[0].id;
+        await sbPatch('empleados', empBdId, {rol:emp.rol, turno_habitual:emp.turno});
+      } else {
+        var newEmp = await sbPost('empleados',{local_id:localId, nombre:emp.nombre, rol:emp.rol, turno_habitual:emp.turno});
+        empBdId = newEmp[0].id;
+      }
+      empIdMap[emp.id] = empBdId;
+
+      // 3. Turnos del cuadrante
+      for(var d=0;d<7;d++){
+        await sbPost('turnos_cuadrante',{
+          cuadrante_id:currentCuadranteId,
+          empleado_id:empBdId,
+          dia:d,
+          turno:emp.turnos[d]||'fiesta'
+        });
+      }
+
+      // 4. Salarios (upsert)
+      var sal = getSalario(emp.id);
+      if(sal.brutoMes!==''){
+        var salExist = await sbGet('salarios','empleado_id=eq.'+empBdId);
+        if(salExist.length){
+          await sbPatch('salarios', salExist[0].id, {bruto_mes:parseFloat(sal.brutoMes), horas_contrato:sal.hContrato});
+        } else {
+          await sbPost('salarios',{empleado_id:empBdId, bruto_mes:parseFloat(sal.brutoMes), horas_contrato:sal.hContrato});
+        }
+      }
+    }
+
+    // 5. Extras del día
+    for(var j=0;j<extrasDia.length;j++){
+      var ex = extrasDia[j];
+      var empBdIdEx = empIdMap[ex.empId];
+      if(empBdIdEx){
+        await sbPost('extras_dia',{
+          cuadrante_id:currentCuadranteId,
+          empleado_id:empBdIdEx,
+          dia:ex.dia,
+          horas:parseFloat(ex.horas)||0,
+          precio_hora:parseFloat(ex.precioHora)||0,
+          motivo:ex.motivo
+        });
+      }
+    }
+
+    if(btn){ btn.textContent='✓ Guardado'; btn.style.background='var(--green)'; btn.style.color='var(--darker)'; btn.disabled=false; }
+    showToast('✓ Cuadrante guardado en base de datos','green');
+  }catch(e){
+    console.error(e);
+    if(btn){ btn.textContent='💾 Guardar en BD'; btn.disabled=false; btn.style.background=''; btn.style.color='var(--green)'; }
+    showToast('Error al guardar: '+e.message,'red');
+  }
+}
 
 var empleados=[], eventos=[], empCounter=0, turnosConfig=[];
 var refuerzoPersonas=[], refuerzoCounter=0;
@@ -1209,7 +1357,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+totSem.toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v1.9 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v2.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -1264,10 +1412,11 @@ function calcEmp(emp){
           costeExtras:costeExtras, totalSem:totalSem};
 }
 
-// INIT - runs directly, works in all environments including local files
+// INIT
 buildFechas();
 horaOpts('hora-apertura','07:30');
 horaOpts('hora-cierre','03:00');
+initSupabase();
 </script>
 </body>
 </html>
