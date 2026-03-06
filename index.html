@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v2.1 – Grupo El Reloj</title>
+<title>RelojTurnos v2.3 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -117,7 +117,21 @@ select option{background:var(--dark)}
 .badge-extra-real{background:#3d2000;border:1px solid var(--orange);color:var(--orange);padding:3px 7px;border-radius:5px;font-size:10px;font-weight:700}
 .kpi-2{grid-template-columns:repeat(2,1fr)}
 .kpi-3{grid-template-columns:repeat(3,1fr)}
-@media(max-width:640px){.extra-dia-row{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){
+  .extra-dia-row{grid-template-columns:1fr 1fr}
+  /* Cuadrante móvil — cada empleado en tarjeta vertical */
+  .schedule-table{display:none}
+  .cuadrante-mobile{display:block}
+  .header-info{flex-direction:column;gap:6px}
+  .form-row{flex-direction:column}
+  .form-row.three{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .step-text{display:none}
+  header h1{font-size:14px}
+  .dias-grid-row,.dias-grid-header{grid-template-columns:80px repeat(7,1fr)}
+  .dia-select{font-size:9px;padding:2px}
+}
+@media(min-width:641px){.cuadrante-mobile{display:none}}
 </style>
 </head>
 <body>
@@ -163,18 +177,9 @@ select option{background:var(--dark)}
           <select id="fecha-inicio"></select>
         </div>
       </div>
-      <div class="form-row three">
+      <div class="form-row">
         <div class="form-group"><label>Hora apertura</label><select id="hora-apertura"></select></div>
         <div class="form-group"><label>Hora cierre</label><select id="hora-cierre"></select></div>
-        <div class="form-group">
-          <label>M&#237;nimo personas/d&#237;a</label>
-          <select id="min-personas">
-            <option value="1">1 persona</option>
-            <option value="2" selected>2 personas</option>
-            <option value="3">3 personas</option>
-            <option value="4">4 personas</option>
-          </select>
-        </div>
       </div>
       <div class="form-group">
         <label>D&#237;as de menor afluencia (fiesta sugerida)</label>
@@ -248,7 +253,15 @@ select option{background:var(--dark)}
   <div class="screen" id="screen4">
     <div class="card">
       <div class="card-title">Asigna los turnos de la semana</div>
-      <div class="card-sub">Turnos y fiestas sugeridos autom&#225;ticamente. Ajusta lo que necesites.</div>
+      <div class="card-sub">Fiestas asignadas automáticamente según días flojos y mínimos de personal. Ajusta lo que necesites.</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="sugerirYRenderizar()" style="border-color:var(--green);color:var(--green)">&#9889; Recalcular fiestas</button>
+        <button class="btn btn-ghost btn-sm" onclick="rotarFiestas()" style="border-color:var(--purple);color:var(--purple)">&#128256; Rotar días (+1)</button>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--darker);border-radius:6px;border:1px solid var(--border);line-height:1.8">
+        &#9889; <strong style="color:var(--green)">Recalcular</strong> — borra las fiestas actuales y las vuelve a asignar desde cero según días flojos y mínimos de personal.<br>
+        &#128256; <strong style="color:var(--purple)">Rotar días</strong> — desplaza los días de descanso de cada empleado +1 día, útil para que no descansen siempre el mismo día de la semana.
+      </div>
       <div class="turno-legend" id="turno-legend"></div>
       <div id="turnos-asignacion"></div>
       <div class="btn-row space">
@@ -352,13 +365,14 @@ select option{background:var(--dark)}
       <div class="tab-panel active" id="panel-planif">
         <div class="stats-grid" id="costes-kpis" style="margin-bottom:18px"></div>
         <div id="costes-cards" style="margin-bottom:14px"></div>
-        <!-- Totales -->
         <div id="costes-totales" style="margin-bottom:14px"></div>
+        <!-- Refuerzos evento -->
+        <div id="costes-refuerzos" style="margin-bottom:14px"></div>
         <div style="background:#1a1a2d;border:1px solid #2a2a5a;border-radius:7px;padding:10px 14px;font-size:10px;color:#8888cc;line-height:1.8;margin-bottom:14px">
           <strong style="color:#aaaaee">Cálculo:</strong>
-          &nbsp;Coste/sem = (Bruto × 1,33 SS) ÷ 4,33 &nbsp;·&nbsp;
+          &nbsp;Coste/sem = (Bruto × 1,39 SS) ÷ 4,33 &nbsp;·&nbsp;
           H.Pact. = días trabajados × jornada &nbsp;·&nbsp;
-          Total sem. = Coste/sem + extras reales anotadas
+          Total sem. = Coste fijo + extras diarias + refuerzos evento
         </div>
       </div>
 
@@ -392,7 +406,7 @@ select option{background:var(--dark)}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v2.1</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v2.3</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#b8cad9cdd496dfddcbccd1d7d6d4d7dbd9d4f8dfd5d9d1d496dbd7d5" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="fd8f9c8891d39a988e8994929391929e9c91bd9a909c9491d39e9290">[email&#160;protected]</span></a>
 </div>
 
@@ -626,7 +640,7 @@ function goStep(n){
 function nextStep(from){
   if(from===1){if(!getLocal()){alert('Selecciona un local');return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
   else if(from===2){goStep(3);cargarEmpleadosBD();}
-  else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});renderTurnosAsig();goStep(4);}
+  else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();sugerirYRenderizar();goStep(4);}
   else if(from===4){initPaso5();goStep(5);cargarCuadrantePrevio().then(function(id){if(id)showToast('✓ Cuadrante previo encontrado — se cargará al generar','green');});}
 }
 
@@ -655,7 +669,7 @@ async function cargarEmpleadosBD(){
         var sal = salMap[e.id]||null;
         empleados.push({
           id:empCounter,
-          bdId:e.id,  // ID real en Supabase
+          bdId:e.id,
           nombre:e.nombre,
           rol:e.rol||'Cam. Ma\u00f1ana',
           turno:e.turno_habitual||'manana',
@@ -780,6 +794,13 @@ function renderEmpleados(){
       +'<div class="form-row">'
       +'<div class="form-group"><label>Rol</label><select onchange="updEmp('+emp.id+',\'rol\',this.value)">'+rOpts+'</select></div>'
       +'<div class="form-group"><label>Turno habitual</label><select onchange="updEmp('+emp.id+',\'turno\',this.value)">'+tOpts+'</select></div>'
+      +'<div class="form-group"><label>D\u00edas fiesta / semana</label>'
+      +'<select class="inp-sm" onchange="updEmp('+emp.id+',\'diasFiesta\',this.value)">'
+      +'<option value="1"'+(emp.diasFiesta==1?' selected':'')+'>1 d\u00eda</option>'
+      +'<option value="1.5"'+(!emp.diasFiesta||emp.diasFiesta==1.5?' selected':'')+'>1,5 d\u00edas (recomendado)</option>'
+      +'<option value="2"'+(emp.diasFiesta==2?' selected':'')+'>2 d\u00edas</option>'
+      +'<option value="3"'+(emp.diasFiesta==3?' selected':'')+'>3 d\u00edas</option>'
+      +'</select></div>'
       +'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; Las horas semanales se calculan autom\u00e1ticamente seg\u00fan los turnos asignados</div>'
       +'</div>';
@@ -791,18 +812,226 @@ function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(
 
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
+// ========== LÓGICA FIESTAS v2.3 ==========
+var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
+var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
+var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
+
+function toMinTurno(str){
+  if(!str) return 0;
+  var p=str.split(':');
+  return parseInt(p[0])*60+(parseInt(p[1])||0);
+}
+
+function getTurnoFin(turnoId){
+  var t=turnosConfig.find(function(x){return x.id===turnoId;});
+  if(!t) return 0;
+  var fin=toMinTurno(t.fin);
+  var ini=toMinTurno(t.ini);
+  if(fin<ini) fin+=1440; // cruza medianoche
+  return fin;
+}
+
+function getTurnoIni(turnoId){
+  var t=turnosConfig.find(function(x){return x.id===turnoId;});
+  if(!t) return 0;
+  return toMinTurno(t.ini);
+}
+
+// Cuenta cuántos empleados del mismo turno trabajan ese día
+function contarTurnoEnDia(dia, turnoId, excluirEmpId){
+  return empleados.filter(function(e){
+    return e.id!==excluirEmpId && e.turno===turnoId && e.turnos && e.turnos[dia]!=='fiesta' && e.turnos[dia]!=='mediafiesta';
+  }).length;
+}
+
+// Verifica si se puede dar fiesta a emp en ese día sin romper mínimos
+function puedeTomarFiesta(emp, dia){
+  var turno = emp.turno;
+  var min = MINIMOS_TURNO[turno]||1;
+  var trabajando = contarTurnoEnDia(dia, turno, emp.id);
+  return trabajando >= min;
+}
+
+// Verifica descanso 12h entre fin del turno anterior y inicio del siguiente
+function respeta12h(emp, diaFiesta, tipoDiaFiesta){
+  // diaFiesta = índice 0-6
+  // tipoDiaFiesta = 'fiesta' o 'mediafiesta'
+  var turno = emp.turno;
+  var hJornada = +document.getElementById('horas-jornada').value||9;
+  var hMF = +document.getElementById('horas-media-fiesta').value||5;
+
+  // Día anterior: ¿a qué hora termina?
+  var diaAnterior = diaFiesta - 1;
+  var finAnterior = 0;
+  if(diaAnterior >= 0){
+    var tAnt = emp.turnos[diaAnterior];
+    if(tAnt === 'fiesta') finAnterior = 0;
+    else if(tAnt === 'mediafiesta'){
+      // media fiesta: trabaja las últimas hMF horas
+      finAnterior = getTurnoFin(turno);
+    } else {
+      finAnterior = getTurnoFin(turno);
+    }
+  }
+
+  // Día siguiente: ¿a qué hora empieza?
+  var diaSiguiente = diaFiesta + 1;
+  var iniSiguiente = 9999;
+  if(diaSiguiente <= 6){
+    var tSig = emp.turnos[diaSiguiente];
+    if(tSig === 'fiesta') iniSiguiente = 9999;
+    else if(tSig === 'mediafiesta'){
+      // media fiesta: trabaja las últimas hMF h → empieza al final del turno - hMF
+      var finTurno = getTurnoFin(turno);
+      iniSiguiente = finTurno - hMF*60 + 1440; // en minutos del día siguiente
+    } else {
+      iniSiguiente = getTurnoIni(turno) + 1440;
+    }
+  }
+
+  // Si es media fiesta el día de "fiesta", trabaja la primera parte del turno
+  // entonces finAnterior sería el fin del trabajo ese mismo día
+  if(tipoDiaFiesta === 'mediafiesta'){
+    finAnterior = getTurnoFin(turno) - hMF*60; // trabaja las hMF últimas → termina en finTurno
+  }
+
+  var descanso = iniSiguiente - finAnterior;
+  return descanso >= 12*60;
+}
+
 function sugerirTurnos(){
-  var df=getDiasFlojos();
-  var fiestaIdx=0;
+  if(!turnosConfig.length) buildTurnosConfig();
+  var df = getDiasFlojos();
+
+  // Inicializar todos con turno habitual
   empleados.forEach(function(emp){
-    emp.turnos=Array(7).fill(emp.turno);
-    var diasFiesta=Math.floor(7/empleados.length*1.5)||1;
-    for(var k=0;k<diasFiesta&&fiestaIdx<df.length;k++){emp.turnos[df[fiestaIdx%df.length]]='fiesta';fiestaIdx++;}
+    emp.turnos = Array(7).fill(emp.turno);
+    if(!emp.diasFiesta) emp.diasFiesta = 1.5;
+  });
+
+  // Ordenar días: primero los flojos, luego los demás evitando V/S/D al final
+  var diasOrdenados = [];
+  // 1. Días flojos que no son V/S/D
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  // 2. Días flojos que son V/S/D
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+  // 3. Resto de días no flojos, evitando V/S/D
+  [0,1,2,3,4,5,6].forEach(function(d){
+    if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d);
+  });
+  // 4. V/S/D no flojos (último recurso)
+  [0,1,2,3,4,5,6].forEach(function(d){
+    if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d);
+  });
+
+  // Asignar fiestas a cada empleado
+  empleados.forEach(function(emp, empIdx){
+    var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
+    var tieneMedia = (diasFiesta % 1) !== 0; // 1.5, 2.5 → tiene media fiesta
+    var diasEnteros = Math.floor(diasFiesta);
+
+    // Intentar encontrar un bloque de días consecutivos disponibles
+    // Rotar el punto de inicio para distribuir fiestas entre empleados
+    var offset = empIdx % diasOrdenados.length;
+    var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
+
+    var asignados = [];
+    var intentos = 0;
+
+    // Buscar día principal de fiesta
+    for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
+      var dia = diasCandidatos[i];
+      if(asignados.indexOf(dia)>=0) continue;
+      if(puedeTomarFiesta(emp, dia)){
+        asignados.push(dia);
+      }
+      intentos++;
+      if(intentos>14) break;
+    }
+
+    // Aplicar días enteros de fiesta
+    asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
+
+    // Aplicar media fiesta consecutiva al último día de fiesta
+    if(tieneMedia && asignados.length>0){
+      var diaFiesta = asignados[asignados.length-1];
+      // Intentar día anterior primero, luego día siguiente
+      var candidatoMedia = -1;
+
+      // Opción A: día anterior (fiesta ayer, media hoy)
+      var diaAntes = diaFiesta - 1;
+      if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)){
+        candidatoMedia = diaAntes;
+      }
+      // Opción B: día siguiente (media hoy, fiesta ayer)
+      if(candidatoMedia<0){
+        var diaDespues = diaFiesta + 1;
+        if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)){
+          candidatoMedia = diaDespues;
+        }
+      }
+      if(candidatoMedia>=0){
+        emp.turnos[candidatoMedia]='mediafiesta';
+      }
+    }
+  });
+}
+
+function sugerirYRenderizar(){
+  sugerirTurnos();
+  renderTurnosAsig();
+}
+
+function rotarFiestas(){
+  // Rotar el offset de cada empleado +1 para cambiar qué día descansa
+  empleados.forEach(function(emp, idx){
+    emp._rotOffset = ((emp._rotOffset||0) + 1);
+  });
+  sugerirTurnosConOffset();
+  renderTurnosAsig();
+  showToast('🔀 Fiestas rotadas — revisa el cuadrante','orange');
+}
+
+function sugerirTurnosConOffset(){
+  if(!turnosConfig.length) buildTurnosConfig();
+  var df = getDiasFlojos();
+  var diasOrdenados = [];
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+  [0,1,2,3,4,5,6].forEach(function(d){ if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  [0,1,2,3,4,5,6].forEach(function(d){ if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+
+  empleados.forEach(function(emp, empIdx){
+    emp.turnos = Array(7).fill(emp.turno);
+    if(!emp.diasFiesta) emp.diasFiesta = 1.5;
+    var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
+    var tieneMedia = (diasFiesta % 1) !== 0;
+    var diasEnteros = Math.floor(diasFiesta);
+    var offset = (empIdx + (emp._rotOffset||0)) % Math.max(diasOrdenados.length,1);
+    var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
+    var asignados = [];
+    for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
+      var dia = diasCandidatos[i];
+      if(asignados.indexOf(dia)>=0) continue;
+      if(puedeTomarFiesta(emp, dia)) asignados.push(dia);
+    }
+    asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
+    if(tieneMedia && asignados.length>0){
+      var diaFiesta = asignados[asignados.length-1];
+      var candidatoMedia = -1;
+      var diaAntes = diaFiesta - 1;
+      if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)) candidatoMedia = diaAntes;
+      if(candidatoMedia<0){
+        var diaDespues = diaFiesta + 1;
+        if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)) candidatoMedia = diaDespues;
+      }
+      if(candidatoMedia>=0) emp.turnos[candidatoMedia]='mediafiesta';
+    }
   });
 }
 
 function renderTurnosAsig(){
-  sugerirTurnos();
   var df=getDiasFlojos();
   var activeTurnos=turnosConfig.filter(function(t){return t.active;});
   var leg=document.getElementById('turno-legend');
@@ -830,11 +1059,30 @@ function renderTurnosAsig(){
 
 function updTurno(empId,di,v,el){var e=empleados.find(function(x){return x.id===empId;});if(e){if(!e.turnos)e.turnos=Array(7).fill(e.turno);e.turnos[di]=v;}el.className='dia-select '+v;}
 
+function calcHorasRefuerzo(p){
+  if(!p.desde||!p.hasta) return 0;
+  var ini=toMinTurno(p.desde), fin=toMinTurno(p.hasta);
+  if(fin<=ini) fin+=1440;
+  return (fin-ini)/60;
+}
+
+function getCosteRefuerzos(){
+  // Suma coste de todos los refuerzos de todos los eventos
+  var total=0;
+  eventos.forEach(function(ev){
+    (ev.personas||[]).forEach(function(p){
+      var h=calcHorasRefuerzo(p);
+      total+=h*(parseFloat(p.precioHora)||10);
+    });
+  });
+  return total;
+}
+
 function initPaso5(){refuerzoPersonas=[];refuerzoCounter=0;renderRefuerzoPersonas();}
 
 function addRefuerzoPersona(){
   refuerzoCounter++;
-  refuerzoPersonas.push({id:refuerzoCounter,nombre:'',desde:'18:00',hasta:'23:00'});
+  refuerzoPersonas.push({id:refuerzoCounter,nombre:'',desde:'18:00',hasta:'23:00',precioHora:10});
   renderRefuerzoPersonas();
 }
 
@@ -848,17 +1096,21 @@ function updRefuerzoPersona(id,field,val){var p=refuerzoPersonas.find(function(x
 function renderRefuerzoPersonas(){
   var cont=document.getElementById('refuerzo-personas-list');if(!cont)return;
   if(refuerzoPersonas.length===0){
-    cont.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:7px;background:var(--darker);border-radius:5px;border:1px dashed var(--border)">\u00c1\u00f1ade al menos una persona de refuerzo para este evento</div>';
+    cont.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:7px;background:var(--darker);border-radius:5px;border:1px dashed var(--border)">Añade al menos una persona de refuerzo para este evento</div>';
     return;
   }
   var allOpts=function(def){return Array.from({length:48},function(_,i){var h=Math.floor(i/2),m=i%2===0?'00':'30';var str=String(h).padStart(2,'0')+':'+m;return'<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';}).join('');};
   cont.innerHTML=refuerzoPersonas.map(function(p){
-    return'<div style="display:grid;grid-template-columns:1fr 90px 90px 30px;gap:7px;align-items:end;margin-bottom:7px;background:var(--darker);padding:9px;border-radius:7px;border:1px solid #3d3000">'
+    var horas=calcHorasRefuerzo(p);
+    var coste=horas*(parseFloat(p.precioHora)||10);
+    return'<div style="display:grid;grid-template-columns:1fr 80px 80px 70px 30px;gap:7px;align-items:end;margin-bottom:7px;background:var(--darker);padding:9px;border-radius:7px;border:1px solid #3d3000">'
       +'<div><label>Nombre</label><input type="text" placeholder="Ej: JUAN" value="'+p.nombre+'" oninput="updRefuerzoPersona('+p.id+',\'nombre\',this.value)" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;font-weight:600;outline:none"></div>'
       +'<div><label>Desde</label><select onchange="updRefuerzoPersona('+p.id+',\'desde\',this.value)">'+allOpts(p.desde)+'</select></div>'
       +'<div><label>Hasta</label><select onchange="updRefuerzoPersona('+p.id+',\'hasta\',this.value)">'+allOpts(p.hasta)+'</select></div>'
+      +'<div><label>€/hora</label><input type="number" min="0" step="0.5" value="'+(p.precioHora||10)+'" oninput="updRefuerzoPersona('+p.id+',\'precioHora\',this.value)" class="inp-sm" style="padding:8px 6px"></div>'
       +'<div><button class="remove-btn" onclick="removeRefuerzoPersona('+p.id+')" style="margin-top:17px">&#10005;</button></div>'
-      +'</div>';
+      +'</div>'
+      +(horas>0?'<div style="font-size:10px;color:var(--orange);margin:-4px 0 6px 0;padding:4px 9px;background:#2d1a00;border-radius:5px">'+p.nombre+': '+horas.toFixed(1)+'h × '+(p.precioHora||10)+'€ = <strong>'+coste.toFixed(2)+'€</strong></div>':'');
   }).join('');
 }
 
@@ -951,7 +1203,7 @@ function generarCuadrante(){
   var local=getLocal(),semana=getSemanaLabel();
   var ap=document.getElementById('hora-apertura').value;
   var ci=document.getElementById('hora-cierre').value;
-  var minP=+document.getElementById('min-personas').value;
+  var minP = 2; // Mínimo por turno — gestionado por MINIMOS_TURNO en lógica fiestas
   var activeTurnos=turnosConfig.filter(function(t){return t.active;});
   var epd=Array(7).fill(null).map(function(_,i){return eventos.filter(function(ev){return ev.dia===i;});});
   var horasE=empleados.map(function(emp){return(emp.turnos||[]).reduce(function(s,t){return s+getTInfo(t).horas;},0);});
@@ -1039,7 +1291,33 @@ function generarCuadrante(){
     +'Desarrollado por <strong>Raul H.B.</strong> \u00b7 <a href="mailto:raul.gestionlocal@gmail.com">raul.gestionlocal@gmail.com</a> \u00b7 Todos los derechos reservados</div>'
     +'</div>';
 
-  document.getElementById('cuadrante-output').innerHTML=html;
+  // Vista móvil — tarjetas por empleado
+  var mobileHtml='<div class="cuadrante-mobile">';
+  mobileHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:8px;background:var(--darker);border-radius:7px;text-align:center">'+semana+'</div>';
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+    mobileHtml+='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">';
+    mobileHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    mobileHtml+='<div style="width:32px;height:32px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">'+init+'</div>';
+    mobileHtml+='<div><div style="font-weight:700;font-size:13px;color:'+color+'">'+( emp.nombre||'Emp '+emp.id)+'</div><div style="font-size:10px;color:var(--muted)">'+emp.rol+'</div></div>';
+    mobileHtml+='</div>';
+    mobileHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+    DIAS_SHORT.forEach(function(dLabel,di){
+      var t=emp.turnos?emp.turnos[di]:emp.turno;
+      var info=getTInfo(t);
+      var bg=t==='fiesta'?'#2d1515':t==='mediafiesta'?'#2d2015':'#0f2030';
+      var col=t==='fiesta'?'#ff6b6b':t==='mediafiesta'?'#ffaa40':color;
+      mobileHtml+='<div style="text-align:center;padding:5px 2px;border-radius:5px;background:'+bg+';border:1px solid '+col+'30">';
+      mobileHtml+='<div style="font-size:8px;color:var(--muted);margin-bottom:2px">'+dLabel+'</div>';
+      mobileHtml+='<div style="font-size:9px;font-weight:700;color:'+col+'">'+info.label.replace('🌅','M').replace('🌃','N').replace('🌆','T').replace('🔄','I').replace('🏖️ FIESTA','FES').replace('½ Media fiesta','½')+'</div>';
+      mobileHtml+='</div>';
+    });
+    mobileHtml+='</div></div>';
+  });
+  mobileHtml+='</div>';
+
+  document.getElementById('cuadrante-output').innerHTML=html+mobileHtml;
   mostrarHoras=true;
   var btn=document.getElementById('btn-toggle-horas');if(btn)btn.textContent='\ud83d\udc41 Ocultar horas';
   goStep(6);
@@ -1147,7 +1425,10 @@ function imprimirCuadrante(){
 var salariosBrutos = {};
 var extrasDia = [];
 var extraCounter = 0;
-var SS_EMPRESA = 0.33;
+var SS_EMPRESA = 0.39; // Hostelería: contingencias comunes 23.6% + desempleo 5.5% + FOGASA 0.2% + formación 0.6% + AT/EP ~9% ≈ 39%
+var BRUTO_DEFAULT = 1800;      // Camarero/cocinero por defecto
+var BRUTO_RESP = 1950;         // Responsable/encargado por defecto
+var ROLES_RESP = ['Resp. Mañana','Resp. Noche','Encargado']; // roles que cobran más
 
 var MOTIVOS_EXTRA = [
   '⚡ Evento especial',
@@ -1163,7 +1444,11 @@ var MOTIVOS_EXTRA = [
 ];
 
 function getSalario(empId){
-  return salariosBrutos[empId]||{brutoMes:'',hContrato:40};
+  if(salariosBrutos[empId]) return salariosBrutos[empId];
+  // Precargar según rol del empleado
+  var emp=empleados.find(function(e){return e.id===empId;});
+  var esResp=emp&&ROLES_RESP.indexOf(emp.rol)>=0;
+  return {brutoMes: esResp?BRUTO_RESP:BRUTO_DEFAULT, hContrato:40};
 }
 
 function updSalario(empId,campo,valor){
@@ -1358,13 +1643,47 @@ function renderCostes(){
     }).join('');
   }
 
+  // Refuerzos de evento
+  var totRefuerzos = getCosteRefuerzos();
+  var totSemConRef = totSem!==null ? totSem+totRefuerzos : totRefuerzos>0?totRefuerzos:null;
+  var refCont = document.getElementById('costes-refuerzos');
+  if(refCont){
+    var refPersonas=[];
+    eventos.forEach(function(ev){
+      (ev.personas||[]).forEach(function(p){
+        var h=calcHorasRefuerzo(p);
+        var coste=h*(parseFloat(p.precioHora)||10);
+        if(h>0) refPersonas.push({nombre:p.nombre,dia:DIAS[ev.dia]||'',horas:h,precioHora:p.precioHora||10,coste:coste,evento:ev.desc});
+      });
+    });
+    if(refPersonas.length){
+      refCont.innerHTML='<div style="background:var(--darker);border:1px solid #4a1a6a;border-radius:10px;padding:14px">'
+        +'<div style="font-size:11px;font-weight:700;color:#c060ff;margin-bottom:10px">🎪 PERSONAL EXTERNO / REFUERZOS EVENTO</div>'
+        +refPersonas.map(function(p){
+          return'<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#1a0a2a;border-radius:6px;margin-bottom:5px;font-size:12px">'
+            +'<div><span style="font-weight:700;color:#c060ff">'+p.nombre+'</span>'
+            +' <span style="color:var(--muted);font-size:10px">'+p.dia+' · '+p.evento+'</span></div>'
+            +'<div style="color:var(--muted);font-size:11px">'+p.horas.toFixed(1)+'h × '+p.precioHora+'€/h</div>'
+            +'<div style="font-weight:700;color:#c060ff">'+p.coste.toFixed(2)+' €</div>'
+            +'</div>';
+        }).join('')
+        +'<div style="margin-top:8px;padding:8px 10px;background:#2a0a3a;border-radius:6px;display:flex;justify-content:space-between">'
+        +'<span style="font-size:11px;font-weight:700;color:#c060ff">TOTAL REFUERZOS</span>'
+        +'<span style="font-size:16px;font-weight:700;color:#c060ff">'+totRefuerzos.toFixed(2)+' €</span>'
+        +'</div></div>';
+    } else {
+      refCont.innerHTML='';
+    }
+  }
+
   // Totales
   var tot=document.getElementById('costes-totales');
   if(tot && tieneDatos){
-    tot.innerHTML='<div style="background:var(--card);border:1px solid var(--accent);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">'
-      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">COSTE FIJO SEMANA</div><div style="font-size:22px;font-weight:700;color:var(--green)">'+(totFijoSem!==null?totFijoSem.toFixed(2)+' €':'—')+'</div></div>'
-      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">EXTRAS SEMANA</div><div style="font-size:22px;font-weight:700;color:var(--orange)">'+(totExtras>0?'+'+totExtras.toFixed(2)+' €':'0 €')+'</div></div>'
-      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">TOTAL REAL SEMANA</div><div style="font-size:26px;font-weight:700;color:var(--accent2)">'+(totSem!==null?totSem.toFixed(2)+' €':'—')+'</div></div>'
+    tot.innerHTML='<div style="background:var(--card);border:1px solid var(--accent);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">COSTE FIJO SEM.</div><div style="font-size:20px;font-weight:700;color:var(--green)">'+(totFijoSem!==null?totFijoSem.toFixed(2)+' €':'—')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">EXTRAS DIARIAS</div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+(totExtras>0?'+'+totExtras.toFixed(2)+' €':'0 €')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">REFUERZOS</div><div style="font-size:20px;font-weight:700;color:#c060ff">'+(totRefuerzos>0?'+'+totRefuerzos.toFixed(2)+' €':'0 €')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">TOTAL REAL SEM.</div><div style="font-size:24px;font-weight:700;color:var(--accent2)">'+(totSemConRef!==null?totSemConRef.toFixed(2)+' €':'—')+'</div></div>'
       +'</div>';
   }
 
@@ -1376,7 +1695,7 @@ function renderCostes(){
       +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+emp.rol+'</span></div>'
       +'<div class="form-row three">'
       +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
-      +'<input type="number" min="0" step="50" placeholder="ej: 1500" value="'+(s.brutoMes!==''?s.brutoMes:'')+'" oninput="updSalario('+emp.id+',\'brutoMes\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<input type="number" min="0" step="50" placeholder="ej: 1800" value="'+(s.brutoMes||'')+'" oninput="updSalario('+emp.id+',\'brutoMes\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
       +'<div class="form-group"><label>Horas contrato / semana</label>'
       +'<input type="number" min="1" max="48" step="1" value="'+s.hContrato+'" oninput="updSalario('+emp.id+',\'hContrato\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
       +'<div class="form-group"><label>Resultado calculado</label>'
@@ -1453,25 +1772,13 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+totSem.toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v2.1 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v2.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
 }
 
 // INIT - runs directly, works in all environments including local files
-
-function getSalario(empId){
-  return salariosBrutos[empId] || {brutoMes:'', hContrato:40};
-}
-
-function updSalario(empId, campo, valor){
-  if(!salariosBrutos[empId]) salariosBrutos[empId]={brutoMes:'',hContrato:40};
-  if(campo==='hContrato') salariosBrutos[empId][campo]=parseInt(valor)||40;
-  else salariosBrutos[empId][campo]=valor===''?'':parseFloat(valor);
-  renderCostes();
-}
-
 function getHorasPactadas(emp){
   // Horas pactadas = calculadas automáticamente desde cuadrante y config
   // días trabajados × jornada completa + medias fiestas × horas media fiesta
