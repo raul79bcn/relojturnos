@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v3.7 – Grupo El Reloj</title>
+<title>RelojTurnos v3.8 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -19,9 +19,9 @@ header{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24
 .logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
 .header-info{font-size:12px;color:var(--muted)}
 .header-info span{color:var(--accent);font-weight:600}
-.container{max-width:980px;margin:0 auto;padding:24px 16px}
+.container{max-width:100%;margin:0;padding:24px 40px}
 .steps{display:flex;margin-bottom:28px;background:var(--dark);border-radius:12px;padding:5px;border:1px solid var(--border)}
-.step{flex:1;padding:9px 4px;border-radius:8px;text-align:center;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
+.step{flex:1;padding:9px 4px;border-radius:8px;text-align:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
 .step.active{background:var(--accent);color:var(--darker);font-weight:700}
 .step.done{color:var(--accent)}
 .step-num{display:inline-flex;width:18px;height:18px;background:var(--border);border-radius:50%;align-items:center;justify-content:center;font-size:10px;margin-right:3px}
@@ -29,8 +29,8 @@ header{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24
 .step.done .step-num{background:var(--accent);color:var(--darker)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px}
 .card-title{font-size:17px;font-weight:700;margin-bottom:5px}
-.card-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
-label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+.card-sub{font-size:14px;color:var(--muted);margin-bottom:20px}
+label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
 select,input[type=text]{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;outline:none;transition:border-color .2s;cursor:pointer}
 select:focus,input[type=text]:focus{border-color:var(--accent)}
 select option{background:var(--dark)}
@@ -39,7 +39,7 @@ select option{background:var(--dark)}
 .form-group{margin-bottom:0}
 .empleado-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
 .empleado-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.emp-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.emp-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
 .emp-name-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-family:Arial,sans-serif;font-size:14px;font-weight:600}
 .emp-name-input:focus{outline:none;border-color:var(--accent)}
 .remove-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px;padding:3px;transition:color .2s}
@@ -47,7 +47,7 @@ select option{background:var(--dark)}
 .dias-grid-header{display:grid;grid-template-columns:140px repeat(7,1fr);gap:5px;margin-bottom:5px}
 .dias-grid-row{display:grid;grid-template-columns:140px repeat(7,1fr);gap:5px;margin-bottom:7px;align-items:center}
 .dia-label-top{text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-.dia-select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:5px 2px;color:var(--text);font-size:10px;font-family:Arial,sans-serif;text-align:center;cursor:pointer}
+.dia-select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:6px 4px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;text-align:center;cursor:pointer}
 .dia-select:focus{outline:none;border-color:var(--accent)}
 .dia-select.fiesta{background:#2d1515;border-color:#5a2020;color:var(--red)}
 .dia-select.mediafiesta{background:#2d2015;border-color:#5a4020;color:var(--orange)}
@@ -68,11 +68,11 @@ select option{background:var(--dark)}
 .turno-config-item{background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:12px}
 .turno-config-label{font-size:12px;font-weight:700;margin-bottom:8px}
 .turno-config-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.schedule-table{width:100%;border-collapse:collapse;font-size:11px}
+.schedule-table{width:100%;border-collapse:collapse;font-size:14px}
 .schedule-table th{background:var(--darker);padding:9px 5px;text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border)}
 .schedule-table th.emp-col{text-align:left;min-width:100px}
 .schedule-table td{padding:7px 5px;border:1px solid var(--border);text-align:center;vertical-align:middle}
-.schedule-table td.emp-name{text-align:left;font-weight:600;font-size:11px;padding-left:8px}
+.schedule-table td.emp-name{text-align:left;font-weight:600;font-size:14px;padding-left:8px}
 .turno-badge{display:inline-block;padding:2px 5px;border-radius:4px;font-size:9px;font-weight:700;line-height:1.5;text-align:center}
 .badge-fiesta{background:#3d1515;color:#ff6b6b}
 .badge-mediafiesta{background:#3d2d10;color:#ffaa40}
@@ -83,13 +83,13 @@ select option{background:var(--dark)}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
 .stat-card{background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:12px;text-align:center}
 .stat-val{font-size:22px;font-weight:700;color:var(--accent)}
-.stat-label{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:1px}
+.stat-label{font-size:12px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:1px}
 .cob-ok{color:var(--green);font-weight:700;font-size:13px}
 .cob-warn{color:var(--orange);font-weight:700;font-size:13px}
 .cob-low{color:var(--red);font-weight:700;font-size:13px}
 .evento-item{display:flex;align-items:center;gap:9px;background:var(--darker);border:1px solid #3d3000;border-radius:7px;padding:9px 12px;margin-bottom:7px}
 .turno-legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;padding:10px;background:var(--darker);border-radius:7px;border:1px solid var(--border)}
-.info-box{background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#8ddb8d}
+.info-box{background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#8ddb8d}
 .screen{display:none}
 .screen.active{display:block}
 .divider{border:none;border-top:1px solid var(--border);margin:16px 0}
@@ -104,9 +104,9 @@ select option{background:var(--dark)}
 .toggle-btn.on .tog-dot::after{left:17px}
 .otro-input{width:100%;background:var(--darker);border:1px solid var(--accent);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;outline:none;margin-top:7px}
 .otro-input::placeholder{color:var(--muted)}
-.schedule-table th,.schedule-table td{font-size:10px}
+.schedule-table th,.schedule-table td{font-size:13px}
 .tab-bar{display:flex;gap:6px;margin-bottom:18px;background:var(--darker);border-radius:10px;padding:4px;border:1px solid var(--border)}
-.tab-btn{flex:1;padding:8px 10px;border-radius:7px;border:none;background:none;color:var(--muted);font-family:Arial,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+.tab-btn{flex:1;padding:8px 10px;border-radius:7px;border:none;background:none;color:var(--muted);font-family:Arial,sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
 .tab-btn.active{background:var(--accent);color:var(--darker)}
 .tab-btn:not(.active):hover{color:var(--text)}
 .tab-panel{display:none}.tab-panel.active{display:block}
@@ -186,7 +186,7 @@ select option{background:var(--dark)}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.7</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.8</span></div>
   </div>
 </div>
 
@@ -605,7 +605,7 @@ select option{background:var(--dark)}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.7</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.8</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="mailto:raul.gestionlocal@gmail.com" style="color:var(--accent);text-decoration:none">raul.gestionlocal@gmail.com</a>
 </div>
 
@@ -1371,7 +1371,7 @@ function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(
 
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v3.7 ==========
+// ========== LÓGICA FIESTAS v3.8 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2674,7 +2674,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v3.7 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v3.8 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
