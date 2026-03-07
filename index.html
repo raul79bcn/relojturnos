@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v2.3 – Grupo El Reloj</title>
+<title>RelojTurnos v2.4 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -119,9 +119,12 @@ select option{background:var(--dark)}
 .kpi-3{grid-template-columns:repeat(3,1fr)}
 @media(max-width:640px){
   .extra-dia-row{grid-template-columns:1fr 1fr}
-  /* Cuadrante móvil — cada empleado en tarjeta vertical */
-  .schedule-table{display:none}
-  .cuadrante-mobile{display:block}
+  /* Cuadrante en móvil: tabla con scroll horizontal, igual que escritorio */
+  .cuadrante-mobile{display:none}
+  .schedule-table{display:table}
+  .cuadrante-scroll-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
+  .schedule-table th,.schedule-table td{font-size:7.5px;padding:3px 2px;white-space:nowrap}
+  .schedule-table .turno-badge{font-size:7px;padding:2px 3px}
   .header-info{flex-direction:column;gap:6px}
   .form-row{flex-direction:column}
   .form-row.three{grid-template-columns:1fr}
@@ -130,12 +133,94 @@ select option{background:var(--dark)}
   header h1{font-size:14px}
   .dias-grid-row,.dias-grid-header{grid-template-columns:80px repeat(7,1fr)}
   .dia-select{font-size:9px;padding:2px}
+  .stats-grid.kpi-4{grid-template-columns:1fr 1fr}
+  .mobile-scroll-hint{display:block !important}
 }
 @media(min-width:641px){.cuadrante-mobile{display:none}}
+
+/* ===== LOGIN ===== */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--darker);position:fixed;top:0;left:0;width:100%;z-index:9999}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:360px;margin:20px}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .logo-icon{font-size:48px;margin-bottom:8px}
+.login-logo .logo-text{font-size:22px;font-weight:700;color:var(--accent)}
+.login-logo .logo-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.login-field{margin-bottom:14px}
+.login-field label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px}
+.login-field input{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-size:14px;outline:none;box-sizing:border-box;transition:border-color 0.2s}
+.login-field input:focus{border-color:var(--accent)}
+.login-error{background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:10px 14px;font-size:12px;color:#ff8080;margin-bottom:14px;display:none}
+.login-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px}
+.login-btn:active{opacity:0.85}
+.login-footer{text-align:center;font-size:10px;color:var(--muted);margin-top:20px}
+/* Portal empleado */
+#portal-empleado{display:none;min-height:100vh}
+.portal-header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.portal-nav{display:flex;gap:8px;padding:12px 16px;background:var(--darker);border-bottom:1px solid var(--border)}
+.portal-tab{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer}
+.portal-tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.portal-content{padding:16px}
+.cambio-pass-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px}
 </style>
 </head>
 <body>
-<header>
+<!-- PANTALLA LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">&#9201;</div>
+      <div class="logo-text">RelojTurnos</div>
+      <div class="logo-sub">Grupo El Reloj</div>
+    </div>
+    <div class="login-field">
+      <label>DNI / NIE</label>
+      <input type="text" id="login-dni" placeholder="12345678A" autocomplete="username" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+    <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj</div>
+  </div>
+</div>
+
+<!-- PORTAL EMPLEADO -->
+<div id="portal-empleado">
+  <div class="portal-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--accent)20;color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px" id="portal-avatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--text)" id="portal-nombre">Empleado</div>
+        <div style="font-size:10px;color:var(--muted)" id="portal-local">—</div>
+      </div>
+    </div>
+    <button onclick="doLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-size:11px;cursor:pointer">Salir</button>
+  </div>
+  <div class="portal-nav">
+    <button class="portal-tab active" onclick="portalTab('cuadrante')">&#128197; Cuadrante</button>
+    <button class="portal-tab" onclick="portalTab('contrato')">&#128196; Mi contrato</button>
+    <button class="portal-tab" onclick="portalTab('password')">&#128274; Contraseña</button>
+  </div>
+  <div class="portal-content">
+    <div id="portal-cuadrante"></div>
+    <div id="portal-contrato" style="display:none"></div>
+    <div id="portal-password" style="display:none">
+      <div class="cambio-pass-form">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">&#128274; Cambiar contraseña</div>
+        <div class="login-field"><label>Contraseña actual</label><input type="password" id="pass-actual" placeholder="••••"></div>
+        <div class="login-field"><label>Nueva contraseña</label><input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres"></div>
+        <div class="login-field"><label>Repetir nueva contraseña</label><input type="password" id="pass-repite" placeholder="Igual que la anterior"></div>
+        <div class="login-error" id="pass-error" style="display:none"></div>
+        <div id="pass-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:8px;padding:10px;font-size:12px;color:#5ddb5d;margin-bottom:10px">✓ Contraseña cambiada correctamente</div>
+        <button class="login-btn" onclick="cambiarPassword()">Guardar nueva contraseña</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header style="display:none">
   <div class="logo">
     <div class="logo-icon">&#9201;</div>
     <div><div class="logo-text">RelojTurnos</div><div class="logo-sub">Grupo El Reloj</div></div>
@@ -143,7 +228,7 @@ select option{background:var(--dark)}
   <div class="header-info">Local: <span id="header-local">&#8212;</span> &nbsp;&middot;&nbsp; Semana: <span id="header-semana">&#8212;</span></div>
 </header>
 
-<div class="container">
+<div class="container" style="display:none">
   <div class="steps">
     <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text">Local</span></div>
     <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text">Turnos</span></div>
@@ -152,6 +237,7 @@ select option{background:var(--dark)}
     <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text">Eventos</span></div>
     <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text">Cuadrante</span></div>
     <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text">Costes</span></div>
+    <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text">Director</span></div>
   </div>
 
   <!-- PASO 1 -->
@@ -242,6 +328,19 @@ select option{background:var(--dark)}
       <div class="card-sub">Empleados y su turno habitual. Las horas se calculan solas seg&#250;n los turnos asignados.</div>
       <div id="empleados-list"></div>
       <button class="btn btn-ghost btn-sm" onclick="addEmpleado()" style="margin-top:4px">&#65291; A&#241;adir empleado</button>
+
+      <!-- Sección Lorena Directora -->
+      <div style="margin-top:16px;background:#0f1a0f;border:1px solid #c0a02040;border-radius:10px;padding:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;color:#c0a020">LORENA <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:2px 7px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>
+            <div style="font-size:10px;color:var(--muted)">Horario orientativo · No computa en cobertura ni costes</div>
+          </div>
+        </div>
+        <div id="lorena-horario-list"></div>
+      </div>
+
       <div class="btn-row space">
         <button class="btn btn-secondary" onclick="goStep(2)">&#8592; Atr&#225;s</button>
         <button class="btn btn-primary" onclick="nextStep(3)">Siguiente &#8594; Asignar turnos</button>
@@ -399,14 +498,48 @@ select option{background:var(--dark)}
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="imprimirCostes()">&#128424; Imprimir informe</button>
           <button class="btn btn-primary btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirVistaDirector()" style="border-color:#c0a020;color:#c0a020">&#128196; Vista Director</button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+  <!-- PASO 8: VISTA DIRECTOR GENERAL -->
+  <div class="screen" id="screen8">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="card-title" style="margin:0">&#128196; Vista Director General</div>
+        <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:3px 9px;border-radius:12px;font-weight:700">GRUPO EL RELOJ</span>
+      </div>
+      <div class="card-sub" id="director-subtitulo">Resumen semanal de todos los locales</div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="cargarVistaDirector()" style="border-color:var(--green);color:var(--green)">&#128257; Actualizar</button>
+        <select id="director-semana-sel" onchange="cargarVistaDirector()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:11px">
+          <option value="">Semana actual</option>
+        </select>
+      </div>
+
+      <!-- KPIs globales -->
+      <div id="director-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px"></div>
+
+      <!-- Cards por local -->
+      <div id="director-locales" style="margin-bottom:14px"></div>
+
+      <!-- Comparativa -->
+      <div id="director-comparativa" style="margin-bottom:14px"></div>
+
+      <div class="btn-row space" style="margin-top:18px">
+        <button class="btn btn-secondary" onclick="goStep(7)">&#8592; Costes</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirDirector()">&#128424; Imprimir resumen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v2.3</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v2.4</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#b8cad9cdd496dfddcbccd1d7d6d4d7dbd9d4f8dfd5d9d1d496dbd7d5" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="fd8f9c8891d39a988e8994929391929e9c91bd9a909c9491d39e9290">[email&#160;protected]</span></a>
 </div>
 
@@ -459,6 +592,206 @@ async function sbDelete(table, filters){
 var localIdMap = {};   // {'La Cala': 1, "Roto's Burguer": 2}
 var empIdMap   = {};   // {empCounter_local_id: supabase_id}
 var currentCuadranteId = null;
+
+// ===================== AUTH / LOGIN =====================
+var currentUser = null; // {id, dni, nombre, rol, local_id, empleado_id}
+
+// Hash simple SHA-256 para contraseñas
+async function hashPass(str){
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+
+async function doLogin(){
+  var dni = (document.getElementById('login-dni').value||'').trim().toUpperCase();
+  var pass = (document.getElementById('login-pass').value||'').trim();
+  var errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if(!dni || !pass){
+    errEl.textContent = 'Introduce tu DNI/NIE y contraseña';
+    errEl.style.display = 'block'; return;
+  }
+
+  try{
+    var passHash = await hashPass(pass);
+    var rows = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni)+'&activo=eq.true');
+    if(!rows.length){ errEl.textContent='Usuario no encontrado'; errEl.style.display='block'; return; }
+    var user = rows[0];
+    if(user.password_hash !== passHash){
+      errEl.textContent='Contraseña incorrecta'; errEl.style.display='block'; return;
+    }
+    currentUser = user;
+    document.getElementById('login-screen').style.display = 'none';
+    if(user.rol === 'empleado'){
+      abrirPortalEmpleado(user);
+    } else if(user.rol === 'directora_general'){
+      document.getElementById('portal-empleado').style.display = 'none';
+      document.querySelector('header').style.display = '';
+      document.querySelector('.container').style.display = '';
+      abrirVistaDirector();
+    } else {
+      // directora / admin — acceso completo
+      document.querySelector('header').style.display = '';
+      document.querySelector('.container').style.display = '';
+    }
+  }catch(e){
+    // Sin BD — modo demo con usuarios hardcodeados
+    var DEMO_USERS = [
+      {dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA', local_id:1},
+      {dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM', local_id:null},
+    ];
+    var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
+    if(demoUser && pass==='1234'){
+      currentUser = demoUser;
+      document.getElementById('login-screen').style.display='none';
+      document.querySelector('header').style.display='';
+      document.querySelector('.container').style.display='';
+      showToast('⚠️ Modo demo — BD no disponible','orange');
+    } else {
+      errEl.textContent='Error de conexión. Usa credenciales demo: DEMO0001 / 1234';
+      errEl.style.display='block';
+    }
+  }
+}
+
+function doLogout(){
+  currentUser = null;
+  document.getElementById('portal-empleado').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-dni').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-error').style.display='none';
+}
+
+async function abrirPortalEmpleado(user){
+  var portal = document.getElementById('portal-empleado');
+  portal.style.display = 'block';
+  document.querySelector('header').style.display = 'none';
+  document.querySelector('.container').style.display = 'none';
+
+  // Cabecera
+  var nombre = user.nombre || user.dni;
+  document.getElementById('portal-avatar').textContent = nombre.substring(0,2).toUpperCase();
+  document.getElementById('portal-nombre').textContent = nombre;
+
+  // Cargar local
+  try{
+    var locs = await sbGet('locales','id=eq.'+user.local_id);
+    document.getElementById('portal-local').textContent = locs.length ? locs[0].nombre : '—';
+  }catch(e){ document.getElementById('portal-local').textContent = '—'; }
+
+  portalTab('cuadrante');
+  await cargarPortalCuadrante(user);
+  await cargarPortalContrato(user);
+}
+
+function portalTab(tab){
+  ['cuadrante','contrato','password'].forEach(function(t){
+    document.getElementById('portal-'+t).style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('.portal-tab').forEach(function(btn, i){
+    btn.classList.toggle('active', ['cuadrante','contrato','password'][i]===tab);
+  });
+}
+
+async function cargarPortalCuadrante(user){
+  var el = document.getElementById('portal-cuadrante');
+  el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">⏳ Cargando cuadrante...</div>';
+  try{
+    // Cargar cuadrante más reciente del local
+    var cuads = await sbGet('cuadrantes','local_id=eq.'+user.local_id+'&order=id.desc&limit=1');
+    if(!cuads.length){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay cuadrante disponible esta semana</div>'; return; }
+    var cuad = cuads[0];
+    var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id);
+    var emps = await sbGet('empleados','local_id=eq.'+user.local_id+'&activo=eq.true');
+    renderPortalCuadrante(el, cuad, emps, turnos, user.empleado_id);
+  }catch(e){
+    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">No se pudo cargar el cuadrante</div>';
+  }
+}
+
+function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
+  var DIAS_S = ['L','M','X','J','V','S','D'];
+  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',intermedio:'I',fiesta:'🏖',mediafiesta:'½'};
+  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',intermedio:'#c080ff',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
+
+  var html = '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-align:center">'+cuad.semana_label+'</div>';
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">';
+  html += '<thead><tr><th style="padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);color:var(--muted)">EMPLEADO</th>';
+  DIAS_S.forEach(function(d){ html += '<th style="padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);color:var(--muted)">'+d+'</th>'; });
+  html += '</tr></thead><tbody>';
+
+  emps.forEach(function(emp){
+    var esMio = emp.id === miEmpId;
+    var bg = esMio ? 'background:var(--accent)15;' : '';
+    var nameCol = esMio ? 'color:var(--accent);font-weight:700' : 'color:var(--text)';
+    html += '<tr style="'+bg+'">';
+    html += '<td style="padding:6px 4px;border-bottom:1px solid var(--border)20;'+nameCol+'">'+(esMio?'👤 ':'')+emp.nombre+'</td>';
+    for(var d=0; d<7; d++){
+      var t = (turnos.find(function(x){ return x.empleado_id===emp.id && x.dia===d; })||{}).turno || emp.turno_habitual || '—';
+      var col = TURNO_COLOR[t] || 'var(--muted)';
+      var lbl = TURNO_LABEL[t] || t.substring(0,1).toUpperCase();
+      html += '<td style="padding:5px 2px;text-align:center;border-bottom:1px solid var(--border)20"><span style="font-weight:700;color:'+col+'">'+lbl+'</span></td>';
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">';
+  [{l:'M',c:'var(--green)',t:'Mañana'},{l:'N',c:'#6b8fff',t:'Noche'},{l:'T',c:'#ffa040',t:'Tarde'},{l:'I',c:'#c080ff',t:'Intermedio'},{l:'🏖',c:'#ff6b6b',t:'Fiesta'},{l:'½',c:'#ffaa40',t:'Media fiesta'}]
+    .forEach(function(x){ html += '<span><strong style="color:'+x.c+'">'+x.l+'</strong> '+x.t+'</span>'; });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function cargarPortalContrato(user){
+  var el = document.getElementById('portal-contrato');
+  try{
+    var sals = await sbGet('salarios','empleado_id=eq.'+user.empleado_id);
+    var sal = sals.length ? sals[0] : null;
+    var emps = await sbGet('empleados','id=eq.'+user.empleado_id);
+    var emp = emps.length ? emps[0] : null;
+    if(!sal && !emp){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay datos de contrato disponibles</div>'; return; }
+    el.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">📄 Mis datos de contrato</div>'
+      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Nombre:</span> <strong>'+emp.nombre+'</strong></div>':'')
+      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Rol:</span> <strong>'+emp.rol+'</strong></div>':'')
+      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Salario bruto/mes:</span> <strong style="color:var(--green)">'+sal.bruto_mes+' €</strong></div>':'')
+      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Horas contrato/semana:</span> <strong>'+sal.horas_contrato+'h</strong></div>':'')
+      +'<div style="margin-top:14px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px">Las nóminas digitales estarán disponibles próximamente</div>'
+      +'</div>';
+  }catch(e){
+    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">No se pudieron cargar los datos</div>';
+  }
+}
+
+async function cambiarPassword(){
+  var actual = document.getElementById('pass-actual').value;
+  var nueva = document.getElementById('pass-nueva').value;
+  var repite = document.getElementById('pass-repite').value;
+  var errEl = document.getElementById('pass-error');
+  var okEl = document.getElementById('pass-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  if(!actual||!nueva||!repite){ errEl.textContent='Rellena todos los campos'; errEl.style.display='block'; return; }
+  if(nueva.length<4){ errEl.textContent='La contraseña debe tener al menos 4 caracteres'; errEl.style.display='block'; return; }
+  if(nueva!==repite){ errEl.textContent='Las contraseñas no coinciden'; errEl.style.display='block'; return; }
+
+  try{
+    var actualHash = await hashPass(actual);
+    var rows = await sbGet('usuarios','id=eq.'+currentUser.id);
+    if(!rows.length||rows[0].password_hash!==actualHash){ errEl.textContent='La contraseña actual es incorrecta'; errEl.style.display='block'; return; }
+    var nuevaHash = await hashPass(nueva);
+    await sbPatch('usuarios', currentUser.id, {password_hash: nuevaHash});
+    okEl.style.display='block';
+    document.getElementById('pass-actual').value='';
+    document.getElementById('pass-nueva').value='';
+    document.getElementById('pass-repite').value='';
+  }catch(e){
+    errEl.textContent='Error al cambiar la contraseña. Inténtalo de nuevo.';
+    errEl.style.display='block';
+  }
+}
 
 async function initSupabase(){
   try{
@@ -628,7 +961,7 @@ function onLocalChange(){
 }
 
 function goStep(n){
-  for(var i=1;i<=7;i++){
+  for(var i=1;i<=8;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
@@ -639,7 +972,7 @@ function goStep(n){
 
 function nextStep(from){
   if(from===1){if(!getLocal()){alert('Selecciona un local');return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
-  else if(from===2){goStep(3);cargarEmpleadosBD();}
+  else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
   else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();sugerirYRenderizar();goStep(4);}
   else if(from===4){initPaso5();goStep(5);cargarCuadrantePrevio().then(function(id){if(id)showToast('✓ Cuadrante previo encontrado — se cargará al generar','green');});}
 }
@@ -778,7 +1111,78 @@ function initDef(local){
 function addEmpleado(){empCounter++;empleados.push({id:empCounter,nombre:'',rol:'Cam. Ma\u00f1ana',turno:'manana',turnos:Array(7).fill('manana')});renderEmpleados();}
 function removeEmpleado(id){empleados=empleados.filter(function(e){return e.id!==id;});renderEmpleados();}
 
+function renderLorenaHorario(){
+  var cont = document.getElementById('lorena-horario-list');
+  if(!cont) return;
+  var DIAS_L = ['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
+  var TIPOS = [
+    {v:'fiesta',  label:'\ud83c\udfd6 Fiesta'},
+    {v:'seguido', label:'\u23f0 Seguido'},
+    {v:'partido', label:'\u2702\ufe0f Partido'},
+    {v:'apoyo',   label:'\ud83e\udd1d Apoyo'},
+  ];
+  var allOpts = function(def){
+    return Array.from({length:48}, function(_,i){
+      var h=Math.floor(i/2), m=i%2===0?'00':'30';
+      var str=String(h).padStart(2,'0')+':'+m;
+      return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
+    }).join('');
+  };
+  var rows = lorenaHorario.map(function(d, idx){
+    var esFiesta = d.tipo==='fiesta';
+    var esPartido = d.tipo==='partido';
+    var bg = esFiesta ? '#2d1515' : '#0a1a0a';
+    var bloqueado = (idx===0 || idx===6);
+    var tipoOpts = TIPOS.map(function(t){
+      return '<option value="'+t.v+'"'+(d.tipo===t.v?' selected':'')+'>'+t.label+'</option>';
+    }).join('');
+
+    var row = '<div style="margin-bottom:8px;padding:8px;background:'+bg+';border-radius:7px;border:1px solid #c0a02025">';
+    // Fila 1: día + tipo + resumen
+    row += '<div style="display:grid;grid-template-columns:80px 100px 1fr;gap:6px;align-items:end;margin-bottom:'+(esFiesta||(!esPartido&&!esFiesta)?'0':'6px')+'">';
+    row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">'+DIAS_L[idx]+(bloqueado?' \ud83d\udd12':'')+'</div>';
+    row += '<select id="ltipo'+idx+'" onchange="updLorena('+idx+')" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-size:11px">'+tipoOpts+'</select></div>';
+    row += '<div style="font-size:10px;color:#c0a020;padding:6px 4px;align-self:center">'+getLorenaLabel(d)+'</div>';
+    row += '<div></div></div>';
+
+    if(!esFiesta){
+      // Fila 2: horas — siempre en grid de 2 columnas para que quepan en móvil
+      row += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">';
+      row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">Entrada'+(esPartido?' 1':'')+'</div><select id="lini'+idx+'" onchange="updLorena('+idx+')">'+allOpts(d.ini||'08:00')+'</select></div>';
+      row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">Salida'+(esPartido?' 1':'')+'</div><select id="lfin'+idx+'" onchange="updLorena('+idx+')">'+allOpts(d.fin||'17:00')+'</select></div>';
+      if(esPartido){
+        row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">Entrada 2</div><select id="lini2'+idx+'" onchange="updLorena('+idx+')">'+allOpts(d.ini2||'20:00')+'</select></div>';
+        row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">Salida 2</div><select id="lfin2'+idx+'" onchange="updLorena('+idx+')">'+allOpts(d.fin2||'23:00')+'</select></div>';
+      }
+      row += '</div>';
+    }
+    row += '</div>';
+    return row;
+  });
+  cont.innerHTML = rows.join('');
+}
+function getLorenaLabel(d){
+  if(d.tipo==='fiesta') return '🏖️ FIESTA';
+  if(d.tipo==='partido') return (d.ini||'')+'–'+(d.fin||'')+' / '+(d.ini2||'')+'–'+(d.fin2||'');
+  return (d.ini||'')+'–'+(d.fin||'');
+}
+
+function updLorena(idx){
+  var tipoEl = document.getElementById('ltipo'+idx);
+  var iniEl  = document.getElementById('lini'+idx);
+  var finEl  = document.getElementById('lfin'+idx);
+  var ini2El = document.getElementById('lini2'+idx);
+  var fin2El = document.getElementById('lfin2'+idx);
+  if(tipoEl) lorenaHorario[idx].tipo = tipoEl.value;
+  if(iniEl)  lorenaHorario[idx].ini  = iniEl.value;
+  if(finEl)  lorenaHorario[idx].fin  = finEl.value;
+  if(ini2El) lorenaHorario[idx].ini2 = ini2El.value;
+  if(fin2El) lorenaHorario[idx].fin2 = fin2El.value;
+  renderLorenaHorario();
+}
+
 function renderEmpleados(){
+  renderLorenaHorario();
   var cont=document.getElementById('empleados-list');cont.innerHTML='';
   empleados.forEach(function(emp,idx){
     var color=COLORS[idx%COLORS.length];
@@ -812,7 +1216,7 @@ function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(
 
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v2.3 ==========
+// ========== LÓGICA FIESTAS v2.4 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -849,6 +1253,10 @@ function contarTurnoEnDia(dia, turnoId, excluirEmpId){
 function puedeTomarFiesta(emp, dia){
   var turno = emp.turno;
   var min = MINIMOS_TURNO[turno]||1;
+  // Contar cuántos del mismo turno hay en total (incluyendo al propio empleado)
+  var totalMismoTurno = empleados.filter(function(e){ return e.turno===turno; }).length;
+  // Si es el único de su turno, el mínimo no aplica — siempre puede tomar fiesta
+  if(totalMismoTurno <= 1) return true;
   var trabajando = contarTurnoEnDia(dia, turno, emp.id);
   return trabajando >= min;
 }
@@ -900,6 +1308,38 @@ function respeta12h(emp, diaFiesta, tipoDiaFiesta){
   return descanso >= 12*60;
 }
 
+// Fiestas fijas inamovibles por empleado
+// formato: {nombre: [[dia, tipo, horaIni, horaFin], ...]}
+// tipo: 'fiesta' = día completo, 'mediafiesta' = media jornada con horario especial
+// Horario semanal de Lorena (directora) — editable desde paso 3
+var lorenaHorario = [
+  {dia:0, tipo:'fiesta',   ini:'',      fin:'',      label:'FIESTA'},       // Lunes - fijo
+  {dia:1, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Martes
+  {dia:2, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Miércoles
+  {dia:3, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Jueves
+  {dia:4, tipo:'partido',  ini:'11:00', fin:'17:00', ini2:'20:00', fin2:'23:00', label:'11:00–17:00 / 20:00–23:00'}, // Viernes
+  {dia:5, tipo:'partido',  ini:'11:00', fin:'17:00', ini2:'20:00', fin2:'23:00', label:'11:00–17:00 / 20:00–23:00'}, // Sábado
+  {dia:6, tipo:'apoyo',    ini:'12:00', fin:'17:00', label:'12:00–17:00'},  // Domingo
+];
+
+var lorenaSalario = {brutoMes: 2300, hContrato: 40}; // Salario Lorena directora
+
+var FIESTAS_FIJAS = {
+  'MARILYN': [
+    [3, 'fiesta', null, null],           // Jueves - fiesta completa
+    [4, 'mediafiesta', '07:30', '12:30'] // Viernes - solo mañana hasta 12:30
+  ]
+};
+
+function getFiestasFijas(emp){
+  // Busca por nombre (case insensitive)
+  var nombre = (emp.nombre||'').toUpperCase().trim();
+  for(var key in FIESTAS_FIJAS){
+    if(key.toUpperCase() === nombre) return FIESTAS_FIJAS[key];
+  }
+  return null;
+}
+
 function sugerirTurnos(){
   if(!turnosConfig.length) buildTurnosConfig();
   var df = getDiasFlojos();
@@ -910,36 +1350,47 @@ function sugerirTurnos(){
     if(!emp.diasFiesta) emp.diasFiesta = 1.5;
   });
 
+  // Aplicar primero las fiestas fijas inamovibles
+  empleados.forEach(function(emp){
+    var fijas = getFiestasFijas(emp);
+    if(!fijas) return;
+    fijas.forEach(function(f){
+      var dia=f[0], tipo=f[1], ini=f[2], fin=f[3];
+      emp.turnos[dia] = tipo;
+      // Si tiene horario especial en media fiesta, guardarlo
+      if(tipo==='mediafiesta' && ini && fin){
+        if(!emp.horarioEspecial) emp.horarioEspecial = {};
+        emp.horarioEspecial[dia] = {ini:ini, fin:fin};
+      }
+    });
+  });
+
   // Ordenar días: primero los flojos, luego los demás evitando V/S/D al final
   var diasOrdenados = [];
-  // 1. Días flojos que no son V/S/D
   df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
-  // 2. Días flojos que son V/S/D
   df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
-  // 3. Resto de días no flojos, evitando V/S/D
   [0,1,2,3,4,5,6].forEach(function(d){
     if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d);
   });
-  // 4. V/S/D no flojos (último recurso)
   [0,1,2,3,4,5,6].forEach(function(d){
     if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d);
   });
 
-  // Asignar fiestas a cada empleado
+  // Asignar fiestas automáticas al resto (saltando empleados con fiestas fijas)
   empleados.forEach(function(emp, empIdx){
+    // Si tiene fiestas fijas, no tocar — ya están asignadas
+    if(getFiestasFijas(emp)) return;
+
     var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
-    var tieneMedia = (diasFiesta % 1) !== 0; // 1.5, 2.5 → tiene media fiesta
+    var tieneMedia = (diasFiesta % 1) !== 0;
     var diasEnteros = Math.floor(diasFiesta);
 
-    // Intentar encontrar un bloque de días consecutivos disponibles
-    // Rotar el punto de inicio para distribuir fiestas entre empleados
-    var offset = empIdx % diasOrdenados.length;
+    var offset = (empIdx + (emp._rotOffset||0)) % diasOrdenados.length;
     var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
 
     var asignados = [];
     var intentos = 0;
 
-    // Buscar día principal de fiesta
     for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
       var dia = diasCandidatos[i];
       if(asignados.indexOf(dia)>=0) continue;
@@ -950,30 +1401,22 @@ function sugerirTurnos(){
       if(intentos>14) break;
     }
 
-    // Aplicar días enteros de fiesta
     asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
 
-    // Aplicar media fiesta consecutiva al último día de fiesta
     if(tieneMedia && asignados.length>0){
       var diaFiesta = asignados[asignados.length-1];
-      // Intentar día anterior primero, luego día siguiente
       var candidatoMedia = -1;
-
-      // Opción A: día anterior (fiesta ayer, media hoy)
       var diaAntes = diaFiesta - 1;
       if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)){
         candidatoMedia = diaAntes;
       }
-      // Opción B: día siguiente (media hoy, fiesta ayer)
       if(candidatoMedia<0){
         var diaDespues = diaFiesta + 1;
         if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)){
           candidatoMedia = diaDespues;
         }
       }
-      if(candidatoMedia>=0){
-        emp.turnos[candidatoMedia]='mediafiesta';
-      }
+      if(candidatoMedia>=0) emp.turnos[candidatoMedia]='mediafiesta';
     }
   });
 }
@@ -1272,7 +1715,8 @@ function generarCuadrante(){
     +'<div class="stat-card"><div class="stat-val">'+Math.min.apply(null,cob)+'\u2013'+Math.max.apply(null,cob)+'</div><div class="stat-label">Cobertura/d\u00eda</div></div>'
     +'<div class="stat-card"><div class="stat-val">'+numEventos+'</div><div class="stat-label">Eventos</div></div>'
     +'</div>'
-    +'<div style="overflow-x:auto"><table class="schedule-table">'
+    +'<div style="font-size:10px;color:var(--muted);margin-bottom:6px;display:none" class="mobile-scroll-hint">← Desliza para ver toda la tabla →</div>'
+    +'<div class="cuadrante-scroll-wrap" style="overflow-x:auto"><table class="schedule-table">'
     +'<thead><tr><th class="emp-col">EMPLEADO</th><th>ROL</th>'
     +DIAS_SHORT.map(function(d,i){return'<th>'+d+(epd[i].length?' '+epd[i].map(function(e){return e.tipo;}).join(''):'')+'</th>';}).join('')
     +'<th class="col-horas">HORAS</th></tr></thead>'
@@ -1283,6 +1727,30 @@ function generarCuadrante(){
     +'<td class="col-horas" style="border:1px solid var(--border)"></td>'
     +'</tr></tfoot>'
     +'</table></div>'
+    // Sección Lorena - Directora (fuera del cuadrante, apoyo operativo)
+    +(function(){
+      var lorenaHtml='';
+      var LORENA_SEMANA = lorenaHorario;
+      lorenaHtml+='<div style="margin:10px 0;background:#0f1f2f;border:1px solid #1e4060;border-radius:10px;padding:12px">';
+      lorenaHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+      lorenaHtml+='<div style="width:28px;height:28px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">LO</div>';
+      lorenaHtml+='<div>';
+      lorenaHtml+='<div style="font-weight:700;font-size:12px;color:#c0a020">LORENA <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:2px 6px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>';
+      lorenaHtml+='<div style="font-size:9px;color:var(--muted)">Apoyo operativo · No computa en cobertura</div>';
+      lorenaHtml+='</div></div>';
+      lorenaHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+      LORENA_SEMANA.forEach(function(d){
+        var bg = d.tipo==='fiesta'?'#2d1515': d.tipo==='apoyo'?'#1a2a1a':'#0f1f2f';
+        var col = d.tipo==='fiesta'?'#ff6b6b': d.tipo==='apoyo'?'#5ddb5d':'#c0a020';
+        var lbl = getLorenaLabel(d);
+        lorenaHtml+='<div style="text-align:center;padding:4px 2px;border-radius:5px;background:'+bg+';border:1px solid '+col+'40">';
+        lorenaHtml+='<div style="font-size:8px;color:var(--muted);margin-bottom:2px">'+DIAS_SHORT[d.dia]+'</div>';
+        lorenaHtml+='<div style="font-size:7.5px;font-weight:700;color:'+col+'">'+lbl+'</div>';
+        lorenaHtml+='</div>';
+      });
+      lorenaHtml+='</div></div>';
+      return lorenaHtml;
+    })()
     +'<hr class="divider">'
     +'<div style="display:flex;gap:7px;flex-wrap:wrap">'+legendaHtml+'</div>'
     +eventosHtml
@@ -1645,7 +2113,8 @@ function renderCostes(){
 
   // Refuerzos de evento
   var totRefuerzos = getCosteRefuerzos();
-  var totSemConRef = totSem!==null ? totSem+totRefuerzos : totRefuerzos>0?totRefuerzos:null;
+  var costeLorena = (lorenaSalario.brutoMes * (1+SS_EMPRESA)) / 4.33;
+  var totSemConRef = totSem!==null ? totSem+totRefuerzos+costeLorena : totRefuerzos>0?totRefuerzos+costeLorena:costeLorena;
   var refCont = document.getElementById('costes-refuerzos');
   if(refCont){
     var refPersonas=[];
@@ -1677,6 +2146,32 @@ function renderCostes(){
   }
 
   // Totales
+  // Añadir Lorena a costes-cards (planificación)
+  var costeLorenaCard = (function(){
+    var costeSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
+    var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+    return '<div class="costes-emp-card" style="border-color:#c0a02040;margin-bottom:8px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      +'<div style="font-size:13px;font-weight:700;color:#c0a020">LORENA'
+      +' <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:1px 6px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>'
+      +'<div style="text-align:right">'
+      +'<div style="font-size:18px;font-weight:700;color:#c0a020">'+costeSem.toFixed(2)+' €<span style="font-size:10px;color:var(--muted)"> / sem</span></div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+costeMes.toFixed(0)+' € / mes · '+lorenaSalario.hContrato+'h contrato</div>'
+      +'</div></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:9px;color:var(--muted)">BRUTO MES</div>'
+      +'<div style="font-size:14px;font-weight:700;color:#c0a020">'+lorenaSalario.brutoMes+' €</div></div>'
+      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:9px;color:var(--muted)">SS EMPRESA (39%)</div>'
+      +'<div style="font-size:14px;font-weight:700;color:var(--orange)">'+(lorenaSalario.brutoMes*SS_EMPRESA).toFixed(0)+' €</div></div>'
+      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:9px;color:var(--muted)">COSTE TOTAL MES</div>'
+      +'<div style="font-size:14px;font-weight:700;color:var(--accent2)">'+costeMes.toFixed(0)+' €</div></div>'
+      +'</div></div>';
+  })();
+  if(cards) cards.innerHTML = costeLorenaCard + cards.innerHTML;
+
   var tot=document.getElementById('costes-totales');
   if(tot && tieneDatos){
     tot.innerHTML='<div style="background:var(--card);border:1px solid var(--accent);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">'
@@ -1688,7 +2183,28 @@ function renderCostes(){
   }
 
   // Editor salarios — solo bruto/mes y horas contrato, sin más
-  document.getElementById('costes-editor').innerHTML=empleados.map(function(emp,idx){
+  // Tarjeta Lorena directora en editor salarios
+  var lorenaCard = (function(){
+    var costeSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
+    var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+    return '<div class="costes-emp-card" style="border-color:#c0a02040">'
+      +'<div style="font-size:13px;font-weight:700;color:#c0a020;margin-bottom:12px">LORENA'
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Directora</span>'
+      +' <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:1px 6px;border-radius:4px;margin-left:4px">No en cuadrante</span></div>'
+      +'<div class="form-row three">'
+      +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
+      +'<input type="number" min="0" step="50" value="'+lorenaSalario.brutoMes+'" oninput="lorenaSalario.brutoMes=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Horas contrato / semana</label>'
+      +'<input type="number" min="1" max="48" step="1" value="'+lorenaSalario.hContrato+'" oninput="lorenaSalario.hContrato=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Resultado calculado</label>'
+      +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+      +'<span style="color:#c0a020;font-weight:700">'+costeSem.toFixed(2)+' € / sem</span><br>'
+      +'<span style="color:var(--muted);font-size:11px">'+costeMes.toFixed(0)+' € / mes (con SS)</span>'
+      +'</div></div>'
+      +'</div></div>';
+  })();
+
+  document.getElementById('costes-editor').innerHTML=lorenaCard+empleados.map(function(emp,idx){
     var color=COLORS[idx%COLORS.length], s=getSalario(emp.id), c=calcs[idx];
     return'<div class="costes-emp-card">'
       +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||'Empleado '+emp.id)
@@ -1708,6 +2224,223 @@ function renderCostes(){
       +'</div>'
       +'</div>';
   }).join('');
+}
+
+// ===================== VISTA DIRECTOR GENERAL =====================
+
+async function abrirVistaDirector(){
+  // Navegar al paso 8 solo si no estamos ya en él
+  var sc8 = document.getElementById('screen8');
+  if(!sc8 || !sc8.classList.contains('active')) goStep(8);
+  await poblarSelectorSemanas();
+  await cargarVistaDirector();
+}
+
+async function poblarSelectorSemanas(){
+  var sel = document.getElementById('director-semana-sel');
+  if(!sel) return;
+  try{
+    var cuads = await sbGet('cuadrantes','order=id.desc&limit=20');
+    // Semanas únicas
+    var vistas = {}, opts = '<option value="">Semana actual</option>';
+    cuads.forEach(function(c){
+      if(!vistas[c.semana_label]){
+        vistas[c.semana_label] = true;
+        opts += '<option value="'+c.semana_label+'">'+c.semana_label+'</option>';
+      }
+    });
+    sel.innerHTML = opts;
+  }catch(e){ console.log('Error semanas:', e); }
+}
+
+async function cargarVistaDirector(){
+  var sel = document.getElementById('director-semana-sel');
+  var semanaFiltro = sel ? sel.value : '';
+  var kpisEl = document.getElementById('director-kpis');
+  var localesEl = document.getElementById('director-locales');
+  var compEl = document.getElementById('director-comparativa');
+  var subtEl = document.getElementById('director-subtitulo');
+
+  if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">⏳ Cargando datos...</div>';
+
+  try{
+    // Cargar todos los locales
+    var locales = await sbGet('locales','order=id.asc');
+    // Cargar cuadrantes (filtrado por semana si se seleccionó)
+    var filtro = semanaFiltro ? 'semana_label=eq.'+encodeURIComponent(semanaFiltro)+'&order=id.desc' : 'order=id.desc&limit=10';
+    var cuads = await sbGet('cuadrantes', filtro+'&order=id.desc');
+
+    // Para cada local coger el cuadrante más reciente
+    var datosLocales = [];
+    for(var i=0; i<locales.length; i++){
+      var loc = locales[i];
+      var cuad = cuads.find(function(c){ return c.local_id === loc.id; });
+      if(!cuad){ datosLocales.push({local:loc, cuad:null, empleados:[], turnos:[], salarios:[]}); continue; }
+
+      // Cargar empleados del local
+      var emps = await sbGet('empleados','local_id=eq.'+loc.id+'&activo=eq.true');
+      // Cargar turnos del cuadrante
+      var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id);
+      // Cargar salarios
+      var sals = await sbGet('salarios','order=id.asc');
+
+      datosLocales.push({local:loc, cuad:cuad, empleados:emps, turnos:turnos, salarios:sals});
+    }
+
+    renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl);
+
+  }catch(e){
+    if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:14px;color:#ff8080;font-size:12px">⚠️ No se pudieron cargar los datos. Verifica la conexión con Supabase.</div>';
+    console.error('Error vista director:', e);
+  }
+}
+
+function calcResumenLocal(datos){
+  var emps = datos.empleados || [];
+  var turnos = datos.turnos || [];
+  var sals = datos.salarios || [];
+  var totalHoras = 0, totalCoste = 0, coberturaMin = 99, coberturaMax = 0;
+  var fiestas = 0;
+
+  // Calcular horas y cobertura por día
+  for(var d=0; d<7; d++){
+    var trabajando = turnos.filter(function(t){ return t.dia===d && t.turno!=='fiesta' && t.turno!=='mediafiesta'; }).length;
+    var mediaF = turnos.filter(function(t){ return t.dia===d && t.turno==='mediafiesta'; }).length;
+    trabajando += mediaF * 0.5;
+    if(trabajando < coberturaMin) coberturaMin = trabajando;
+    if(trabajando > coberturaMax) coberturaMax = trabajando;
+    fiestas += turnos.filter(function(t){ return t.dia===d && (t.turno==='fiesta'||t.turno==='mediafiesta'); }).length;
+  }
+
+  // Coste total
+  emps.forEach(function(emp){
+    var sal = sals.find(function(s){ return s.empleado_id===emp.id; });
+    var bruto = sal ? sal.bruto_mes : 1800;
+    totalCoste += (bruto * (1+SS_EMPRESA)) / 4.33;
+  });
+  // Añadir Lorena si es La Cala
+  if(datos.local.nombre === 'La Cala'){
+    totalCoste += (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
+  }
+
+  return {
+    numEmpleados: emps.length,
+    cobMin: coberturaMin===99?0:coberturaMin,
+    cobMax: coberturaMax,
+    coste: totalCoste,
+    fiestas: fiestas,
+    semana: datos.cuad ? datos.cuad.semana_label : 'Sin datos'
+  };
+}
+
+function renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl){
+  var semLabel = semanaFiltro || (datosLocales[0]&&datosLocales[0].cuad ? datosLocales[0].cuad.semana_label : 'Sin datos');
+  if(subtEl) subtEl.textContent = 'Semana: '+semLabel+' · '+datosLocales.length+' locales';
+
+  var resúmenes = datosLocales.map(calcResumenLocal);
+  var totEmps = resúmenes.reduce(function(s,r){ return s+r.numEmpleados; },0);
+  var totCoste = resúmenes.reduce(function(s,r){ return s+r.coste; },0);
+  var cobGlobal = resúmenes.reduce(function(s,r){ return s+r.cobMin; },0);
+
+  // KPIs globales
+  if(kpisEl){
+    kpisEl.innerHTML = [
+      {v: datosLocales.length, l: 'LOCALES ACTIVOS', c: '#c0a020'},
+      {v: totEmps+' pers.', l: 'TOTAL EMPLEADOS', c: 'var(--green)'},
+      {v: totCoste.toFixed(0)+' €', l: 'COSTE TOTAL SEMANA', c: 'var(--accent2)'},
+      {v: cobGlobal+' mín.', l: 'COBERTURA MÍNIMA', c: 'var(--orange)'},
+    ].map(function(k){
+      return '<div class="stat-card"><div class="stat-val" style="color:'+k.c+'">'+k.v+'</div><div class="stat-label">'+k.l+'</div></div>';
+    }).join('');
+  }
+
+  // Cards por local
+  if(localesEl){
+    var COLORES_LOCAL = ['#e8a020','#3498db','#2ecc71','#e74c3c','#9b59b6'];
+    localesEl.innerHTML = datosLocales.map(function(datos, idx){
+      var r = resúmenes[idx];
+      var col = COLORES_LOCAL[idx % COLORES_LOCAL.length];
+      var tieneDatos = !!datos.cuad;
+      return '<div style="background:var(--card);border:1px solid '+col+'40;border-radius:12px;padding:14px;margin-bottom:10px">'
+        // Header local
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+        +'<div style="font-size:15px;font-weight:700;color:'+col+'">'+datos.local.nombre+'</div>'
+        +(tieneDatos
+          ?'<span style="font-size:9px;background:'+col+'20;color:'+col+';padding:2px 8px;border-radius:10px">'+r.semana+'</span>'
+          :'<span style="font-size:9px;background:#3d1515;color:#ff6b6b;padding:2px 8px;border-radius:10px">Sin cuadrante esta semana</span>')
+        +'</div>'
+        // KPIs del local
+        +(tieneDatos
+          ?'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">'
+          +[
+            {v:r.numEmpleados, l:'EMPLEADOS'},
+            {v:r.cobMin+'-'+r.cobMax, l:'COBERTURA/DÍA'},
+            {v:r.coste.toFixed(0)+' €', l:'COSTE/SEM'},
+            {v:r.fiestas, l:'FIESTAS SEM'},
+          ].map(function(k){
+            return '<div style="background:var(--darker);border-radius:6px;padding:7px;text-align:center">'
+              +'<div style="font-size:14px;font-weight:700;color:'+col+'">'+k.v+'</div>'
+              +'<div style="font-size:8px;color:var(--muted);margin-top:2px">'+k.l+'</div>'
+              +'</div>';
+          }).join('')+'</div>'
+          :'<div style="font-size:11px;color:var(--muted);padding:10px;text-align:center">Genera el cuadrante para ver datos</div>')
+        // Mini cuadrante visual (cobertura por día)
+        +(tieneDatos ? renderMiniCuadrante(datos, col) : '')
+        +'</div>';
+    }).join('');
+  }
+
+  // Comparativa entre locales
+  if(compEl && datosLocales.length > 1){
+    var maxCoste = Math.max.apply(null, resúmenes.map(function(r){ return r.coste; }));
+    compEl.innerHTML = '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Comparativa de coste semanal</div>'
+      +datosLocales.map(function(datos, idx){
+        var r = resúmenes[idx];
+        var col = ['#e8a020','#3498db'][idx] || '#2ecc71';
+        var pct = maxCoste > 0 ? (r.coste/maxCoste*100) : 0;
+        return '<div style="margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+          +'<span style="font-size:11px;font-weight:700;color:'+col+'">'+datos.local.nombre+'</span>'
+          +'<span style="font-size:11px;color:var(--text)">'+r.coste.toFixed(0)+' €</span>'
+          +'</div>'
+          +'<div style="background:#1a1a1a;border-radius:4px;height:8px;overflow:hidden">'
+          +'<div style="background:'+col+';height:100%;width:'+pct+'%;border-radius:4px;transition:width 0.5s"></div>'
+          +'</div></div>';
+      }).join('')
+      +'</div>';
+  }
+}
+
+function renderMiniCuadrante(datos, col){
+  var DIAS_M = ['L','M','X','J','V','S','D'];
+  var bars = DIAS_M.map(function(d, di){
+    var trabajando = (datos.turnos||[]).filter(function(t){ return t.dia===di && t.turno!=='fiesta' && t.turno!=='mediafiesta'; }).length;
+    var total = datos.empleados.length || 1;
+    var pct = Math.round(trabajando/total*100);
+    var barCol = pct>=80?'var(--green)':pct>=50?'var(--orange)':'#e74c3c';
+    return '<div style="text-align:center;flex:1">'
+      +'<div style="font-size:8px;color:var(--muted);margin-bottom:3px">'+d+'</div>'
+      +'<div style="background:#1a1a1a;border-radius:3px;height:30px;position:relative;overflow:hidden">'
+      +'<div style="background:'+barCol+';position:absolute;bottom:0;width:100%;height:'+pct+'%;border-radius:3px;opacity:0.8"></div>'
+      +'</div>'
+      +'<div style="font-size:8px;color:var(--muted);margin-top:2px">'+trabajando+'p</div>'
+      +'</div>';
+  }).join('');
+  return '<div style="display:flex;gap:3px;margin-top:4px">'+bars+'</div>';
+}
+
+function imprimirDirector(){
+  var el = document.getElementById('screen8');
+  if(!el){ alert('No hay datos que imprimir'); return; }
+  var ventana = window.open('','_blank','width=900,height=700');
+  if(!ventana){ alert('Permite las ventanas emergentes'); return; }
+  ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Vista Director - Grupo El Reloj</title>'
+    +'<style>body{font-family:Arial,sans-serif;background:#0f1923;color:#e8edf2;padding:20px}'
+    +'*{box-sizing:border-box}</style></head><body>'
+    +el.innerHTML+'</body></html>');
+  ventana.document.close();
+  ventana.print();
 }
 
 function imprimirCostes(){
@@ -1772,7 +2505,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+totSem.toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v2.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v2.4 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
