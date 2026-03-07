@@ -726,21 +726,21 @@ async function doLogin(){
       showToast('✓ Bienvenida '+user.nombre,'green');
     }
   }catch(e){
-    // Sin BD — modo demo con usuarios hardcodeados
-    var DEMO_USERS = [
-      {dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA', local_id:1},
-      {dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM', local_id:null},
+    var OFFLINE_USERS = [
+      {dni:'23842646H', password_hash:'fcd3ea094503446af61291a741292e480275f1f5c9f4660ebcf885880a2109fe', rol:'directora', nombre:'LORENA', local_id:1},
+      {dni:'DEMO0002',  password_hash:'03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', rol:'directora_general', nombre:'MIRYAM', local_id:null},
+      {dni:'DEMO0001',  password_hash:'03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', rol:'directora', nombre:'LORENA (DEMO)', local_id:1},
     ];
-    var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
-    if(demoUser && pass==='1234'){
-      currentUser = demoUser;
+    var offlineUser = OFFLINE_USERS.find(function(u){ return u.dni===dni; });
+    if(offlineUser && offlineUser.password_hash === passHash){
+      currentUser = offlineUser;
       document.getElementById('login-screen').style.display='none';
       document.querySelector('header').style.display='';
       document.querySelector('.container').style.display='';
-      showStep(1);
-      showToast('⚠️ Modo demo — BD no disponible','orange');
+      if(offlineUser.rol==='directora_general'){ abrirVistaDirector(); } else { showStep(1); }
+      showToast('✓ Bienvenida '+offlineUser.nombre,'green');
     } else {
-      errEl.textContent='Error de conexión. Usa credenciales demo: DEMO0001 / 1234';
+      errEl.textContent='Usuario o contraseña incorrectos';
       errEl.style.display='block';
     }
   }
