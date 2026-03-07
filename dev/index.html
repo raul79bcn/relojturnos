@@ -1,1 +1,2752 @@
-test
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RelojTurnos v3.5 – Grupo El Reloj</title>
+<style>
+:root {
+  --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
+  --accent:#e8a020;--accent2:#f0c060;--text:#e8edf2;--muted:#6b8299;
+  --green:#2ecc71;--red:#e74c3c;--blue:#3498db;--purple:#9b59b6;--orange:#e67e22;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--darker);color:var(--text);min-height:100vh}
+header{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:19px;font-weight:700;color:var(--accent)}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.header-info{font-size:12px;color:var(--muted)}
+.header-info span{color:var(--accent);font-weight:600}
+.container{max-width:980px;margin:0 auto;padding:24px 16px}
+.steps{display:flex;margin-bottom:28px;background:var(--dark);border-radius:12px;padding:5px;border:1px solid var(--border)}
+.step{flex:1;padding:9px 4px;border-radius:8px;text-align:center;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
+.step.active{background:var(--accent);color:var(--darker);font-weight:700}
+.step.done{color:var(--accent)}
+.step-num{display:inline-flex;width:18px;height:18px;background:var(--border);border-radius:50%;align-items:center;justify-content:center;font-size:10px;margin-right:3px}
+.step.active .step-num{background:var(--darker)}
+.step.done .step-num{background:var(--accent);color:var(--darker)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px}
+.card-title{font-size:17px;font-weight:700;margin-bottom:5px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+select,input[type=text]{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;outline:none;transition:border-color .2s;cursor:pointer}
+select:focus,input[type=text]:focus{border-color:var(--accent)}
+select option{background:var(--dark)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row.three{grid-template-columns:1fr 1fr 1fr}
+.form-group{margin-bottom:0}
+.empleado-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.empleado-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.emp-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.emp-name-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-family:Arial,sans-serif;font-size:14px;font-weight:600}
+.emp-name-input:focus{outline:none;border-color:var(--accent)}
+.remove-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px;padding:3px;transition:color .2s}
+.remove-btn:hover{color:var(--red)}
+.dias-grid-header{display:grid;grid-template-columns:140px repeat(7,1fr);gap:5px;margin-bottom:5px}
+.dias-grid-row{display:grid;grid-template-columns:140px repeat(7,1fr);gap:5px;margin-bottom:7px;align-items:center}
+.dia-label-top{text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.dia-select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:5px 2px;color:var(--text);font-size:10px;font-family:Arial,sans-serif;text-align:center;cursor:pointer}
+.dia-select:focus{outline:none;border-color:var(--accent)}
+.dia-select.fiesta{background:#2d1515;border-color:#5a2020;color:var(--red)}
+.dia-select.mediafiesta{background:#2d2015;border-color:#5a4020;color:var(--orange)}
+.dia-select.manana{background:#1a2d1a;border-color:#2a5a2a;color:var(--green)}
+.dia-select.noche{background:#1a1a2d;border-color:#2a2a5a;color:var(--blue)}
+.dia-select.intermedio{background:#2a1a2d;border-color:#4a2a5a;color:var(--purple)}
+.dia-select.tarde{background:#2d2a1a;border-color:#5a4a1a;color:var(--orange)}
+.btn{padding:11px 22px;border-radius:9px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--accent);color:var(--darker)}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-secondary{background:var(--border);color:var(--text)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.btn-row.space{justify-content:space-between}
+.turno-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.turno-config-item{background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:12px}
+.turno-config-label{font-size:12px;font-weight:700;margin-bottom:8px}
+.turno-config-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.schedule-table{width:100%;border-collapse:collapse;font-size:11px}
+.schedule-table th{background:var(--darker);padding:9px 5px;text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border)}
+.schedule-table th.emp-col{text-align:left;min-width:100px}
+.schedule-table td{padding:7px 5px;border:1px solid var(--border);text-align:center;vertical-align:middle}
+.schedule-table td.emp-name{text-align:left;font-weight:600;font-size:11px;padding-left:8px}
+.turno-badge{display:inline-block;padding:2px 5px;border-radius:4px;font-size:9px;font-weight:700;line-height:1.5;text-align:center}
+.badge-fiesta{background:#3d1515;color:#ff6b6b}
+.badge-mediafiesta{background:#3d2d10;color:#ffaa40}
+.badge-manana{background:#152d15;color:#5ddb5d}
+.badge-noche{background:#15152d;color:#6b8fff}
+.badge-intermedio{background:#25152d;color:#c080ff}
+.badge-tarde{background:#2d2515;color:#ffa040}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat-card{background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:12px;text-align:center}
+.stat-val{font-size:22px;font-weight:700;color:var(--accent)}
+.stat-label{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:1px}
+.cob-ok{color:var(--green);font-weight:700;font-size:13px}
+.cob-warn{color:var(--orange);font-weight:700;font-size:13px}
+.cob-low{color:var(--red);font-weight:700;font-size:13px}
+.evento-item{display:flex;align-items:center;gap:9px;background:var(--darker);border:1px solid #3d3000;border-radius:7px;padding:9px 12px;margin-bottom:7px}
+.turno-legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;padding:10px;background:var(--darker);border-radius:7px;border:1px solid var(--border)}
+.info-box{background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#8ddb8d}
+.screen{display:none}
+.screen.active{display:block}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.footer-credits{font-size:10px;color:var(--muted);text-align:center;line-height:2;margin-top:6px}
+.footer-credits a{color:var(--accent);text-decoration:none}
+.footer-credits strong{color:var(--accent)}
+.toggle-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:var(--darker);color:var(--muted);cursor:pointer;font-family:Arial,sans-serif;font-size:11px;font-weight:600;transition:all .2s;user-select:none}
+.toggle-btn.on{background:#1a2d1a;border-color:#2a5a2a;color:var(--green)}
+.toggle-btn .tog-dot{width:30px;height:16px;border-radius:8px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0}
+.toggle-btn.on .tog-dot{background:var(--green)}
+.toggle-btn .tog-dot::after{content:'';position:absolute;width:10px;height:10px;border-radius:50%;background:white;top:3px;left:3px;transition:left .2s}
+.toggle-btn.on .tog-dot::after{left:17px}
+.otro-input{width:100%;background:var(--darker);border:1px solid var(--accent);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;outline:none;margin-top:7px}
+.otro-input::placeholder{color:var(--muted)}
+.schedule-table th,.schedule-table td{font-size:10px}
+.tab-bar{display:flex;gap:6px;margin-bottom:18px;background:var(--darker);border-radius:10px;padding:4px;border:1px solid var(--border)}
+.tab-btn{flex:1;padding:8px 10px;border-radius:7px;border:none;background:none;color:var(--muted);font-family:Arial,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+.tab-btn.active{background:var(--accent);color:var(--darker)}
+.tab-btn:not(.active):hover{color:var(--text)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.costes-emp-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.extra-dia-row{display:grid;grid-template-columns:90px 70px 70px 1fr 28px;gap:7px;align-items:center;margin-bottom:7px}
+.inp-sm{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:Arial,sans-serif;font-size:12px;width:100%;outline:none}
+.inp-sm:focus{border-color:var(--accent)}
+.badge-extra-real{background:#3d2000;border:1px solid var(--orange);color:var(--orange);padding:3px 7px;border-radius:5px;font-size:10px;font-weight:700}
+.kpi-2{grid-template-columns:repeat(2,1fr)}
+.kpi-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:640px){
+  .extra-dia-row{grid-template-columns:1fr 1fr}
+  /* Cuadrante en móvil: tabla con scroll horizontal, igual que escritorio */
+  .cuadrante-mobile{display:none}
+  .schedule-table{display:table}
+  .cuadrante-scroll-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
+  .schedule-table th,.schedule-table td{font-size:7.5px;padding:3px 2px;white-space:nowrap}
+  .schedule-table .turno-badge{font-size:7px;padding:2px 3px}
+  .header-info{flex-direction:column;gap:6px}
+  .form-row{flex-direction:column}
+  .form-row.three{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .step-text{display:none}
+  header h1{font-size:14px}
+  .dias-grid-row,.dias-grid-header{grid-template-columns:80px repeat(7,1fr)}
+  .dia-select{font-size:9px;padding:2px}
+  .stats-grid.kpi-4{grid-template-columns:1fr 1fr}
+  .mobile-scroll-hint{display:block !important}
+}
+@media(min-width:641px){.cuadrante-mobile{display:none}}
+
+/* ===== LOGIN ===== */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--darker);position:fixed;top:0;left:0;width:100%;z-index:9999}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:360px;margin:20px}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .logo-icon{font-size:48px;margin-bottom:8px}
+.login-logo .logo-text{font-size:22px;font-weight:700;color:var(--accent)}
+.login-logo .logo-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.login-field{margin-bottom:14px}
+.login-field label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px}
+.login-field input{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-size:14px;outline:none;box-sizing:border-box;transition:border-color 0.2s}
+.login-field input:focus{border-color:var(--accent)}
+.login-error{background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:10px 14px;font-size:12px;color:#ff8080;margin-bottom:14px;display:none}
+.login-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px}
+.login-btn:active{opacity:0.85}
+.login-footer{text-align:center;font-size:10px;color:var(--muted);margin-top:20px}
+/* Portal empleado */
+#portal-empleado{display:none;min-height:100vh}
+.portal-header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.portal-nav{display:flex;gap:8px;padding:12px 16px;background:var(--darker);border-bottom:1px solid var(--border)}
+.portal-tab{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer}
+.portal-tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.portal-content{padding:16px}
+.cambio-pass-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px}
+.lorena-mobile{display:none}
+.lorena-desktop{display:block}
+@media(max-width:640px){.lorena-mobile{display:block}.lorena-desktop{display:none}}
+@media print{.cuadrante-mobile{display:none!important}.lorena-mobile{display:none!important}}
+</style>
+</head>
+<body>
+<!-- PANTALLA LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">&#9201;</div>
+      <div class="logo-text">RelojTurnos</div>
+      <div class="logo-sub">Grupo El Reloj</div>
+    </div>
+    <div class="login-field">
+      <label>DNI / NIE</label>
+      <input type="text" id="login-dni" placeholder="12345678A" autocomplete="username" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+    <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.5</span></div>
+  </div>
+</div>
+
+<!-- PORTAL EMPLEADO -->
+<div id="portal-empleado">
+  <div class="portal-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--accent)20;color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px" id="portal-avatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--text)" id="portal-nombre">Empleado</div>
+        <div style="font-size:10px;color:var(--muted)" id="portal-local">—</div>
+      </div>
+    </div>
+    <button onclick="doLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-size:11px;cursor:pointer">Salir</button>
+  </div>
+  <div class="portal-nav">
+    <button class="portal-tab active" onclick="portalTab('cuadrante')">&#128197; Cuadrante</button>
+    <button class="portal-tab" onclick="portalTab('contrato')">&#128196; Mi contrato</button>
+    <button class="portal-tab" onclick="portalTab('password')">&#128274; Contraseña</button>
+  </div>
+  <div class="portal-content">
+    <div id="portal-cuadrante"></div>
+    <div id="portal-contrato" style="display:none"></div>
+    <div id="portal-password" style="display:none">
+      <div class="cambio-pass-form">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">&#128274; Cambiar contraseña</div>
+        <div class="login-field"><label>Contraseña actual</label><input type="password" id="pass-actual" placeholder="••••"></div>
+        <div class="login-field"><label>Nueva contraseña</label><input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres"></div>
+        <div class="login-field"><label>Repetir nueva contraseña</label><input type="password" id="pass-repite" placeholder="Igual que la anterior"></div>
+        <div class="login-error" id="pass-error" style="display:none"></div>
+        <div id="pass-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:8px;padding:10px;font-size:12px;color:#5ddb5d;margin-bottom:10px">✓ Contraseña cambiada correctamente</div>
+        <button class="login-btn" onclick="cambiarPassword()">Guardar nueva contraseña</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header style="display:none">
+  <div class="logo">
+    <div class="logo-icon">&#9201;</div>
+    <div><div class="logo-text">RelojTurnos</div><div class="logo-sub">Grupo El Reloj</div></div>
+  </div>
+  <div class="header-info">Local: <span id="header-local">&#8212;</span> &nbsp;&middot;&nbsp; Semana: <span id="header-semana">&#8212;</span></div>
+</header>
+
+<div class="container" style="display:none">
+  <div class="steps">
+    <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text">Local</span></div>
+    <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text">Turnos</span></div>
+    <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text">Equipo</span></div>
+    <div class="step" id="step4" onclick="goStep(4)"><span class="step-num">4</span><span class="step-text">Asignar</span></div>
+    <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text">Eventos</span></div>
+    <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text">Cuadrante</span></div>
+    <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text">Costes</span></div>
+    <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text">Direcc. Gral.</span></div>
+    <div class="step" id="step9" onclick="goStep(9)" style="display:none"><span class="step-num">&#128101;</span><span class="step-text">Usuarios</span></div>
+  </div>
+
+  <!-- PASO 1 -->
+  <div class="screen active" id="screen1">
+    <div class="card">
+      <div class="card-title">&#191;Qu&#233; local y semana vamos a planificar?</div>
+      <div class="card-sub">Selecciona el restaurante, la semana y la configuraci&#243;n b&#225;sica</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Local</label>
+          <select id="local-select" onchange="onLocalChange()">
+            <option value="">Selecciona local...</option>
+            <option value="La Cala">Restaurante La Cala</option>
+            <option value="Roto's Burguer">Roto's Burguer</option>
+            <option value="Otro">Otro local</option>
+          </select>
+          <div id="otro-local-wrap" style="display:none">
+            <input class="otro-input" id="otro-local-input" type="text" placeholder="Escribe el nombre del local...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Semana que empieza el</label>
+          <select id="fecha-inicio"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Hora apertura</label><select id="hora-apertura"></select></div>
+        <div class="form-group"><label>Hora cierre</label><select id="hora-cierre"></select></div>
+      </div>
+      <div class="form-group">
+        <label>D&#237;as de menor afluencia (fiesta sugerida)</label>
+        <select id="dias-flojos" multiple style="height:82px">
+          <option value="0" selected>Lunes</option>
+          <option value="1">Martes</option>
+          <option value="2" selected>Mi&#233;rcoles</option>
+          <option value="3">Jueves</option>
+          <option value="4">Viernes</option>
+          <option value="5">S&#225;bado</option>
+          <option value="6">Domingo</option>
+        </select>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">Mant&#233;n Ctrl para seleccionar varios</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="nextStep(1)">Siguiente &#8594; Configurar turnos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2 -->
+  <div class="screen" id="screen2">
+    <div class="card">
+      <div class="card-title">Configura los turnos del local</div>
+      <div class="card-sub">Turnos calculados autom&#225;ticamente. Activa solo los que usa este local.</div>
+      <div class="info-box" id="info-box-turnos"></div>
+      <div class="turno-config-grid" id="turnos-config-grid"></div>
+      <hr class="divider">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Duraci&#243;n media fiesta (horas trabajadas)</label>
+          <select id="horas-media-fiesta">
+            <option value="4">4 horas</option>
+            <option value="4.5">4,5 horas</option>
+            <option value="5" selected>5 horas</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Horas jornada completa</label>
+          <select id="horas-jornada">
+            <option value="8">8 horas</option>
+            <option value="8.5">8,5 horas</option>
+            <option value="9" selected>9 horas</option>
+            <option value="9.5">9,5 horas</option>
+            <option value="10">10 horas</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(1)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="nextStep(2)">Siguiente &#8594; Equipo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 3 -->
+  <div class="screen" id="screen3">
+    <div class="card">
+      <div class="card-title">&#191;Qui&#233;n trabaja en este local?</div>
+      <div class="card-sub">Empleados y su turno habitual. Las horas se calculan solas seg&#250;n los turnos asignados.</div>
+      <div id="empleados-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addEmpleado()" style="margin-top:4px">&#65291; A&#241;adir empleado</button>
+
+      <!-- Sección Lorena Directora -->
+      <div style="margin-top:16px;background:#0f1a0f;border:1px solid #c0a02040;border-radius:10px;padding:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;color:#c0a020">LORENA <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:2px 7px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>
+            <div style="font-size:10px;color:var(--muted)">Horario orientativo · No computa en cobertura ni costes</div>
+          </div>
+        </div>
+        <div id="lorena-horario-list"></div>
+      </div>
+
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(2)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="nextStep(3)">Siguiente &#8594; Asignar turnos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 4 -->
+  <div class="screen" id="screen4">
+    <div class="card">
+      <div class="card-title">Asigna los turnos de la semana</div>
+      <div class="card-sub">Fiestas asignadas automáticamente según días flojos y mínimos de personal. Ajusta lo que necesites.</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="sugerirYRenderizar()" style="border-color:var(--green);color:var(--green)">&#9889; Recalcular fiestas</button>
+        <button class="btn btn-ghost btn-sm" onclick="rotarFiestas()" style="border-color:var(--purple);color:var(--purple)">&#128256; Rotar días (+1)</button>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--darker);border-radius:6px;border:1px solid var(--border);line-height:1.8">
+        &#9889; <strong style="color:var(--green)">Recalcular</strong> — borra las fiestas actuales y las vuelve a asignar desde cero según días flojos y mínimos de personal.<br>
+        &#128256; <strong style="color:var(--purple)">Rotar días</strong> — desplaza los días de descanso de cada empleado +1 día, útil para que no descansen siempre el mismo día de la semana.
+      </div>
+      <div class="turno-legend" id="turno-legend"></div>
+      <div id="turnos-asignacion"></div>
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(3)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="nextStep(4)">Siguiente &#8594; Eventos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 5 -->
+  <div class="screen" id="screen5">
+    <div class="card">
+      <div class="card-title">&#191;Hay eventos especiales esta semana?</div>
+      <div class="card-sub">Partidos, eventos, festivos que necesiten refuerzo de personal</div>
+      <div id="eventos-list"><div id="no-eventos" style="color:var(--muted);font-size:12px;padding:18px 0;text-align:center">No hay eventos a&#241;adidos</div></div>
+      <hr class="divider">
+      <div class="form-row three">
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="evento-tipo">
+            <option value="&#9917;">&#9917; Partido f&#250;tbol</option>
+            <option value="&#127881;">&#127881; Evento especial</option>
+            <option value="&#128197;">&#128197; Festivo local</option>
+            <option value="&#127783;">&#127783; Mal tiempo</option>
+            <option value="&#127939;">&#127939; Marat&#243;n / Carrera popular</option>
+            <option value="&#127925;">&#127925; Concierto cercano</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>D&#237;a</label>
+          <select id="evento-dia">
+            <option value="0">Lunes</option><option value="1">Martes</option>
+            <option value="2">Mi&#233;rcoles</option><option value="3">Jueves</option>
+            <option value="4">Viernes</option><option value="5">S&#225;bado</option>
+            <option value="6">Domingo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Descripci&#243;n</label>
+          <select id="evento-desc-sel">
+            <option value="">Selecciona...</option>
+            <option value="Bar&#231;a vs Madrid">Bar&#231;a vs Madrid</option>
+            <option value="Selecci&#243;n espa&#241;ola">Selecci&#243;n espa&#241;ola</option>
+            <option value="Champions League">Champions League</option>
+            <option value="Concierto Forum">Concierto Forum</option>
+            <option value="Festivo local Barcelona">Festivo local Barcelona</option>
+            <option value="Sant Jordi">Sant Jordi</option>
+            <option value="Marat&#243;n Barcelona">Marat&#243;n Barcelona</option>
+            <option value="Cursa Popular">Cursa Popular</option>
+            <option value="Evento especial">Evento especial</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Personas de refuerzo</div>
+      <div id="refuerzo-personas-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addRefuerzoPersona()" style="margin-bottom:14px">&#65291; A&#241;adir persona de refuerzo</button>
+      <div style="margin-bottom:14px">
+        <button class="btn btn-primary btn-sm" onclick="addEvento()">&#10003; Confirmar y a&#241;adir evento</button>
+      </div>
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(4)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="generarCuadrante()">&#9889; Generar cuadrante</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 6 -->
+  <div class="screen" id="screen6">
+    <div id="cuadrante-output"></div>
+    <div class="btn-row space">
+      <button class="btn btn-secondary" onclick="goStep(4)">&#8592; Editar</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()">&#128065; Ocultar horas</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()">&#128424; Imprimir</button>
+        <button class="btn btn-ghost btn-sm" id="btn-guardar-bd" onclick="guardarCuadranteEnBD()" style="border-color:var(--green);color:var(--green)">&#128190; Guardar en BD</button>
+        <button class="btn btn-primary btn-sm" onclick="goStep(7)">&#128182; Ver costes</button>
+        <button class="btn btn-ghost btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 7: COSTES -->
+  <div class="screen" id="screen7">
+    <div class="card">
+      <div class="card-title">&#128182; Costes de personal</div>
+      <div class="card-sub" id="costes-subtitulo">Cuadrante · Bruto nómina + SS empresa + Extras reales</div>
+
+      <!-- Aviso datos pendientes -->
+      <div id="costes-aviso" style="display:none;background:#2d1a0a;border:1px solid #6b3a00;border-radius:8px;padding:11px 15px;margin-bottom:16px;font-size:12px;color:#ffaa40">
+        &#9888; Hay empleados sin datos salariales. Introdúcelos en la pestaña "Salarios" para ver el informe completo.
+      </div>
+
+      <!-- Pestañas -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-planif" onclick="switchTab('planif')">&#128197; Planificación</button>
+        <button class="tab-btn" id="tab-extras" onclick="switchTab('extras')">&#9889; Extras del día</button>
+        <button class="tab-btn" id="tab-salarios" onclick="switchTab('salarios')">&#9999;&#65039; Salarios</button>
+      </div>
+
+      <!-- PESTAÑA 1: PLANIFICACIÓN -->
+      <div class="tab-panel active" id="panel-planif">
+        <div class="stats-grid" id="costes-kpis" style="margin-bottom:18px"></div>
+        <div id="costes-cards" style="margin-bottom:14px"></div>
+        <div id="costes-totales" style="margin-bottom:14px"></div>
+        <!-- Refuerzos evento -->
+        <div id="costes-refuerzos" style="margin-bottom:14px"></div>
+        <div style="background:#1a1a2d;border:1px solid #2a2a5a;border-radius:7px;padding:10px 14px;font-size:10px;color:#8888cc;line-height:1.8;margin-bottom:14px">
+          <strong style="color:#aaaaee">Cálculo:</strong>
+          &nbsp;Coste/sem = (Bruto × 1,39 SS) ÷ 4,33 &nbsp;·&nbsp;
+          H.Pact. = días trabajados × jornada &nbsp;·&nbsp;
+          Total sem. = Coste fijo + extras diarias + refuerzos evento
+        </div>
+      </div>
+
+      <!-- PESTAÑA 2: EXTRAS DEL DÍA -->
+      <div class="tab-panel" id="panel-extras">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:16px;padding:10px 14px;background:var(--darker);border-radius:8px;border:1px solid var(--border)">
+          &#128221; Anota aquí las horas extra puntuales fuera del acuerdo habitual. El responsable del local las registra el mismo día que ocurren.
+        </div>
+        <div id="extras-lista"></div>
+        <button class="btn btn-ghost btn-sm" onclick="addExtraDia()" style="margin-top:4px">&#65291; Añadir horas extra</button>
+        <div id="extras-resumen" style="margin-top:16px"></div>
+      </div>
+
+      <!-- PESTAÑA 3: SALARIOS -->
+      <div class="tab-panel" id="panel-salarios">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;padding:10px 14px;background:var(--darker);border-radius:8px;border:1px solid var(--border)">
+          &#128274; Datos salariales introducidos por la dirección o responsable del local. En el futuro vendrán automáticamente del módulo de contratos/nóminas.
+        </div>
+        <div id="costes-editor"></div>
+      </div>
+
+      <div class="btn-row space" style="margin-top:18px">
+        <button class="btn btn-secondary" onclick="goStep(6)">&#8592; Cuadrante</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="imprimirCostes()">&#128424; Imprimir informe</button>
+          <button class="btn btn-primary btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirVistaDirector()" style="border-color:#c0a020;color:#c0a020">&#128196; Dirección General</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- PASO 8: VISTA DIRECTOR GENERAL -->
+  <div class="screen" id="screen8">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="card-title" style="margin:0">&#128196; Dirección General</div>
+        <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:3px 9px;border-radius:12px;font-weight:700">GRUPO EL RELOJ</span>
+      </div>
+      <div class="card-sub" id="director-subtitulo">Resumen semanal de todos los locales</div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="cargarVistaDirector()" style="border-color:var(--green);color:var(--green)">&#128257; Actualizar</button>
+        <select id="director-semana-sel" onchange="cargarVistaDirector()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:11px">
+          <option value="">Semana actual</option>
+        </select>
+      </div>
+
+      <!-- KPIs globales -->
+      <div id="director-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px"></div>
+
+      <!-- Cards por local -->
+      <div id="director-locales" style="margin-bottom:14px"></div>
+
+      <!-- Comparativa -->
+      <div id="director-comparativa" style="margin-bottom:14px"></div>
+
+      <div class="btn-row space" style="margin-top:18px">
+        <button class="btn btn-secondary" onclick="goStep(7)">&#8592; Costes</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirDirector()">&#128424; Imprimir resumen</button>
+      </div>
+    </div>
+  </div>
+  <!-- PASO 9: GESTIÓN DE USUARIOS -->
+  <div class="screen" id="screen9">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="card-title" style="margin:0">&#128101; Gestión de Usuarios</div>
+        <span style="font-size:9px;background:#6b8fff20;color:#6b8fff;padding:3px 9px;border-radius:12px;font-weight:700">SOLO DIRECTORA</span>
+      </div>
+      <div class="card-sub">Crea y gestiona los accesos del personal</div>
+
+      <!-- Formulario nuevo usuario -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px">&#43; Nuevo usuario</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="nu-nombre" placeholder="Ej: MARILYN" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
+          </div>
+          <div class="form-group">
+            <label>DNI / NIE</label>
+            <input type="text" id="nu-dni" placeholder="12345678A" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Afiliación Seg. Social</label>
+            <input type="text" id="nu-ss" placeholder="081153483246" class="inp-sm">
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">Los últimos 4 dígitos serán la contraseña inicial</div>
+          </div>
+          <div class="form-group">
+            <label>Rol en la app</label>
+            <select id="nu-rol" class="inp-sm">
+              <option value="empleado">Empleado</option>
+              <option value="directora">Directora</option>
+              <option value="directora_general">Dirección General</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Local</label>
+            <select id="nu-local" class="inp-sm">
+              <option value="1">La Cala</option>
+              <option value="2">Roto's Burguer</option>
+            </select>
+          </div>
+        </div>
+        <div id="nu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
+        <div id="nu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
+        <button class="btn btn-primary btn-sm" onclick="crearUsuario()">&#128274; Crear usuario</button>
+      </div>
+
+      <!-- Lista de usuarios -->
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Usuarios registrados</div>
+      <div id="usuarios-lista">
+        <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Cargando...</div>
+      </div>
+
+      <div class="btn-row space" style="margin-top:18px">
+        <button class="btn btn-secondary" onclick="goStep(8)">&#8592; Dirección General</button>
+        <button class="btn btn-ghost btn-sm" onclick="cargarUsuarios()" style="border-color:var(--green);color:var(--green)">&#128257; Actualizar lista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.5</span>
+  &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="mailto:raul.gestionlocal@gmail.com" style="color:var(--accent);text-decoration:none">raul.gestionlocal@gmail.com</a>
+</div>
+
+<script>
+var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
+var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
+var COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800'];
+var ROLES=['Resp. Ma\u00f1ana','Resp. Noche','Cam. Ma\u00f1ana','Cam. Noche','Cam. Tarde','Cam. Intermedio','Cocinero','Ayud. Cocina','Encargado','Barman'];
+
+// ========== SUPABASE CONFIG ==========
+const SUPA_URL = 'https://ttewezdnroiqtetmgyrh.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0ZXdlemRucm9pcXRldG1neXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTExMDIsImV4cCI6MjA4ODM2NzEwMn0.mA5tWItknmHmBe7-8AZpN9579RRwEaM3ZybYpQBc2Pw';
+
+async function sbGet(table, filters){
+  var url = SUPA_URL+'/rest/v1/'+table+'?'+( filters||'order=id.asc');
+  var r = await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'}});
+  if(!r.ok) throw new Error('GET '+table+' error '+r.status);
+  return r.json();
+}
+
+async function sbPost(table, data){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table,{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(data)
+  });
+  if(!r.ok){var e=await r.text();throw new Error('POST '+table+' error '+r.status+': '+e);}
+  return r.json();
+}
+
+async function sbPatch(table, id, data){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table+'?id=eq.'+id,{
+    method:'PATCH',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(data)
+  });
+  if(!r.ok) throw new Error('PATCH '+table+' error '+r.status);
+  return r.json();
+}
+
+async function sbDelete(table, filters){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table+'?'+filters,{
+    method:'DELETE',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  if(!r.ok) throw new Error('DELETE '+table+' error '+r.status);
+}
+
+// Cache local→id de Supabase
+var localIdMap = {};   // {'La Cala': 1, "Roto's Burguer": 2}
+var empIdMap   = {};   // {empCounter_local_id: supabase_id}
+var currentCuadranteId = null;
+
+// ===================== AUTH / LOGIN =====================
+var currentUser = null; // {id, dni, nombre, rol, local_id, empleado_id}
+
+// Hash simple SHA-256 para contraseñas
+async function hashPass(str){
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+
+async function doLogin(){
+  var dni = (document.getElementById('login-dni').value||'').trim().toUpperCase();
+  var pass = (document.getElementById('login-pass').value||'').trim();
+  var errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if(!dni || !pass){
+    errEl.textContent = 'Introduce tu DNI/NIE y contraseña';
+    errEl.style.display = 'block'; return;
+  }
+
+  try{
+    var passHash = await hashPass(pass);
+    // Comprobar usuarios demo primero
+    var DEMO_USERS = [
+      {id:0, dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA (DEMO)', local_id:1, empleado_id:null},
+      {id:0, dni:'DEMO0002', password_hash:'', rol:'direccion_general', nombre:'MIRYAM (DEMO)', local_id:null, empleado_id:null},
+    ];
+    var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
+    if(demoUser && pass==='1234'){
+      currentUser = demoUser;
+      document.getElementById('login-screen').style.display='none';
+      if(demoUser.rol==='direccion_general'){
+        document.querySelector('header').style.display='';
+        document.querySelector('.container').style.display='';
+        abrirVistaDirector();
+      } else {
+        document.querySelector('header').style.display='';
+        document.querySelector('.container').style.display='';
+        showStep(1);
+        showToast('✓ Bienvenida '+demoUser.nombre,'green');
+      }
+      return;
+    }
+    var rows = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni)+'&activo=eq.true');
+    if(!rows.length){ errEl.textContent='Usuario no encontrado'; errEl.style.display='block'; return; }
+    var user = rows[0];
+    if(user.password_hash !== passHash){
+      errEl.textContent='Contraseña incorrecta'; errEl.style.display='block'; return;
+    }
+    currentUser = user;
+    document.getElementById('login-screen').style.display = 'none';
+    checkMostrarBtnUsuarios();
+    if(user.rol === 'empleado'){
+      abrirPortalEmpleado(user);
+    } else if(user.rol === 'directora_general'){
+      document.getElementById('portal-empleado').style.display = 'none';
+      document.querySelector('header').style.display = '';
+      document.querySelector('.container').style.display = '';
+      abrirVistaDirector();
+    } else {
+      // directora / admin — acceso completo
+      document.querySelector('header').style.display = '';
+      document.querySelector('.container').style.display = '';
+      showStep(1);
+      showToast('✓ Bienvenida '+user.nombre,'green');
+    }
+  }catch(e){
+    // Sin BD — modo demo con usuarios hardcodeados
+    var DEMO_USERS = [
+      {dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA', local_id:1},
+      {dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM', local_id:null},
+    ];
+    var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
+    if(demoUser && pass==='1234'){
+      currentUser = demoUser;
+      document.getElementById('login-screen').style.display='none';
+      document.querySelector('header').style.display='';
+      document.querySelector('.container').style.display='';
+      showStep(1);
+      showToast('⚠️ Modo demo — BD no disponible','orange');
+    } else {
+      errEl.textContent='Error de conexión. Usa credenciales demo: DEMO0001 / 1234';
+      errEl.style.display='block';
+    }
+  }
+}
+
+function doLogout(){
+  currentUser = null;
+  document.getElementById('portal-empleado').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-dni').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-error').style.display='none';
+}
+
+async function abrirPortalEmpleado(user){
+  var portal = document.getElementById('portal-empleado');
+  portal.style.display = 'block';
+  document.querySelector('header').style.display = 'none';
+  document.querySelector('.container').style.display = 'none';
+
+  // Cabecera
+  var nombre = user.nombre || user.dni;
+  document.getElementById('portal-avatar').textContent = nombre.substring(0,2).toUpperCase();
+  document.getElementById('portal-nombre').textContent = nombre;
+
+  // Cargar local
+  try{
+    var locs = await sbGet('locales','id=eq.'+user.local_id);
+    document.getElementById('portal-local').textContent = locs.length ? locs[0].nombre : '—';
+  }catch(e){ document.getElementById('portal-local').textContent = '—'; }
+
+  portalTab('cuadrante');
+  await cargarPortalCuadrante(user);
+  await cargarPortalContrato(user);
+}
+
+function portalTab(tab){
+  ['cuadrante','contrato','password'].forEach(function(t){
+    document.getElementById('portal-'+t).style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('.portal-tab').forEach(function(btn, i){
+    btn.classList.toggle('active', ['cuadrante','contrato','password'][i]===tab);
+  });
+}
+
+async function cargarPortalCuadrante(user){
+  var el = document.getElementById('portal-cuadrante');
+  el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">⏳ Cargando cuadrante...</div>';
+  try{
+    // Cargar cuadrante más reciente del local
+    var cuads = await sbGet('cuadrantes','local_id=eq.'+user.local_id+'&order=id.desc&limit=1');
+    if(!cuads.length){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay cuadrante disponible esta semana</div>'; return; }
+    var cuad = cuads[0];
+    var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id);
+    var emps = await sbGet('empleados','local_id=eq.'+user.local_id+'&activo=eq.true');
+    renderPortalCuadrante(el, cuad, emps, turnos, user.empleado_id);
+  }catch(e){
+    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">No se pudo cargar el cuadrante</div>';
+  }
+}
+
+function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
+  var DIAS_S = ['L','M','X','J','V','S','D'];
+  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',intermedio:'I',fiesta:'🏖',mediafiesta:'½'};
+  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',intermedio:'#c080ff',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
+
+  var html = '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-align:center">'+cuad.semana_label+'</div>';
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">';
+  html += '<thead><tr><th style="padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);color:var(--muted)">EMPLEADO</th>';
+  DIAS_S.forEach(function(d){ html += '<th style="padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);color:var(--muted)">'+d+'</th>'; });
+  html += '</tr></thead><tbody>';
+
+  emps.forEach(function(emp){
+    var esMio = emp.id === miEmpId;
+    var bg = esMio ? 'background:var(--accent)15;' : '';
+    var nameCol = esMio ? 'color:var(--accent);font-weight:700' : 'color:var(--text)';
+    html += '<tr style="'+bg+'">';
+    html += '<td style="padding:6px 4px;border-bottom:1px solid var(--border)20;'+nameCol+'">'+(esMio?'👤 ':'')+emp.nombre+'</td>';
+    for(var d=0; d<7; d++){
+      var t = (turnos.find(function(x){ return x.empleado_id===emp.id && x.dia===d; })||{}).turno || emp.turno_habitual || '—';
+      var col = TURNO_COLOR[t] || 'var(--muted)';
+      var lbl = TURNO_LABEL[t] || t.substring(0,1).toUpperCase();
+      html += '<td style="padding:5px 2px;text-align:center;border-bottom:1px solid var(--border)20"><span style="font-weight:700;color:'+col+'">'+lbl+'</span></td>';
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">';
+  [{l:'M',c:'var(--green)',t:'Mañana'},{l:'N',c:'#6b8fff',t:'Noche'},{l:'T',c:'#ffa040',t:'Tarde'},{l:'I',c:'#c080ff',t:'Intermedio'},{l:'🏖',c:'#ff6b6b',t:'Fiesta'},{l:'½',c:'#ffaa40',t:'Media fiesta'}]
+    .forEach(function(x){ html += '<span><strong style="color:'+x.c+'">'+x.l+'</strong> '+x.t+'</span>'; });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function cargarPortalContrato(user){
+  var el = document.getElementById('portal-contrato');
+  try{
+    var sals = await sbGet('salarios','empleado_id=eq.'+user.empleado_id);
+    var sal = sals.length ? sals[0] : null;
+    var emps = await sbGet('empleados','id=eq.'+user.empleado_id);
+    var emp = emps.length ? emps[0] : null;
+    if(!sal && !emp){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay datos de contrato disponibles</div>'; return; }
+    el.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">📄 Mis datos de contrato</div>'
+      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Nombre:</span> <strong>'+emp.nombre+'</strong></div>':'')
+      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Rol:</span> <strong>'+emp.rol+'</strong></div>':'')
+      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Salario bruto/mes:</span> <strong style="color:var(--green)">'+sal.bruto_mes+' €</strong></div>':'')
+      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Horas contrato/semana:</span> <strong>'+sal.horas_contrato+'h</strong></div>':'')
+      +'<div style="margin-top:14px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px">Las nóminas digitales estarán disponibles próximamente</div>'
+      +'</div>';
+  }catch(e){
+    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">No se pudieron cargar los datos</div>';
+  }
+}
+
+async function cambiarPassword(){
+  var actual = document.getElementById('pass-actual').value;
+  var nueva = document.getElementById('pass-nueva').value;
+  var repite = document.getElementById('pass-repite').value;
+  var errEl = document.getElementById('pass-error');
+  var okEl = document.getElementById('pass-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  if(!actual||!nueva||!repite){ errEl.textContent='Rellena todos los campos'; errEl.style.display='block'; return; }
+  if(nueva.length<4){ errEl.textContent='La contraseña debe tener al menos 4 caracteres'; errEl.style.display='block'; return; }
+  if(nueva!==repite){ errEl.textContent='Las contraseñas no coinciden'; errEl.style.display='block'; return; }
+
+  try{
+    var actualHash = await hashPass(actual);
+    var rows = await sbGet('usuarios','id=eq.'+currentUser.id);
+    if(!rows.length||rows[0].password_hash!==actualHash){ errEl.textContent='La contraseña actual es incorrecta'; errEl.style.display='block'; return; }
+    var nuevaHash = await hashPass(nueva);
+    await sbPatch('usuarios', currentUser.id, {password_hash: nuevaHash});
+    okEl.style.display='block';
+    document.getElementById('pass-actual').value='';
+    document.getElementById('pass-nueva').value='';
+    document.getElementById('pass-repite').value='';
+  }catch(e){
+    errEl.textContent='Error al cambiar la contraseña. Inténtalo de nuevo.';
+    errEl.style.display='block';
+  }
+}
+
+async function initSupabase(){
+  try{
+    var locs = await sbGet('locales');
+    locs.forEach(function(l){ localIdMap[l.nombre]=l.id; });
+    showToast('✓ Conectado a base de datos','green');
+  }catch(e){
+    showToast('⚠ Sin conexión BD — modo local','orange');
+  }
+}
+
+function showToast(msg, color){
+  var t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:12px;font-weight:700;z-index:9999;transition:opacity .5s';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.background=color==='green'?'#1a4a2a':color==='orange'?'#3d2a00':'#3d1a1a';
+  t.style.border='1px solid '+(color==='green'?'#2ecc71':color==='orange'?'var(--orange)':'var(--red)');
+  t.style.color=color==='green'?'#2ecc71':color==='orange'?'var(--orange)':'var(--red)';
+  t.style.opacity='1';
+  setTimeout(function(){t.style.opacity='0';},3000);
+}
+
+// ========== GUARDAR CUADRANTE EN BD ==========
+async function guardarCuadranteEnBD(){
+  var local = getLocal();
+  var localId = localIdMap[local];
+  if(!localId){ showToast('Local no encontrado en BD','red'); return; }
+
+  var semana = getSemanaLabel();
+  var btn = document.getElementById('btn-guardar-bd');
+  if(btn){ btn.textContent='⏳ Guardando...'; btn.disabled=true; }
+
+  try{
+    // 1. Crear cuadrante
+    var cArr = await sbPost('cuadrantes',{local_id:localId, semana_label:semana});
+    currentCuadranteId = cArr[0].id;
+
+    // 2. Guardar/actualizar empleados en BD
+    for(var i=0;i<empleados.length;i++){
+      var emp = empleados[i];
+      // Buscar si ya existe por nombre+local
+      var existing = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(emp.nombre));
+      var empBdId;
+      if(existing.length){
+        empBdId = existing[0].id;
+        await sbPatch('empleados', empBdId, {rol:emp.rol, turno_habitual:emp.turno});
+      } else {
+        var newEmp = await sbPost('empleados',{local_id:localId, nombre:emp.nombre, rol:emp.rol, turno_habitual:emp.turno});
+        empBdId = newEmp[0].id;
+      }
+      empIdMap[emp.id] = empBdId;
+
+      // 3. Turnos del cuadrante
+      for(var d=0;d<7;d++){
+        await sbPost('turnos_cuadrante',{
+          cuadrante_id:currentCuadranteId,
+          empleado_id:empBdId,
+          dia:d,
+          turno:emp.turnos[d]||'fiesta'
+        });
+      }
+
+      // 4. Salarios (upsert)
+      var sal = getSalario(emp.id);
+      if(sal.brutoMes!==''){
+        var salExist = await sbGet('salarios','empleado_id=eq.'+empBdId);
+        if(salExist.length){
+          await sbPatch('salarios', salExist[0].id, {bruto_mes:parseFloat(sal.brutoMes), horas_contrato:sal.hContrato});
+        } else {
+          await sbPost('salarios',{empleado_id:empBdId, bruto_mes:parseFloat(sal.brutoMes), horas_contrato:sal.hContrato});
+        }
+      }
+    }
+
+    // 5. Extras del día
+    for(var j=0;j<extrasDia.length;j++){
+      var ex = extrasDia[j];
+      var empBdIdEx = empIdMap[ex.empId];
+      if(empBdIdEx){
+        await sbPost('extras_dia',{
+          cuadrante_id:currentCuadranteId,
+          empleado_id:empBdIdEx,
+          dia:ex.dia,
+          horas:parseFloat(ex.horas)||0,
+          precio_hora:parseFloat(ex.precioHora)||0,
+          motivo:ex.motivo
+        });
+      }
+    }
+
+    if(btn){ btn.textContent='✓ Guardado'; btn.style.background='var(--green)'; btn.style.color='var(--darker)'; btn.disabled=false; }
+    showToast('✓ Cuadrante guardado en base de datos','green');
+  }catch(e){
+    console.error(e);
+    if(btn){ btn.textContent='💾 Guardar en BD'; btn.disabled=false; btn.style.background=''; btn.style.color='var(--green)'; }
+    showToast('Error al guardar: '+e.message,'red');
+  }
+}
+
+var empleados=[], eventos=[], empCounter=0, turnosConfig=[];
+var refuerzoPersonas=[], refuerzoCounter=0;
+var mostrarHoras=true, lastLocal='';
+
+function toMin(t){var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
+function toStr(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+function diffH(s,e){var sm=toMin(s),em=toMin(e);if(em<=sm)em+=1440;return(em-sm)/60;}
+
+function horaOpts(selId,defVal){
+  var el=document.getElementById(selId);if(!el)return;
+  el.innerHTML='';
+  for(var h=0;h<24;h++){for(var m=0;m<60;m+=30){
+    var str=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    var o=document.createElement('option');o.value=str;o.textContent=str;
+    if(str===defVal)o.selected=true;el.appendChild(o);
+  }}
+}
+
+function buildFechas(){
+  var sel=document.getElementById('fecha-inicio');if(!sel)return;sel.innerHTML='';
+  var today=new Date(),d=new Date(today);
+  d.setDate(d.getDate()+((1+7-d.getDay())%7||7));
+  for(var i=-2;i<10;i++){
+    var dd=new Date(d);dd.setDate(dd.getDate()+i*7);
+    var val=dd.toISOString().split('T')[0];
+    var label=dd.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+    var o=document.createElement('option');o.value=val;o.textContent='Lunes '+label;
+    if(i===0)o.selected=true;sel.appendChild(o);
+  }
+}
+
+function getLocal(){
+  var sel=document.getElementById('local-select');if(!sel)return'';
+  var v=sel.value;
+  if(v==='Otro'){var inp=document.getElementById('otro-local-input');return inp?(inp.value||'Nuevo local'):'Nuevo local';}
+  return v;
+}
+
+function getSemanaLabel(){
+  var fi=document.getElementById('fecha-inicio');if(!fi||!fi.value)return'';
+  var d=new Date(fi.value+'T12:00:00');
+  var fin=new Date(d);fin.setDate(fin.getDate()+6);
+  var fmt=function(dt){return dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});};
+  return fmt(d)+' \u2013 '+fmt(fin);
+}
+
+function updateHeader(){
+  var hl=document.getElementById('header-local'),hs=document.getElementById('header-semana');
+  if(hl)hl.textContent=getLocal()||'\u2014';
+  if(hs)hs.textContent=getSemanaLabel()||'\u2014';
+}
+
+function onLocalChange(){
+  var sel=document.getElementById('local-select');if(!sel)return;
+  var v=sel.value;
+  var wrap=document.getElementById('otro-local-wrap');
+  if(wrap)wrap.style.display=(v==='Otro')?'block':'none';
+  var ap=document.getElementById('hora-apertura');
+  var ci=document.getElementById('hora-cierre');
+  if(v==='La Cala'){if(ap)ap.value='07:30';if(ci)ci.value='03:00';}
+  else if(v==="Roto's Burguer"){if(ap)ap.value='11:00';if(ci)ci.value='00:00';}
+  if(v!==lastLocal){empleados=[];empCounter=0;lastLocal=v;}
+}
+
+function goStep(n){
+  for(var i=1;i<=8;i++){
+    var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
+    if(sc)sc.className='screen'+(i===n?' active':'');
+    if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
+  }
+  if(n===7) renderCostes();
+  window.scrollTo(0,0);
+}
+
+function nextStep(from){
+  if(from===1){if(!getLocal()){alert('Selecciona un local');return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
+  else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
+  else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();sugerirYRenderizar();goStep(4);}
+  else if(from===4){initPaso5();goStep(5);cargarCuadrantePrevio().then(function(id){if(id)showToast('✓ Cuadrante previo encontrado — se cargará al generar','green');});}
+}
+
+async function cargarEmpleadosBD(){
+  var local = getLocal();
+  var localId = localIdMap[local];
+  if(!localId){ 
+    // Sin conexión BD — usar empleados por defecto
+    if(empleados.length===0) initDef(local);
+    renderEmpleados();
+    return;
+  }
+  try{
+    showToast('⏳ Cargando equipo...','orange');
+    var emps = await sbGet('empleados','local_id=eq.'+localId+'&activo=eq.true&order=id.asc');
+    if(emps.length){
+      empleados=[];
+      empCounter=0;
+      // Cargar salarios de una vez
+      var sals = await sbGet('salarios','order=id.asc');
+      var salMap={};
+      sals.forEach(function(s){ salMap[s.empleado_id]=s; });
+
+      emps.forEach(function(e){
+        empCounter++;
+        var sal = salMap[e.id]||null;
+        empleados.push({
+          id:empCounter,
+          bdId:e.id,
+          nombre:e.nombre,
+          rol:e.rol||'Cam. Ma\u00f1ana',
+          turno:e.turno_habitual||'manana',
+          turnos:Array(7).fill(e.turno_habitual||'manana')
+        });
+        // Cargar salario si existe
+        if(sal){
+          salariosBrutos[empCounter]={
+            brutoMes:sal.bruto_mes||'',
+            hContrato:sal.horas_contrato||40
+          };
+        }
+        // Mapear id local → id BD
+        empIdMap[empCounter]=e.id;
+      });
+      showToast('✓ Equipo cargado desde BD ('+emps.length+' empleados)','green');
+    } else {
+      // No hay empleados en BD — usar por defecto
+      if(empleados.length===0) initDef(local);
+      showToast('ℹ Sin empleados en BD — usando equipo por defecto','orange');
+    }
+  } catch(err){
+    console.error(err);
+    if(empleados.length===0) initDef(local);
+    showToast('⚠ Error cargando BD — usando equipo por defecto','orange');
+  }
+  renderEmpleados();
+}
+
+function buildTurnosConfig(){
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  var local=getLocal();
+  // Horarios predeterminados por local
+  if(local==='La Cala'){
+    turnosConfig=[
+      {id:'manana',nome:'Ma\u00f1ana',emoji:'\u2600\ufe0f',ini:'07:30',fin:'16:30',badge:'badge-manana',color:'#2ecc71',active:true},
+      {id:'tarde',nome:'Tarde',emoji:'\ud83c\udf05',ini:'15:00',fin:'00:00',badge:'badge-tarde',color:'#e67e22',active:true},
+      {id:'noche',nome:'Noche',emoji:'\ud83c\udf19',ini:'18:00',fin:'03:00',badge:'badge-noche',color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',emoji:'\ud83d\udd04',ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
+    ];
+  } else {
+    var s=toMin(ap),e=toMin(ci);if(e<=s)e+=1440;
+    var third=Math.round((e-s)/3/30)*30;
+    var mid1=toStr(s+third),mid2=toStr(s+third*2);
+    var iS=toStr(s+Math.round(third*0.7/30)*30),iE=toStr(s+Math.round(third*1.7/30)*30);
+    turnosConfig=[
+      {id:'manana',nome:'Ma\u00f1ana',emoji:'\u2600\ufe0f',ini:ap,fin:mid1,badge:'badge-manana',color:'#2ecc71',active:true},
+      {id:'tarde',nome:'Tarde',emoji:'\ud83c\udf05',ini:mid1,fin:mid2,badge:'badge-tarde',color:'#e67e22',active:false},
+      {id:'noche',nome:'Noche',emoji:'\ud83c\udf19',ini:mid2,fin:ci,badge:'badge-noche',color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',emoji:'\ud83d\udd04',ini:iS,fin:iE,badge:'badge-intermedio',color:'#9b59b6',active:false},
+    ];
+  }
+}
+
+function toggleTurno(id){
+  var t=turnosConfig.find(function(x){return x.id===id;});
+  if(t){t.active=!t.active;renderTurnosConfigGrid();}
+}
+
+function renderTurnosConfigGrid(){
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  document.getElementById('info-box-turnos').innerHTML='&#10003; Apertura <strong>'+ap+'</strong> &middot; Cierre <strong>'+ci+'</strong> &middot; Activa solo los turnos que usa este local.';
+  var grid=document.getElementById('turnos-config-grid');grid.innerHTML='';
+  turnosConfig.forEach(function(t){
+    var opts=function(def){return Array.from({length:48},function(_,i){
+      var h=Math.floor(i/2),m=i%2===0?'00':'30';
+      var str=String(h).padStart(2,'0')+':'+m;
+      return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
+    }).join('');};
+    var dis=t.active?'':'opacity:0.45';
+    grid.innerHTML+='<div class="turno-config-item" style="'+dis+'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">'
+      +'<div class="turno-config-label" style="color:'+t.color+';margin-bottom:0">'+t.emoji+' Turno '+t.nome+' <small style="color:var(--muted);font-weight:400">'+t.ini+'\u2013'+t.fin+'</small></div>'
+      +'<button onclick="toggleTurno(\''+t.id+'\')" class="toggle-btn '+(t.active?'on':'')+'">'
+      +'<div class="tog-dot"></div><span>'+(t.active?'Activo':'Inactivo')+'</span></button></div>'
+      +'<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
+      +'<div><label>Desde</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
+      +'<div><label>Hasta</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
+      +'</div></div>';
+  });
+}
+
+function updTC(id,f,v){var t=turnosConfig.find(function(x){return x.id===id;});if(t)t[f]=v;}
+
+function initDef(local){
+  empleados=[];
+  var d=local==='La Cala'?[
+    {nombre:'MARILYN',rol:'Resp. Ma\u00f1ana',turno:'manana'},
+    {nombre:'SONNY',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+    {nombre:'ALEX',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+    {nombre:'CONNY',rol:'Cam. Intermedio',turno:'intermedio'},
+    {nombre:'IRENE',rol:'Resp. Noche',turno:'noche'},
+    {nombre:'SANTIAGO',rol:'Cam. Noche',turno:'noche'},
+    {nombre:'LENY',rol:'Cam. Noche',turno:'noche'},
+  ]:local==="Roto's Burguer"?[
+    {nombre:'ARTUR',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+    {nombre:'ALLAN (CAM.)',rol:'Cam. Tarde',turno:'tarde'},
+    {nombre:'ALLAN (COC.)',rol:'Cocinero',turno:'manana'},
+    {nombre:'ARLENE',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+  ]:[];
+  d.forEach(function(x){empCounter++;empleados.push({id:empCounter,nombre:x.nombre,rol:x.rol,turno:x.turno,turnos:Array(7).fill(x.turno)});});
+}
+
+function addEmpleado(){empCounter++;empleados.push({id:empCounter,nombre:'',rol:'Cam. Ma\u00f1ana',turno:'manana',turnos:Array(7).fill('manana')});renderEmpleados();}
+function removeEmpleado(id){empleados=empleados.filter(function(e){return e.id!==id;});renderEmpleados();}
+
+function renderLorenaHorario(){
+  var cont = document.getElementById('lorena-horario-list');
+  if(!cont) return;
+  var DIAS_S = ['L','M','X','J','V','S','D'];
+  var DIAS_L = ['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
+  var TIPO_COLOR = {fiesta:'#ff6b6b', seguido:'var(--green)', partido:'#ffa040', apoyo:'#6b8fff'};
+  var TIPO_ICON  = {fiesta:'\ud83c\udfd6', seguido:'\u23f0', partido:'\u2702\ufe0f', apoyo:'\ud83e\udd1d'};
+  var TIPOS = ['fiesta','seguido','partido','apoyo'];
+
+  var timeOpts = function(def){
+    return Array.from({length:48}, function(_,i){
+      var h=Math.floor(i/2), m=i%2===0?'00':'30';
+      var str=String(h).padStart(2,'0')+':'+m;
+      return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
+    }).join('');
+  };
+
+  var sel = function(id, def){
+    return '<select id="'+id+'" onchange="updLorena('+id.replace(/\D/g,'')+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 4px;color:var(--text);font-size:10px;width:58px">'+timeOpts(def)+'</select>';
+  };
+
+  // Diseño adaptativo: cards en móvil, tabla en escritorio
+  var html = '';
+
+  // === ESCRITORIO: tabla compacta ===
+  html += '<div class="lorena-desktop">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<thead><tr style="border-bottom:1px solid var(--border)">'
+    +'<th style="padding:4px 6px;text-align:left;color:var(--muted);font-size:9px;font-weight:600">DÍA</th>'
+    +'<th style="padding:4px 6px;text-align:left;color:var(--muted);font-size:9px;font-weight:600">TIPO</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">ENTRADA</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">SALIDA</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">ENT.2</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">SAL.2</th>'
+    +'</tr></thead><tbody>';
+
+  lorenaHorario.forEach(function(d, idx){
+    var esFiesta  = d.tipo==='fiesta';
+    var esPartido = d.tipo==='partido';
+    var col = TIPO_COLOR[d.tipo] || 'var(--muted)';
+    var tipoOpts = TIPOS.map(function(t){
+      return '<option value="'+t+'"'+(d.tipo===t?' selected':'')+'>'+TIPO_ICON[t]+' '+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';
+    }).join('');
+    var bg = idx%2===0 ? 'background:#ffffff06' : '';
+    html += '<tr style="border-bottom:1px solid var(--border)10;'+bg+'">';
+    html += '<td style="padding:5px 6px"><span style="font-weight:700;color:'+col+'">'+DIAS_S[idx]+'</span><span style="font-size:9px;color:var(--muted);margin-left:4px">'+DIAS_L[idx]+'</span></td>';
+    html += '<td style="padding:3px 6px"><select id="ltipo'+idx+'" onchange="updLorena('+idx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 4px;color:'+col+';font-size:10px;font-weight:600">'+tipoOpts+'</select></td>';
+    if(esFiesta){
+      html += '<td colspan="4" style="padding:3px 6px;text-align:center;color:#ff6b6b;font-size:10px">\ud83c\udfd6 Día libre</td>';
+    } else {
+      html += '<td style="padding:3px 4px;text-align:center">'+sel('lini'+idx, d.ini||'12:00')+'</td>';
+      html += '<td style="padding:3px 4px;text-align:center">'+sel('lfin'+idx, d.fin||'21:00')+'</td>';
+      if(esPartido){
+        html += '<td style="padding:3px 4px;text-align:center">'+sel('lini2'+idx, d.ini2||'20:00')+'</td>';
+        html += '<td style="padding:3px 4px;text-align:center">'+sel('lfin2'+idx, d.fin2||'23:00')+'</td>';
+      } else {
+        html += '<td colspan="2" style="padding:3px 4px;text-align:center;color:var(--muted);font-size:10px">—</td>';
+      }
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  // === MÓVIL: cards compactas ===
+  html += '<div class="lorena-mobile">';
+  lorenaHorario.forEach(function(d, idx){
+    var esFiesta  = d.tipo==='fiesta';
+    var esPartido = d.tipo==='partido';
+    var col = TIPO_COLOR[d.tipo] || 'var(--muted)';
+    var tipoOpts = TIPOS.map(function(t){
+      return '<option value="'+t+'"'+(d.tipo===t?' selected':'')+'>'+TIPO_ICON[t]+' '+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';
+    }).join('');
+    var bg = esFiesta ? '#2d1515' : '#ffffff06';
+    html += '<div style="background:'+bg+';border-radius:7px;border:1px solid var(--border)40;padding:7px 8px;margin-bottom:5px">';
+    // Fila 1: día + tipo
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:'+(esFiesta?'0':'6px')+'">';
+    html += '<span style="font-weight:700;font-size:12px;color:'+col+';min-width:20px">'+DIAS_S[idx]+'</span>';
+    html += '<span style="font-size:10px;color:var(--muted);flex:1">'+DIAS_L[idx]+'</span>';
+    html += '<select id="mltipo'+idx+'" onchange="updLorenaMobile('+idx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 6px;color:'+col+';font-size:10px;font-weight:600">'+tipoOpts+'</select>';
+    html += '</div>';
+    if(!esFiesta){
+      // Fila 2: horas en grid 2 col
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">';
+      html += '<div><div style="font-size:8px;color:var(--muted);margin-bottom:2px">Entrada'+(esPartido?' 1':'')+'</div>'
+            + '<select id="mlini'+idx+'" onchange="updLorenaMobile('+idx+')" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:4px;color:var(--text);font-size:11px">'+timeOpts(d.ini||'12:00')+'</select></div>';
+      html += '<div><div style="font-size:8px;color:var(--muted);margin-bottom:2px">Salida'+(esPartido?' 1':'')+'</div>'
+            + '<select id="mlfin'+idx+'" onchange="updLorenaMobile('+idx+')" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:4px;color:var(--text);font-size:11px">'+timeOpts(d.fin||'21:00')+'</select></div>';
+      if(esPartido){
+        html += '<div><div style="font-size:8px;color:var(--muted);margin-bottom:2px">Entrada 2</div>'
+              + '<select id="mlini2'+idx+'" onchange="updLorenaMobile('+idx+')" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:4px;color:var(--text);font-size:11px">'+timeOpts(d.ini2||'20:00')+'</select></div>';
+        html += '<div><div style="font-size:8px;color:var(--muted);margin-bottom:2px">Salida 2</div>'
+              + '<select id="mlfin2'+idx+'" onchange="updLorenaMobile('+idx+')" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:4px;color:var(--text);font-size:11px">'+timeOpts(d.fin2||'23:00')+'</select></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+
+  cont.innerHTML = html;
+}
+function updLorenaMobile(idx){
+  var tipoEl = document.getElementById('mltipo'+idx);
+  var iniEl  = document.getElementById('mlini'+idx);
+  var finEl  = document.getElementById('mlfin'+idx);
+  var ini2El = document.getElementById('mlini2'+idx);
+  var fin2El = document.getElementById('mlfin2'+idx);
+  if(tipoEl) lorenaHorario[idx].tipo = tipoEl.value;
+  if(iniEl)  lorenaHorario[idx].ini  = iniEl.value;
+  if(finEl)  lorenaHorario[idx].fin  = finEl.value;
+  if(ini2El) lorenaHorario[idx].ini2 = ini2El.value;
+  if(fin2El) lorenaHorario[idx].fin2 = fin2El.value;
+  renderLorenaHorario();
+}
+function getLorenaLabel(d){
+  if(d.tipo==='fiesta') return '🏖️ FIESTA';
+  if(d.tipo==='partido') return (d.ini||'')+'–'+(d.fin||'')+' / '+(d.ini2||'')+'–'+(d.fin2||'');
+  return (d.ini||'')+'–'+(d.fin||'');
+}
+
+function updLorena(idx){
+  var tipoEl = document.getElementById('ltipo'+idx);
+  var iniEl  = document.getElementById('lini'+idx);
+  var finEl  = document.getElementById('lfin'+idx);
+  var ini2El = document.getElementById('lini2'+idx);
+  var fin2El = document.getElementById('lfin2'+idx);
+  if(tipoEl) lorenaHorario[idx].tipo = tipoEl.value;
+  if(iniEl)  lorenaHorario[idx].ini  = iniEl.value;
+  if(finEl)  lorenaHorario[idx].fin  = finEl.value;
+  if(ini2El) lorenaHorario[idx].ini2 = ini2El.value;
+  if(fin2El) lorenaHorario[idx].fin2 = fin2El.value;
+  renderLorenaHorario();
+}
+
+function renderEmpleados(){
+  renderLorenaHorario();
+  var cont=document.getElementById('empleados-list');cont.innerHTML='';
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=emp.nombre?emp.nombre.substring(0,2).toUpperCase():'??';
+    var rOpts=ROLES.map(function(r){return'<option value="'+r+'"'+(emp.rol===r?' selected':'')+'>'+r+'</option>';}).join('');
+    var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+    var tOpts=activeTurnos.map(function(t){return'<option value="'+t.id+'"'+(emp.turno===t.id?' selected':'')+'>'+t.emoji+' '+t.nome+'</option>';}).join('');
+    cont.innerHTML+='<div class="empleado-card" id="ec-'+emp.id+'">'
+      +'<div class="empleado-header">'
+      +'<div class="emp-avatar" style="background:'+color+'20;color:'+color+'" id="ea-'+emp.id+'">'+init+'</div>'
+      +'<input class="emp-name-input" type="text" placeholder="Nombre empleado" value="'+emp.nombre+'" oninput="updNom('+emp.id+',this.value)">'
+      +'<button class="remove-btn" onclick="removeEmpleado('+emp.id+')">&#10005;</button></div>'
+      +'<div class="form-row">'
+      +'<div class="form-group"><label>Rol</label><select onchange="updEmp('+emp.id+',\'rol\',this.value)">'+rOpts+'</select></div>'
+      +'<div class="form-group"><label>Turno habitual</label><select onchange="updEmp('+emp.id+',\'turno\',this.value)">'+tOpts+'</select></div>'
+      +'<div class="form-group"><label>D\u00edas fiesta / semana</label>'
+      +'<select class="inp-sm" onchange="updEmp('+emp.id+',\'diasFiesta\',this.value)">'
+      +'<option value="1"'+(emp.diasFiesta==1?' selected':'')+'>1 d\u00eda</option>'
+      +'<option value="1.5"'+(!emp.diasFiesta||emp.diasFiesta==1.5?' selected':'')+'>1,5 d\u00edas (recomendado)</option>'
+      +'<option value="2"'+(emp.diasFiesta==2?' selected':'')+'>2 d\u00edas</option>'
+      +'<option value="3"'+(emp.diasFiesta==3?' selected':'')+'>3 d\u00edas</option>'
+      +'</select></div>'
+      +'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; Las horas semanales se calculan autom\u00e1ticamente seg\u00fan los turnos asignados</div>'
+      +'</div>';
+  });
+}
+
+function updNom(id,v){var e=empleados.find(function(x){return x.id===id;});if(e)e.nombre=v;var av=document.getElementById('ea-'+id);if(av)av.textContent=v?v.substring(0,2).toUpperCase():'??';}
+function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(e)e[f]=v;}
+
+function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
+
+// ========== LÓGICA FIESTAS v3.5 ==========
+var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
+var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
+var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
+
+function toMinTurno(str){
+  if(!str) return 0;
+  var p=str.split(':');
+  return parseInt(p[0])*60+(parseInt(p[1])||0);
+}
+
+function getTurnoFin(turnoId){
+  var t=turnosConfig.find(function(x){return x.id===turnoId;});
+  if(!t) return 0;
+  var fin=toMinTurno(t.fin);
+  var ini=toMinTurno(t.ini);
+  if(fin<ini) fin+=1440; // cruza medianoche
+  return fin;
+}
+
+function getTurnoIni(turnoId){
+  var t=turnosConfig.find(function(x){return x.id===turnoId;});
+  if(!t) return 0;
+  return toMinTurno(t.ini);
+}
+
+// Cuenta cuántos empleados del mismo turno trabajan ese día
+function contarTurnoEnDia(dia, turnoId, excluirEmpId){
+  return empleados.filter(function(e){
+    return e.id!==excluirEmpId && e.turno===turnoId && e.turnos && e.turnos[dia]!=='fiesta' && e.turnos[dia]!=='mediafiesta';
+  }).length;
+}
+
+// Verifica si se puede dar fiesta a emp en ese día sin romper mínimos
+function puedeTomarFiesta(emp, dia){
+  var turno = emp.turno;
+  var min = MINIMOS_TURNO[turno]||1;
+  // Contar cuántos del mismo turno hay en total (incluyendo al propio empleado)
+  var totalMismoTurno = empleados.filter(function(e){ return e.turno===turno; }).length;
+  // Si es el único de su turno, el mínimo no aplica — siempre puede tomar fiesta
+  if(totalMismoTurno <= 1) return true;
+  var trabajando = contarTurnoEnDia(dia, turno, emp.id);
+  return trabajando >= min;
+}
+
+// Verifica descanso 12h entre fin del turno anterior y inicio del siguiente
+function respeta12h(emp, diaFiesta, tipoDiaFiesta){
+  // diaFiesta = índice 0-6
+  // tipoDiaFiesta = 'fiesta' o 'mediafiesta'
+  var turno = emp.turno;
+  var hJornada = +document.getElementById('horas-jornada').value||9;
+  var hMF = +document.getElementById('horas-media-fiesta').value||5;
+
+  // Día anterior: ¿a qué hora termina?
+  var diaAnterior = diaFiesta - 1;
+  var finAnterior = 0;
+  if(diaAnterior >= 0){
+    var tAnt = emp.turnos[diaAnterior];
+    if(tAnt === 'fiesta') finAnterior = 0;
+    else if(tAnt === 'mediafiesta'){
+      // media fiesta: trabaja las últimas hMF horas
+      finAnterior = getTurnoFin(turno);
+    } else {
+      finAnterior = getTurnoFin(turno);
+    }
+  }
+
+  // Día siguiente: ¿a qué hora empieza?
+  var diaSiguiente = diaFiesta + 1;
+  var iniSiguiente = 9999;
+  if(diaSiguiente <= 6){
+    var tSig = emp.turnos[diaSiguiente];
+    if(tSig === 'fiesta') iniSiguiente = 9999;
+    else if(tSig === 'mediafiesta'){
+      // media fiesta: trabaja las últimas hMF h → empieza al final del turno - hMF
+      var finTurno = getTurnoFin(turno);
+      iniSiguiente = finTurno - hMF*60 + 1440; // en minutos del día siguiente
+    } else {
+      iniSiguiente = getTurnoIni(turno) + 1440;
+    }
+  }
+
+  // Si es media fiesta el día de "fiesta", trabaja la primera parte del turno
+  // entonces finAnterior sería el fin del trabajo ese mismo día
+  if(tipoDiaFiesta === 'mediafiesta'){
+    finAnterior = getTurnoFin(turno) - hMF*60; // trabaja las hMF últimas → termina en finTurno
+  }
+
+  var descanso = iniSiguiente - finAnterior;
+  return descanso >= 12*60;
+}
+
+// Fiestas fijas inamovibles por empleado
+// formato: {nombre: [[dia, tipo, horaIni, horaFin], ...]}
+// tipo: 'fiesta' = día completo, 'mediafiesta' = media jornada con horario especial
+// Horario semanal de Lorena (directora) — editable desde paso 3
+var lorenaHorario = [
+  {dia:0, tipo:'fiesta',   ini:'',      fin:'',      label:'FIESTA'},       // Lunes - fijo
+  {dia:1, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Martes
+  {dia:2, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Miércoles
+  {dia:3, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Jueves
+  {dia:4, tipo:'partido',  ini:'11:00', fin:'17:00', ini2:'20:00', fin2:'23:00', label:'11:00–17:00 / 20:00–23:00'}, // Viernes
+  {dia:5, tipo:'partido',  ini:'11:00', fin:'17:00', ini2:'20:00', fin2:'23:00', label:'11:00–17:00 / 20:00–23:00'}, // Sábado
+  {dia:6, tipo:'apoyo',    ini:'12:00', fin:'17:00', label:'12:00–17:00'},  // Domingo
+];
+
+var lorenaSalario = {brutoMes: 2300, hContrato: 40}; // Salario Lorena directora
+
+var FIESTAS_FIJAS = {
+  'MARILYN': [
+    [3, 'fiesta', null, null],           // Jueves - fiesta completa
+    [4, 'mediafiesta', '07:30', '12:30'] // Viernes - solo mañana hasta 12:30
+  ]
+};
+
+function getFiestasFijas(emp){
+  // Busca por nombre (case insensitive)
+  var nombre = (emp.nombre||'').toUpperCase().trim();
+  for(var key in FIESTAS_FIJAS){
+    if(key.toUpperCase() === nombre) return FIESTAS_FIJAS[key];
+  }
+  return null;
+}
+
+function sugerirTurnos(){
+  if(!turnosConfig.length) buildTurnosConfig();
+  var df = getDiasFlojos();
+
+  // Inicializar todos con turno habitual
+  empleados.forEach(function(emp){
+    emp.turnos = Array(7).fill(emp.turno);
+    if(!emp.diasFiesta) emp.diasFiesta = 1.5;
+  });
+
+  // Aplicar primero las fiestas fijas inamovibles
+  empleados.forEach(function(emp){
+    var fijas = getFiestasFijas(emp);
+    if(!fijas) return;
+    fijas.forEach(function(f){
+      var dia=f[0], tipo=f[1], ini=f[2], fin=f[3];
+      emp.turnos[dia] = tipo;
+      // Si tiene horario especial en media fiesta, guardarlo
+      if(tipo==='mediafiesta' && ini && fin){
+        if(!emp.horarioEspecial) emp.horarioEspecial = {};
+        emp.horarioEspecial[dia] = {ini:ini, fin:fin};
+      }
+    });
+  });
+
+  // Ordenar días: primero los flojos, luego los demás evitando V/S/D al final
+  var diasOrdenados = [];
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+  [0,1,2,3,4,5,6].forEach(function(d){
+    if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d);
+  });
+  [0,1,2,3,4,5,6].forEach(function(d){
+    if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d);
+  });
+
+  // Asignar fiestas automáticas al resto (saltando empleados con fiestas fijas)
+  empleados.forEach(function(emp, empIdx){
+    // Si tiene fiestas fijas, no tocar — ya están asignadas
+    if(getFiestasFijas(emp)) return;
+
+    var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
+    var tieneMedia = (diasFiesta % 1) !== 0;
+    var diasEnteros = Math.floor(diasFiesta);
+
+    var offset = (empIdx + (emp._rotOffset||0)) % diasOrdenados.length;
+    var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
+
+    var asignados = [];
+    var intentos = 0;
+
+    for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
+      var dia = diasCandidatos[i];
+      if(asignados.indexOf(dia)>=0) continue;
+      if(puedeTomarFiesta(emp, dia)){
+        asignados.push(dia);
+      }
+      intentos++;
+      if(intentos>14) break;
+    }
+
+    asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
+
+    if(tieneMedia && asignados.length>0){
+      var diaFiesta = asignados[asignados.length-1];
+      var candidatoMedia = -1;
+      var diaAntes = diaFiesta - 1;
+      if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)){
+        candidatoMedia = diaAntes;
+      }
+      if(candidatoMedia<0){
+        var diaDespues = diaFiesta + 1;
+        if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)){
+          candidatoMedia = diaDespues;
+        }
+      }
+      if(candidatoMedia>=0) emp.turnos[candidatoMedia]='mediafiesta';
+    }
+  });
+}
+
+function sugerirYRenderizar(){
+  sugerirTurnos();
+  renderTurnosAsig();
+}
+
+function rotarFiestas(){
+  // Rotar el offset de cada empleado +1 para cambiar qué día descansa
+  empleados.forEach(function(emp, idx){
+    emp._rotOffset = ((emp._rotOffset||0) + 1);
+  });
+  sugerirTurnosConOffset();
+  renderTurnosAsig();
+  showToast('🔀 Fiestas rotadas — revisa el cuadrante','orange');
+}
+
+function sugerirTurnosConOffset(){
+  if(!turnosConfig.length) buildTurnosConfig();
+  var df = getDiasFlojos();
+  var diasOrdenados = [];
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+  [0,1,2,3,4,5,6].forEach(function(d){ if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  [0,1,2,3,4,5,6].forEach(function(d){ if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+
+  empleados.forEach(function(emp, empIdx){
+    emp.turnos = Array(7).fill(emp.turno);
+    if(!emp.diasFiesta) emp.diasFiesta = 1.5;
+    var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
+    var tieneMedia = (diasFiesta % 1) !== 0;
+    var diasEnteros = Math.floor(diasFiesta);
+    var offset = (empIdx + (emp._rotOffset||0)) % Math.max(diasOrdenados.length,1);
+    var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
+    var asignados = [];
+    for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
+      var dia = diasCandidatos[i];
+      if(asignados.indexOf(dia)>=0) continue;
+      if(puedeTomarFiesta(emp, dia)) asignados.push(dia);
+    }
+    asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
+    if(tieneMedia && asignados.length>0){
+      var diaFiesta = asignados[asignados.length-1];
+      var candidatoMedia = -1;
+      var diaAntes = diaFiesta - 1;
+      if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)) candidatoMedia = diaAntes;
+      if(candidatoMedia<0){
+        var diaDespues = diaFiesta + 1;
+        if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)) candidatoMedia = diaDespues;
+      }
+      if(candidatoMedia>=0) emp.turnos[candidatoMedia]='mediafiesta';
+    }
+  });
+}
+
+function renderTurnosAsig(){
+  var df=getDiasFlojos();
+  var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+  var leg=document.getElementById('turno-legend');
+  leg.innerHTML=activeTurnos.map(function(t){return'<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span class="turno-badge '+t.badge+'">'+t.emoji+' '+t.nome+'</span> '+t.ini+'\u2013'+t.fin+'</span>';}).join('')
+    +'<span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd Media fiesta</span></span>'
+    +'<span style="font-size:10px"><span class="turno-badge badge-fiesta">\ud83c\udfd6 Fiesta</span></span>';
+
+  var html='<div class="dias-grid-header"><div></div>';
+  DIAS_SHORT.forEach(function(d,i){html+='<div class="dia-label-top" style="'+(df.includes(i)?'color:var(--red)':'')+'">'+(df.includes(i)?'\ud83c\udfd6 ':'')+d+'</div>';});
+  html+='</div>';
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    html+='<div class="dias-grid-row"><div style="font-size:11px;font-weight:700;color:'+color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( emp.nombre||'Emp '+emp.id)+'</div>';
+    DIAS.forEach(function(_,di){
+      var tv=emp.turnos?emp.turnos[di]:emp.turno;
+      var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+'</option>';}).join('')
+        +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>\u00bd Media fiesta</option>'
+        +'<option value="fiesta"'+(tv==='fiesta'?' selected':'')+'>\ud83c\udfd6 Fiesta</option>';
+      html+='<div><select class="dia-select '+tv+'" onchange="updTurno('+emp.id+','+di+',this.value,this)">'+opts+'</select></div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('turnos-asignacion').innerHTML=html;
+}
+
+function updTurno(empId,di,v,el){var e=empleados.find(function(x){return x.id===empId;});if(e){if(!e.turnos)e.turnos=Array(7).fill(e.turno);e.turnos[di]=v;}el.className='dia-select '+v;}
+
+function calcHorasRefuerzo(p){
+  if(!p.desde||!p.hasta) return 0;
+  var ini=toMinTurno(p.desde), fin=toMinTurno(p.hasta);
+  if(fin<=ini) fin+=1440;
+  return (fin-ini)/60;
+}
+
+function getCosteRefuerzos(){
+  // Suma coste de todos los refuerzos de todos los eventos
+  var total=0;
+  eventos.forEach(function(ev){
+    (ev.personas||[]).forEach(function(p){
+      var h=calcHorasRefuerzo(p);
+      total+=h*(parseFloat(p.precioHora)||10);
+    });
+  });
+  return total;
+}
+
+function initPaso5(){refuerzoPersonas=[];refuerzoCounter=0;renderRefuerzoPersonas();}
+
+function addRefuerzoPersona(){
+  refuerzoCounter++;
+  refuerzoPersonas.push({id:refuerzoCounter,nombre:'',desde:'18:00',hasta:'23:00',precioHora:10});
+  renderRefuerzoPersonas();
+}
+
+function removeRefuerzoPersona(id){
+  refuerzoPersonas=refuerzoPersonas.filter(function(p){return p.id!==id;});
+  renderRefuerzoPersonas();
+}
+
+function updRefuerzoPersona(id,field,val){var p=refuerzoPersonas.find(function(x){return x.id===id;});if(p)p[field]=val;}
+
+function renderRefuerzoPersonas(){
+  var cont=document.getElementById('refuerzo-personas-list');if(!cont)return;
+  if(refuerzoPersonas.length===0){
+    cont.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:7px;background:var(--darker);border-radius:5px;border:1px dashed var(--border)">Añade al menos una persona de refuerzo para este evento</div>';
+    return;
+  }
+  var allOpts=function(def){return Array.from({length:48},function(_,i){var h=Math.floor(i/2),m=i%2===0?'00':'30';var str=String(h).padStart(2,'0')+':'+m;return'<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';}).join('');};
+  cont.innerHTML=refuerzoPersonas.map(function(p){
+    var horas=calcHorasRefuerzo(p);
+    var coste=horas*(parseFloat(p.precioHora)||10);
+    return'<div style="display:grid;grid-template-columns:1fr 80px 80px 70px 30px;gap:7px;align-items:end;margin-bottom:7px;background:var(--darker);padding:9px;border-radius:7px;border:1px solid #3d3000">'
+      +'<div><label>Nombre</label><input type="text" placeholder="Ej: JUAN" value="'+p.nombre+'" oninput="updRefuerzoPersona('+p.id+',\'nombre\',this.value)" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;font-weight:600;outline:none"></div>'
+      +'<div><label>Desde</label><select onchange="updRefuerzoPersona('+p.id+',\'desde\',this.value)">'+allOpts(p.desde)+'</select></div>'
+      +'<div><label>Hasta</label><select onchange="updRefuerzoPersona('+p.id+',\'hasta\',this.value)">'+allOpts(p.hasta)+'</select></div>'
+      +'<div><label>€/hora</label><input type="number" min="0" step="0.5" value="'+(p.precioHora||10)+'" oninput="updRefuerzoPersona('+p.id+',\'precioHora\',this.value)" class="inp-sm" style="padding:8px 6px"></div>'
+      +'<div><button class="remove-btn" onclick="removeRefuerzoPersona('+p.id+')" style="margin-top:17px">&#10005;</button></div>'
+      +'</div>'
+      +(horas>0?'<div style="font-size:10px;color:var(--orange);margin:-4px 0 6px 0;padding:4px 9px;background:#2d1a00;border-radius:5px">'+p.nombre+': '+horas.toFixed(1)+'h × '+(p.precioHora||10)+'€ = <strong>'+coste.toFixed(2)+'€</strong></div>':'');
+  }).join('');
+}
+
+function addEvento(){
+  var tipo=document.getElementById('evento-tipo').value;
+  var dia=+document.getElementById('evento-dia').value;
+  var desc=document.getElementById('evento-desc-sel').value;
+  if(!desc){alert('Selecciona una descripci\u00f3n del evento');return;}
+  if(refuerzoPersonas.length===0){alert('A\u00f1ade al menos una persona de refuerzo');return;}
+  var inv=refuerzoPersonas.filter(function(p){return!p.nombre.trim();});
+  if(inv.length>0){alert('Pon el nombre de cada persona de refuerzo');return;}
+  eventos.push({tipo:tipo,dia:dia,desc:desc,personas:refuerzoPersonas.map(function(p){return{id:p.id,nombre:p.nombre,desde:p.desde,hasta:p.hasta};})});
+  refuerzoPersonas=[];refuerzoCounter=0;
+  document.getElementById('evento-desc-sel').value='';
+  renderRefuerzoPersonas();renderEventos();
+}
+
+function removeEvento(i){eventos.splice(i,1);renderEventos();}
+
+function renderEventos(){
+  var cont=document.getElementById('eventos-list');
+  cont.innerHTML=eventos.map(function(ev,i){
+    return'<div class="evento-item">'
+      +'<div style="font-size:18px">'+ev.tipo+'</div>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:600">'+ev.desc+' \u00b7 '+DIAS[ev.dia]+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+ev.personas.map(function(p){return p.nombre+' ('+p.desde+'\u2013'+p.hasta+')';}).join(' \u00b7 ')+'</div></div>'
+      +'<button class="remove-btn" onclick="removeEvento('+i+')">&#10005;</button></div>';
+  }).join('')+'<div id="no-eventos" style="display:'+(eventos.length?'none':'block')+';color:var(--muted);font-size:12px;padding:18px 0;text-align:center">No hay eventos a\u00f1adidos</div>';
+}
+
+function getTInfo(v){
+  if(v==='fiesta')return{label:'\ud83c\udfd6 FIESTA',badge:'badge-fiesta',horas:0};
+  var hMF=+document.getElementById('horas-media-fiesta').value;
+  if(v==='mediafiesta')return{label:'\u00bd Media fiesta',badge:'badge-mediafiesta',horas:hMF};
+  var t=turnosConfig.find(function(x){return x.id===v;});
+  if(t)return{label:t.emoji+' '+t.ini+'\u2013'+t.fin,badge:t.badge,horas:diffH(t.ini,t.fin)};
+  return{label:v,badge:'badge-manana',horas:0};
+}
+
+function toggleHoras(){
+  mostrarHoras=!mostrarHoras;
+  var btn=document.getElementById('btn-toggle-horas');
+  if(btn)btn.textContent=(mostrarHoras?'\ud83d\udc41 Ocultar horas':'\ud83d\udc41 Mostrar horas');
+  document.querySelectorAll('.col-horas').forEach(function(el){el.style.display=mostrarHoras?'':'none';});
+}
+
+async function cargarCuadrantePrevio(){
+  var local=getLocal();
+  var localId=localIdMap[local];
+  if(!localId) return null;
+  var semana=getSemanaLabel();
+  try{
+    var cuads=await sbGet('cuadrantes','local_id=eq.'+localId+'&semana_label=eq.'+encodeURIComponent(semana)+'&order=id.desc&limit=1');
+    if(!cuads.length) return null;
+    var cuadId=cuads[0].id;
+    currentCuadranteId=cuadId;
+    // Cargar turnos
+    var turnos=await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuadId+'&order=empleado_id.asc,dia.asc');
+    // Mapear por empleado bdId
+    var turnoMap={};
+    turnos.forEach(function(t){
+      if(!turnoMap[t.empleado_id]) turnoMap[t.empleado_id]=Array(7).fill('fiesta');
+      turnoMap[t.empleado_id][t.dia]=(t.turno||'fiesta').toLowerCase();
+    });
+    // Aplicar a empleados
+    empleados.forEach(function(emp){
+      var bdId=empIdMap[emp.id];
+      if(bdId && turnoMap[bdId]) emp.turnos=turnoMap[bdId];
+    });
+    // Cargar extras
+    var extras=await sbGet('extras_dia','cuadrante_id=eq.'+cuadId);
+    extrasDia=[];extraCounter=0;
+    extras.forEach(function(ex){
+      extraCounter++;
+      // Buscar empId local desde bdId
+      var localEmpId=null;
+      Object.keys(empIdMap).forEach(function(k){if(empIdMap[k]===ex.empleado_id)localEmpId=parseInt(k);});
+      extrasDia.push({id:extraCounter,empId:localEmpId||ex.empleado_id,dia:ex.dia,
+                      horas:ex.horas||'',precioHora:ex.precio_hora||'',motivo:ex.motivo||''});
+    });
+    return cuadId;
+  }catch(e){
+    console.error('cargarCuadrantePrevio:',e);
+    return null;
+  }
+}
+
+function generarCuadrante(){
+  updateHeader();
+  var local=getLocal(),semana=getSemanaLabel();
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  var minP = 2; // Mínimo por turno — gestionado por MINIMOS_TURNO en lógica fiestas
+  var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+  var epd=Array(7).fill(null).map(function(_,i){return eventos.filter(function(ev){return ev.dia===i;});});
+  var horasE=empleados.map(function(emp){return(emp.turnos||[]).reduce(function(s,t){return s+getTInfo(t).horas;},0);});
+  var cob=Array(7).fill(0).map(function(_,di){return empleados.filter(function(e){return e.turnos&&e.turnos[di]!=='fiesta';}).length;});
+  var totalH=horasE.reduce(function(a,b){return a+b;},0);
+  var numEventos=eventos.length;
+
+  var tbodyRows=empleados.map(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+    var cells=(emp.turnos||[]).map(function(t,di){
+      var info=getTInfo(t);
+      return'<td><span class="turno-badge '+info.badge+'">'+info.label+'</span></td>';
+    }).join('');
+    return'<tr>'
+      +'<td class="emp-name"><div style="display:flex;align-items:center;gap:7px">'
+      +'<div style="width:24px;height:24px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">'+init+'</div>'
+      +(emp.nombre||'Empleado '+emp.id)+'</div></td>'
+      +'<td style="font-size:10px;color:var(--muted)">'+emp.rol+'</td>'
+      +cells
+      +'<td class="col-horas" style="font-weight:700;color:var(--accent);font-size:12px">'+horasE[idx].toFixed(1)+'h</td></tr>';
+  }).join('');
+
+  var refRows='';
+  eventos.forEach(function(ev){
+    (ev.personas||[]).forEach(function(p){
+      var horas=diffH(p.desde,p.hasta);
+      var cells=DIAS.map(function(_,di){
+        if(di===ev.dia)return'<td><span class="turno-badge" style="background:#3d2d00;color:#ffd040;border:1px solid #6b5000">'+p.desde+'\u2013'+p.hasta+'</span><br><span style="font-size:8px;color:#aaa">'+ev.desc+'</span></td>';
+        return'<td style="color:var(--muted);font-size:10px;text-align:center">\u2014</td>';
+      }).join('');
+      refRows+='<tr style="background:#1a1500">'
+        +'<td class="emp-name"><div style="display:flex;align-items:center;gap:7px">'
+        +'<div style="width:24px;height:24px;border-radius:50%;background:#ffd04020;color:#ffd040;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">\u26a1</div>'
+        +(p.nombre||'REFUERZO')+'</div></td>'
+        +'<td style="font-size:10px;color:#ffd040">'+ev.tipo+' Evento</td>'
+        +cells
+        +'<td class="col-horas" style="font-weight:700;color:#ffd040;font-size:12px">'+horas.toFixed(1)+'h</td></tr>';
+    });
+  });
+
+  var cobRow=cob.map(function(c){
+    var cl=c>=minP?'cob-ok':c===minP-1?'cob-warn':'cob-low';
+    return'<td style="border:1px solid var(--border);padding:5px;text-align:center"><span class="'+cl+'">'+c+'</span><br><span style="font-size:9px;color:var(--muted)">pers.</span></td>';
+  }).join('');
+
+  var eventosHtml='';
+  if(numEventos>0){
+    eventosHtml='<hr class="divider"><div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--accent)">\u26a1 Eventos especiales de la semana</div>'
+      +eventos.map(function(ev){
+        return'<div class="evento-item"><div style="font-size:18px">'+ev.tipo+'</div>'
+          +'<div><div style="font-size:12px;font-weight:600">'+ev.desc+' \u00b7 '+DIAS[ev.dia]+'</div>'
+          +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+(ev.personas||[]).map(function(p){return p.nombre+' \u00b7 '+p.desde+'\u2013'+p.hasta+' ('+diffH(p.desde,p.hasta).toFixed(1)+'h)';}).join(' &nbsp;\u00b7&nbsp; ')+'</div></div></div>';
+      }).join('');
+  }
+
+  var legendaHtml=activeTurnos.map(function(t){return'<span style="font-size:10px"><span class="turno-badge '+t.badge+'">'+t.emoji+' '+t.nome+'</span> '+t.ini+'\u2013'+t.fin+'</span>';}).join(' ')
+    +' <span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd Media fiesta</span></span>';
+
+  var html='<div class="card">'
+    +'<div style="margin-bottom:16px"><div class="card-title">\ud83d\udccb Cuadrante generado</div>'
+    +'<div class="card-sub">'+local+' \u00b7 '+semana+' \u00b7 '+ap+' \u2013 '+ci+'</div></div>'
+    +'<div class="stats-grid">'
+    +'<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">Empleados</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+totalH.toFixed(0)+'h</div><div class="stat-label">Horas totales</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+Math.min.apply(null,cob)+'\u2013'+Math.max.apply(null,cob)+'</div><div class="stat-label">Cobertura/d\u00eda</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+numEventos+'</div><div class="stat-label">Eventos</div></div>'
+    +'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-bottom:6px;display:none" class="mobile-scroll-hint">← Desliza para ver toda la tabla →</div>'
+    +'<div class="cuadrante-scroll-wrap" style="overflow-x:auto"><table class="schedule-table">'
+    +'<thead><tr><th class="emp-col">EMPLEADO</th><th>ROL</th>'
+    +DIAS_SHORT.map(function(d,i){return'<th>'+d+(epd[i].length?' '+epd[i].map(function(e){return e.tipo;}).join(''):'')+'</th>';}).join('')
+    +'<th class="col-horas">HORAS</th></tr></thead>'
+    +'<tbody>'+tbodyRows+refRows+'</tbody>'
+    +'<tfoot><tr style="background:var(--darker)">'
+    +'<td colspan="2" style="padding:7px;font-weight:700;font-size:10px;color:var(--muted);border:1px solid var(--border)">COBERTURA</td>'
+    +cobRow
+    +'<td class="col-horas" style="border:1px solid var(--border)"></td>'
+    +'</tr></tfoot>'
+    +'</table></div>'
+    // Sección Lorena - Directora (fuera del cuadrante, apoyo operativo)
+    +(function(){
+      var lorenaHtml='';
+      var LORENA_SEMANA = lorenaHorario;
+      lorenaHtml+='<div style="margin:10px 0;background:transparent;border:1.5px solid #888;border-radius:8px;padding:10px">';
+      lorenaHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+      lorenaHtml+='<div style="width:28px;height:28px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">LO</div>';
+      lorenaHtml+='<div>';
+      lorenaHtml+='<div style="font-weight:700;font-size:12px;color:#333">LORENA <span style="font-size:9px;background:#eee;color:#555;padding:2px 6px;border-radius:4px;margin-left:4px;border:1px solid #ccc">DIRECTORA</span></div>';
+      lorenaHtml+='<div style="font-size:9px;color:#666">Apoyo operativo · No computa en cobertura</div>';
+      lorenaHtml+='</div></div>';
+      lorenaHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+      LORENA_SEMANA.forEach(function(d){
+        var bg = 'transparent';
+        var col = d.tipo==='fiesta'?'#c00': d.tipo==='apoyo'?'#050':'#333';
+        var lbl = getLorenaLabel(d);
+        lorenaHtml+='<div style="text-align:center;padding:4px 2px;border-radius:5px;background:'+bg+';border:1px solid '+col+'40">';
+        lorenaHtml+='<div style="font-size:8px;color:var(--muted);margin-bottom:2px">'+DIAS_SHORT[d.dia]+'</div>';
+        lorenaHtml+='<div style="font-size:7.5px;font-weight:700;color:'+col+'">'+lbl+'</div>';
+        lorenaHtml+='</div>';
+      });
+      lorenaHtml+='</div></div>';
+      return lorenaHtml;
+    })()
+    +'<hr class="divider">'
+    +'<div style="display:flex;gap:7px;flex-wrap:wrap">'+legendaHtml+'</div>'
+    +eventosHtml
+    +'<hr class="divider">'
+    +'<div class="footer-credits">Generado por <strong>RelojTurnos</strong> \u00b7 Grupo El Reloj \u00b7 '+new Date().toLocaleDateString('es-ES')+'<br>'
+    +'Desarrollado por <strong>Raul H.B.</strong> \u00b7 <a href="mailto:raul.gestionlocal@gmail.com">raul.gestionlocal@gmail.com</a> \u00b7 Todos los derechos reservados</div>'
+    +'</div>';
+
+  // Vista móvil — tarjetas por empleado
+  var mobileHtml='<div class="cuadrante-mobile">';
+  mobileHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:8px;background:var(--darker);border-radius:7px;text-align:center">'+semana+'</div>';
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+    mobileHtml+='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">';
+    mobileHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    mobileHtml+='<div style="width:32px;height:32px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">'+init+'</div>';
+    mobileHtml+='<div><div style="font-weight:700;font-size:13px;color:'+color+'">'+( emp.nombre||'Emp '+emp.id)+'</div><div style="font-size:10px;color:var(--muted)">'+emp.rol+'</div></div>';
+    mobileHtml+='</div>';
+    mobileHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+    DIAS_SHORT.forEach(function(dLabel,di){
+      var t=emp.turnos?emp.turnos[di]:emp.turno;
+      var info=getTInfo(t);
+      var bg=t==='fiesta'?'#2d1515':t==='mediafiesta'?'#2d2015':'#0f2030';
+      var col=t==='fiesta'?'#ff6b6b':t==='mediafiesta'?'#ffaa40':color;
+      mobileHtml+='<div style="text-align:center;padding:5px 2px;border-radius:5px;background:'+bg+';border:1px solid '+col+'30">';
+      mobileHtml+='<div style="font-size:8px;color:var(--muted);margin-bottom:2px">'+dLabel+'</div>';
+      mobileHtml+='<div style="font-size:9px;font-weight:700;color:'+col+'">'+info.label.replace('🌅','M').replace('🌃','N').replace('🌆','T').replace('🔄','I').replace('🏖️ FIESTA','FES').replace('½ Media fiesta','½')+'</div>';
+      mobileHtml+='</div>';
+    });
+    mobileHtml+='</div></div>';
+  });
+  mobileHtml+='</div>';
+
+  document.getElementById('cuadrante-output').innerHTML=html+mobileHtml;
+  mostrarHoras=true;
+  var btn=document.getElementById('btn-toggle-horas');if(btn)btn.textContent='\ud83d\udc41 Ocultar horas';
+  goStep(6);
+}
+
+function guardarImagen(){
+  var el=document.getElementById('cuadrante-output');
+  var local=(getLocal()||'cuadrante').replace(/\s+/g,'_');
+  var semana=getSemanaLabel().replace(/\s/g,'').replace(/\u2013/g,'-');
+  var ventana=window.open('','_blank','width=1000,height=750');
+  if(!ventana){alert('Permite las ventanas emergentes para esta p\u00e1gina y vuelve a intentarlo.');return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1.0">'
+    +'<title>RelojTurnos_'+local+'_'+semana+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;background:#0f1923;color:#e8edf2;padding:14px}'
+    +'.card{background:#162030;border:1px solid #1e3048;border-radius:10px;padding:18px}'
+    +'.card-title{font-size:15px;font-weight:700;margin-bottom:3px}'
+    +'.card-sub{font-size:11px;color:#6b8299;margin-bottom:14px}'
+    +'.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}'
+    +'.stat-card{background:#080e14;border:1px solid #1e3048;border-radius:7px;padding:9px;text-align:center}'
+    +'.stat-val{font-size:20px;font-weight:700;color:#e8a020}'
+    +'.stat-label{font-size:9px;color:#6b8299;text-transform:uppercase;letter-spacing:1px;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;font-size:10px}'
+    +'th{background:#080e14;padding:7px 4px;text-align:center;font-size:8px;font-weight:700;color:#6b8299;text-transform:uppercase;letter-spacing:1px;border:1px solid #1e3048}'
+    +'th.emp-col{text-align:left}'
+    +'td{padding:5px 4px;border:1px solid #1e3048;text-align:center;vertical-align:middle}'
+    +'td.emp-name{text-align:left;font-weight:600;padding-left:7px}'
+    +'.turno-badge{display:inline-block;padding:2px 5px;border-radius:4px;font-size:8px;font-weight:700;line-height:1.4}'
+    +'.badge-fiesta{background:#3d1515;color:#ff6b6b}'
+    +'.badge-mediafiesta{background:#3d2d10;color:#ffaa40}'
+    +'.badge-manana{background:#152d15;color:#5ddb5d}'
+    +'.badge-noche{background:#15152d;color:#6b8fff}'
+    +'.badge-intermedio{background:#25152d;color:#c080ff}'
+    +'.badge-tarde{background:#2d2515;color:#ffa040}'
+    +'.cob-ok{color:#2ecc71;font-weight:700;font-size:12px}'
+    +'.cob-warn{color:#e67e22;font-weight:700;font-size:12px}'
+    +'.cob-low{color:#e74c3c;font-weight:700;font-size:12px}'
+    +'.col-horas{}'
+    +'.evento-item{display:flex;align-items:center;gap:7px;background:#1a1500;border:1px solid #3d3000;border-radius:6px;padding:7px 10px;margin-bottom:5px}'
+    +'.footer-credits{font-size:9px;color:#6b8299;text-align:center;line-height:2;margin-top:8px}'
+    +'.footer-credits strong,.footer-credits a{color:#e8a020;text-decoration:none}'
+    +'hr{border:none;border-top:1px solid #1e3048;margin:10px 0}'
+    +'.divider{border:none;border-top:1px solid #1e3048;margin:10px 0}'
+    +'.hint{background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px;margin-bottom:14px;font-size:11px;color:#8ddb8d;text-align:center}'
+    +'@media print{.hint{display:none}.cuadrante-mobile{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+    +'</style></head><body>'
+    +'<div class="hint">&#128247; <strong>iOS Safari:</strong> Pulsa compartir &#10132; "A\u00f1adir a Fotos" o haz captura &nbsp;&nbsp; <strong>Android/PC:</strong> Men\u00fa &#10132; Guardar como PDF o captura</div>'
+    +el.innerHTML
+    +'</body></html>');
+  ventana.document.close();
+}
+
+function imprimirCuadrante(){
+  var original=document.getElementById('cuadrante-output');
+  var clon=original.cloneNode(true);
+  if(!mostrarHoras)clon.querySelectorAll('.col-horas').forEach(function(el){el.remove();});
+  clon.querySelectorAll('.cuadrante-mobile').forEach(function(el){el.remove();});
+  clon.querySelectorAll('[class*="mobile"]').forEach(function(el){el.remove();});
+  var contenido=clon.innerHTML;
+  var ventana=window.open('','_blank','width=1200,height=800');
+  if(!ventana){alert('Permite las ventanas emergentes y vuelve a intentarlo.');return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>RelojTurnos \u2013 Cuadrante</title>'
+    +'<style>'
+    +'@page{size:A4 landscape;margin:8mm 10mm}'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;background:white;color:#111;font-size:10px}'
+    +'.card{border:1px solid #ccc;border-radius:5px;padding:10px}'
+    +'.card-title{font-size:14px;font-weight:700;margin-bottom:3px;color:#111}'
+    +'.card-sub{font-size:10px;color:#666;margin-bottom:10px}'
+    +'.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}'
+    +'.stat-card{background:#f5f5f5;border:1px solid #ddd;border-radius:5px;padding:7px;text-align:center}'
+    +'.stat-val{font-size:18px;font-weight:700;color:#c07010}'
+    +'.stat-label{font-size:8px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;font-size:9px}'
+    +'th{background:#eee;padding:5px 3px;text-align:center;font-size:8px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:1px;border:1px solid #ccc}'
+    +'th.emp-col{text-align:left}'
+    +'td{padding:4px 3px;border:1px solid #ddd;text-align:center;vertical-align:middle}'
+    +'td.emp-name{text-align:left;font-weight:600;padding-left:6px}'
+    +'.turno-badge{display:inline-block;padding:2px 4px;border-radius:3px;font-size:8px;font-weight:700;line-height:1.4}'
+    +'.badge-fiesta{background:#ffe0e0;color:#c00}'
+    +'.badge-mediafiesta{background:#fff0d0;color:#a06000}'
+    +'.badge-manana{background:#e0ffe0;color:#050}'
+    +'.badge-noche{background:#e0e8ff;color:#003}'
+    +'.badge-intermedio{background:#f0e0ff;color:#404}'
+    +'.badge-tarde{background:#fff0e0;color:#840}'
+    +'.cob-ok{color:#050;font-weight:700;font-size:11px}'
+    +'.cob-warn{color:#840;font-weight:700;font-size:11px}'
+    +'.cob-low{color:#c00;font-weight:700;font-size:11px}'
+    +'.evento-item{display:flex;align-items:center;gap:6px;background:#fffbe0;border:1px solid #ddc000;border-radius:4px;padding:5px 8px;margin-bottom:4px}'
+    +'.footer-credits{font-size:8px;color:#888;text-align:center;line-height:2;margin-top:7px}'
+    +'.footer-credits strong,.footer-credits a{color:#c07010;text-decoration:none}'
+    +'hr,.divider{border:none;border-top:1px solid #ddd;margin:8px 0}'
+    +'[style*="background:#1a1500"]{background:#fffbe0!important}'
+    +'[style*="color:#ffd040"]{color:#c07010!important}'
+    +'[style*="background:#3d2d00"]{background:#fff0d0!important}'
+    +'body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'</style></head><body>'+contenido
+    +'<script>window.onload=function(){setTimeout(function(){window.print();window.close();},350);};<\/script>'
+    +'</body></html>');
+  ventana.document.close();
+}
+
+// ========== PASO 7: COSTES v1.8 ==========
+var salariosBrutos = {};
+var extrasDia = [];
+var extraCounter = 0;
+var SS_EMPRESA = 0.39; // Hostelería: contingencias comunes 23.6% + desempleo 5.5% + FOGASA 0.2% + formación 0.6% + AT/EP ~9% ≈ 39%
+var BRUTO_DEFAULT = 1800;      // Camarero/cocinero por defecto
+var BRUTO_RESP = 1950;         // Responsable/encargado por defecto
+var ROLES_RESP = ['Resp. Mañana','Resp. Noche','Encargado']; // roles que cobran más
+
+var MOTIVOS_EXTRA = [
+  '⚡ Evento especial',
+  '🔄 Sustitución compañero',
+  '🙋 Refuerzo ocasional',
+  '⚽ Partido fútbol',
+  '📅 Festivo / día especial',
+  '🌧️ Mal tiempo / baja afluencia',
+  '🎵 Concierto cercano',
+  '🏃 Maratón / carrera popular',
+  '📦 Recepción mercancía',
+  '🔧 Otro motivo'
+];
+
+function getSalario(empId){
+  if(salariosBrutos[empId]) return salariosBrutos[empId];
+  // Precargar según rol del empleado
+  var emp=empleados.find(function(e){return e.id===empId;});
+  var esResp=emp&&ROLES_RESP.indexOf(emp.rol)>=0;
+  return {brutoMes: esResp?BRUTO_RESP:BRUTO_DEFAULT, hContrato:40};
+}
+
+function updSalario(empId,campo,valor){
+  if(!salariosBrutos[empId]) salariosBrutos[empId]={brutoMes:'',hContrato:40};
+  if(campo==='hContrato') salariosBrutos[empId][campo]=parseInt(valor)||40;
+  else salariosBrutos[empId][campo]=valor===''?'':parseFloat(valor);
+  renderCostes();
+}
+
+function getHorasPactadas(emp){
+  var hJornada=+document.getElementById('horas-jornada').value||9;
+  var hMF=+document.getElementById('horas-media-fiesta').value||5;
+  var hPact=0;
+  (emp.turnos||[]).forEach(function(t){
+    if(t==='fiesta') return;
+    if(t==='mediafiesta'){hPact+=hMF;return;}
+    hPact+=hJornada;
+  });
+  return hPact;
+}
+
+function getTotalExtrasEmp(empId){
+  return extrasDia.filter(function(e){return e.empId===empId;})
+    .reduce(function(s,e){return s+(parseFloat(e.horas)||0)*(parseFloat(e.precioHora)||0);},0);
+}
+
+function calcEmp(emp){
+  var s=getSalario(emp.id);
+  var hCuad=(emp.turnos||[]).reduce(function(sum,t){return sum+getTInfo(t).horas;},0);
+  var hPact=getHorasPactadas(emp);
+  var bruto=s.brutoMes!==''?parseFloat(s.brutoMes):null;
+  var costeFijoSem=bruto!==null?(bruto*(1+SS_EMPRESA))/4.33:null;
+  var costeFijoMes=bruto!==null?bruto*(1+SS_EMPRESA):null;
+  var costeExtras=getTotalExtrasEmp(emp.id);
+  var totalSem=costeFijoSem!==null?costeFijoSem+costeExtras:null;
+  return{hCuad:hCuad,hPact:hPact,bruto:bruto,
+         costeFijoSem:costeFijoSem,costeFijoMes:costeFijoMes,
+         costeExtras:costeExtras,totalSem:totalSem};
+}
+
+function switchTab(tab){
+  ['planif','extras','salarios'].forEach(function(t){
+    document.getElementById('tab-'+t).className='tab-btn'+(t===tab?' active':'');
+    document.getElementById('panel-'+t).className='tab-panel'+(t===tab?' active':'');
+  });
+  renderCostes();
+}
+
+// ---- EXTRAS DEL DÍA ----
+function addExtraDia(){
+  extraCounter++;
+  extrasDia.push({id:extraCounter,empId:empleados.length?empleados[0].id:0,
+                  dia:0,horas:'',precioHora:'',motivo:MOTIVOS_EXTRA[1]});
+  renderExtras();
+}
+
+function removeExtra(id){
+  extrasDia=extrasDia.filter(function(e){return e.id!==id;});
+  renderExtras(); renderCostes();
+}
+
+function updExtra(id,campo,valor){
+  var e=extrasDia.find(function(x){return x.id===id;});
+  if(e){if(campo==='empId')e[campo]=parseInt(valor);else e[campo]=valor;}
+  renderCostes();
+}
+
+function renderExtras(){
+  var cont=document.getElementById('extras-lista');
+  if(!cont) return;
+  if(!extrasDia.length){
+    cont.innerHTML='<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;background:var(--darker);border-radius:8px;border:1px dashed var(--border)">Sin extras registradas esta semana</div>';
+    renderResumenExtras(); return;
+  }
+  var empOpts=empleados.map(function(e){
+    return'<option value="'+e.id+'">'+(e.nombre||'Emp '+e.id)+'</option>';
+  }).join('');
+  var diaOpts=DIAS.map(function(d,i){return'<option value="'+i+'">'+d+'</option>';}).join('');
+
+  cont.innerHTML=extrasDia.map(function(ex){
+    var motivoOpts=MOTIVOS_EXTRA.map(function(m){
+      return'<option value="'+m+'"'+(m===ex.motivo?' selected':'')+'>'+m+'</option>';
+    }).join('');
+    var empOptsEx=empleados.map(function(e){
+      return'<option value="'+e.id+'"'+(e.id===ex.empId?' selected':'')+'>'+( e.nombre||'Emp '+e.id)+'</option>';
+    }).join('');
+    var diaOptsEx=DIAS.map(function(d,i){
+      return'<option value="'+i+'"'+(i===ex.dia?' selected':'')+'>'+d+'</option>';
+    }).join('');
+    var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+    return'<div style="background:var(--darker);border:1px solid #4a2800;border-radius:9px;padding:13px;margin-bottom:9px">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+      +'<div><label>Empleado</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'empId\',this.value)">'+empOptsEx+'</select></div>'
+      +'<div><label>Día</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'dia\',this.value)">'+diaOptsEx+'</select></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+      +'<div><label>Horas extra</label><input type="number" min="0.5" step="0.5" placeholder="ej: 2" value="'+ex.horas+'" oninput="updExtra('+ex.id+',\'horas\',this.value)" class="inp-sm"></div>'
+      +'<div><label>€ / hora extra</label><input type="number" min="0" step="0.5" placeholder="ej: 10" value="'+ex.precioHora+'" oninput="updExtra('+ex.id+',\'precioHora\',this.value)" class="inp-sm"></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:end">'
+      +'<div><label>Motivo</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'motivo\',this.value)">'+motivoOpts+'</select></div>'
+      +'<button class="remove-btn" onclick="removeExtra('+ex.id+')" style="margin-bottom:2px;font-size:18px">&#10005;</button>'
+      +'</div>'
+      +(coste>0?'<div style="margin-top:10px;padding:8px 12px;background:#2d1a00;border-radius:6px;font-size:13px;font-weight:700;color:var(--orange)">⚡ Coste extra: '+coste.toFixed(2)+' €</div>':'')
+      +'</div>';
+  }).join('');
+  renderResumenExtras();
+}
+
+function renderResumenExtras(){
+  var cont=document.getElementById('extras-resumen'); if(!cont) return;
+  if(!extrasDia.length){cont.innerHTML='';return;}
+  var totH=extrasDia.reduce(function(s,e){return s+(parseFloat(e.horas)||0);},0);
+  var totE=extrasDia.reduce(function(s,e){return s+(parseFloat(e.horas)||0)*(parseFloat(e.precioHora)||0);},0);
+  cont.innerHTML='<div style="background:#2d1a00;border:1px solid var(--orange);border-radius:8px;padding:12px 16px;display:flex;gap:24px;flex-wrap:wrap">'
+    +'<div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+totH.toFixed(1)+'h</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Total h. extra</div></div>'
+    +'<div><div style="font-size:20px;font-weight:700;color:var(--accent)">'+totE.toFixed(2)+' €</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Coste extras semana</div></div>'
+    +'</div>';
+}
+
+// ---- RENDER COSTES PRINCIPAL ----
+function renderCostes(){
+  renderExtras();
+  var calcs=empleados.map(function(emp){return calcEmp(emp);});
+  var faltanDatos=calcs.some(function(c){return c.bruto===null;});
+  document.getElementById('costes-aviso').style.display=faltanDatos?'block':'none';
+
+  var totHCuad=calcs.reduce(function(s,c){return s+c.hCuad;},0);
+  var totHPact=calcs.reduce(function(s,c){return s+c.hPact;},0);
+  var tieneDatos=calcs.some(function(c){return c.bruto!==null;});
+  var totFijoSem=tieneDatos?calcs.reduce(function(s,c){return s+(c.costeFijoSem||0);},0):null;
+  var totExtras=calcs.reduce(function(s,c){return s+c.costeExtras;},0);
+  var totSem=totFijoSem!==null?totFijoSem+totExtras:null;
+  var totMes=totSem!==null?totSem*4.33:null;
+
+  // KPIs
+  document.getElementById('costes-kpis').innerHTML=
+    '<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">Empleados</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+totHPact.toFixed(0)+'h</div><div class="stat-label">H. pactadas</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totFijoSem!==null?totFijoSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">Coste fijo sem.</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totExtras>0?'+'+totExtras.toFixed(0)+' €':'0 €')+'</div><div class="stat-label">Extras sem.</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null?totSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">Total semana</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totMes!==null?totMes.toFixed(0)+' €':'—')+'</div><div class="stat-label">Total mes est.</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null&&totHCuad?(totSem/totHCuad).toFixed(2)+' €':'—')+'</div><div class="stat-label">€/hora real</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+extrasDia.length+'</div><div class="stat-label">Extras anotadas</div></div>';
+
+  // TARJETAS por empleado (sin tabla, sin desbordamiento)
+  var cards=document.getElementById('costes-cards');
+  if(cards){
+    // Tarjeta Lorena — mismo formato que empleados
+    var costeLorSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
+    var costeLorMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+    var lorColor = COLORS[0]; // primer color de la paleta
+    var lorCard = '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:9px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+      +'<div style="display:flex;align-items:center;gap:9px">'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:'+lorColor+'20;color:'+lorColor+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>'
+      +'<div><div style="font-weight:700;font-size:13px;color:'+lorColor+'">LORENA</div>'
+      +'<div style="font-size:10px;color:var(--muted)">Directora</div></div></div>'
+      +'<div style="font-size:20px;font-weight:700;color:var(--accent2)">'+costeLorSem.toFixed(2)+' €</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
+      +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
+      +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--green)">'+costeLorSem.toFixed(2)+' €</div></div>'
+      +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+costeLorMes.toFixed(0)+' €</div></div>'
+      +'</div></div>';
+
+    cards.innerHTML=lorCard+empleados.map(function(emp,idx){
+      var c=calcs[idx], color=COLORS[idx%COLORS.length];
+      var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+      var extrasEmp=extrasDia.filter(function(e){return e.empId===emp.id;});
+      return'<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:9px">'
+        // Cabecera empleado
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+        +'<div style="display:flex;align-items:center;gap:9px">'
+        +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">'+init+'</div>'
+        +'<div><div style="font-weight:700;font-size:13px;color:'+color+'">'+( emp.nombre||'Empleado '+emp.id)+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+emp.rol+'</div></div></div>'
+        +'<div style="font-size:20px;font-weight:700;color:'+(c.totalSem!==null?'var(--accent2)':'var(--muted)')+'>'
+        +(c.totalSem!==null?c.totalSem.toFixed(2)+' €':'sin datos')+'</div>'
+        +'</div>'
+        // Fila de datos
+        +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
+        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
+        +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+c.hPact.toFixed(0)+'h</div></div>'
+        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
+        +'<div style="font-size:15px;font-weight:700;color:var(--green)">'+(c.costeFijoSem!==null?c.costeFijoSem.toFixed(2)+' €':'—')+'</div></div>'
+        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
+        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
+        +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+(c.costeFijoMes!==null?c.costeFijoMes.toFixed(0)+' €':'—')+'</div></div>'
+        +'</div>'
+        // Extras de este empleado si las hay
+        +(extrasEmp.length?
+          '<div style="margin-top:9px;padding:8px 10px;background:#2d1a00;border:1px solid #6b3a00;border-radius:7px">'
+          +'<div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:5px">⚡ EXTRAS REGISTRADAS</div>'
+          +extrasEmp.map(function(ex){
+            var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+            return'<div style="font-size:11px;color:var(--text);display:flex;justify-content:space-between;margin-bottom:2px">'
+              +'<span>'+DIAS[ex.dia]+' · '+ex.horas+'h · '+ex.motivo+'</span>'
+              +'<span style="color:var(--orange);font-weight:700">'+coste.toFixed(2)+' €</span></div>';
+          }).join('')
+          +(c.costeExtras>0?'<div style="font-size:11px;font-weight:700;color:var(--orange);margin-top:4px;text-align:right">Total extras: '+c.costeExtras.toFixed(2)+' €</div>':'')
+          +'</div>'
+        :'')
+        // Sin datos aviso
+        +(c.bruto===null?'<div style="margin-top:8px;font-size:11px;color:var(--red);padding:6px 10px;background:#2d1515;border-radius:6px">⚠ Sin datos salariales — introduce en pestaña Salarios</div>':'')
+        +'</div>';
+    }).join('');
+  }
+
+  // Refuerzos de evento
+  var totRefuerzos = getCosteRefuerzos();
+  var costeLorena = (lorenaSalario.brutoMes * (1+SS_EMPRESA)) / 4.33;
+  var totSemConRef = totSem!==null ? totSem+totRefuerzos+costeLorena : totRefuerzos>0?totRefuerzos+costeLorena:costeLorena;
+  var refCont = document.getElementById('costes-refuerzos');
+  if(refCont){
+    var refPersonas=[];
+    eventos.forEach(function(ev){
+      (ev.personas||[]).forEach(function(p){
+        var h=calcHorasRefuerzo(p);
+        var coste=h*(parseFloat(p.precioHora)||10);
+        if(h>0) refPersonas.push({nombre:p.nombre,dia:DIAS[ev.dia]||'',horas:h,precioHora:p.precioHora||10,coste:coste,evento:ev.desc});
+      });
+    });
+    if(refPersonas.length){
+      refCont.innerHTML='<div style="background:var(--darker);border:1px solid #4a1a6a;border-radius:10px;padding:14px">'
+        +'<div style="font-size:11px;font-weight:700;color:#c060ff;margin-bottom:10px">🎪 PERSONAL EXTERNO / REFUERZOS EVENTO</div>'
+        +refPersonas.map(function(p){
+          return'<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#1a0a2a;border-radius:6px;margin-bottom:5px;font-size:12px">'
+            +'<div><span style="font-weight:700;color:#c060ff">'+p.nombre+'</span>'
+            +' <span style="color:var(--muted);font-size:10px">'+p.dia+' · '+p.evento+'</span></div>'
+            +'<div style="color:var(--muted);font-size:11px">'+p.horas.toFixed(1)+'h × '+p.precioHora+'€/h</div>'
+            +'<div style="font-weight:700;color:#c060ff">'+p.coste.toFixed(2)+' €</div>'
+            +'</div>';
+        }).join('')
+        +'<div style="margin-top:8px;padding:8px 10px;background:#2a0a3a;border-radius:6px;display:flex;justify-content:space-between">'
+        +'<span style="font-size:11px;font-weight:700;color:#c060ff">TOTAL REFUERZOS</span>'
+        +'<span style="font-size:16px;font-weight:700;color:#c060ff">'+totRefuerzos.toFixed(2)+' €</span>'
+        +'</div></div>';
+    } else {
+      refCont.innerHTML='';
+    }
+  }
+
+  // Totales
+  // Añadir Lorena a costes-cards (planificación)
+  var costeLorenaCard = (function(){
+    var costeSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
+    var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+    return '<div class="costes-emp-card" style="border-color:#c0a02040;margin-bottom:8px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      +'<div style="font-size:13px;font-weight:700;color:#c0a020">LORENA'
+      +' <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:1px 6px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>'
+      +'<div style="text-align:right">'
+      +'<div style="font-size:18px;font-weight:700;color:#c0a020">'+costeSem.toFixed(2)+' €<span style="font-size:10px;color:var(--muted)"> / sem</span></div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+costeMes.toFixed(0)+' € / mes · '+lorenaSalario.hContrato+'h contrato</div>'
+      +'</div></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:9px;color:var(--muted)">BRUTO MES</div>'
+      +'<div style="font-size:14px;font-weight:700;color:#c0a020">'+lorenaSalario.brutoMes+' €</div></div>'
+      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:9px;color:var(--muted)">SS EMPRESA (39%)</div>'
+      +'<div style="font-size:14px;font-weight:700;color:var(--orange)">'+(lorenaSalario.brutoMes*SS_EMPRESA).toFixed(0)+' €</div></div>'
+      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:9px;color:var(--muted)">COSTE TOTAL MES</div>'
+      +'<div style="font-size:14px;font-weight:700;color:var(--accent2)">'+costeMes.toFixed(0)+' €</div></div>'
+      +'</div></div>';
+  })();
+  if(cards) cards.innerHTML = costeLorenaCard + cards.innerHTML;
+
+  var tot=document.getElementById('costes-totales');
+  if(tot && tieneDatos){
+    tot.innerHTML='<div style="background:var(--card);border:1px solid var(--accent);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">COSTE FIJO SEM.</div><div style="font-size:20px;font-weight:700;color:var(--green)">'+(totFijoSem!==null?totFijoSem.toFixed(2)+' €':'—')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">EXTRAS DIARIAS</div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+(totExtras>0?'+'+totExtras.toFixed(2)+' €':'0 €')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">REFUERZOS</div><div style="font-size:20px;font-weight:700;color:#c060ff">'+(totRefuerzos>0?'+'+totRefuerzos.toFixed(2)+' €':'0 €')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">TOTAL REAL SEM.</div><div style="font-size:24px;font-weight:700;color:var(--accent2)">'+(totSemConRef!==null?totSemConRef.toFixed(2)+' €':'—')+'</div></div>'
+      +'</div>';
+  }
+
+  // Editor salarios — solo bruto/mes y horas contrato, sin más
+  // Tarjeta Lorena directora en editor salarios
+  var lorenaCardEditor = (function(){
+    var lorColor = COLORS[0];
+    var costeSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
+    var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+    return '<div class="costes-emp-card">'
+      +'<div style="font-size:13px;font-weight:700;color:'+lorColor+';margin-bottom:12px">LORENA'
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Directora</span></div>'
+      +'<div class="form-row three">'
+      +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
+      +'<input type="number" min="0" step="50" value="'+lorenaSalario.brutoMes+'" oninput="lorenaSalario.brutoMes=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Horas contrato / semana</label>'
+      +'<input type="number" min="1" max="48" step="1" value="'+lorenaSalario.hContrato+'" oninput="lorenaSalario.hContrato=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Resultado calculado</label>'
+      +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+      +'<span style="color:var(--green);font-weight:700">'+costeSem.toFixed(2)+' € / sem</span><br>'
+      +'<span style="color:var(--muted);font-size:11px">'+costeMes.toFixed(0)+' € / mes (con SS)</span>'
+      +'</div></div>'
+      +'</div></div>';
+  })();
+
+  document.getElementById('costes-editor').innerHTML=lorenaCardEditor+empleados.map(function(emp,idx){
+    var color=COLORS[idx%COLORS.length], s=getSalario(emp.id), c=calcs[idx];
+    return'<div class="costes-emp-card">'
+      +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||'Empleado '+emp.id)
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+emp.rol+'</span></div>'
+      +'<div class="form-row three">'
+      +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
+      +'<input type="number" min="0" step="50" placeholder="ej: 1800" value="'+(s.brutoMes||'')+'" oninput="updSalario('+emp.id+',\'brutoMes\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Horas contrato / semana</label>'
+      +'<input type="number" min="1" max="48" step="1" value="'+s.hContrato+'" oninput="updSalario('+emp.id+',\'hContrato\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Resultado calculado</label>'
+      +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+      +(c.costeFijoSem!==null
+        ?'<span style="color:var(--green);font-weight:700">'+c.costeFijoSem.toFixed(2)+' € / sem</span><br>'
+        +'<span style="color:var(--muted);font-size:11px">'+c.costeFijoMes.toFixed(0)+' € / mes (con SS)</span>'
+        :'<span style="color:var(--muted)">Introduce el bruto</span>')
+      +'</div></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ===================== VISTA DIRECTOR GENERAL =====================
+
+async function abrirVistaDirector(){
+  // Navegar al paso 8 solo si no estamos ya en él
+  var sc8 = document.getElementById('screen8');
+  if(!sc8 || !sc8.classList.contains('active')) goStep(8);
+  await poblarSelectorSemanas();
+  await cargarVistaDirector();
+}
+
+async function poblarSelectorSemanas(){
+  var sel = document.getElementById('director-semana-sel');
+  if(!sel) return;
+  try{
+    var cuads = await sbGet('cuadrantes','order=id.desc&limit=20');
+    // Semanas únicas
+    var vistas = {}, opts = '<option value="">Semana actual</option>';
+    cuads.forEach(function(c){
+      if(!vistas[c.semana_label]){
+        vistas[c.semana_label] = true;
+        opts += '<option value="'+c.semana_label+'">'+c.semana_label+'</option>';
+      }
+    });
+    sel.innerHTML = opts;
+  }catch(e){ console.log('Error semanas:', e); }
+}
+
+async function cargarVistaDirector(){
+  var sel = document.getElementById('director-semana-sel');
+  var semanaFiltro = sel ? sel.value : '';
+  var kpisEl = document.getElementById('director-kpis');
+  var localesEl = document.getElementById('director-locales');
+  var compEl = document.getElementById('director-comparativa');
+  var subtEl = document.getElementById('director-subtitulo');
+
+  if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">⏳ Cargando datos...</div>';
+
+  try{
+    // Cargar todos los locales
+    var locales = await sbGet('locales','order=id.asc');
+    // Cargar cuadrantes (filtrado por semana si se seleccionó)
+    var filtro = semanaFiltro ? 'semana_label=eq.'+encodeURIComponent(semanaFiltro)+'&order=id.desc' : 'order=id.desc&limit=10';
+    var cuads = await sbGet('cuadrantes', filtro+'&order=id.desc');
+
+    // Para cada local coger el cuadrante más reciente
+    var datosLocales = [];
+    for(var i=0; i<locales.length; i++){
+      var loc = locales[i];
+      var cuad = cuads.find(function(c){ return c.local_id === loc.id; });
+      if(!cuad){ datosLocales.push({local:loc, cuad:null, empleados:[], turnos:[], salarios:[]}); continue; }
+
+      // Cargar empleados del local
+      var emps = await sbGet('empleados','local_id=eq.'+loc.id+'&activo=eq.true');
+      // Cargar turnos del cuadrante
+      var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id);
+      // Cargar salarios
+      var sals = await sbGet('salarios','order=id.asc');
+
+      datosLocales.push({local:loc, cuad:cuad, empleados:emps, turnos:turnos, salarios:sals});
+    }
+
+    renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl);
+
+  }catch(e){
+    if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:14px;color:#ff8080;font-size:12px">⚠️ No se pudieron cargar los datos. Verifica la conexión con Supabase.</div>';
+    console.error('Error vista director:', e);
+  }
+}
+
+function calcResumenLocal(datos){
+  var emps = datos.empleados || [];
+  var turnos = datos.turnos || [];
+  var sals = datos.salarios || [];
+  var totalHoras = 0, totalCoste = 0, coberturaMin = 99, coberturaMax = 0;
+  var fiestas = 0;
+
+  // Calcular horas y cobertura por día
+  for(var d=0; d<7; d++){
+    var trabajando = turnos.filter(function(t){ return t.dia===d && t.turno!=='fiesta' && t.turno!=='mediafiesta'; }).length;
+    var mediaF = turnos.filter(function(t){ return t.dia===d && t.turno==='mediafiesta'; }).length;
+    trabajando += mediaF * 0.5;
+    if(trabajando < coberturaMin) coberturaMin = trabajando;
+    if(trabajando > coberturaMax) coberturaMax = trabajando;
+    fiestas += turnos.filter(function(t){ return t.dia===d && (t.turno==='fiesta'||t.turno==='mediafiesta'); }).length;
+  }
+
+  // Coste total
+  emps.forEach(function(emp){
+    var sal = sals.find(function(s){ return s.empleado_id===emp.id; });
+    var bruto = sal ? sal.bruto_mes : 1800;
+    totalCoste += (bruto * (1+SS_EMPRESA)) / 4.33;
+  });
+  // Añadir Lorena si es La Cala
+  if(datos.local.nombre === 'La Cala'){
+    totalCoste += (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
+  }
+
+  return {
+    numEmpleados: emps.length,
+    cobMin: coberturaMin===99?0:coberturaMin,
+    cobMax: coberturaMax,
+    coste: totalCoste,
+    fiestas: fiestas,
+    semana: datos.cuad ? datos.cuad.semana_label : 'Sin datos'
+  };
+}
+
+function renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl){
+  var semLabel = semanaFiltro || (datosLocales[0]&&datosLocales[0].cuad ? datosLocales[0].cuad.semana_label : 'Sin datos');
+  if(subtEl) subtEl.textContent = 'Semana: '+semLabel+' · '+datosLocales.length+' locales';
+
+  var resúmenes = datosLocales.map(calcResumenLocal);
+  var totEmps = resúmenes.reduce(function(s,r){ return s+r.numEmpleados; },0);
+  var totCoste = resúmenes.reduce(function(s,r){ return s+r.coste; },0);
+  var cobGlobal = resúmenes.reduce(function(s,r){ return s+r.cobMin; },0);
+
+  // KPIs globales
+  if(kpisEl){
+    kpisEl.innerHTML = [
+      {v: datosLocales.length, l: 'LOCALES ACTIVOS', c: '#c0a020'},
+      {v: totEmps+' pers.', l: 'TOTAL EMPLEADOS', c: 'var(--green)'},
+      {v: totCoste.toFixed(0)+' €', l: 'COSTE TOTAL SEMANA', c: 'var(--accent2)'},
+      {v: cobGlobal+' mín.', l: 'COBERTURA MÍNIMA', c: 'var(--orange)'},
+    ].map(function(k){
+      return '<div class="stat-card"><div class="stat-val" style="color:'+k.c+'">'+k.v+'</div><div class="stat-label">'+k.l+'</div></div>';
+    }).join('');
+  }
+
+  // Cards por local
+  if(localesEl){
+    var COLORES_LOCAL = ['#e8a020','#3498db','#2ecc71','#e74c3c','#9b59b6'];
+    localesEl.innerHTML = datosLocales.map(function(datos, idx){
+      var r = resúmenes[idx];
+      var col = COLORES_LOCAL[idx % COLORES_LOCAL.length];
+      var tieneDatos = !!datos.cuad;
+      return '<div style="background:var(--card);border:1px solid '+col+'40;border-radius:12px;padding:14px;margin-bottom:10px">'
+        // Header local
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+        +'<div style="font-size:15px;font-weight:700;color:'+col+'">'+datos.local.nombre+'</div>'
+        +(tieneDatos
+          ?'<span style="font-size:9px;background:'+col+'20;color:'+col+';padding:2px 8px;border-radius:10px">'+r.semana+'</span>'
+          :'<span style="font-size:9px;background:#3d1515;color:#ff6b6b;padding:2px 8px;border-radius:10px">Sin cuadrante esta semana</span>')
+        +'</div>'
+        // KPIs del local
+        +(tieneDatos
+          ?'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">'
+          +[
+            {v:r.numEmpleados, l:'EMPLEADOS'},
+            {v:r.cobMin+'-'+r.cobMax, l:'COBERTURA/DÍA'},
+            {v:r.coste.toFixed(0)+' €', l:'COSTE/SEM'},
+            {v:r.fiestas, l:'FIESTAS SEM'},
+          ].map(function(k){
+            return '<div style="background:var(--darker);border-radius:6px;padding:7px;text-align:center">'
+              +'<div style="font-size:14px;font-weight:700;color:'+col+'">'+k.v+'</div>'
+              +'<div style="font-size:8px;color:var(--muted);margin-top:2px">'+k.l+'</div>'
+              +'</div>';
+          }).join('')+'</div>'
+          :'<div style="font-size:11px;color:var(--muted);padding:10px;text-align:center">Genera el cuadrante para ver datos</div>')
+        // Mini cuadrante visual (cobertura por día)
+        +(tieneDatos ? renderMiniCuadrante(datos, col) : '')
+        +'</div>';
+    }).join('');
+  }
+
+  // Comparativa entre locales
+  if(compEl && datosLocales.length > 1){
+    var maxCoste = Math.max.apply(null, resúmenes.map(function(r){ return r.coste; }));
+    compEl.innerHTML = '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Comparativa de coste semanal</div>'
+      +datosLocales.map(function(datos, idx){
+        var r = resúmenes[idx];
+        var col = ['#e8a020','#3498db'][idx] || '#2ecc71';
+        var pct = maxCoste > 0 ? (r.coste/maxCoste*100) : 0;
+        return '<div style="margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+          +'<span style="font-size:11px;font-weight:700;color:'+col+'">'+datos.local.nombre+'</span>'
+          +'<span style="font-size:11px;color:var(--text)">'+r.coste.toFixed(0)+' €</span>'
+          +'</div>'
+          +'<div style="background:#1a1a1a;border-radius:4px;height:8px;overflow:hidden">'
+          +'<div style="background:'+col+';height:100%;width:'+pct+'%;border-radius:4px;transition:width 0.5s"></div>'
+          +'</div></div>';
+      }).join('')
+      +'</div>';
+  }
+}
+
+function renderMiniCuadrante(datos, col){
+  var DIAS_M = ['L','M','X','J','V','S','D'];
+  var bars = DIAS_M.map(function(d, di){
+    var trabajando = (datos.turnos||[]).filter(function(t){ return t.dia===di && t.turno!=='fiesta' && t.turno!=='mediafiesta'; }).length;
+    var total = datos.empleados.length || 1;
+    var pct = Math.round(trabajando/total*100);
+    var barCol = pct>=80?'var(--green)':pct>=50?'var(--orange)':'#e74c3c';
+    return '<div style="text-align:center;flex:1">'
+      +'<div style="font-size:8px;color:var(--muted);margin-bottom:3px">'+d+'</div>'
+      +'<div style="background:#1a1a1a;border-radius:3px;height:30px;position:relative;overflow:hidden">'
+      +'<div style="background:'+barCol+';position:absolute;bottom:0;width:100%;height:'+pct+'%;border-radius:3px;opacity:0.8"></div>'
+      +'</div>'
+      +'<div style="font-size:8px;color:var(--muted);margin-top:2px">'+trabajando+'p</div>'
+      +'</div>';
+  }).join('');
+  return '<div style="display:flex;gap:3px;margin-top:4px">'+bars+'</div>';
+}
+
+function imprimirDirector(){
+  var el = document.getElementById('screen8');
+  if(!el){ alert('No hay datos que imprimir'); return; }
+  var ventana = window.open('','_blank','width=900,height=700');
+  if(!ventana){ alert('Permite las ventanas emergentes'); return; }
+  ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Vista Director - Grupo El Reloj</title>'
+    +'<style>body{font-family:Arial,sans-serif;background:#0f1923;color:#e8edf2;padding:20px}'
+    +'*{box-sizing:border-box}</style></head><body>'
+    +el.innerHTML+'</body></html>');
+  ventana.document.close();
+  ventana.print();
+}
+
+function imprimirCostes(){
+  var local=getLocal()||'Local', semana=getSemanaLabel();
+  var calcs=empleados.map(function(emp){return calcEmp(emp);});
+  var totFijo=calcs.reduce(function(s,c){return s+(c.costeFijoSem||0);},0);
+  var totExtras=calcs.reduce(function(s,c){return s+c.costeExtras;},0);
+  var totSem=totFijo+totExtras, totMes=totSem*4.33;
+  var totHCuad=calcs.reduce(function(s,c){return s+c.hCuad;},0);
+
+  // Fila Lorena
+  var lorSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
+  var lorMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+  var rowLorena = '<tr style="background:#fffbe6">'
+    +'<td><strong>LORENA</strong></td><td>Directora</td>'
+    +'<td>'+lorenaSalario.hContrato+'h</td><td>—</td>'
+    +'<td>'+lorenaSalario.brutoMes+' €</td>'
+    +'<td>'+lorSem.toFixed(2)+' €</td>'
+    +'<td>'+lorMes.toFixed(0)+' €</td>'
+    +'<td>—</td>'
+    +'<td style="font-weight:700">'+lorSem.toFixed(2)+' €</td>'
+    +'</tr>';
+
+  var rows=empleados.map(function(emp,i){
+    var c=calcs[i];
+    return'<tr><td>'+(emp.nombre||'Emp '+emp.id)+'</td><td>'+emp.rol+'</td>'
+      +'<td>'+c.hPact.toFixed(0)+'h</td><td>'+c.hCuad.toFixed(1)+'h</td>'
+      +'<td>'+(c.bruto!==null?c.bruto.toFixed(0)+' €':'sin dato')+'</td>'
+      +'<td>'+(c.costeFijoSem!==null?c.costeFijoSem.toFixed(2)+' €':'—')+'</td>'
+      +'<td>'+(c.costeFijoMes!==null?c.costeFijoMes.toFixed(0)+' €':'—')+'</td>'
+      +'<td>'+(c.costeExtras>0?c.costeExtras.toFixed(2)+' €':'—')+'</td>'
+      +'<td style="font-weight:700">'+(c.totalSem!==null?c.totalSem.toFixed(2)+' €':'sin dato')+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var extrasRows=extrasDia.length?extrasDia.map(function(ex){
+    var emp=empleados.find(function(e){return e.id===ex.empId;})||{};
+    var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+    return'<tr><td>'+(emp.nombre||'?')+'</td><td>'+(DIAS[ex.dia]||'')+'</td>'
+      +'<td>'+ex.horas+'h</td><td>'+(ex.precioHora?ex.precioHora+' €/h':'—')+'</td>'
+      +'<td>'+coste.toFixed(2)+' €</td><td>'+ex.motivo+'</td></tr>';
+  }).join(''):'';
+
+  var ventana=window.open('','_blank','width=1100,height=750');
+  if(!ventana){alert('Permite ventanas emergentes');return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>Costes – '+local+' – '+semana+'</title>'
+    +'<style>@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;font-size:10px;color:#111;padding:14px}'
+    +'h1{font-size:15px;margin-bottom:2px}h2{font-size:11px;color:#444;margin:14px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}'
+    +'p.sub{color:#666;font-size:10px;margin-bottom:12px}'
+    +'.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}'
+    +'.stat{background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:7px;text-align:center}'
+    +'.sv{font-size:16px;font-weight:700;color:#c07010}.sl{font-size:8px;color:#666;text-transform:uppercase;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:12px}'
+    +'th{background:#eee;padding:5px;text-align:center;border:1px solid #ccc;font-size:8px;text-transform:uppercase}'
+    +'th:first-child,th:nth-child(2){text-align:left}'
+    +'td{padding:4px 5px;border:1px solid #ddd;font-size:9px;text-align:center}'
+    +'td:first-child,td:nth-child(2){text-align:left}tfoot td{background:#f0f0f0;font-weight:700}'
+    +'.footer{font-size:8px;color:#999;text-align:center;margin-top:10px}'
+    +'body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'</style></head><body>'
+    +'<h1>&#128182; Informe de Costes · '+local+'</h1><p class="sub">'+semana+'</p>'
+    +'<div class="stats">'
+    +'<div class="stat"><div class="sv">'+empleados.length+'</div><div class="sl">Empleados</div></div>'
+    +'<div class="stat"><div class="sv">'+totHCuad.toFixed(0)+'h</div><div class="sl">Horas cuadrante</div></div>'
+    +'<div class="stat"><div class="sv">'+totSem.toFixed(0)+' €</div><div class="sl">Total semana</div></div>'
+    +'<div class="stat"><div class="sv">'+totMes.toFixed(0)+' €</div><div class="sl">Estimado mes</div></div>'
+    +'</div>'
+    +'<h2>Personal</h2>'
+    +'<table><thead><tr><th>Empleado</th><th>Rol</th><th>H.Pact</th><th>H.Cuad</th><th>Bruto/mes</th><th>Coste/sem</th><th>Coste/mes</th><th>Extras €</th><th>Total sem</th></tr></thead>'
+    +'<tbody>'+rowLorena+rows+'</tbody>'
+    +'<tfoot><tr><td colspan="2">TOTALES</td><td></td><td>'+totHCuad.toFixed(1)+'h</td><td></td>'
+    +'<td>'+(totFijo+lorSem).toFixed(2)+' €</td><td></td>'
+    +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
+    +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
+    +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
+    +'<p class="footer">RelojTurnos v3.5 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
+    +'</body></html>');
+  ventana.document.close();
+}
+
+// INIT - runs directly, works in all environments including local files
+function getHorasPactadas(emp){
+  // Horas pactadas = calculadas automáticamente desde cuadrante y config
+  // días trabajados × jornada completa + medias fiestas × horas media fiesta
+  var hJornada = +document.getElementById('horas-jornada').value || 9;
+  var hMF = +document.getElementById('horas-media-fiesta').value || 5;
+  var hPact = 0;
+  (emp.turnos||[]).forEach(function(t){
+    if(t==='fiesta') return;
+    if(t==='mediafiesta'){ hPact += hMF; return; }
+    hPact += hJornada;
+  });
+  return hPact;
+}
+
+function getTotalExtrasEmp(empId){
+  return extrasDia.filter(function(e){return e.empId===empId;})
+    .reduce(function(s,e){
+      var h=parseFloat(e.horas)||0, p=parseFloat(e.precioHora)||0;
+      return s+(h*p);
+    },0);
+}
+
+function calcEmp(emp){
+  var s = getSalario(emp.id);
+  var hCuad = (emp.turnos||[]).reduce(function(sum,t){return sum+getTInfo(t).horas;},0);
+  var hPact = getHorasPactadas(emp);
+  var bruto = s.brutoMes!==''?parseFloat(s.brutoMes):null;
+  var costeFijoSem = bruto!==null?(bruto*(1+SS_EMPRESA))/4.33:null;
+  var costeFijoMes = bruto!==null?bruto*(1+SS_EMPRESA):null;
+  var costeExtras = getTotalExtrasEmp(emp.id);
+  var totalSem = costeFijoSem!==null?costeFijoSem+costeExtras:null;
+  return {hCuad:hCuad, hPact:hPact, bruto:bruto,
+          costeFijoSem:costeFijoSem, costeFijoMes:costeFijoMes,
+          costeExtras:costeExtras, totalSem:totalSem};
+}
+
+// INIT
+buildFechas();
+horaOpts('hora-apertura','07:30');
+horaOpts('hora-cierre','03:00');
+initSupabase();
+</script>
+</body>
+</html>
