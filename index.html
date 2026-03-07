@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v2.6 – Grupo El Reloj</title>
+<title>RelojTurnos v3.0 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -164,6 +164,7 @@ select option{background:var(--dark)}
 .lorena-mobile{display:none}
 .lorena-desktop{display:block}
 @media(max-width:640px){.lorena-mobile{display:block}.lorena-desktop{display:none}}
+@media print{.cuadrante-mobile{display:none!important}.lorena-mobile{display:none!important}}
 </style>
 </head>
 <body>
@@ -240,7 +241,7 @@ select option{background:var(--dark)}
     <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text">Eventos</span></div>
     <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text">Cuadrante</span></div>
     <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text">Costes</span></div>
-    <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text">Director</span></div>
+    <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text">Direcc. Gral.</span></div>
   </div>
 
   <!-- PASO 1 -->
@@ -501,7 +502,7 @@ select option{background:var(--dark)}
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="imprimirCostes()">&#128424; Imprimir informe</button>
           <button class="btn btn-primary btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
-          <button class="btn btn-ghost btn-sm" onclick="abrirVistaDirector()" style="border-color:#c0a020;color:#c0a020">&#128196; Vista Director</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirVistaDirector()" style="border-color:#c0a020;color:#c0a020">&#128196; Dirección General</button>
         </div>
       </div>
     </div>
@@ -512,7 +513,7 @@ select option{background:var(--dark)}
   <div class="screen" id="screen8">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="card-title" style="margin:0">&#128196; Vista Director General</div>
+        <div class="card-title" style="margin:0">&#128196; Dirección General</div>
         <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:3px 9px;border-radius:12px;font-weight:700">GRUPO EL RELOJ</span>
       </div>
       <div class="card-sub" id="director-subtitulo">Resumen semanal de todos los locales</div>
@@ -542,7 +543,7 @@ select option{background:var(--dark)}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v2.6</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.0</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#b8cad9cdd496dfddcbccd1d7d6d4d7dbd9d4f8dfd5d9d1d496dbd7d5" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="fd8f9c8891d39a988e8994929391929e9c91bd9a909c9491d39e9290">[email&#160;protected]</span></a>
 </div>
 
@@ -621,13 +622,13 @@ async function doLogin(){
     // Comprobar usuarios demo primero
     var DEMO_USERS = [
       {id:0, dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA (DEMO)', local_id:1, empleado_id:null},
-      {id:0, dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM (DEMO)', local_id:null, empleado_id:null},
+      {id:0, dni:'DEMO0002', password_hash:'', rol:'direccion_general', nombre:'MIRYAM (DEMO)', local_id:null, empleado_id:null},
     ];
     var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
     if(demoUser && pass==='1234'){
       currentUser = demoUser;
       document.getElementById('login-screen').style.display='none';
-      if(demoUser.rol==='directora_general'){
+      if(demoUser.rol==='direccion_general'){
         document.querySelector('header').style.display='';
         document.querySelector('.container').style.display='';
         abrirVistaDirector();
@@ -648,7 +649,7 @@ async function doLogin(){
     document.getElementById('login-screen').style.display = 'none';
     if(user.rol === 'empleado'){
       abrirPortalEmpleado(user);
-    } else if(user.rol === 'directora_general'){
+    } else if(user.rol === 'direccion_general'){
       document.getElementById('portal-empleado').style.display = 'none';
       document.querySelector('header').style.display = '';
       document.querySelector('.container').style.display = '';
@@ -662,7 +663,7 @@ async function doLogin(){
     // Sin BD — modo demo con usuarios hardcodeados
     var DEMO_USERS = [
       {dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA', local_id:1},
-      {dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM', local_id:null},
+      {dni:'DEMO0002', password_hash:'', rol:'direccion_general', nombre:'MIRYAM', local_id:null},
     ];
     var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
     if(demoUser && pass==='1234'){
@@ -1303,7 +1304,7 @@ function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(
 
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v2.6 ==========
+// ========== LÓGICA FIESTAS v3.0 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -1818,17 +1819,17 @@ function generarCuadrante(){
     +(function(){
       var lorenaHtml='';
       var LORENA_SEMANA = lorenaHorario;
-      lorenaHtml+='<div style="margin:10px 0;background:#0f1f2f;border:1px solid #1e4060;border-radius:10px;padding:12px">';
+      lorenaHtml+='<div style="margin:10px 0;background:transparent;border:1.5px solid #888;border-radius:8px;padding:10px">';
       lorenaHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
       lorenaHtml+='<div style="width:28px;height:28px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">LO</div>';
       lorenaHtml+='<div>';
-      lorenaHtml+='<div style="font-weight:700;font-size:12px;color:#c0a020">LORENA <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:2px 6px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>';
-      lorenaHtml+='<div style="font-size:9px;color:var(--muted)">Apoyo operativo · No computa en cobertura</div>';
+      lorenaHtml+='<div style="font-weight:700;font-size:12px;color:#333">LORENA <span style="font-size:9px;background:#eee;color:#555;padding:2px 6px;border-radius:4px;margin-left:4px;border:1px solid #ccc">DIRECTORA</span></div>';
+      lorenaHtml+='<div style="font-size:9px;color:#666">Apoyo operativo · No computa en cobertura</div>';
       lorenaHtml+='</div></div>';
       lorenaHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
       LORENA_SEMANA.forEach(function(d){
-        var bg = d.tipo==='fiesta'?'#2d1515': d.tipo==='apoyo'?'#1a2a1a':'#0f1f2f';
-        var col = d.tipo==='fiesta'?'#ff6b6b': d.tipo==='apoyo'?'#5ddb5d':'#c0a020';
+        var bg = 'transparent';
+        var col = d.tipo==='fiesta'?'#c00': d.tipo==='apoyo'?'#050':'#333';
         var lbl = getLorenaLabel(d);
         lorenaHtml+='<div style="text-align:center;padding:4px 2px;border-radius:5px;background:'+bg+';border:1px solid '+col+'40">';
         lorenaHtml+='<div style="font-size:8px;color:var(--muted);margin-bottom:2px">'+DIAS_SHORT[d.dia]+'</div>';
@@ -1932,6 +1933,7 @@ function imprimirCuadrante(){
   var clon=original.cloneNode(true);
   if(!mostrarHoras)clon.querySelectorAll('.col-horas').forEach(function(el){el.remove();});
   clon.querySelectorAll('.cuadrante-mobile').forEach(function(el){el.remove();});
+  clon.querySelectorAll('[class*="mobile"]').forEach(function(el){el.remove();});
   var contenido=clon.innerHTML;
   var ventana=window.open('','_blank','width=1200,height=800');
   if(!ventana){alert('Permite las ventanas emergentes y vuelve a intentarlo.');return;}
@@ -2154,20 +2156,21 @@ function renderCostes(){
   // TARJETAS por empleado (sin tabla, sin desbordamiento)
   var cards=document.getElementById('costes-cards');
   if(cards){
-    // Tarjeta Lorena primero
+    // Tarjeta Lorena — mismo formato que empleados
     var costeLorSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
     var costeLorMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
-    var lorCard = '<div style="background:var(--darker);border:1px solid #c0a02040;border-radius:10px;padding:14px;margin-bottom:9px">'
+    var lorColor = COLORS[0]; // primer color de la paleta
+    var lorCard = '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:9px">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
       +'<div style="display:flex;align-items:center;gap:9px">'
-      +'<div style="width:32px;height:32px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>'
-      +'<div><div style="font-weight:700;font-size:13px;color:#c0a020">LORENA</div>'
-      +'<div style="font-size:10px;color:var(--muted)">Directora · La Cala</div></div></div>'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:'+lorColor+'20;color:'+lorColor+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>'
+      +'<div><div style="font-weight:700;font-size:13px;color:'+lorColor+'">LORENA</div>'
+      +'<div style="font-size:10px;color:var(--muted)">Directora</div></div></div>'
       +'<div style="font-size:20px;font-weight:700;color:var(--accent2)">'+costeLorSem.toFixed(2)+' €</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
       +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">H. CONTRATO</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
       +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
       +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
       +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
@@ -2629,7 +2632,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v2.6 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v3.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
