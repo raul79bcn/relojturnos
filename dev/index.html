@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v3.6 – Grupo El Reloj</title>
+<title>RelojTurnos v3.7 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -19,7 +19,7 @@ header{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24
 .logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
 .header-info{font-size:12px;color:var(--muted)}
 .header-info span{color:var(--accent);font-weight:600}
-.container{max-width:1600px;margin:0 auto;padding:24px 32px}
+.container{max-width:980px;margin:0 auto;padding:24px 16px}
 .steps{display:flex;margin-bottom:28px;background:var(--dark);border-radius:12px;padding:5px;border:1px solid var(--border)}
 .step{flex:1;padding:9px 4px;border-radius:8px;text-align:center;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
 .step.active{background:var(--accent);color:var(--darker);font-weight:700}
@@ -186,7 +186,7 @@ select option{background:var(--dark)}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.6</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.7</span></div>
   </div>
 </div>
 
@@ -605,7 +605,7 @@ select option{background:var(--dark)}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.6</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.7</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="mailto:raul.gestionlocal@gmail.com" style="color:var(--accent);text-decoration:none">raul.gestionlocal@gmail.com</a>
 </div>
 
@@ -1371,7 +1371,7 @@ function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(
 
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v3.6 ==========
+// ========== LÓGICA FIESTAS v3.7 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2233,18 +2233,18 @@ function renderCostes(){
       +'<div style="width:32px;height:32px;border-radius:50%;background:'+lorColor+'20;color:'+lorColor+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>'
       +'<div><div style="font-weight:700;font-size:13px;color:'+lorColor+'">LORENA</div>'
       +'<div style="font-size:10px;color:var(--muted)">Directora</div></div></div>'
-      +'<div style="font-size:20px;font-weight:700;color:var(--accent2)">'+costeLorSem.toFixed(2)+' €</div>'
+      +'<div style="font-size:22px;font-weight:700;color:var(--accent2)">'+costeLorSem.toFixed(2)+' €</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
       +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
       +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
+      +'<div style="font-size:18px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
       +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
       +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--green)">'+costeLorSem.toFixed(2)+' €</div></div>'
+      +'<div style="font-size:18px;font-weight:700;color:var(--green)">'+costeLorSem.toFixed(2)+' €</div></div>'
       +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
       +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+costeLorMes.toFixed(0)+' €</div></div>'
+      +'<div style="font-size:18px;font-weight:700;color:var(--muted)">'+costeLorMes.toFixed(0)+' €</div></div>'
       +'</div></div>';
 
     cards.innerHTML=lorCard+empleados.map(function(emp,idx){
@@ -2327,31 +2327,6 @@ function renderCostes(){
   }
 
   // Totales
-  // Añadir Lorena a costes-cards (planificación)
-  var costeLorenaCard = (function(){
-    var costeSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
-    var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
-    return '<div class="costes-emp-card" style="border-color:#c0a02040;margin-bottom:8px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-      +'<div style="font-size:13px;font-weight:700;color:#c0a020">LORENA'
-      +' <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:1px 6px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>'
-      +'<div style="text-align:right">'
-      +'<div style="font-size:18px;font-weight:700;color:#c0a020">'+costeSem.toFixed(2)+' €<span style="font-size:10px;color:var(--muted)"> / sem</span></div>'
-      +'<div style="font-size:10px;color:var(--muted)">'+costeMes.toFixed(0)+' € / mes · '+lorenaSalario.hContrato+'h contrato</div>'
-      +'</div></div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
-      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
-      +'<div style="font-size:9px;color:var(--muted)">BRUTO MES</div>'
-      +'<div style="font-size:14px;font-weight:700;color:#c0a020">'+lorenaSalario.brutoMes+' €</div></div>'
-      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
-      +'<div style="font-size:9px;color:var(--muted)">SS EMPRESA (39%)</div>'
-      +'<div style="font-size:14px;font-weight:700;color:var(--orange)">'+(lorenaSalario.brutoMes*SS_EMPRESA).toFixed(0)+' €</div></div>'
-      +'<div style="background:var(--darker);border-radius:6px;padding:8px;text-align:center">'
-      +'<div style="font-size:9px;color:var(--muted)">COSTE TOTAL MES</div>'
-      +'<div style="font-size:14px;font-weight:700;color:var(--accent2)">'+costeMes.toFixed(0)+' €</div></div>'
-      +'</div></div>';
-  })();
-  if(cards) cards.innerHTML = costeLorenaCard + cards.innerHTML;
 
   var tot=document.getElementById('costes-totales');
   if(tot && tieneDatos){
@@ -2699,7 +2674,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v3.6 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v3.7 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
