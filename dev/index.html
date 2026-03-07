@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v3.8 – Grupo El Reloj</title>
+<title>RelojTurnos v3.9 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -37,7 +37,7 @@ select option{background:var(--dark)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .form-row.three{grid-template-columns:1fr 1fr 1fr}
 .form-group{margin-bottom:0}
-.empleado-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.empleado-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:0}
 .empleado-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .emp-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
 .emp-name-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-family:Arial,sans-serif;font-size:14px;font-weight:600}
@@ -186,7 +186,7 @@ select option{background:var(--dark)}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.8</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.9</span></div>
   </div>
 </div>
 
@@ -274,7 +274,16 @@ select option{background:var(--dark)}
       </div>
       <div class="form-group">
         <label>D&#237;as de menor afluencia (fiesta sugerida)</label>
-        <select id="dias-flojos" multiple style="height:82px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--darker);border:1px solid var(--border);border-radius:8px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="0" checked onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> Lunes</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="1" onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> Martes</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="2" checked onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> Mi&#233;rcoles</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="3" onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> Jueves</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="4" onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> Viernes</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="5" onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> S&#225;bado</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="6" onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> Domingo</label>
+        </div>
+        <select id="dias-flojos" multiple style="display:none">
           <option value="0" selected>Lunes</option>
           <option value="1">Martes</option>
           <option value="2" selected>Mi&#233;rcoles</option>
@@ -283,7 +292,6 @@ select option{background:var(--dark)}
           <option value="5">S&#225;bado</option>
           <option value="6">Domingo</option>
         </select>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">Mant&#233;n Ctrl para seleccionar varios</div>
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="nextStep(1)">Siguiente &#8594; Configurar turnos</button>
@@ -331,7 +339,7 @@ select option{background:var(--dark)}
     <div class="card">
       <div class="card-title">&#191;Qui&#233;n trabaja en este local?</div>
       <div class="card-sub">Empleados y su turno habitual. Las horas se calculan solas seg&#250;n los turnos asignados.</div>
-      <div id="empleados-list"></div>
+      <div id="empleados-list" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
       <button class="btn btn-ghost btn-sm" onclick="addEmpleado()" style="margin-top:4px">&#65291; A&#241;adir empleado</button>
 
       <!-- Sección Lorena Directora -->
@@ -339,8 +347,8 @@ select option{background:var(--dark)}
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <div style="width:32px;height:32px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>
           <div>
-            <div style="font-weight:700;font-size:13px;color:#c0a020">LORENA <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:2px 7px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>
-            <div style="font-size:10px;color:var(--muted)">Horario orientativo · No computa en cobertura ni costes</div>
+            <div style="font-weight:700;font-size:16px;color:#c0a020">LORENA <span style="font-size:11px;background:#c0a02020;color:#c0a020;padding:2px 7px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>
+            <div style="font-size:13px;color:var(--muted)">Horario orientativo · No computa en cobertura ni costes</div>
           </div>
         </div>
         <div id="lorena-horario-list"></div>
@@ -605,7 +613,7 @@ select option{background:var(--dark)}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.8</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.9</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="mailto:raul.gestionlocal@gmail.com" style="color:var(--accent);text-decoration:none">raul.gestionlocal@gmail.com</a>
 </div>
 
@@ -1369,9 +1377,18 @@ function renderEmpleados(){
 function updNom(id,v){var e=empleados.find(function(x){return x.id===id;});if(e)e.nombre=v;var av=document.getElementById('ea-'+id);if(av)av.textContent=v?v.substring(0,2).toUpperCase():'??';}
 function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(e)e[f]=v;}
 
+
+function syncDiasFlojos(){
+  var checks = document.querySelectorAll('[onchange="syncDiasFlojos()"]');
+  var sel = document.getElementById('dias-flojos');
+  Array.from(sel.options).forEach(function(opt){
+    var cb = Array.from(checks).find(function(c){return c.value===opt.value;});
+    opt.selected = cb ? cb.checked : false;
+  });
+}
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v3.8 ==========
+// ========== LÓGICA FIESTAS v3.9 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2674,7 +2691,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v3.8 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v3.9 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
