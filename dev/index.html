@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v3.9 – Grupo El Reloj</title>
+<title>RelojTurnos v4.0 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -46,7 +46,7 @@ select option{background:var(--dark)}
 .remove-btn:hover{color:var(--red)}
 .dias-grid-header{display:grid;grid-template-columns:140px repeat(7,1fr);gap:5px;margin-bottom:5px}
 .dias-grid-row{display:grid;grid-template-columns:140px repeat(7,1fr);gap:5px;margin-bottom:7px;align-items:center}
-.dia-label-top{text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.dia-label-top{text-align:center;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
 .dia-select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:6px 4px;color:var(--text);font-size:13px;font-family:Arial,sans-serif;text-align:center;cursor:pointer}
 .dia-select:focus{outline:none;border-color:var(--accent)}
 .dia-select.fiesta{background:#2d1515;border-color:#5a2020;color:var(--red)}
@@ -73,7 +73,7 @@ select option{background:var(--dark)}
 .schedule-table th.emp-col{text-align:left;min-width:100px}
 .schedule-table td{padding:7px 5px;border:1px solid var(--border);text-align:center;vertical-align:middle}
 .schedule-table td.emp-name{text-align:left;font-weight:600;font-size:14px;padding-left:8px}
-.turno-badge{display:inline-block;padding:2px 5px;border-radius:4px;font-size:9px;font-weight:700;line-height:1.5;text-align:center}
+.turno-badge{display:inline-block;padding:4px 8px;border-radius:5px;font-size:13px;font-weight:700;line-height:1.5;text-align:center}
 .badge-fiesta{background:#3d1515;color:#ff6b6b}
 .badge-mediafiesta{background:#3d2d10;color:#ffaa40}
 .badge-manana{background:#152d15;color:#5ddb5d}
@@ -186,7 +186,7 @@ select option{background:var(--dark)}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.9</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.0</span></div>
   </div>
 </div>
 
@@ -348,7 +348,7 @@ select option{background:var(--dark)}
           <div style="width:32px;height:32px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>
           <div>
             <div style="font-weight:700;font-size:16px;color:#c0a020">LORENA <span style="font-size:11px;background:#c0a02020;color:#c0a020;padding:2px 7px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>
-            <div style="font-size:13px;color:var(--muted)">Horario orientativo · No computa en cobertura ni costes</div>
+            <div style="font-size:13px;color:var(--muted)">Horario orientativo · No computa en cobertura de sala · <span style="color:var(--green)">Sí computa en costes</span></div>
           </div>
         </div>
         <div id="lorena-horario-list"></div>
@@ -613,7 +613,7 @@ select option{background:var(--dark)}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.9</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.0</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="mailto:raul.gestionlocal@gmail.com" style="color:var(--accent);text-decoration:none">raul.gestionlocal@gmail.com</a>
 </div>
 
@@ -1388,7 +1388,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v3.9 ==========
+// ========== LÓGICA FIESTAS v4.0 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -1837,9 +1837,9 @@ function generarCuadrante(){
       +'<td class="emp-name"><div style="display:flex;align-items:center;gap:7px">'
       +'<div style="width:24px;height:24px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">'+init+'</div>'
       +(emp.nombre||'Empleado '+emp.id)+'</div></td>'
-      +'<td style="font-size:10px;color:var(--muted)">'+emp.rol+'</td>'
+      +'<td style="font-size:13px;color:var(--muted)">'+emp.rol+'</td>'
       +cells
-      +'<td class="col-horas" style="font-weight:700;color:var(--accent);font-size:12px">'+horasE[idx].toFixed(1)+'h</td></tr>';
+      +'<td class="col-horas" style="font-weight:700;color:var(--accent);font-size:15px">'+horasE[idx].toFixed(1)+'h</td></tr>';
   }).join('');
 
   var refRows='';
@@ -2248,20 +2248,20 @@ function renderCostes(){
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
       +'<div style="display:flex;align-items:center;gap:9px">'
       +'<div style="width:32px;height:32px;border-radius:50%;background:'+lorColor+'20;color:'+lorColor+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>'
-      +'<div><div style="font-weight:700;font-size:13px;color:'+lorColor+'">LORENA</div>'
-      +'<div style="font-size:10px;color:var(--muted)">Directora</div></div></div>'
-      +'<div style="font-size:22px;font-weight:700;color:var(--accent2)">'+costeLorSem.toFixed(2)+' €</div>'
+      +'<div><div style="font-weight:700;font-size:15px;color:'+lorColor+'">LORENA</div>'
+      +'<div style="font-size:13px;color:var(--muted)">Directora</div></div></div>'
+      +'<div style="font-size:20px;font-weight:700;color:var(--accent2)">'+costeLorSem.toFixed(2)+' €</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
       +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
-      +'<div style="font-size:18px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
+      +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
       +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
-      +'<div style="font-size:18px;font-weight:700;color:var(--green)">'+costeLorSem.toFixed(2)+' €</div></div>'
+      +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--green)">'+costeLorSem.toFixed(2)+' €</div></div>'
       +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-      +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
-      +'<div style="font-size:18px;font-weight:700;color:var(--muted)">'+costeLorMes.toFixed(0)+' €</div></div>'
+      +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+costeLorMes.toFixed(0)+' €</div></div>'
       +'</div></div>';
 
     cards.innerHTML=lorCard+empleados.map(function(emp,idx){
@@ -2281,13 +2281,13 @@ function renderCostes(){
         // Fila de datos
         +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
         +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
+        +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
         +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+c.hPact.toFixed(0)+'h</div></div>'
         +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
+        +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
         +'<div style="font-size:15px;font-weight:700;color:var(--green)">'+(c.costeFijoSem!==null?c.costeFijoSem.toFixed(2)+' €':'—')+'</div></div>'
         +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-        +'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
+        +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
         +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+(c.costeFijoMes!==null?c.costeFijoMes.toFixed(0)+' €':'—')+'</div></div>'
         +'</div>'
         // Extras de este empleado si las hay
@@ -2691,7 +2691,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v3.9 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
