@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v3.4 – Grupo El Reloj</title>
+<title>RelojTurnos v3.0 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -186,7 +186,7 @@ select option{background:var(--dark)}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V3.4</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj</div>
   </div>
 </div>
 
@@ -242,7 +242,6 @@ select option{background:var(--dark)}
     <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text">Cuadrante</span></div>
     <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text">Costes</span></div>
     <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text">Direcc. Gral.</span></div>
-    <div class="step" id="step9" onclick="goStep(9)" style="display:none"><span class="step-num">&#128101;</span><span class="step-text">Usuarios</span></div>
   </div>
 
   <!-- PASO 1 -->
@@ -541,75 +540,14 @@ select option{background:var(--dark)}
       </div>
     </div>
   </div>
-  <!-- PASO 9: GESTIÓN DE USUARIOS -->
-  <div class="screen" id="screen9">
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="card-title" style="margin:0">&#128101; Gestión de Usuarios</div>
-        <span style="font-size:9px;background:#6b8fff20;color:#6b8fff;padding:3px 9px;border-radius:12px;font-weight:700">SOLO DIRECTORA</span>
-      </div>
-      <div class="card-sub">Crea y gestiona los accesos del personal</div>
-
-      <!-- Formulario nuevo usuario -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px">&#43; Nuevo usuario</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nombre completo</label>
-            <input type="text" id="nu-nombre" placeholder="Ej: MARILYN" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
-          </div>
-          <div class="form-group">
-            <label>DNI / NIE</label>
-            <input type="text" id="nu-dni" placeholder="12345678A" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nº Afiliación Seg. Social</label>
-            <input type="text" id="nu-ss" placeholder="081153483246" class="inp-sm">
-            <div style="font-size:9px;color:var(--muted);margin-top:3px">Los últimos 4 dígitos serán la contraseña inicial</div>
-          </div>
-          <div class="form-group">
-            <label>Rol en la app</label>
-            <select id="nu-rol" class="inp-sm">
-              <option value="empleado">Empleado</option>
-              <option value="directora">Directora</option>
-              <option value="directora_general">Dirección General</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Local</label>
-            <select id="nu-local" class="inp-sm">
-              <option value="1">La Cala</option>
-              <option value="2">Roto's Burguer</option>
-            </select>
-          </div>
-        </div>
-        <div id="nu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
-        <div id="nu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
-        <button class="btn btn-primary btn-sm" onclick="crearUsuario()">&#128274; Crear usuario</button>
-      </div>
-
-      <!-- Lista de usuarios -->
-      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Usuarios registrados</div>
-      <div id="usuarios-lista">
-        <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Cargando...</div>
-      </div>
-
-      <div class="btn-row space" style="margin-top:18px">
-        <button class="btn btn-secondary" onclick="goStep(8)">&#8592; Dirección General</button>
-        <button class="btn btn-ghost btn-sm" onclick="cargarUsuarios()" style="border-color:var(--green);color:var(--green)">&#128257; Actualizar lista</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.4</span>
-  &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="mailto:raul.gestionlocal@gmail.com" style="color:var(--accent);text-decoration:none">raul.gestionlocal@gmail.com</a>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v3.0</span>
+  &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#b8cad9cdd496dfddcbccd1d7d6d4d7dbd9d4f8dfd5d9d1d496dbd7d5" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="fd8f9c8891d39a988e8994929391929e9c91bd9a909c9491d39e9290">[email&#160;protected]</span></a>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
 var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
 var COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800'];
@@ -709,10 +647,9 @@ async function doLogin(){
     }
     currentUser = user;
     document.getElementById('login-screen').style.display = 'none';
-    checkMostrarBtnUsuarios();
     if(user.rol === 'empleado'){
       abrirPortalEmpleado(user);
-    } else if(user.rol === 'directora_general'){
+    } else if(user.rol === 'direccion_general'){
       document.getElementById('portal-empleado').style.display = 'none';
       document.querySelector('header').style.display = '';
       document.querySelector('.container').style.display = '';
@@ -726,7 +663,7 @@ async function doLogin(){
     // Sin BD — modo demo con usuarios hardcodeados
     var DEMO_USERS = [
       {dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA', local_id:1},
-      {dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM', local_id:null},
+      {dni:'DEMO0002', password_hash:'', rol:'direccion_general', nombre:'MIRYAM', local_id:null},
     ];
     var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
     if(demoUser && pass==='1234'){
@@ -1367,7 +1304,7 @@ function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(
 
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v3.4 ==========
+// ========== LÓGICA FIESTAS v3.0 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2361,13 +2298,13 @@ function renderCostes(){
 
   // Editor salarios — solo bruto/mes y horas contrato, sin más
   // Tarjeta Lorena directora en editor salarios
-  var lorenaCardEditor = (function(){
-    var lorColor = COLORS[0];
+  var lorenaCard = (function(){
     var costeSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
     var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
-    return '<div class="costes-emp-card">'
-      +'<div style="font-size:13px;font-weight:700;color:'+lorColor+';margin-bottom:12px">LORENA'
-      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Directora</span></div>'
+    return '<div class="costes-emp-card" style="border-color:#c0a02040">'
+      +'<div style="font-size:13px;font-weight:700;color:#c0a020;margin-bottom:12px">LORENA'
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Directora</span>'
+      +' <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:1px 6px;border-radius:4px;margin-left:4px">No en cuadrante</span></div>'
       +'<div class="form-row three">'
       +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
       +'<input type="number" min="0" step="50" value="'+lorenaSalario.brutoMes+'" oninput="lorenaSalario.brutoMes=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
@@ -2375,13 +2312,13 @@ function renderCostes(){
       +'<input type="number" min="1" max="48" step="1" value="'+lorenaSalario.hContrato+'" oninput="lorenaSalario.hContrato=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
       +'<div class="form-group"><label>Resultado calculado</label>'
       +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
-      +'<span style="color:var(--green);font-weight:700">'+costeSem.toFixed(2)+' € / sem</span><br>'
+      +'<span style="color:#c0a020;font-weight:700">'+costeSem.toFixed(2)+' € / sem</span><br>'
       +'<span style="color:var(--muted);font-size:11px">'+costeMes.toFixed(0)+' € / mes (con SS)</span>'
       +'</div></div>'
       +'</div></div>';
   })();
 
-  document.getElementById('costes-editor').innerHTML=lorenaCardEditor+empleados.map(function(emp,idx){
+  document.getElementById('costes-editor').innerHTML=lorenaCard+empleados.map(function(emp,idx){
     var color=COLORS[idx%COLORS.length], s=getSalario(emp.id), c=calcs[idx];
     return'<div class="costes-emp-card">'
       +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||'Empleado '+emp.id)
@@ -2695,7 +2632,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v3.4 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v3.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
