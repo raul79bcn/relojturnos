@@ -615,6 +615,26 @@ async function doLogin(){
 
   try{
     var passHash = await hashPass(pass);
+    // Comprobar usuarios demo primero
+    var DEMO_USERS = [
+      {id:0, dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA (DEMO)', local_id:1, empleado_id:null},
+      {id:0, dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM (DEMO)', local_id:null, empleado_id:null},
+    ];
+    var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
+    if(demoUser && pass==='1234'){
+      currentUser = demoUser;
+      document.getElementById('login-screen').style.display='none';
+      if(demoUser.rol==='directora_general'){
+        document.querySelector('header').style.display='';
+        document.querySelector('.container').style.display='';
+        abrirVistaDirector();
+      } else {
+        document.querySelector('header').style.display='';
+        document.querySelector('.container').style.display='';
+        showToast('✓ Bienvenida '+demoUser.nombre,'green');
+      }
+      return;
+    }
     var rows = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni)+'&activo=eq.true');
     if(!rows.length){ errEl.textContent='Usuario no encontrado'; errEl.style.display='block'; return; }
     var user = rows[0];
@@ -1114,52 +1134,69 @@ function removeEmpleado(id){empleados=empleados.filter(function(e){return e.id!=
 function renderLorenaHorario(){
   var cont = document.getElementById('lorena-horario-list');
   if(!cont) return;
+  var DIAS_S = ['L','M','X','J','V','S','D'];
   var DIAS_L = ['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
-  var TIPOS = [
-    {v:'fiesta',  label:'\ud83c\udfd6 Fiesta'},
-    {v:'seguido', label:'\u23f0 Seguido'},
-    {v:'partido', label:'\u2702\ufe0f Partido'},
-    {v:'apoyo',   label:'\ud83e\udd1d Apoyo'},
-  ];
-  var allOpts = function(def){
+  var TIPO_COLOR = {fiesta:'#ff6b6b', seguido:'var(--green)', partido:'#ffa040', apoyo:'#6b8fff'};
+  var TIPO_ICON  = {fiesta:'\ud83c\udfd6', seguido:'\u23f0', partido:'\u2702\ufe0f', apoyo:'\ud83e\udd1d'};
+  var TIPOS = ['fiesta','seguido','partido','apoyo'];
+
+  var timeOpts = function(def){
     return Array.from({length:48}, function(_,i){
       var h=Math.floor(i/2), m=i%2===0?'00':'30';
       var str=String(h).padStart(2,'0')+':'+m;
       return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
     }).join('');
   };
-  var rows = lorenaHorario.map(function(d, idx){
-    var esFiesta = d.tipo==='fiesta';
+
+  var sel = function(id, def){
+    return '<select id="'+id+'" onchange="updLorena('+id.replace(/\D/g,'')+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 4px;color:var(--text);font-size:10px;width:58px">'+timeOpts(def)+'</select>';
+  };
+
+  // Tabla compacta
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<thead><tr style="border-bottom:1px solid var(--border)">'
+    +'<th style="padding:4px 6px;text-align:left;color:var(--muted);font-size:9px;font-weight:600">DÍA</th>'
+    +'<th style="padding:4px 6px;text-align:left;color:var(--muted);font-size:9px;font-weight:600">TIPO</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">ENTRADA</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">SALIDA</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">ENT.2</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">SAL.2</th>'
+    +'</tr></thead><tbody>';
+
+  lorenaHorario.forEach(function(d, idx){
+    var esFiesta  = d.tipo==='fiesta';
     var esPartido = d.tipo==='partido';
-    var bg = esFiesta ? '#2d1515' : '#0a1a0a';
-    var bloqueado = (idx===0 || idx===6);
+    var col = TIPO_COLOR[d.tipo] || 'var(--muted)';
     var tipoOpts = TIPOS.map(function(t){
-      return '<option value="'+t.v+'"'+(d.tipo===t.v?' selected':'')+'>'+t.label+'</option>';
+      return '<option value="'+t+'"'+(d.tipo===t?' selected':'')+'>'+TIPO_ICON[t]+' '+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';
     }).join('');
+    var bg = idx%2===0 ? 'background:#ffffff06' : '';
 
-    var row = '<div style="margin-bottom:8px;padding:8px;background:'+bg+';border-radius:7px;border:1px solid #c0a02025">';
-    // Fila 1: día + tipo + resumen
-    row += '<div style="display:grid;grid-template-columns:80px 100px 1fr;gap:6px;align-items:end;margin-bottom:'+(esFiesta||(!esPartido&&!esFiesta)?'0':'6px')+'">';
-    row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">'+DIAS_L[idx]+(bloqueado?' \ud83d\udd12':'')+'</div>';
-    row += '<select id="ltipo'+idx+'" onchange="updLorena('+idx+')" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-size:11px">'+tipoOpts+'</select></div>';
-    row += '<div style="font-size:10px;color:#c0a020;padding:6px 4px;align-self:center">'+getLorenaLabel(d)+'</div>';
-    row += '<div></div></div>';
-
-    if(!esFiesta){
-      // Fila 2: horas — siempre en grid de 2 columnas para que quepan en móvil
-      row += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">';
-      row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">Entrada'+(esPartido?' 1':'')+'</div><select id="lini'+idx+'" onchange="updLorena('+idx+')">'+allOpts(d.ini||'08:00')+'</select></div>';
-      row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">Salida'+(esPartido?' 1':'')+'</div><select id="lfin'+idx+'" onchange="updLorena('+idx+')">'+allOpts(d.fin||'17:00')+'</select></div>';
+    html += '<tr style="border-bottom:1px solid var(--border)10;'+bg+'">';
+    // Día
+    html += '<td style="padding:5px 6px"><span style="font-weight:700;color:'+col+'">'+DIAS_S[idx]+'</span>'
+          + '<span style="font-size:9px;color:var(--muted);margin-left:4px">'+DIAS_L[idx]+'</span></td>';
+    // Tipo selector
+    html += '<td style="padding:3px 6px"><select id="ltipo'+idx+'" onchange="updLorena('+idx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 4px;color:'+col+';font-size:10px;font-weight:600">'+tipoOpts+'</select></td>';
+    // Horas
+    if(esFiesta){
+      html += '<td colspan="4" style="padding:3px 6px;text-align:center;color:#ff6b6b;font-size:10px">\ud83c\udfd6 Día libre</td>';
+    } else {
+      html += '<td style="padding:3px 4px;text-align:center">'+sel('lini'+idx, d.ini||'12:00')+'</td>';
+      html += '<td style="padding:3px 4px;text-align:center">'+sel('lfin'+idx, d.fin||'21:00')+'</td>';
       if(esPartido){
-        row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">Entrada 2</div><select id="lini2'+idx+'" onchange="updLorena('+idx+')">'+allOpts(d.ini2||'20:00')+'</select></div>';
-        row += '<div><div style="font-size:9px;color:var(--muted);margin-bottom:3px">Salida 2</div><select id="lfin2'+idx+'" onchange="updLorena('+idx+')">'+allOpts(d.fin2||'23:00')+'</select></div>';
+        html += '<td style="padding:3px 4px;text-align:center">'+sel('lini2'+idx, d.ini2||'20:00')+'</td>';
+        html += '<td style="padding:3px 4px;text-align:center">'+sel('lfin2'+idx, d.fin2||'23:00')+'</td>';
+      } else {
+        html += '<td style="padding:3px 4px;text-align:center;color:var(--muted);font-size:10px">—</td>';
+        html += '<td style="padding:3px 4px;text-align:center;color:var(--muted);font-size:10px">—</td>';
       }
-      row += '</div>';
     }
-    row += '</div>';
-    return row;
+    html += '</tr>';
   });
-  cont.innerHTML = rows.join('');
+
+  html += '</tbody></table>';
+  cont.innerHTML = html;
 }
 function getLorenaLabel(d){
   if(d.tipo==='fiesta') return '🏖️ FIESTA';
