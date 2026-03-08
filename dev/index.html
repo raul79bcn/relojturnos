@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.4 – Grupo El Reloj</title>
+<title>RelojTurnos v4.5 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -206,8 +206,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 <!-- PANTALLA LOGIN -->
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-logo">
-      <div class="logo-icon">&#9201;</div>
+      <div class="login-logo">
+      <div class="logo-icon" id="login-logo-icon">&#9201;</div>
       <div class="logo-text">RelojTurnos</div>
       <div class="logo-sub">Grupo El Reloj</div>
     </div>
@@ -221,7 +221,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.4</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.5</span></div>
   </div>
 </div>
 
@@ -261,7 +261,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
 <header style="display:none">
   <div class="logo">
-    <div class="logo-icon">&#9201;</div>
+    <div class="logo-icon" id="header-logo-icon">&#9201;</div>
     <div><div class="logo-text" id="header-appname">RelojTurnos</div><div class="logo-sub" id="header-groupname">Grupo El Reloj</div></div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
@@ -623,10 +623,12 @@ select,input[type=text],.inp-sm{font-size:14px!important}
               <option value="directora">Directora</option>
               <option value="directora_general">Dirección General</option>
             </select>
+            <script>document.getElementById('nu-rol').addEventListener('change',function(){var l=document.getElementById('nu-local');if(this.value==='directora_general'){l.value='0';}else if(l.value==='0'){l.value='1';}});</script>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="nu-local-group">
             <label>Local</label>
             <select id="nu-local" class="inp-sm">
+              <option value="0">Todos los locales</option>
               <option value="1">La Cala</option>
               <option value="2">Roto's Burguer</option>
             </select>
@@ -685,6 +687,26 @@ select,input[type=text],.inp-sm{font-size:14px!important}
           <button onclick="aplicarTema('dark')" id="btn-tema-dark" class="btn btn-primary btn-sm">&#127762; Oscuro (actual)</button>
           <button onclick="aplicarTema('light')" id="btn-tema-light" class="btn btn-ghost btn-sm">&#9728;&#65039; Claro</button>
           <button onclick="aplicarTema('navy')" id="btn-tema-navy" class="btn btn-ghost btn-sm">&#128674; Marino</button>
+        </div>
+      </div>
+
+      <!-- Logo empresa -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">🖼️ Logo de la empresa</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Aparece en el header, pantalla de login y documentos impresos</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div id="logo-preview-wrap" style="width:56px;height:56px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+            <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain">
+            <span id="logo-preview-placeholder" style="font-size:22px">⏱</span>
+          </div>
+          <div style="flex:1">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-block">
+              📁 Seleccionar imagen
+              <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)">
+            </label>
+            <div style="font-size:10px;color:var(--muted);margin-top:6px">PNG, JPG o SVG · Recomendado: fondo transparente</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="quitarLogo()" style="border-color:var(--red);color:var(--red);flex-shrink:0">🗑 Quitar</button>
         </div>
       </div>
 
@@ -787,7 +809,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.4</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.5</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1240,7 +1262,7 @@ function onLocalChange(){
   var ci=document.getElementById('hora-cierre');
   if(v==='La Cala'){if(ap)ap.value='07:30';if(ci)ci.value='03:00';}
   else if(v==="Roto's Burguer"){if(ap)ap.value='11:00';if(ci)ci.value='00:00';}
-  if(v!==lastLocal){empleados=[];empCounter=0;lastLocal=v;}
+  if(v!==lastLocal){empleados=[];empCounter=0;eventos=[];extrasDia=[];extraCounter=0;lastLocal=v;}
 }
 
 function goStep(n){
@@ -1251,7 +1273,7 @@ function goStep(n){
   }
   if(n===7) renderCostes();
   if(n===9) cargarUsuarios();
-  if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); }
+  if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
   window.scrollTo(0,0);
 }
 
@@ -1574,7 +1596,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.4 ==========
+// ========== LÓGICA FIESTAS v4.5 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2091,21 +2113,27 @@ function generarCuadrante(){
     +(function(){
       var lorenaHtml='';
       var LORENA_SEMANA = lorenaHorario;
-      lorenaHtml+='<div style="margin:10px 0;background:transparent;border:1.5px solid #888;border-radius:8px;padding:10px">';
+      var TIPO_COLOR = {fiesta:'#e74c3c', seguido:'var(--green)', partido:'#ffa040', apoyo:'#6b8fff'};
+      var TIPO_BG    = {fiesta:'#3d1515', seguido:'#153d15', partido:'#3d2a00', apoyo:'#151530'};
+      lorenaHtml+='<div style="margin:10px 0;background:var(--darker);border:1px solid #c0a02040;border-radius:8px;padding:10px">';
       lorenaHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
-      lorenaHtml+='<div style="width:28px;height:28px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">LO</div>';
+      lorenaHtml+='<div style="width:26px;height:26px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">LO</div>';
       lorenaHtml+='<div>';
-      lorenaHtml+='<div style="font-weight:700;font-size:13px;color:#c0a020">LORENA <span style="font-size:10px;background:#2a2200;color:#c0a020;padding:2px 7px;border-radius:4px;margin-left:6px;border:1px solid #c0a02060">DIRECTORA</span></div>';
-      lorenaHtml+='<div style="font-size:10px;color:#999">Apoyo operativo · No computa en cobertura</div>';
+      lorenaHtml+='<div style="font-weight:700;font-size:12px;color:#c0a020">LORENA <span style="font-size:9px;background:#2a2200;color:#c0a020;padding:1px 6px;border-radius:4px;margin-left:4px;border:1px solid #c0a02060">DIRECTORA</span></div>';
+      lorenaHtml+='<div style="font-size:9px;color:#888">Apoyo operativo · No computa en cobertura</div>';
       lorenaHtml+='</div></div>';
-      lorenaHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+      lorenaHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">';
       LORENA_SEMANA.forEach(function(d){
-        var bg = 'transparent';
-        var col = d.tipo==='fiesta'?'#c00': d.tipo==='apoyo'?'#050':'#333';
-        var lbl = getLorenaLabel(d);
-        lorenaHtml+='<div style="text-align:center;padding:4px 2px;border-radius:5px;background:'+bg+';border:1px solid '+col+'40">';
-        lorenaHtml+='<div style="font-size:10px;color:var(--muted);margin-bottom:2px">'+DIAS_SHORT[d.dia]+'</div>';
-        lorenaHtml+='<div style="font-size:10px;font-weight:700;color:'+col+'">'+lbl+'</div>';
+        var col = TIPO_COLOR[d.tipo] || 'var(--muted)';
+        var bg  = TIPO_BG[d.tipo]   || 'transparent';
+        var lbl, sub='';
+        if(d.tipo==='fiesta'){ lbl='🏖'; sub='Fiesta'; }
+        else if(d.tipo==='partido'){ lbl=(d.ini||'')+'–'+(d.fin||''); sub=(d.ini2||'')+'–'+(d.fin2||''); }
+        else { lbl=(d.ini||'')+'–'+(d.fin||''); sub=d.tipo.charAt(0).toUpperCase()+d.tipo.slice(1); }
+        lorenaHtml+='<div style="text-align:center;padding:4px 1px;border-radius:4px;background:'+bg+';border:1px solid '+col+'30">';
+        lorenaHtml+='<div style="font-size:9px;font-weight:700;color:var(--muted);margin-bottom:1px">'+DIAS_SHORT[d.dia]+'</div>';
+        lorenaHtml+='<div style="font-size:8.5px;font-weight:700;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+lbl+'</div>';
+        if(sub) lorenaHtml+='<div style="font-size:7.5px;color:'+col+'80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>';
         lorenaHtml+='</div>';
       });
       lorenaHtml+='</div></div>';
@@ -2890,7 +2918,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.4 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.5 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -2954,6 +2982,8 @@ function resetPersonalizacion(){
   localStorage.removeItem('rt_accent');
   localStorage.removeItem('rt_tema');
   localStorage.removeItem('rt_empresa');
+  localStorage.removeItem('rt_logo');
+  aplicarLogoGuardado(null);
   // Restaurar valores por defecto
   document.documentElement.style.setProperty('--accent','#e8a020');
   document.documentElement.style.setProperty('--accent2','#f0c060');
@@ -3025,7 +3055,6 @@ async function crearUsuario(){
   var dni    = (document.getElementById('nu-dni').value||'').trim().toUpperCase();
   var ss     = (document.getElementById('nu-ss').value||'').trim();
   var rol    = document.getElementById('nu-rol').value;
-  var local  = parseInt(document.getElementById('nu-local').value);
   var errEl  = document.getElementById('nu-error');
   var okEl   = document.getElementById('nu-ok');
   errEl.style.display='none'; okEl.style.display='none';
@@ -3040,7 +3069,9 @@ async function crearUsuario(){
     var existing = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni));
     if(existing && existing.length){ errEl.textContent='Ya existe un usuario con ese DNI'; errEl.style.display='block'; return; }
 
-    var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: local, activo: true };
+    var localRaw = parseInt(document.getElementById('nu-local').value);
+    var localId  = localRaw > 0 ? localRaw : null;
+    var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
     await sbPost('usuarios', nuevo);
     okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
     okEl.style.display = 'block';
@@ -3067,6 +3098,49 @@ function checkMostrarBtnUsuarios(){
 
 // showStep alias
 function showStep(n){ goStep(n); }
+
+// ========== LOGO EMPRESA ==========
+function subirLogo(input){
+  var file = input.files[0];
+  if(!file) return;
+  if(file.size > 500000){ showToast('⚠ Imagen muy grande (máx 500KB)','orange'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var dataUrl = e.target.result;
+    localStorage.setItem('rt_logo', dataUrl);
+    aplicarLogoGuardado(dataUrl);
+    showToast('✓ Logo actualizado','green');
+  };
+  reader.readAsDataURL(file);
+}
+
+function quitarLogo(){
+  localStorage.removeItem('rt_logo');
+  aplicarLogoGuardado(null);
+  showToast('✓ Logo eliminado','green');
+}
+
+function aplicarLogoGuardado(dataUrl){
+  // Preview en Ajustes
+  var img = document.getElementById('logo-preview-img');
+  var ph  = document.getElementById('logo-preview-placeholder');
+  if(img && ph){
+    if(dataUrl){ img.src=dataUrl; img.style.display=''; ph.style.display='none'; }
+    else { img.src=''; img.style.display='none'; ph.style.display=''; }
+  }
+  // Header — sustituir el icono ⏱ por la imagen si hay logo
+  var headerIcon = document.getElementById('header-logo-icon');
+  if(headerIcon){
+    if(dataUrl){ headerIcon.innerHTML='<img src="'+dataUrl+'" style="width:32px;height:32px;object-fit:contain;border-radius:6px">'; }
+    else { headerIcon.innerHTML='⏱'; }
+  }
+  // Login — igual
+  var loginIcon = document.getElementById('login-logo-icon');
+  if(loginIcon){
+    if(dataUrl){ loginIcon.innerHTML='<img src="'+dataUrl+'" style="width:48px;height:48px;object-fit:contain;border-radius:10px">'; }
+    else { loginIcon.innerHTML='⏱'; }
+  }
+}
 
 // ========== WHATSAPP ==========
 function enviarTurnoWA(empId){
@@ -3172,6 +3246,8 @@ function cargarIdiomaGuardado(){
   cargarPersonalizacionGuardada();
   cargarParamsCosteGuardados();
   cargarIdiomaGuardado();
+  var savedLogo = localStorage.getItem('rt_logo');
+  if(savedLogo) setTimeout(function(){ aplicarLogoGuardado(savedLogo); }, 100);
   initSupabase();
 })();
 </script>
