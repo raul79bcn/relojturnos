@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.1 – Grupo El Reloj</title>
+<title>RelojTurnos v4.2 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -20,6 +20,7 @@ header{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24
 .header-info{font-size:12px;color:var(--muted)}
 .header-info span{color:var(--accent);font-weight:600}
 .container{max-width:100%;margin:0;padding:24px 40px}
+body{overflow-x:hidden}
 .steps{display:flex;margin-bottom:28px;background:var(--dark);border-radius:12px;padding:5px;border:1px solid var(--border)}
 .step{flex:1;padding:9px 4px;border-radius:8px;text-align:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
 .step.active{background:var(--accent);color:var(--darker);font-weight:700}
@@ -118,6 +119,8 @@ select option{background:var(--dark)}
 .kpi-2{grid-template-columns:repeat(2,1fr)}
 .kpi-3{grid-template-columns:repeat(3,1fr)}
 @media(max-width:640px){
+  .container{padding:12px 12px}
+  .card{padding:14px 12px}
   .extra-dia-row{grid-template-columns:1fr 1fr}
   /* Cuadrante en móvil: tabla con scroll horizontal, igual que escritorio */
   .cuadrante-mobile{display:none}
@@ -218,7 +221,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.1</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.2</span></div>
   </div>
 </div>
 
@@ -726,7 +729,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.1</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.2</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1179,6 +1182,7 @@ function goStep(n){
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
   }
   if(n===7) renderCostes();
+  if(n===9) cargarUsuarios();
   if(n===10) renderPersonalizacion();
   window.scrollTo(0,0);
 }
@@ -1502,7 +1506,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.1 ==========
+// ========== LÓGICA FIESTAS v4.2 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -1769,7 +1773,7 @@ function renderTurnosAsig(){
     +'<span style="font-size:10px"><span class="turno-badge badge-fiesta">\ud83c\udfd6 Fiesta</span></span>';
 
   var html='<div class="dias-grid-header"><div></div>';
-  DIAS_SHORT.forEach(function(d,i){html+='<div class="dia-label-top" style="'+(df.includes(i)?'color:var(--red)':'')+'">'+(df.includes(i)?'\ud83c\udfd6 ':'')+d+'</div>';});
+  DIAS_SHORT.forEach(function(d,i){html+='<div class="dia-label-top" style="'+(df.includes(i)?'color:var(--red)':'')+'">'+d+'</div>';});
   html+='</div>';
   empleados.forEach(function(emp,idx){
     var color=COLORS[idx%COLORS.length];
@@ -2021,8 +2025,8 @@ function generarCuadrante(){
       lorenaHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
       lorenaHtml+='<div style="width:28px;height:28px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">LO</div>';
       lorenaHtml+='<div>';
-      lorenaHtml+='<div style="font-weight:700;font-size:12px;color:#333">LORENA <span style="font-size:9px;background:#eee;color:#555;padding:2px 6px;border-radius:4px;margin-left:4px;border:1px solid #ccc">DIRECTORA</span></div>';
-      lorenaHtml+='<div style="font-size:9px;color:#666">Apoyo operativo · No computa en cobertura</div>';
+      lorenaHtml+='<div style="font-weight:700;font-size:13px;color:#c0a020">LORENA <span style="font-size:10px;background:#2a2200;color:#c0a020;padding:2px 7px;border-radius:4px;margin-left:6px;border:1px solid #c0a02060">DIRECTORA</span></div>';
+      lorenaHtml+='<div style="font-size:10px;color:#999">Apoyo operativo · No computa en cobertura</div>';
       lorenaHtml+='</div></div>';
       lorenaHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
       LORENA_SEMANA.forEach(function(d){
@@ -2030,8 +2034,8 @@ function generarCuadrante(){
         var col = d.tipo==='fiesta'?'#c00': d.tipo==='apoyo'?'#050':'#333';
         var lbl = getLorenaLabel(d);
         lorenaHtml+='<div style="text-align:center;padding:4px 2px;border-radius:5px;background:'+bg+';border:1px solid '+col+'40">';
-        lorenaHtml+='<div style="font-size:8px;color:var(--muted);margin-bottom:2px">'+DIAS_SHORT[d.dia]+'</div>';
-        lorenaHtml+='<div style="font-size:7.5px;font-weight:700;color:'+col+'">'+lbl+'</div>';
+        lorenaHtml+='<div style="font-size:10px;color:var(--muted);margin-bottom:2px">'+DIAS_SHORT[d.dia]+'</div>';
+        lorenaHtml+='<div style="font-size:10px;font-weight:700;color:'+col+'">'+lbl+'</div>';
         lorenaHtml+='</div>';
       });
       lorenaHtml+='</div></div>';
@@ -2354,55 +2358,51 @@ function renderCostes(){
   // TARJETAS por empleado (sin tabla, sin desbordamiento)
   var cards=document.getElementById('costes-cards');
   if(cards){
-    // Tarjeta Lorena — mismo formato que empleados
-    var costeLorSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
-    var costeLorMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
-    var lorColor = COLORS[0]; // primer color de la paleta
-    var lorCard = '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:9px">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-      +'<div style="display:flex;align-items:center;gap:9px">'
-      +'<div style="width:32px;height:32px;border-radius:50%;background:'+lorColor+'20;color:'+lorColor+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>'
-      +'<div><div style="font-weight:700;font-size:15px;color:'+lorColor+'">LORENA</div>'
-      +'<div style="font-size:13px;color:var(--muted)">Directora</div></div></div>'
-      +'<div style="font-size:20px;font-weight:700;color:var(--accent2)">'+costeLorSem.toFixed(2)+' €</div>'
-      +'</div>'
-      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
-      +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-      +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
-      +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-      +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--green)">'+costeLorSem.toFixed(2)+' €</div></div>'
-      +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-      +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+costeLorMes.toFixed(0)+' €</div></div>'
-      +'</div></div>';
+    // Tarjeta Lorena — mismo formato que Salarios
+    var lorColor = COLORS[0];
+    var lorCard = (function(){
+      var cSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
+      var cMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+      return '<div class="costes-emp-card">'
+        +'<div style="font-size:13px;font-weight:700;color:'+lorColor+';margin-bottom:12px">LORENA'
+        +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Directora</span></div>'
+        +'<div class="form-row three">'
+        +'<div class="form-group"><label>H. Pactadas / semana</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:13px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
+        +'<div class="form-group"><label>Coste / semana</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+        +'<span style="color:var(--green);font-weight:700">'+cSem.toFixed(2)+' € / sem</span>'
+        +'</div></div>'
+        +'<div class="form-group"><label>Coste / mes (con SS)</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+        +'<span style="color:var(--muted);font-size:11px">'+cMes.toFixed(0)+' €</span>'
+        +'</div></div>'
+        +'</div></div>';
+    })();
 
     cards.innerHTML=lorCard+empleados.map(function(emp,idx){
       var c=calcs[idx], color=COLORS[idx%COLORS.length];
-      var init=(emp.nombre||'?').substring(0,2).toUpperCase();
       var extrasEmp=extrasDia.filter(function(e){return e.empId===emp.id;});
-      return'<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:9px">'
-        // Cabecera empleado
-        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-        +'<div style="display:flex;align-items:center;gap:9px">'
-        +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">'+init+'</div>'
-        +'<div><div style="font-weight:700;font-size:13px;color:'+color+'">'+( emp.nombre||'Empleado '+emp.id)+'</div>'
-        +'<div style="font-size:10px;color:var(--muted)">'+emp.rol+'</div></div></div>'
-        +'<div style="font-size:20px;font-weight:700;color:'+(c.totalSem!==null?'var(--accent2)':'var(--muted)')+'>'
-        +(c.totalSem!==null?c.totalSem.toFixed(2)+' €':'sin datos')+'</div>'
-        +'</div>'
-        // Fila de datos
-        +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
-        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-        +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">H. PACTADAS</div>'
-        +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+c.hPact.toFixed(0)+'h</div></div>'
-        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-        +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">COSTE / SEM</div>'
-        +'<div style="font-size:15px;font-weight:700;color:var(--green)">'+(c.costeFijoSem!==null?c.costeFijoSem.toFixed(2)+' €':'—')+'</div></div>'
-        +'<div style="background:var(--card);border-radius:7px;padding:9px;text-align:center">'
-        +'<div style="font-size:13px;color:var(--muted);margin-bottom:3px">COSTE / MES</div>'
-        +'<div style="font-size:15px;font-weight:700;color:var(--muted)">'+(c.costeFijoMes!==null?c.costeFijoMes.toFixed(0)+' €':'—')+'</div></div>'
+      var costeSemVal = c.costeFijoSem!==null ? c.costeFijoSem.toFixed(2)+' € / sem' : 'Sin datos';
+      var costeMesVal = c.costeFijoMes!==null ? c.costeFijoMes.toFixed(0)+' € / mes (con SS)' : '—';
+      return'<div class="costes-emp-card">'
+        +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||'Empleado '+emp.id)
+        +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+emp.rol+'</span></div>'
+        +'<div class="form-row three">'
+        +'<div class="form-group"><label>H. Pactadas / semana</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:13px;font-weight:700;color:var(--muted)">'+c.hPact.toFixed(0)+'h</div></div>'
+        +'<div class="form-group"><label>Coste / semana</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+        +(c.costeFijoSem!==null
+          ?'<span style="color:var(--green);font-weight:700">'+c.costeFijoSem.toFixed(2)+' € / sem</span>'
+          :'<span style="color:var(--muted)">Sin datos salariales</span>')
+        +'</div></div>'
+        +'<div class="form-group"><label>Coste / mes (con SS)</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+        +(c.costeFijoMes!==null
+          ?'<span style="color:var(--muted);font-size:11px">'+c.costeFijoMes.toFixed(0)+' €</span>'
+          :'<span style="color:var(--muted)">—</span>')
+        +'</div></div>'
         +'</div>'
         // Extras de este empleado si las hay
         +(extrasEmp.length?
@@ -2417,7 +2417,6 @@ function renderCostes(){
           +(c.costeExtras>0?'<div style="font-size:11px;font-weight:700;color:var(--orange);margin-top:4px;text-align:right">Total extras: '+c.costeExtras.toFixed(2)+' €</div>':'')
           +'</div>'
         :'')
-        // Sin datos aviso
         +(c.bruto===null?'<div style="margin-top:8px;font-size:11px;color:var(--red);padding:6px 10px;background:#2d1515;border-radius:6px">⚠ Sin datos salariales — introduce en pestaña Salarios</div>':'')
         +'</div>';
     }).join('');
@@ -2805,7 +2804,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.1 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.2 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -2904,6 +2903,71 @@ function abrirPersonalizacion(){
 }
 
 // Muestra botón Ajustes para directoras
+// ========== GESTIÓN USUARIOS ==========
+async function cargarUsuarios(){
+  var lista = document.getElementById('usuarios-lista');
+  if(!lista) return;
+  lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">⏳ Cargando...</div>';
+  try{
+    var rows = await sbGet('usuarios','order=id.asc');
+    if(!rows || !rows.length){
+      lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No hay usuarios registrados aún</div>';
+      return;
+    }
+    var ROLES = {empleado:'Empleado', directora:'Directora', directora_general:'Dir. General', admin:'Admin'};
+    var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
+    lista.innerHTML = rows.map(function(u){
+      var col = u.rol==='directora'?'var(--accent)':u.rol==='directora_general'?'#c0a020':'var(--green)';
+      var init = (u.nombre||'?').substring(0,2).toUpperCase();
+      return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px">'
+        +'<div style="width:32px;height:32px;border-radius:50%;background:'+col+'20;color:'+col+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-size:13px;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(u.nombre||'Sin nombre')+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+(ROLES[u.rol]||u.rol)+' · DNI: '+(u.dni||'—')+' · '+(LOCALES[u.local_id]||'Todos los locales')+'</div>'
+        +'</div>'
+        +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(u.activo?'#15351520':'#35151520')+';color:'+(u.activo?'var(--green)':'var(--red)')+';border:1px solid '+(u.activo?'var(--green)':'var(--red)')+'40;flex-shrink:0">'+(u.activo?'ACTIVO':'INACTIVO')+'</span>'
+        +'</div>';
+    }).join('');
+  }catch(e){
+    lista.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:20px">⚠ Error cargando usuarios: '+e.message+'</div>';
+    console.error('cargarUsuarios error:',e);
+  }
+}
+
+async function crearUsuario(){
+  var nombre = (document.getElementById('nu-nombre').value||'').trim();
+  var dni    = (document.getElementById('nu-dni').value||'').trim().toUpperCase();
+  var ss     = (document.getElementById('nu-ss').value||'').trim();
+  var rol    = document.getElementById('nu-rol').value;
+  var local  = parseInt(document.getElementById('nu-local').value);
+  var errEl  = document.getElementById('nu-error');
+  var okEl   = document.getElementById('nu-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  if(!nombre||!dni||!ss){ errEl.textContent='Rellena todos los campos'; errEl.style.display='block'; return; }
+  if(ss.length < 4){ errEl.textContent='El nº de afiliación debe tener al menos 4 dígitos'; errEl.style.display='block'; return; }
+
+  var pass = ss.slice(-4);
+  var passHash = await hashPass(pass);
+  try{
+    // Comprobar si ya existe
+    var existing = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni));
+    if(existing && existing.length){ errEl.textContent='Ya existe un usuario con ese DNI'; errEl.style.display='block'; return; }
+
+    var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: local, activo: true };
+    await sbPost('usuarios', nuevo);
+    okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
+    okEl.style.display = 'block';
+    // Limpiar form
+    ['nu-nombre','nu-dni','nu-ss'].forEach(function(id){ document.getElementById(id).value=''; });
+    cargarUsuarios();
+  }catch(e){
+    errEl.textContent = 'Error al crear usuario: '+e.message;
+    errEl.style.display='block';
+    console.error('crearUsuario error:',e);
+  }
+}
+
 function checkMostrarBtnUsuarios(){
   var u = currentUser;
   if(!u) return;
