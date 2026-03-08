@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.0 – Grupo El Reloj</title>
+<title>RelojTurnos v4.1 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -138,21 +138,53 @@ select option{background:var(--dark)}
 }
 @media(min-width:641px){.cuadrante-mobile{display:none}}
 
+/* ===== TIPOGRAFÍA GLOBAL UNIFICADA ===== */
+/* Base: 14px para toda la app. Cabeceras/pestañas pueden ser mayores */
+body{font-size:14px}
+.card-title{font-size:18px!important}
+.card-sub{font-size:14px!important}
+label{font-size:13px!important}
+select,input[type=text],.inp-sm{font-size:14px!important}
+.dia-select{font-size:13px!important}
+.turno-badge{font-size:13px!important}
+.schedule-table th{font-size:12px!important}
+.schedule-table td{font-size:14px!important}
+.schedule-table td.emp-name{font-size:14px!important}
+.stat-val{font-size:22px!important}
+.stat-label{font-size:12px!important}
+.btn{font-size:14px!important}
+.btn-sm{font-size:13px!important}
+.step{font-size:13px!important}
+.tab-btn{font-size:15px!important}
+.footer-credits{font-size:11px!important}
+/* Leyenda y detalles menores: 12px mínimo */
+.turno-legend span{font-size:13px!important}
+.info-box{font-size:14px!important}
 /* ===== LOGIN ===== */
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--darker);position:fixed;top:0;left:0;width:100%;z-index:9999}
-.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:360px;margin:20px}
-.login-logo{text-align:center;margin-bottom:24px}
-.login-logo .logo-icon{font-size:48px;margin-bottom:8px}
-.login-logo .logo-text{font-size:22px;font-weight:700;color:var(--accent)}
-.login-logo .logo-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
-.login-field{margin-bottom:14px}
-.login-field label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px}
-.login-field input{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-size:14px;outline:none;box-sizing:border-box;transition:border-color 0.2s}
+/* Escritorio: caja de login más grande y centrada */
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:44px 40px;width:100%;max-width:480px;margin:20px;box-shadow:0 8px 48px #00000060}
+.login-logo{text-align:center;margin-bottom:30px}
+.login-logo .logo-icon{font-size:64px;margin-bottom:12px;display:block}
+.login-logo .logo-text{font-size:28px;font-weight:700;color:var(--accent)}
+.login-logo .logo-sub{font-size:13px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.login-field{margin-bottom:18px}
+.login-field label{font-size:12px!important;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px}
+.login-field input{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:15px 18px;color:var(--text);font-size:16px!important;outline:none;box-sizing:border-box;transition:border-color 0.2s}
 .login-field input:focus{border-color:var(--accent)}
-.login-error{background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:10px 14px;font-size:12px;color:#ff8080;margin-bottom:14px;display:none}
-.login-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px}
+.login-error{background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:10px 14px;font-size:13px;color:#ff8080;margin-bottom:14px;display:none}
+.login-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:12px;padding:17px;font-size:17px!important;font-weight:700;cursor:pointer;margin-top:8px}
 .login-btn:active{opacity:0.85}
-.login-footer{text-align:center;font-size:10px;color:var(--muted);margin-top:20px}
+.login-footer{text-align:center;font-size:11px;color:var(--muted);margin-top:22px}
+/* Móvil: tamaño original */
+@media(max-width:640px){
+  .login-box{padding:28px 20px;max-width:360px}
+  .login-logo .logo-icon{font-size:48px}
+  .login-logo .logo-text{font-size:22px}
+  .login-logo .logo-sub{font-size:11px}
+  .login-field input{font-size:14px!important;padding:12px 14px}
+  .login-btn{font-size:15px!important;padding:14px}
+}
 /* Portal empleado */
 #portal-empleado{display:none;min-height:100vh}
 .portal-header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
@@ -186,7 +218,7 @@ select option{background:var(--dark)}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.0</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.1</span></div>
   </div>
 </div>
 
@@ -227,9 +259,12 @@ select option{background:var(--dark)}
 <header style="display:none">
   <div class="logo">
     <div class="logo-icon">&#9201;</div>
-    <div><div class="logo-text">RelojTurnos</div><div class="logo-sub">Grupo El Reloj</div></div>
+    <div><div class="logo-text" id="header-appname">RelojTurnos</div><div class="logo-sub" id="header-groupname">Grupo El Reloj</div></div>
   </div>
-  <div class="header-info">Local: <span id="header-local">&#8212;</span> &nbsp;&middot;&nbsp; Semana: <span id="header-semana">&#8212;</span></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="header-info">Local: <span id="header-local">&#8212;</span> &nbsp;&middot;&nbsp; Semana: <span id="header-semana">&#8212;</span></div>
+    <button onclick="abrirPersonalizacion()" title="Personalizar app" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center">&#127912;</button>
+  </div>
 </header>
 
 <div class="container" style="display:none">
@@ -243,6 +278,7 @@ select option{background:var(--dark)}
     <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text">Costes</span></div>
     <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text">Direcc. Gral.</span></div>
     <div class="step" id="step9" onclick="goStep(9)" style="display:none"><span class="step-num">&#128101;</span><span class="step-text">Usuarios</span></div>
+    <div class="step" id="step10" onclick="goStep(10)" style="display:none"><span class="step-num">&#127912;</span><span class="step-text">Ajustes</span></div>
   </div>
 
   <!-- PASO 1 -->
@@ -610,14 +646,91 @@ select option{background:var(--dark)}
       </div>
     </div>
   </div>
+
+  <!-- PASO 10: PERSONALIZACIÓN APP -->
+  <div class="screen" id="screen10">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="card-title" style="margin:0">&#127912; Personalización</div>
+        <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:3px 9px;border-radius:12px;font-weight:700">DIRECCIÓN</span>
+      </div>
+      <div class="card-sub">Adapta la apariencia de RelojTurnos a tu empresa</div>
+
+      <!-- Color de acento -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127775; Color principal</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div onclick="aplicarColor('#e8a020')" style="width:36px;height:36px;border-radius:50%;background:#e8a020;cursor:pointer;border:3px solid #e8a020;box-shadow:0 0 0 2px var(--darker)" title="Dorado (por defecto)"></div>
+          <div onclick="aplicarColor('#3498db')" style="width:36px;height:36px;border-radius:50%;background:#3498db;cursor:pointer" title="Azul"></div>
+          <div onclick="aplicarColor('#2ecc71')" style="width:36px;height:36px;border-radius:50%;background:#2ecc71;cursor:pointer" title="Verde"></div>
+          <div onclick="aplicarColor('#e74c3c')" style="width:36px;height:36px;border-radius:50%;background:#e74c3c;cursor:pointer" title="Rojo"></div>
+          <div onclick="aplicarColor('#9b59b6')" style="width:36px;height:36px;border-radius:50%;background:#9b59b6;cursor:pointer" title="Morado"></div>
+          <div onclick="aplicarColor('#1abc9c')" style="width:36px;height:36px;border-radius:50%;background:#1abc9c;cursor:pointer" title="Turquesa"></div>
+          <div onclick="aplicarColor('#e67e22')" style="width:36px;height:36px;border-radius:50%;background:#e67e22;cursor:pointer" title="Naranja"></div>
+          <div onclick="aplicarColor('#e91e63')" style="width:36px;height:36px;border-radius:50%;background:#e91e63;cursor:pointer" title="Rosa"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0">Color personalizado:</label>
+          <input type="color" id="color-custom" value="#e8a020" onchange="aplicarColor(this.value)" style="width:44px;height:32px;padding:2px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer">
+        </div>
+      </div>
+
+      <!-- Tema claro / oscuro -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127763; Tema de color</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button onclick="aplicarTema('dark')" id="btn-tema-dark" class="btn btn-primary btn-sm">&#127762; Oscuro (actual)</button>
+          <button onclick="aplicarTema('light')" id="btn-tema-light" class="btn btn-ghost btn-sm">&#9728;&#65039; Claro</button>
+          <button onclick="aplicarTema('navy')" id="btn-tema-navy" class="btn btn-ghost btn-sm">&#128674; Marino</button>
+        </div>
+      </div>
+
+      <!-- Nombre empresa -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127970; Nombre del grupo / empresa</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="text" id="custom-empresa" placeholder="Ej: Grupo El Reloj" maxlength="40" style="flex:1" oninput="aplicarNombreEmpresa(this.value)">
+          <button class="btn btn-ghost btn-sm" onclick="aplicarNombreEmpresa(document.getElementById('custom-empresa').value)">&#10003; Aplicar</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Aparecerá en el header, login y pies de documentos</div>
+      </div>
+
+      <!-- Preview -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#128065; Vista previa</div>
+        <div id="preview-personaliz" style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">&#9201;</div>
+            <div>
+              <div style="font-size:16px;font-weight:700;color:var(--accent)" id="prev-nombre">RelojTurnos</div>
+              <div style="font-size:10px;color:var(--muted);letter-spacing:2px" id="prev-empresa">GRUPO EL RELOJ</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:7px">
+            <span style="background:var(--accent);color:var(--darker);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700">Botón activo</span>
+            <span style="border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;color:var(--muted)">Botón normal</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 14px;font-size:12px;color:#8ddb8d;margin-bottom:14px">
+        &#9432; Los cambios se guardan localmente en tu navegador y se aplican al instante. Para hacerlos permanentes en el servidor, contacta con el administrador.
+      </div>
+
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(9)">&#8592; Usuarios</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetPersonalizacion()" style="border-color:var(--red);color:var(--red)">&#8635; Restablecer por defecto</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.0</span>
-  &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="mailto:raul.gestionlocal@gmail.com" style="color:var(--accent);text-decoration:none">raul.gestionlocal@gmail.com</a>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.1</span>
+  &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
 var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
 var COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800'];
@@ -1060,12 +1173,13 @@ function onLocalChange(){
 }
 
 function goStep(n){
-  for(var i=1;i<=8;i++){
+  for(var i=1;i<=10;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
   }
   if(n===7) renderCostes();
+  if(n===10) renderPersonalizacion();
   window.scrollTo(0,0);
 }
 
@@ -1073,7 +1187,7 @@ function nextStep(from){
   if(from===1){if(!getLocal()){alert('Selecciona un local');return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
   else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
   else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();sugerirYRenderizar();goStep(4);}
-  else if(from===4){initPaso5();goStep(5);cargarCuadrantePrevio().then(function(id){if(id)showToast('✓ Cuadrante previo encontrado — se cargará al generar','green');});}
+  else if(from===4){initPaso5();goStep(5);}
 }
 
 async function cargarEmpleadosBD(){
@@ -1388,7 +1502,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.0 ==========
+// ========== LÓGICA FIESTAS v4.1 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2691,54 +2805,127 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.1 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
 }
 
-// INIT - runs directly, works in all environments including local files
-function getHorasPactadas(emp){
-  // Horas pactadas = calculadas automáticamente desde cuadrante y config
-  // días trabajados × jornada completa + medias fiestas × horas media fiesta
-  var hJornada = +document.getElementById('horas-jornada').value || 9;
-  var hMF = +document.getElementById('horas-media-fiesta').value || 5;
-  var hPact = 0;
-  (emp.turnos||[]).forEach(function(t){
-    if(t==='fiesta') return;
-    if(t==='mediafiesta'){ hPact += hMF; return; }
-    hPact += hJornada;
+
+// ========== PERSONALIZACIÓN ==========
+var TEMAS = {
+  dark:  {dark:'#0f1923', darker:'#080e14', card:'#162030', border:'#1e3048', text:'#e8edf2', muted:'#6b8299'},
+  light: {dark:'#f0f4f8', darker:'#e8edf2', card:'#ffffff', border:'#c5d0db', text:'#1a2530', muted:'#5a7080'},
+  navy:  {dark:'#0a0f1e', darker:'#050810', card:'#0f1730', border:'#1a2848', text:'#d8e4f0', muted:'#5a7299'}
+};
+
+function aplicarColor(hex){
+  document.documentElement.style.setProperty('--accent', hex);
+  // calcular accent2 ligeramente más claro
+  document.documentElement.style.setProperty('--accent2', hex);
+  // actualizar input color
+  var inp = document.getElementById('color-custom');
+  if(inp) inp.value = hex;
+  // guardar
+  localStorage.setItem('rt_accent', hex);
+  // preview
+  renderPersonalizacion();
+  showToast('✓ Color aplicado','green');
+}
+
+function aplicarTema(tema){
+  var t = TEMAS[tema];
+  if(!t) return;
+  Object.keys(t).forEach(function(k){ document.documentElement.style.setProperty('--'+k, t[k]); });
+  localStorage.setItem('rt_tema', tema);
+  ['dark','light','navy'].forEach(function(n){
+    var btn = document.getElementById('btn-tema-'+n);
+    if(btn) btn.className = 'btn btn-sm '+(n===tema?'btn-primary':'btn-ghost');
   });
-  return hPact;
+  renderPersonalizacion();
+  showToast('✓ Tema aplicado','green');
 }
 
-function getTotalExtrasEmp(empId){
-  return extrasDia.filter(function(e){return e.empId===empId;})
-    .reduce(function(s,e){
-      var h=parseFloat(e.horas)||0, p=parseFloat(e.precioHora)||0;
-      return s+(h*p);
-    },0);
+function aplicarNombreEmpresa(nombre){
+  if(!nombre.trim()) return;
+  localStorage.setItem('rt_empresa', nombre);
+  // actualizar todos los elementos con nombre empresa
+  document.querySelectorAll('.logo-sub, #header-groupname').forEach(function(el){
+    el.textContent = nombre.toUpperCase();
+  });
+  renderPersonalizacion();
+  showToast('✓ Nombre actualizado','green');
 }
 
-function calcEmp(emp){
-  var s = getSalario(emp.id);
-  var hCuad = (emp.turnos||[]).reduce(function(sum,t){return sum+getTInfo(t).horas;},0);
-  var hPact = getHorasPactadas(emp);
-  var bruto = s.brutoMes!==''?parseFloat(s.brutoMes):null;
-  var costeFijoSem = bruto!==null?(bruto*(1+SS_EMPRESA))/4.33:null;
-  var costeFijoMes = bruto!==null?bruto*(1+SS_EMPRESA):null;
-  var costeExtras = getTotalExtrasEmp(emp.id);
-  var totalSem = costeFijoSem!==null?costeFijoSem+costeExtras:null;
-  return {hCuad:hCuad, hPact:hPact, bruto:bruto,
-          costeFijoSem:costeFijoSem, costeFijoMes:costeFijoMes,
-          costeExtras:costeExtras, totalSem:totalSem};
+function renderPersonalizacion(){
+  var prevNombre = document.getElementById('prev-nombre');
+  var prevEmpresa = document.getElementById('prev-empresa');
+  var empresa = localStorage.getItem('rt_empresa') || 'GRUPO EL RELOJ';
+  if(prevNombre) prevNombre.textContent = 'RelojTurnos';
+  if(prevEmpresa) prevEmpresa.textContent = empresa.toUpperCase();
 }
 
-// INIT
-buildFechas();
-horaOpts('hora-apertura','07:30');
-horaOpts('hora-cierre','03:00');
-initSupabase();
+function resetPersonalizacion(){
+  localStorage.removeItem('rt_accent');
+  localStorage.removeItem('rt_tema');
+  localStorage.removeItem('rt_empresa');
+  // Restaurar valores por defecto
+  document.documentElement.style.setProperty('--accent','#e8a020');
+  document.documentElement.style.setProperty('--accent2','#f0c060');
+  aplicarTema('dark');
+  document.querySelectorAll('.logo-sub, #header-groupname').forEach(function(el){
+    el.textContent = 'GRUPO EL RELOJ';
+  });
+  var inp = document.getElementById('custom-empresa');
+  if(inp) inp.value = '';
+  renderPersonalizacion();
+  showToast('✓ Ajustes restablecidos','green');
+}
+
+function cargarPersonalizacionGuardada(){
+  var accent = localStorage.getItem('rt_accent');
+  var tema = localStorage.getItem('rt_tema');
+  var empresa = localStorage.getItem('rt_empresa');
+  if(accent) aplicarColor(accent);
+  if(tema) aplicarTema(tema);
+  if(empresa){
+    document.querySelectorAll('.logo-sub, #header-groupname').forEach(function(el){
+      el.textContent = empresa.toUpperCase();
+    });
+    var inp = document.getElementById('custom-empresa');
+    if(inp) inp.value = empresa;
+  }
+}
+
+function abrirPersonalizacion(){
+  var step10 = document.getElementById('step10');
+  if(step10) step10.style.display='';
+  goStep(10);
+}
+
+// Muestra botón Ajustes para directoras
+function checkMostrarBtnUsuarios(){
+  var u = currentUser;
+  if(!u) return;
+  var s9 = document.getElementById('step9');
+  var s10 = document.getElementById('step10');
+  if(u.rol==='directora'||u.rol==='directora_general'||u.rol==='admin'){
+    if(s9) s9.style.display='';
+    if(s10) s10.style.display='';
+  }
+}
+
+// showStep alias
+function showStep(n){ goStep(n); }
+
+// ========== INIT ==========
+(function(){
+  buildFechas();
+  horaOpts('hora-apertura','07:30');
+  horaOpts('hora-cierre','02:30');
+  cargarPersonalizacionGuardada();
+  initSupabase();
+})();
 </script>
 </body>
 </html>
