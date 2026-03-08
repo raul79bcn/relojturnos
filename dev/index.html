@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.3 – Grupo El Reloj</title>
+<title>RelojTurnos v4.4 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -221,7 +221,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.3</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.4</span></div>
   </div>
 </div>
 
@@ -787,7 +787,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.3</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.4</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1069,10 +1069,20 @@ async function cambiarPassword(){
 async function initSupabase(){
   try{
     var locs = await sbGet('locales');
-    locs.forEach(function(l){ localIdMap[l.nombre]=l.id; });
-    showToast('✓ Conectado a base de datos','green');
+    if(locs && locs.length){
+      locs.forEach(function(l){ localIdMap[l.nombre]=l.id; });
+      showToast('✓ Conectado a base de datos','green');
+    } else {
+      // Tabla locales vacía — usar fallback hardcoded
+      localIdMap['La Cala'] = 1;
+      localIdMap["Roto's Burguer"] = 2;
+      showToast('✓ Conectado (locales por defecto)','green');
+    }
   }catch(e){
-    showToast('⚠ Sin conexión BD — modo local','orange');
+    // Sin tabla locales — usar fallback
+    localIdMap['La Cala'] = 1;
+    localIdMap["Roto's Burguer"] = 2;
+    showToast('⚠ Sin tabla locales — modo local','orange');
   }
 }
 
@@ -1564,7 +1574,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.3 ==========
+// ========== LÓGICA FIESTAS v4.4 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2612,31 +2622,47 @@ async function cargarVistaDirector(){
   try{
     // Cargar todos los locales
     var locales = await sbGet('locales','order=id.asc');
-    // Cargar cuadrantes (filtrado por semana si se seleccionó)
-    var filtro = semanaFiltro ? 'semana_label=eq.'+encodeURIComponent(semanaFiltro)+'&order=id.desc' : 'order=id.desc&limit=10';
-    var cuads = await sbGet('cuadrantes', filtro+'&order=id.desc');
+
+    // Si la tabla locales está vacía, usar fallback hardcoded
+    if(!locales || !locales.length){
+      locales = [{id:1, nombre:'La Cala'}, {id:2, nombre:"Roto's Burguer"}];
+    }
+
+    // Cargar cuadrantes — SIN doble order
+    var filtroQ = semanaFiltro
+      ? 'semana_label=eq.'+encodeURIComponent(semanaFiltro)+'&order=id.desc'
+      : 'order=id.desc&limit=20';
+    var cuads = await sbGet('cuadrantes', filtroQ);
 
     // Para cada local coger el cuadrante más reciente
     var datosLocales = [];
     for(var i=0; i<locales.length; i++){
       var loc = locales[i];
-      var cuad = cuads.find(function(c){ return c.local_id === loc.id; });
-      if(!cuad){ datosLocales.push({local:loc, cuad:null, empleados:[], turnos:[], salarios:[]}); continue; }
+      var cuad = (cuads||[]).find(function(c){ return c.local_id === loc.id; });
+      if(!cuad){
+        datosLocales.push({local:loc, cuad:null, empleados:[], turnos:[], salarios:[]});
+        continue;
+      }
 
       // Cargar empleados del local
-      var emps = await sbGet('empleados','local_id=eq.'+loc.id+'&activo=eq.true');
-      // Cargar turnos del cuadrante
-      var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id);
-      // Cargar salarios
-      var sals = await sbGet('salarios','order=id.asc');
+      var emps = [];
+      var turnos = [];
+      var sals = [];
+      try{ emps  = await sbGet('empleados','local_id=eq.'+loc.id+'&activo=eq.true'); }catch(e2){ console.warn('empleados local '+loc.id, e2); }
+      try{ turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id); }catch(e2){ console.warn('turnos cuad '+cuad.id, e2); }
+      try{ sals   = await sbGet('salarios','order=id.asc'); }catch(e2){ console.warn('salarios', e2); }
 
       datosLocales.push({local:loc, cuad:cuad, empleados:emps, turnos:turnos, salarios:sals});
     }
 
     renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl);
+    // Debug info — se puede quitar después
+    console.log('[Director] Locales cargados:', locales.map(function(l){return l.id+':'+l.nombre;}));
+    console.log('[Director] Cuadrantes encontrados:', (cuads||[]).map(function(c){return 'local'+c.local_id+' sem:'+c.semana_label;}));
+    console.log('[Director] datosLocales:', datosLocales.map(function(d){return d.local.nombre+' cuad:'+(d.cuad?d.cuad.id:'null')+' emps:'+d.empleados.length;}));
 
   }catch(e){
-    if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:14px;color:#ff8080;font-size:12px">⚠️ No se pudieron cargar los datos. Verifica la conexión con Supabase.</div>';
+    if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:14px;color:#ff8080;font-size:12px">⚠️ Error cargando datos: '+e.message+'</div>';
     console.error('Error vista director:', e);
   }
 }
@@ -2864,7 +2890,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.4 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
