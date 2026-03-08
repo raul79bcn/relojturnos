@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.2 – Grupo El Reloj</title>
+<title>RelojTurnos v4.3 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -199,7 +199,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 .lorena-mobile{display:none}
 .lorena-desktop{display:block}
 @media(max-width:640px){.lorena-mobile{display:block}.lorena-desktop{display:none}}
-@media print{.cuadrante-mobile{display:none!important}.lorena-mobile{display:none!important}}
+@media print{.cuadrante-mobile{display:none!important}.lorena-mobile{display:none!important}.no-print{display:none!important}}
 </style>
 </head>
 <body>
@@ -221,7 +221,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.2</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.3</span></div>
   </div>
 </div>
 
@@ -720,6 +720,64 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         &#9432; Los cambios se guardan localmente en tu navegador y se aplican al instante. Para hacerlos permanentes en el servidor, contacta con el administrador.
       </div>
 
+      <!-- Parámetros de coste -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">💰 Parámetros de coste</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Afectan a todos los cálculos de nómina y SS</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>% SS empresa</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="number" id="cfg-ss" min="20" max="60" step="0.1" placeholder="39" style="flex:1" oninput="aplicarParamsCoste()">
+              <span style="font-size:12px;color:var(--muted)">%</span>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Hostelería estándar: 39%</div>
+          </div>
+          <div class="form-group">
+            <label>Divisor mensual</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="number" id="cfg-divisor" min="4" max="5" step="0.01" placeholder="4.33" style="flex:1" oninput="aplicarParamsCoste()">
+              <span style="font-size:12px;color:var(--muted)">sem/mes</span>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Estándar: 4,33 semanas/mes</div>
+          </div>
+        </div>
+        <div id="cfg-coste-preview" style="margin-top:10px;background:var(--card);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--muted)">
+          Ejemplo: bruto 1.800€ → coste empresa <span id="cfg-coste-ej" style="color:var(--green);font-weight:700">—</span> / sem
+        </div>
+      </div>
+
+      <!-- WhatsApp -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📲 WhatsApp cuadrante</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Al enviar el cuadrante se abrirá WhatsApp con el turno del empleado seleccionado</div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label>Número del responsable (con prefijo)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="tel" id="cfg-wa-num" placeholder="Ej: 34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
+            <span style="font-size:20px">📱</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">Sin el + ni espacios · Ej: 34612345678 (España)</div>
+        </div>
+        <div class="form-group">
+          <label>Número del empleado (para enviarle su turno)</label>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;padding:8px 10px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
+            💡 El empleado se selecciona en el cuadrante. El botón 📲 aparece junto a cada persona al generar el cuadrante.
+          </div>
+        </div>
+      </div>
+
+      <!-- Idioma -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🌍 Idioma de la app</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="aplicarIdioma('es')" id="btn-lang-es" class="btn btn-primary btn-sm">🇪🇸 Español</button>
+          <button onclick="aplicarIdioma('ca')" id="btn-lang-ca" class="btn btn-ghost btn-sm">🏴󠁥󠁳󠁣󠁴󠁿 Català</button>
+          <button onclick="aplicarIdioma('en')" id="btn-lang-en" class="btn btn-ghost btn-sm">🇬🇧 English</button>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:10px">⚠ El cambio de idioma es parcial en esta versión — días, turnos y etiquetas principales</div>
+      </div>
+
       <div class="btn-row space">
         <button class="btn btn-secondary" onclick="goStep(9)">&#8592; Usuarios</button>
         <button class="btn btn-ghost btn-sm" onclick="resetPersonalizacion()" style="border-color:var(--red);color:var(--red)">&#8635; Restablecer por defecto</button>
@@ -729,7 +787,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.2</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.3</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1183,7 +1241,7 @@ function goStep(n){
   }
   if(n===7) renderCostes();
   if(n===9) cargarUsuarios();
-  if(n===10) renderPersonalizacion();
+  if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); }
   window.scrollTo(0,0);
 }
 
@@ -1373,7 +1431,7 @@ function renderLorenaHorario(){
     }).join('');
     var bg = idx%2===0 ? 'background:#ffffff06' : '';
     html += '<tr style="border-bottom:1px solid var(--border)10;'+bg+'">';
-    html += '<td style="padding:5px 6px"><span style="font-weight:700;color:'+col+'">'+DIAS_S[idx]+'</span><span style="font-size:9px;color:var(--muted);margin-left:4px">'+DIAS_L[idx]+'</span></td>';
+    html += '<td style="padding:5px 6px"><span style="font-weight:700;font-size:13px;color:'+col+'">'+DIAS_S[idx]+'</span><span style="font-size:13px;color:var(--muted);margin-left:5px">'+DIAS_L[idx]+'</span></td>';
     html += '<td style="padding:3px 6px"><select id="ltipo'+idx+'" onchange="updLorena('+idx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 4px;color:'+col+';font-size:10px;font-weight:600">'+tipoOpts+'</select></td>';
     if(esFiesta){
       html += '<td colspan="4" style="padding:3px 6px;text-align:center;color:#ff6b6b;font-size:10px">\ud83c\udfd6 Día libre</td>';
@@ -1404,8 +1462,8 @@ function renderLorenaHorario(){
     html += '<div style="background:'+bg+';border-radius:7px;border:1px solid var(--border)40;padding:7px 8px;margin-bottom:5px">';
     // Fila 1: día + tipo
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:'+(esFiesta?'0':'6px')+'">';
-    html += '<span style="font-weight:700;font-size:12px;color:'+col+';min-width:20px">'+DIAS_S[idx]+'</span>';
-    html += '<span style="font-size:10px;color:var(--muted);flex:1">'+DIAS_L[idx]+'</span>';
+    html += '<span style="font-weight:700;font-size:13px;color:'+col+';min-width:20px">'+DIAS_S[idx]+'</span>';
+    html += '<span style="font-size:13px;color:var(--muted);flex:1">'+DIAS_L[idx]+'</span>';
     html += '<select id="mltipo'+idx+'" onchange="updLorenaMobile('+idx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 6px;color:'+col+';font-size:10px;font-weight:600">'+tipoOpts+'</select>';
     html += '</div>';
     if(!esFiesta){
@@ -1506,7 +1564,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.2 ==========
+// ========== LÓGICA FIESTAS v4.3 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -1952,9 +2010,11 @@ function generarCuadrante(){
       return'<td><span class="turno-badge '+info.badge+'">'+info.label+'</span></td>';
     }).join('');
     return'<tr>'
-      +'<td class="emp-name"><div style="display:flex;align-items:center;gap:7px">'
+      +'<td class="emp-name"><div style="display:flex;align-items:center;gap:6px">'
       +'<div style="width:24px;height:24px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">'+init+'</div>'
-      +(emp.nombre||'Empleado '+emp.id)+'</div></td>'
+      +(emp.nombre||'Empleado '+emp.id)
+      +'<span onclick="enviarTurnoWA('+emp.id+')" title="Enviar turno por WhatsApp" style="cursor:pointer;font-size:13px;opacity:0.75;flex-shrink:0" class="wa-btn no-print">📲</span>'
+      +'</div></td>'
       +'<td style="font-size:13px;color:var(--muted)">'+emp.rol+'</td>'
       +cells
       +'<td class="col-horas" style="font-weight:700;color:var(--accent);font-size:15px">'+horasE[idx].toFixed(1)+'h</td></tr>';
@@ -2240,7 +2300,7 @@ function calcEmp(emp){
   var hCuad=(emp.turnos||[]).reduce(function(sum,t){return sum+getTInfo(t).horas;},0);
   var hPact=getHorasPactadas(emp);
   var bruto=s.brutoMes!==''?parseFloat(s.brutoMes):null;
-  var costeFijoSem=bruto!==null?(bruto*(1+SS_EMPRESA))/4.33:null;
+  var costeFijoSem=bruto!==null?(bruto*(1+SS_EMPRESA))/(DIVISOR_CUSTOM||4.33):null;
   var costeFijoMes=bruto!==null?bruto*(1+SS_EMPRESA):null;
   var costeExtras=getTotalExtrasEmp(emp.id);
   var totalSem=costeFijoSem!==null?costeFijoSem+costeExtras:null;
@@ -2804,7 +2864,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.2 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -2982,12 +3042,110 @@ function checkMostrarBtnUsuarios(){
 // showStep alias
 function showStep(n){ goStep(n); }
 
+// ========== WHATSAPP ==========
+function enviarTurnoWA(empId){
+  var num = localStorage.getItem('rt_wa_num') || '';
+  if(!num){
+    showToast('⚠ Configura el número en Ajustes → WhatsApp','orange');
+    return;
+  }
+  var emp = empleados.find(function(e){ return e.id===empId; });
+  if(!emp){ showToast('Empleado no encontrado','orange'); return; }
+  var semana = getSemanaLabel();
+  var DIAS_WA = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  var lineas = (emp.turnos||[]).map(function(t, di){
+    var info = getTInfo(t);
+    var label = t==='fiesta' ? '🏖 FIESTA' : info.label;
+    return DIAS_WA[di]+': '+label;
+  }).join('\n');
+  var local = getLocal() || 'el restaurante';
+  var msg = '📅 *Tu horario - '+semana+'*\n'
+    +'📍 '+local+'\n\n'
+    +lineas+'\n\n'
+    +'_Enviado desde RelojTurnos_';
+  var url = 'https://wa.me/'+num+'?text='+encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+function guardarConfigWA(){
+  var num = (document.getElementById('cfg-wa-num')||{}).value || '';
+  localStorage.setItem('rt_wa_num', num.replace(/\s+/g,''));
+  showToast('✓ Número guardado','green');
+}
+
+// ========== PARÁMETROS COSTE ==========
+var SS_EMPRESA_CUSTOM = null;
+var DIVISOR_CUSTOM = null;
+
+function aplicarParamsCoste(){
+  var ssVal = parseFloat((document.getElementById('cfg-ss')||{}).value);
+  var divVal = parseFloat((document.getElementById('cfg-divisor')||{}).value);
+  if(!isNaN(ssVal) && ssVal>0){ SS_EMPRESA = ssVal/100; SS_EMPRESA_CUSTOM = ssVal; localStorage.setItem('rt_ss', ssVal); }
+  if(!isNaN(divVal) && divVal>0){ DIVISOR_CUSTOM = divVal; localStorage.setItem('rt_div', divVal); }
+  // Preview
+  var div = (!isNaN(divVal)&&divVal>0)?divVal:4.33;
+  var ss = (!isNaN(ssVal)&&ssVal>0)?ssVal/100:0.39;
+  var ej = (1800*(1+ss)/div).toFixed(2);
+  var ejEl = document.getElementById('cfg-coste-ej');
+  if(ejEl) ejEl.textContent = ej+' €';
+  if(typeof renderCostes==='function' && document.getElementById('screen7') && document.getElementById('screen7').classList.contains('active')) renderCostes();
+  showToast('✓ Parámetros actualizados','green');
+}
+
+function cargarParamsCosteGuardados(){
+  var ss = localStorage.getItem('rt_ss');
+  var div = localStorage.getItem('rt_div');
+  var waNum = localStorage.getItem('rt_wa_num');
+  if(ss){ SS_EMPRESA = parseFloat(ss)/100; }
+  if(div){ DIVISOR_CUSTOM = parseFloat(div); }
+  // Rellenar inputs cuando se abra la pantalla
+  if(ss){ var el=document.getElementById('cfg-ss'); if(el) el.value=ss; }
+  if(div){ var el2=document.getElementById('cfg-divisor'); if(el2) el2.value=div; }
+  if(waNum){ var el3=document.getElementById('cfg-wa-num'); if(el3) el3.value=waNum; }
+  // Preview coste
+  var ejEl = document.getElementById('cfg-coste-ej');
+  if(ejEl){ var div2=div?parseFloat(div):4.33; var ss2=ss?parseFloat(ss)/100:0.39; ejEl.textContent=(1800*(1+ss2)/div2).toFixed(2)+' €'; }
+}
+
+// ========== IDIOMA ==========
+var IDIOMAS = {
+  es: { dias: ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],
+        diasShort: ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'],
+        manana: 'Mañana', noche: 'Noche', tarde: 'Tarde', intermedio: 'Intermedio', fiesta: 'Fiesta' },
+  ca: { dias: ['Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte','Diumenge'],
+        diasShort: ['DLL','DIM','DMC','DIJ','DIV','DIS','DIU'],
+        manana: 'Matí', noche: 'Nit', tarde: 'Tarda', intermedio: 'Intermedi', fiesta: 'Festa' },
+  en: { dias: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
+        diasShort: ['MON','TUE','WED','THU','FRI','SAT','SUN'],
+        manana: 'Morning', noche: 'Night', tarde: 'Afternoon', intermedio: 'Split', fiesta: 'Day off' }
+};
+
+function aplicarIdioma(lang){
+  var l = IDIOMAS[lang];
+  if(!l) return;
+  DIAS = l.dias;
+  DIAS_SHORT = l.diasShort;
+  localStorage.setItem('rt_lang', lang);
+  ['es','ca','en'].forEach(function(n){
+    var btn = document.getElementById('btn-lang-'+n);
+    if(btn) btn.className = 'btn btn-sm '+(n===lang?'btn-primary':'btn-ghost');
+  });
+  showToast('✓ Idioma aplicado','green');
+}
+
+function cargarIdiomaGuardado(){
+  var lang = localStorage.getItem('rt_lang');
+  if(lang && IDIOMAS[lang]) aplicarIdioma(lang);
+}
+
 // ========== INIT ==========
 (function(){
   buildFechas();
   horaOpts('hora-apertura','07:30');
   horaOpts('hora-cierre','02:30');
   cargarPersonalizacionGuardada();
+  cargarParamsCosteGuardados();
+  cargarIdiomaGuardado();
   initSupabase();
 })();
 </script>
