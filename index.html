@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.5 – Grupo El Reloj</title>
+<title>RelojTurnos v4.6 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -77,6 +77,7 @@ select option{background:var(--dark)}
 .turno-badge{display:inline-block;padding:4px 8px;border-radius:5px;font-size:13px;font-weight:700;line-height:1.5;text-align:center}
 .badge-fiesta{background:#3d1515;color:#ff6b6b}
 .badge-mediafiesta{background:#3d2d10;color:#ffaa40}
+.badge-partido{background:#2d1f00;color:#ffa040}
 .badge-manana{background:#152d15;color:#5ddb5d}
 .badge-noche{background:#15152d;color:#6b8fff}
 .badge-intermedio{background:#25152d;color:#c080ff}
@@ -221,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.5</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.6</span></div>
   </div>
 </div>
 
@@ -486,6 +487,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <button class="btn btn-secondary" onclick="goStep(4)">&#8592; Editar</button>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()">&#128065; Ocultar horas</button>
+        <button class="btn btn-ghost btn-sm no-print" onclick="enviarCuadranteGrupoWA()" style="border-color:#25d366;color:#25d366">&#128242; Enviar grupo WA</button>
         <button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()">&#128424; Imprimir</button>
         <button class="btn btn-ghost btn-sm" id="btn-guardar-bd" onclick="guardarCuadranteEnBD()" style="border-color:var(--green);color:var(--green)">&#128190; Guardar en BD</button>
         <button class="btn btn-primary btn-sm" onclick="goStep(7)">&#128182; Ver costes</button>
@@ -618,17 +620,15 @@ select,input[type=text],.inp-sm{font-size:14px!important}
           </div>
           <div class="form-group">
             <label>Rol en la app</label>
-            <select id="nu-rol" class="inp-sm">
+            <select id="nu-rol" class="inp-sm" onchange="document.getElementById('nu-local-group').style.display=this.value==='directora_general'?'none':''">
               <option value="empleado">Empleado</option>
               <option value="directora">Directora</option>
               <option value="directora_general">Dirección General</option>
             </select>
-            <script>document.getElementById('nu-rol').addEventListener('change',function(){var l=document.getElementById('nu-local');if(this.value==='directora_general'){l.value='0';}else if(l.value==='0'){l.value='1';}});</script>
           </div>
           <div class="form-group" id="nu-local-group">
             <label>Local</label>
             <select id="nu-local" class="inp-sm">
-              <option value="0">Todos los locales</option>
               <option value="1">La Cala</option>
               <option value="2">Roto's Burguer</option>
             </select>
@@ -771,21 +771,26 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
       <!-- WhatsApp -->
       <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📲 WhatsApp cuadrante</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Al enviar el cuadrante se abrirá WhatsApp con el turno del empleado seleccionado</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📲 WhatsApp — Grupos por local</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Al pulsar "Enviar a grupo" se abre WhatsApp con el cuadrante completo de esa semana</div>
         <div class="form-group" style="margin-bottom:10px">
-          <label>Número del responsable (con prefijo)</label>
+          <label>🍽 Nº grupo La Cala</label>
           <div style="display:flex;gap:8px;align-items:center">
-            <input type="tel" id="cfg-wa-num" placeholder="Ej: 34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
-            <span style="font-size:20px">📱</span>
+            <input type="tel" id="cfg-wa-lacala" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
+            <span style="font-size:18px">📱</span>
           </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">Sin el + ni espacios · Ej: 34612345678 (España)</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">Sin el + ni espacios · Ej: 34612345678</div>
         </div>
         <div class="form-group">
-          <label>Número del empleado (para enviarle su turno)</label>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px;padding:8px 10px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
-            💡 El empleado se selecciona en el cuadrante. El botón 📲 aparece junto a cada persona al generar el cuadrante.
+          <label>🍔 Nº grupo Roto's Burguer</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="tel" id="cfg-wa-rotos" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
+            <span style="font-size:18px">📱</span>
           </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">Sin el + ni espacios · Ej: 34612345678</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:10px;padding:8px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
+          💡 El teléfono de cada empleado se configura en el <strong>Paso 3</strong> (tarjeta del empleado). El botón 📲 en el cuadrante envía el turno directamente a ese número.
         </div>
       </div>
 
@@ -809,7 +814,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.5</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.6</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1147,9 +1152,9 @@ async function guardarCuadranteEnBD(){
       var empBdId;
       if(existing.length){
         empBdId = existing[0].id;
-        await sbPatch('empleados', empBdId, {rol:emp.rol, turno_habitual:emp.turno});
+        await sbPatch('empleados', empBdId, {rol:emp.rol, turno_habitual:emp.turno, telefono:emp.telefono||null, email:emp.email||null});
       } else {
-        var newEmp = await sbPost('empleados',{local_id:localId, nombre:emp.nombre, rol:emp.rol, turno_habitual:emp.turno});
+        var newEmp = await sbPost('empleados',{local_id:localId, nombre:emp.nombre, rol:emp.rol, turno_habitual:emp.turno, telefono:emp.telefono||null, email:emp.email||null});
         empBdId = newEmp[0].id;
       }
       empIdMap[emp.id] = empBdId;
@@ -1313,7 +1318,9 @@ async function cargarEmpleadosBD(){
           nombre:e.nombre,
           rol:e.rol||'Cam. Ma\u00f1ana',
           turno:e.turno_habitual||'manana',
-          turnos:Array(7).fill(e.turno_habitual||'manana')
+          turnos:Array(7).fill(e.turno_habitual||'manana'),
+          telefono:e.telefono||'',
+          email:e.email||''
         });
         // Cargar salario si existe
         if(sal){
@@ -1346,10 +1353,19 @@ function buildTurnosConfig(){
   // Horarios predeterminados por local
   if(local==='La Cala'){
     turnosConfig=[
-      {id:'manana',nome:'Ma\u00f1ana',emoji:'\u2600\ufe0f',ini:'07:30',fin:'16:30',badge:'badge-manana',color:'#2ecc71',active:true},
-      {id:'tarde',nome:'Tarde',emoji:'\ud83c\udf05',ini:'15:00',fin:'00:00',badge:'badge-tarde',color:'#e67e22',active:true},
-      {id:'noche',nome:'Noche',emoji:'\ud83c\udf19',ini:'18:00',fin:'03:00',badge:'badge-noche',color:'#3498db',active:true},
-      {id:'intermedio',nome:'Intermedio',emoji:'\ud83d\udd04',ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
+      {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:'07:30',fin:'16:30',badge:'badge-manana',    color:'#2ecc71',active:true},
+      {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:'15:00',fin:'00:00',badge:'badge-tarde',     color:'#e67e22',active:true},
+      {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'18:00',fin:'03:00',badge:'badge-noche',     color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
+      {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'23:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
+    ];
+  } else if(local==="Roto's Burguer"){
+    turnosConfig=[
+      {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:'11:00',fin:'19:00',badge:'badge-manana',    color:'#2ecc71',active:true},
+      {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:'14:00',fin:'23:00',badge:'badge-tarde',     color:'#e67e22',active:true},
+      {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'16:00',fin:'00:00',badge:'badge-noche',     color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:'12:00',fin:'20:00',badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'00:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   } else {
     var s=toMin(ap),e=toMin(ci);if(e<=s)e+=1440;
@@ -1357,10 +1373,11 @@ function buildTurnosConfig(){
     var mid1=toStr(s+third),mid2=toStr(s+third*2);
     var iS=toStr(s+Math.round(third*0.7/30)*30),iE=toStr(s+Math.round(third*1.7/30)*30);
     turnosConfig=[
-      {id:'manana',nome:'Ma\u00f1ana',emoji:'\u2600\ufe0f',ini:ap,fin:mid1,badge:'badge-manana',color:'#2ecc71',active:true},
-      {id:'tarde',nome:'Tarde',emoji:'\ud83c\udf05',ini:mid1,fin:mid2,badge:'badge-tarde',color:'#e67e22',active:false},
-      {id:'noche',nome:'Noche',emoji:'\ud83c\udf19',ini:mid2,fin:ci,badge:'badge-noche',color:'#3498db',active:true},
-      {id:'intermedio',nome:'Intermedio',emoji:'\ud83d\udd04',ini:iS,fin:iE,badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:ap,   fin:mid1,badge:'badge-manana',    color:'#2ecc71',active:true},
+      {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:mid1, fin:mid2,badge:'badge-tarde',     color:'#e67e22',active:false},
+      {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:mid2, fin:ci,  badge:'badge-noche',     color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:iS,   fin:iE,  badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:ap,   fin:mid1,ini2:mid2,fin2:ci,badge:'badge-partido',color:'#ffa040',active:false,esPartido:true},
     ];
   }
 }
@@ -1382,15 +1399,24 @@ function renderTurnosConfigGrid(){
       return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
     }).join('');};
     var dis=t.active?'':'opacity:0.45';
+    var timeRow = t.esPartido
+      ? '<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
+        +'<div><label>Tramo 1 desde</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
+        +'<div><label>Tramo 1 hasta</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
+        +'<div><label>Tramo 2 desde</label><select onchange="updTC(\''+t.id+'\',\'ini2\',this.value)">'+opts(t.ini2||'20:00')+'</select></div>'
+        +'<div><label>Tramo 2 hasta</label><select onchange="updTC(\''+t.id+'\',\'fin2\',this.value)">'+opts(t.fin2||'23:00')+'</select></div>'
+        +'</div>'
+      : '<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
+        +'<div><label>Desde</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
+        +'<div><label>Hasta</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
+        +'</div>';
     grid.innerHTML+='<div class="turno-config-item" style="'+dis+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">'
-      +'<div class="turno-config-label" style="color:'+t.color+';margin-bottom:0">'+t.emoji+' Turno '+t.nome+' <small style="color:var(--muted);font-weight:400">'+t.ini+'\u2013'+t.fin+'</small></div>'
+      +'<div class="turno-config-label" style="color:'+t.color+';margin-bottom:0">'+t.emoji+' Turno '+t.nome+' <small style="color:var(--muted);font-weight:400">'+t.ini+'\u2013'+t.fin+(t.esPartido&&t.ini2?' / '+t.ini2+'\u2013'+(t.fin2||''):'')+'</small></div>'
       +'<button onclick="toggleTurno(\''+t.id+'\')" class="toggle-btn '+(t.active?'on':'')+'">'
       +'<div class="tog-dot"></div><span>'+(t.active?'Activo':'Inactivo')+'</span></button></div>'
-      +'<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
-      +'<div><label>Desde</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
-      +'<div><label>Hasta</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
-      +'</div></div>';
+      +timeRow
+      +'</div>';
   });
 }
 
@@ -1399,13 +1425,14 @@ function updTC(id,f,v){var t=turnosConfig.find(function(x){return x.id===id;});i
 function initDef(local){
   empleados=[];
   var d=local==='La Cala'?[
-    {nombre:'MARILYN',rol:'Resp. Ma\u00f1ana',turno:'manana'},
-    {nombre:'SONNY',rol:'Cam. Ma\u00f1ana',turno:'manana'},
-    {nombre:'ALEX',rol:'Cam. Ma\u00f1ana',turno:'manana'},
-    {nombre:'CONNY',rol:'Cam. Intermedio',turno:'intermedio'},
-    {nombre:'IRENE',rol:'Resp. Noche',turno:'noche'},
-    {nombre:'SANTIAGO',rol:'Cam. Noche',turno:'noche'},
-    {nombre:'LENY',rol:'Cam. Noche',turno:'noche'},
+    {nombre:'MARILYN',  rol:'Resp. Ma\u00f1ana', turno:'manana'},
+    {nombre:'SONNY',    rol:'Cam. Ma\u00f1ana',  turno:'manana'},
+    {nombre:'ALEX',     rol:'Cam. Ma\u00f1ana',  turno:'manana'},
+    {nombre:'ZEUS',     rol:'Cam. Ma\u00f1ana',  turno:'partido', diasFiesta:1.5},
+    {nombre:'CONNY',    rol:'Cam. Intermedio',   turno:'intermedio'},
+    {nombre:'IRENE',    rol:'Resp. Noche',        turno:'noche'},
+    {nombre:'SANTIAGO', rol:'Cam. Noche',         turno:'noche'},
+    {nombre:'LENY',     rol:'Cam. Noche',         turno:'noche'},
   ]:local==="Roto's Burguer"?[
     {nombre:'ARTUR',rol:'Cam. Ma\u00f1ana',turno:'manana'},
     {nombre:'ALLAN (CAM.)',rol:'Cam. Tarde',turno:'tarde'},
@@ -1577,6 +1604,10 @@ function renderEmpleados(){
       +'<option value="3"'+(emp.diasFiesta==3?' selected':'')+'>3 d\u00edas</option>'
       +'</select></div>'
       +'</div>'
+      +'<div class="form-row" style="margin-top:6px">'
+      +'<div class="form-group" style="flex:1"><label>📱 Tel\u00e9fono WhatsApp</label>'
+      +'<input class="inp-sm" type="tel" placeholder="34612345678" maxlength="15" value="'+(emp.telefono||'')+'" oninput="updEmp('+emp.id+',\'telefono\',this.value.replace(/\\s+/g,\'\'))" style="width:100%"></div>'
+      +'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; Las horas semanales se calculan autom\u00e1ticamente seg\u00fan los turnos asignados</div>'
       +'</div>';
   });
@@ -1596,7 +1627,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.5 ==========
+// ========== LÓGICA FIESTAS v4.6 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -1969,7 +2000,13 @@ function getTInfo(v){
   var hMF=+document.getElementById('horas-media-fiesta').value;
   if(v==='mediafiesta')return{label:'\u00bd Media fiesta',badge:'badge-mediafiesta',horas:hMF};
   var t=turnosConfig.find(function(x){return x.id===v;});
-  if(t)return{label:t.emoji+' '+t.ini+'\u2013'+t.fin,badge:t.badge,horas:diffH(t.ini,t.fin)};
+  if(t){
+    if(t.esPartido && t.ini2){
+      var h1=diffH(t.ini,t.fin), h2=diffH(t.ini2,t.fin2||t.fin);
+      return{label:t.emoji+' '+t.ini+'\u2013'+t.fin+' / '+t.ini2+'\u2013'+(t.fin2||t.fin),badge:t.badge,horas:h1+h2};
+    }
+    return{label:t.emoji+' '+t.ini+'\u2013'+t.fin,badge:t.badge,horas:diffH(t.ini,t.fin)};
+  }
   return{label:v,badge:'badge-manana',horas:0};
 }
 
@@ -2918,7 +2955,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.5 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.6 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3035,11 +3072,12 @@ async function cargarUsuarios(){
     lista.innerHTML = rows.map(function(u){
       var col = u.rol==='directora'?'var(--accent)':u.rol==='directora_general'?'#c0a020':'var(--green)';
       var init = (u.nombre||'?').substring(0,2).toUpperCase();
+      var localLabel = !u.local_id ? "🌐 La Cala · Roto's Burguer" : (LOCALES[u.local_id]||'Local '+u.local_id);
       return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px">'
         +'<div style="width:32px;height:32px;border-radius:50%;background:'+col+'20;color:'+col+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>'
         +'<div style="flex:1;min-width:0">'
         +'<div style="font-weight:700;font-size:13px;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(u.nombre||'Sin nombre')+'</div>'
-        +'<div style="font-size:10px;color:var(--muted)">'+(ROLES[u.rol]||u.rol)+' · DNI: '+(u.dni||'—')+' · '+(LOCALES[u.local_id]||'Todos los locales')+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+(ROLES[u.rol]||u.rol)+' · DNI: '+(u.dni||'—')+' · '+localLabel+'</div>'
         +'</div>'
         +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(u.activo?'#15351520':'#35151520')+';color:'+(u.activo?'var(--green)':'var(--red)')+';border:1px solid '+(u.activo?'var(--green)':'var(--red)')+'40;flex-shrink:0">'+(u.activo?'ACTIVO':'INACTIVO')+'</span>'
         +'</div>';
@@ -3069,8 +3107,7 @@ async function crearUsuario(){
     var existing = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni));
     if(existing && existing.length){ errEl.textContent='Ya existe un usuario con ese DNI'; errEl.style.display='block'; return; }
 
-    var localRaw = parseInt(document.getElementById('nu-local').value);
-    var localId  = localRaw > 0 ? localRaw : null;
+    var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
     var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
     await sbPost('usuarios', nuevo);
     okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
@@ -3143,34 +3180,78 @@ function aplicarLogoGuardado(dataUrl){
 }
 
 // ========== WHATSAPP ==========
-function enviarTurnoWA(empId){
-  var num = localStorage.getItem('rt_wa_num') || '';
-  if(!num){
-    showToast('⚠ Configura el número en Ajustes → WhatsApp','orange');
-    return;
-  }
-  var emp = empleados.find(function(e){ return e.id===empId; });
-  if(!emp){ showToast('Empleado no encontrado','orange'); return; }
+function getNumGrupoLocal(){
+  var local = getLocal();
+  if(local === 'La Cala') return localStorage.getItem('rt_wa_lacala') || '';
+  if(local === "Roto's Burguer") return localStorage.getItem('rt_wa_rotos') || '';
+  return '';
+}
+
+function formatMsgTurno(emp){
   var semana = getSemanaLabel();
-  var DIAS_WA = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  var DIAS_WA = ['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
   var lineas = (emp.turnos||[]).map(function(t, di){
     var info = getTInfo(t);
-    var label = t==='fiesta' ? '🏖 FIESTA' : info.label;
-    return DIAS_WA[di]+': '+label;
+    return DIAS_WA[di]+': '+(t==='fiesta'?'\ud83c\udfd6 FIESTA':info.label);
   }).join('\n');
+  return '\ud83d\udcc5 *Tu horario - '+semana+'*\n\ud83d\udccd '+( getLocal()||'el restaurante')+'\n\n'+lineas+'\n\n_Enviado desde RelojTurnos_';
+}
+
+function formatMsgCuadranteCompleto(){
+  var semana = getSemanaLabel();
   var local = getLocal() || 'el restaurante';
-  var msg = '📅 *Tu horario - '+semana+'*\n'
-    +'📍 '+local+'\n\n'
-    +lineas+'\n\n'
-    +'_Enviado desde RelojTurnos_';
-  var url = 'https://wa.me/'+num+'?text='+encodeURIComponent(msg);
-  window.open(url, '_blank');
+  var DIAS_WA = ['L','M','X','J','V','S','D'];
+  var lineas = empleados.map(function(emp){
+    var turnos = (emp.turnos||[]).map(function(t,di){
+      if(t==='fiesta') return DIAS_WA[di]+':🏖';
+      var info = getTInfo(t);
+      return DIAS_WA[di]+':'+info.label.replace(/[^\d:\-\/]/g,'').trim();
+    }).join(' ');
+    return '*'+emp.nombre+'*: '+turnos;
+  }).join('\n');
+  return '\ud83d\udcc5 *Cuadrante '+semana+'*\n\ud83d\udccd '+local+'\n\n'+lineas+'\n\n_RelojTurnos_';
+}
+
+// Enviar turno individual — al empleado + al grupo
+function enviarTurnoWA(empId){
+  var emp = empleados.find(function(e){ return e.id===empId; });
+  if(!emp){ showToast('Empleado no encontrado','orange'); return; }
+  var msg = formatMsgTurno(emp);
+  var numEmp = (emp.telefono||'').replace(/\s+/g,'');
+  var numGrupo = getNumGrupoLocal();
+  var abierto = false;
+  if(numEmp){
+    window.open('https://wa.me/'+numEmp+'?text='+encodeURIComponent(msg), '_blank');
+    abierto = true;
+  }
+  if(numGrupo){
+    setTimeout(function(){
+      window.open('https://wa.me/'+numGrupo+'?text='+encodeURIComponent(msg), '_blank');
+    }, abierto ? 600 : 0);
+    abierto = true;
+  }
+  if(!abierto){
+    showToast('\u26a0 A\u00f1ade el tel\u00e9fono del empleado en Paso 3 o el grupo en Ajustes','orange');
+  }
+}
+
+// Enviar cuadrante completo al grupo del local
+function enviarCuadranteGrupoWA(){
+  var numGrupo = getNumGrupoLocal();
+  if(!numGrupo){
+    showToast('\u26a0 Configura el n\u00famero del grupo en Ajustes \u2192 WhatsApp','orange');
+    return;
+  }
+  var msg = formatMsgCuadranteCompleto();
+  window.open('https://wa.me/'+numGrupo+'?text='+encodeURIComponent(msg), '_blank');
 }
 
 function guardarConfigWA(){
-  var num = (document.getElementById('cfg-wa-num')||{}).value || '';
-  localStorage.setItem('rt_wa_num', num.replace(/\s+/g,''));
-  showToast('✓ Número guardado','green');
+  var lacala = (document.getElementById('cfg-wa-lacala')||{}).value || '';
+  var rotos  = (document.getElementById('cfg-wa-rotos')||{}).value  || '';
+  localStorage.setItem('rt_wa_lacala', lacala.replace(/\s+/g,''));
+  localStorage.setItem('rt_wa_rotos',  rotos.replace(/\s+/g,''));
+  showToast('\u2713 N\u00fameros guardados','green');
 }
 
 // ========== PARÁMETROS COSTE ==========
@@ -3195,14 +3276,14 @@ function aplicarParamsCoste(){
 function cargarParamsCosteGuardados(){
   var ss = localStorage.getItem('rt_ss');
   var div = localStorage.getItem('rt_div');
-  var waNum = localStorage.getItem('rt_wa_num');
+  var waLacala = localStorage.getItem('rt_wa_lacala');
+  var waRotos  = localStorage.getItem('rt_wa_rotos');
   if(ss){ SS_EMPRESA = parseFloat(ss)/100; }
   if(div){ DIVISOR_CUSTOM = parseFloat(div); }
-  // Rellenar inputs cuando se abra la pantalla
-  if(ss){ var el=document.getElementById('cfg-ss'); if(el) el.value=ss; }
-  if(div){ var el2=document.getElementById('cfg-divisor'); if(el2) el2.value=div; }
-  if(waNum){ var el3=document.getElementById('cfg-wa-num'); if(el3) el3.value=waNum; }
-  // Preview coste
+  var elSS=document.getElementById('cfg-ss'); if(elSS&&ss) elSS.value=ss;
+  var elDiv=document.getElementById('cfg-divisor'); if(elDiv&&div) elDiv.value=div;
+  var elWaL=document.getElementById('cfg-wa-lacala'); if(elWaL&&waLacala) elWaL.value=waLacala;
+  var elWaR=document.getElementById('cfg-wa-rotos'); if(elWaR&&waRotos) elWaR.value=waRotos;
   var ejEl = document.getElementById('cfg-coste-ej');
   if(ejEl){ var div2=div?parseFloat(div):4.33; var ss2=ss?parseFloat(ss)/100:0.39; ejEl.textContent=(1800*(1+ss2)/div2).toFixed(2)+' €'; }
 }
