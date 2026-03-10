@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.6 – Grupo El Reloj</title>
+<title>RelojTurnos v4.7 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,11 +222,28 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:9px;opacity:0.5">V4.5</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V4.7</span></div>
   </div>
 </div>
 
-<!-- PORTAL EMPLEADO -->
+<!-- VISTA PÚBLICA CUADRANTE (sin login, acceso por link) -->
+<div id="vista-publica" style="display:none;min-height:100vh;background:var(--bg);padding:16px;font-family:inherit">
+  <div style="max-width:700px;margin:0 auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <div class="logo-icon" style="width:36px;height:36px;font-size:18px">⏱</div>
+      <div>
+        <div style="font-weight:700;font-size:16px;color:var(--accent)">RelojTurnos</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px">GRUPO EL RELOJ</div>
+      </div>
+    </div>
+    <div id="vp-loading" style="text-align:center;padding:40px;color:var(--muted)">⏳ Cargando cuadrante...</div>
+    <div id="vp-content" style="display:none"></div>
+    <div id="vp-error" style="display:none;text-align:center;padding:40px;color:var(--red)">⚠ Cuadrante no encontrado</div>
+    <div style="text-align:center;margin-top:24px;font-size:10px;color:var(--muted)">RelojTurnos · Grupo El Reloj</div>
+  </div>
+</div>
+
+
 <div id="portal-empleado">
   <div class="portal-header">
     <div style="display:flex;align-items:center;gap:10px">
@@ -814,7 +831,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.6</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.7</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1627,7 +1644,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.6 ==========
+// ========== LÓGICA FIESTAS v4.7 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2955,7 +2972,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.6 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.7 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3197,19 +3214,153 @@ function formatMsgTurno(emp){
   return '\ud83d\udcc5 *Tu horario - '+semana+'*\n\ud83d\udccd '+( getLocal()||'el restaurante')+'\n\n'+lineas+'\n\n_Enviado desde RelojTurnos_';
 }
 
-function formatMsgCuadranteCompleto(){
+// ========== VISTA PÚBLICA CUADRANTE ==========
+async function cargarVistaPublica(cuadId){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('vista-publica').style.display='block';
+  var loading = document.getElementById('vp-loading');
+  var content = document.getElementById('vp-content');
+  var errEl   = document.getElementById('vp-error');
+  try{
+    var cuads = await sbGet('cuadrantes','id=eq.'+cuadId);
+    if(!cuads||!cuads.length){ loading.style.display='none'; errEl.style.display='block'; return; }
+    var cuad = cuads[0];
+    var localNombre = cuad.local_id===1?'La Cala':"Roto's Burguer";
+
+    var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuadId+'&order=empleado_id.asc,dia.asc');
+    var emps   = await sbGet('empleados','local_id=eq.'+cuad.local_id+'&activo=eq.true&order=id.asc');
+
+    // Horarios por local y turno
+    var HORARIOS = cuad.local_id===1 ? {
+      manana:'07:30–16:30', noche:'18:00–03:00', tarde:'15:00–00:00',
+      intermedio:'12:00–21:00', partido:'11:00–16:00 / 20:00–23:00',
+      fiesta:'FIESTA', mediafiesta:'½ FIESTA'
+    } : {
+      manana:'11:00–19:00', noche:'16:00–00:00', tarde:'14:00–23:00',
+      intermedio:'12:00–20:00', partido:'11:00–16:00 / 20:00–00:00',
+      fiesta:'FIESTA', mediafiesta:'½ FIESTA'
+    };
+
+    var TURNO_STYLE = {
+      manana:   {bg:'#0d2e12', color:'#2ecc71', border:'#1a5a22'},
+      tarde:    {bg:'#2e1e00', color:'#f39c12', border:'#5a3a00'},
+      noche:    {bg:'#0d0d2e', color:'#5b9bd5', border:'#1a2a5a'},
+      intermedio:{bg:'#1e0d2e',color:'#9b59b6', border:'#3a1a5a'},
+      partido:  {bg:'#2e1e00', color:'#ffa040', border:'#5a3a00'},
+      fiesta:   {bg:'#2e0d0d', color:'#e74c3c', border:'#5a1a1a'},
+      mediafiesta:{bg:'#2e0d0d',color:'#e74c3c',border:'#5a1a1a'}
+    };
+
+    var turnoMap = {};
+    turnos.forEach(function(t){
+      if(!turnoMap[t.empleado_id]) turnoMap[t.empleado_id]={};
+      turnoMap[t.empleado_id][t.dia]=t.turno;
+    });
+
+    var DIAS_C = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+    var COLORS_VP = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4'];
+
+    var html = '';
+
+    // Header del cuadrante
+    html += '<div style="background:var(--darker);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px">';
+    html += '<div style="font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px">📅 '+cuad.semana_label+'</div>';
+    html += '<div style="font-size:13px;color:var(--muted)">📍 '+localNombre+' · '+emps.length+' empleados</div>';
+    html += '</div>';
+
+    // Tarjeta por empleado — formato móvil
+    emps.forEach(function(emp, idx){
+      var color = COLORS_VP[idx%COLORS_VP.length];
+      var tMap  = turnoMap[emp.id]||{};
+      var init  = (emp.nombre||'?').substring(0,2).toUpperCase();
+      var totalDias = 0;
+
+      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px">';
+      // Nombre empleado
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+      html += '<div style="width:30px;height:30px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>';
+      html += '<div style="font-weight:700;font-size:14px;color:var(--text)">'+emp.nombre+'</div>';
+      html += '<div style="font-size:10px;color:var(--muted);margin-left:auto">'+emp.rol+'</div>';
+      html += '</div>';
+
+      // Grid días
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+      for(var d=0;d<7;d++){
+        var t  = tMap[d]||'fiesta';
+        var st = TURNO_STYLE[t]||TURNO_STYLE['fiesta'];
+        var hr = HORARIOS[t]||t;
+        var isF= t==='fiesta'||t==='mediafiesta';
+        if(!isF) totalDias++;
+
+        // Para turno partido, mostrar en dos líneas
+        var lines = hr.split(' / ');
+        html += '<div style="text-align:center;padding:4px 2px;border-radius:6px;background:'+st.bg+';border:1px solid '+st.border+'">';
+        html += '<div style="font-size:8px;font-weight:700;color:var(--muted);margin-bottom:2px">'+DIAS_C[d]+'</div>';
+        if(isF){
+          html += '<div style="font-size:11px">🏖</div>';
+        } else {
+          lines.forEach(function(l){
+            html += '<div style="font-size:7.5px;font-weight:700;color:'+st.color+';white-space:nowrap">'+l+'</div>';
+          });
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+
+      // Total días trabajados
+      html += '<div style="margin-top:8px;font-size:10px;color:var(--muted);text-align:right">'+totalDias+' días trabajados</div>';
+      html += '</div>';
+    });
+
+    // Leyenda
+    html += '<div style="margin-top:6px;padding:12px;background:var(--darker);border-radius:10px;border:1px solid var(--border)">';
+    html += '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Leyenda</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    var leg=[
+      {t:'Mañana',c:'#2ecc71',b:'#0d2e12'},
+      {t:'Tarde',c:'#f39c12',b:'#2e1e00'},
+      {t:'Noche',c:'#5b9bd5',b:'#0d0d2e'},
+      {t:'Intermedio',c:'#9b59b6',b:'#1e0d2e'},
+      {t:'Partido',c:'#ffa040',b:'#2e1e00'},
+      {t:'🏖 Fiesta',c:'#e74c3c',b:'#2e0d0d'}
+    ];
+    leg.forEach(function(x){
+      html+='<span style="font-size:10px;padding:3px 9px;border-radius:12px;background:'+x.b+';color:'+x.c+'">'+x.t+'</span>';
+    });
+    html += '</div></div>';
+
+    loading.style.display='none';
+    content.innerHTML = html;
+    content.style.display='block';
+
+  }catch(e){
+    console.error(e);
+    loading.style.display='none';
+    errEl.style.display='block';
+    errEl.textContent='⚠ Error cargando cuadrante: '+e.message;
+  }
+}
+
+// Enviar cuadrante completo al grupo del local
+function enviarCuadranteGrupoWA(){
+  var numGrupo = getNumGrupoLocal();
+  if(!numGrupo){
+    showToast('⚠ Configura el número del grupo en Ajustes → WhatsApp','orange');
+    return;
+  }
+  if(!currentCuadranteId){
+    showToast('⚠ Primero guarda el cuadrante en BD (botón 💾)','orange');
+    return;
+  }
   var semana = getSemanaLabel();
   var local = getLocal() || 'el restaurante';
-  var DIAS_WA = ['L','M','X','J','V','S','D'];
-  var lineas = empleados.map(function(emp){
-    var turnos = (emp.turnos||[]).map(function(t,di){
-      if(t==='fiesta') return DIAS_WA[di]+':🏖';
-      var info = getTInfo(t);
-      return DIAS_WA[di]+':'+info.label.replace(/[^\d:\-\/]/g,'').trim();
-    }).join(' ');
-    return '*'+emp.nombre+'*: '+turnos;
-  }).join('\n');
-  return '\ud83d\udcc5 *Cuadrante '+semana+'*\n\ud83d\udccd '+local+'\n\n'+lineas+'\n\n_RelojTurnos_';
+  var link = 'https://raul79bcn.github.io/relojturnos/dev/?cuadrante='+currentCuadranteId;
+  var msg = '📅 *Cuadrante semanal*\n'
+    +'*'+semana+'*\n'
+    +'📍 '+local+'\n\n'
+    +'👇 Pulsa para ver tu horario:\n'
+    +link;
+  window.open('https://wa.me/'+numGrupo+'?text='+encodeURIComponent(msg), '_blank');
 }
 
 // Enviar turno individual — al empleado + al grupo
@@ -3233,17 +3384,6 @@ function enviarTurnoWA(empId){
   if(!abierto){
     showToast('\u26a0 A\u00f1ade el tel\u00e9fono del empleado en Paso 3 o el grupo en Ajustes','orange');
   }
-}
-
-// Enviar cuadrante completo al grupo del local
-function enviarCuadranteGrupoWA(){
-  var numGrupo = getNumGrupoLocal();
-  if(!numGrupo){
-    showToast('\u26a0 Configura el n\u00famero del grupo en Ajustes \u2192 WhatsApp','orange');
-    return;
-  }
-  var msg = formatMsgCuadranteCompleto();
-  window.open('https://wa.me/'+numGrupo+'?text='+encodeURIComponent(msg), '_blank');
 }
 
 function guardarConfigWA(){
@@ -3321,6 +3461,19 @@ function cargarIdiomaGuardado(){
 
 // ========== INIT ==========
 (function(){
+  // Detectar vista pública por parámetro URL
+  var urlParams = new URLSearchParams(window.location.search);
+  var cuadParam = urlParams.get('cuadrante');
+  if(cuadParam){
+    // Modo vista pública — no mostrar login
+    document.getElementById('login-screen').style.display='none';
+    // Init Supabase primero, luego cargar
+    const SUPA_URL2='https://ttewezdnroiqtetmgyrh.supabase.co';
+    const SUPA_KEY2='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0ZXdlemRucm9pcXRldG1neXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTExMDIsImV4cCI6MjA4ODM2NzEwMn0.mA5tWItknmHmBe7-8AZpN9579RRwEaM3ZybYpQBc2Pw';
+    cargarPersonalizacionGuardada();
+    cargarVistaPublica(parseInt(cuadParam));
+    return;
+  }
   buildFechas();
   horaOpts('hora-apertura','07:30');
   horaOpts('hora-cierre','02:30');
