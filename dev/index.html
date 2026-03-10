@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.7 – Grupo El Reloj</title>
+<title>RelojTurnos v4.8 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V4.7</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V4.8</span></div>
   </div>
 </div>
 
@@ -300,6 +300,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text">Direcc. Gral.</span></div>
     <div class="step" id="step9" onclick="goStep(9)" style="display:none"><span class="step-num">&#128101;</span><span class="step-text">Usuarios</span></div>
     <div class="step" id="step10" onclick="goStep(10)" style="display:none"><span class="step-num">&#127912;</span><span class="step-text">Ajustes</span></div>
+    <div class="step" id="step11" onclick="goStep(11)" style="display:none"><span class="step-num">&#128181;</span><span class="step-text">Arqueo</span></div>
   </div>
 
   <!-- PASO 1 -->
@@ -603,7 +604,10 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
       <div class="btn-row space" style="margin-top:18px">
         <button class="btn btn-secondary" onclick="goStep(7)">&#8592; Costes</button>
-        <button class="btn btn-ghost btn-sm" onclick="imprimirDirector()">&#128424; Imprimir resumen</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="imprimirDirector()">&#128424; Imprimir resumen</button>
+          <button class="btn btn-ghost btn-sm" onclick="goStep(11)" style="border-color:#f39c12;color:#f39c12">&#128181; Arqueo de caja</button>
+        </div>
       </div>
     </div>
   </div>
@@ -828,10 +832,138 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       </div>
     </div>
   </div>
+
+  <!-- PASO 11: ARQUEO DE CAJA -->
+  <div class="screen" id="screen11">
+    <div class="card">
+      <div class="card-title">&#128181; Arqueo de Caja</div>
+      <div class="card-sub">Registro de cierre de turno · <span id="arqueo-local-label" style="color:var(--accent)"></span></div>
+
+      <!-- Selector local + turno + fecha -->
+      <div class="form-row" style="margin-bottom:14px">
+        <div class="form-group">
+          <label>Local</label>
+          <select id="arq-local" class="inp-sm" onchange="arqueoLocalChange()">
+            <option value="1">&#127869; La Cala</option>
+            <option value="2">&#127828; Roto's Burguer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Turno</label>
+          <select id="arq-turno" class="inp-sm">
+            <option value="manana">&#9728;&#65039; Mañana</option>
+            <option value="noche">&#127769; Noche</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="arq-fecha" class="inp-sm">
+        </div>
+        <div class="form-group">
+          <label>Responsable</label>
+          <input type="text" id="arq-responsable" class="inp-sm" placeholder="Nombre encargado">
+        </div>
+      </div>
+
+      <!-- Fondo y cambio extra -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">&#128176; Efectivo inicial</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fondo de caja (€)</label>
+            <input type="number" id="arq-fondo" class="inp-sm" value="600" min="0" step="0.01" oninput="calcArqueo()">
+            <div style="font-size:9px;color:var(--muted);margin-top:2px">Importe fijo siempre en caja</div>
+          </div>
+          <div class="form-group">
+            <label>Cambio extra añadido (€)</label>
+            <input type="number" id="arq-cambio-extra" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
+            <div style="font-size:9px;color:var(--muted);margin-top:2px">Sacado de caja fuerte si faltaba</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ingresos -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px">&#8679; Ingresos del turno</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Venta total del turno (€)</label>
+            <input type="number" id="arq-venta" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
+          </div>
+          <div class="form-group">
+            <label>Cobrado por VISA/TPV (€)</label>
+            <input type="number" id="arq-visa" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
+            <div style="font-size:9px;color:var(--muted);margin-top:2px">Se descuenta del efectivo</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagos proveedores -->
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--red)">&#8681; Pagos a proveedores</div>
+          <button class="btn btn-ghost btn-sm" onclick="addProveedor()" style="font-size:11px;padding:4px 10px">&#65291; Añadir</button>
+        </div>
+        <div id="arq-proveedores-list"></div>
+        <div id="arq-proveedores-empty" style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0">Sin pagos a proveedores este turno</div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;font-size:12px;color:var(--red)">
+          Total pagos: <strong style="margin-left:8px;color:var(--red)" id="arq-total-pagos">0,00 €</strong>
+        </div>
+      </div>
+
+      <!-- Resultado -->
+      <div style="background:var(--card);border:2px solid var(--accent);border-radius:12px;padding:16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">&#128202; Resultado del turno</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div style="background:var(--darker);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Total en caja</div>
+            <div style="font-size:18px;font-weight:700;color:var(--green)" id="arq-res-total">0,00 €</div>
+          </div>
+          <div style="background:var(--darker);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Total salidas</div>
+            <div style="font-size:18px;font-weight:700;color:var(--red)" id="arq-res-salidas">0,00 €</div>
+          </div>
+        </div>
+        <div style="background:var(--accent)20;border:1px solid var(--accent)60;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">&#128181; EFECTIVO RECAUDACIÓN</div>
+          <div style="font-size:28px;font-weight:700;color:var(--accent)" id="arq-res-efectivo">0,00 €</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">A ingresar en caja fuerte (descontando fondo <span id="arq-res-fondo-label">600</span>€)</div>
+          <div style="font-size:22px;font-weight:700;color:var(--green);margin-top:8px;border-top:1px solid var(--border);padding-top:8px" id="arq-res-ingresar">0,00 €</div>
+          <div style="font-size:10px;color:var(--muted)">= Efectivo a meter en caja fuerte</div>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Notas / Incidencias</label>
+        <textarea id="arq-notas" class="inp-sm" rows="2" placeholder="Observaciones del turno..." style="width:100%;resize:vertical"></textarea>
+      </div>
+
+      <div id="arq-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
+      <div id="arq-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
+
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(8)">&#8592; Volver</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="limpiarArqueo()" style="border-color:var(--muted);color:var(--muted)">&#8635; Limpiar</button>
+          <button class="btn btn-ghost btn-sm no-print" onclick="imprimirArqueo()" style="border-color:var(--accent);color:var(--accent)">&#128424; Imprimir</button>
+          <button class="btn btn-primary" onclick="guardarArqueo()">&#128190; Guardar arqueo</button>
+        </div>
+      </div>
+
+      <!-- Histórico -->
+      <div style="margin-top:22px">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">&#128197; Últimos arqueos guardados</div>
+        <div id="arq-historico">
+          <div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">Cargando...</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.7</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.8</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1288,7 +1420,7 @@ function onLocalChange(){
 }
 
 function goStep(n){
-  for(var i=1;i<=10;i++){
+  for(var i=1;i<=11;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
@@ -1296,6 +1428,7 @@ function goStep(n){
   if(n===7) renderCostes();
   if(n===9) cargarUsuarios();
   if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
+  if(n===11){ initArqueo(); }
   window.scrollTo(0,0);
 }
 
@@ -1644,7 +1777,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.7 ==========
+// ========== LÓGICA FIESTAS v4.8 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2972,7 +3105,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.7 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.8 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3142,11 +3275,13 @@ async function crearUsuario(){
 function checkMostrarBtnUsuarios(){
   var u = currentUser;
   if(!u) return;
-  var s9 = document.getElementById('step9');
+  var s9  = document.getElementById('step9');
   var s10 = document.getElementById('step10');
+  var s11 = document.getElementById('step11');
   if(u.rol==='directora'||u.rol==='directora_general'||u.rol==='admin'){
-    if(s9) s9.style.display='';
+    if(s9)  s9.style.display='';
     if(s10) s10.style.display='';
+    if(s11) s11.style.display='';
   }
 }
 
@@ -3484,6 +3619,218 @@ function cargarIdiomaGuardado(){
   if(savedLogo) setTimeout(function(){ aplicarLogoGuardado(savedLogo); }, 100);
   initSupabase();
 })();
+
+// ========== ARQUEO DE CAJA ==========
+var arqProveedores = [];
+var arqProvCounter = 0;
+
+var CIERRES_LOCAL = {
+  1: { manana: '17:00', noche: '03:00' },
+  2: { manana: '17:00', noche: '00:00' }
+};
+
+function initArqueo(){
+  // Fecha de hoy por defecto
+  var hoy = new Date();
+  var yyyy = hoy.getFullYear();
+  var mm   = String(hoy.getMonth()+1).padStart(2,'0');
+  var dd   = String(hoy.getDate()).padStart(2,'0');
+  var fechaEl = document.getElementById('arq-fecha');
+  if(fechaEl && !fechaEl.value) fechaEl.value = yyyy+'-'+mm+'-'+dd;
+
+  // Responsable del usuario actual
+  var respEl = document.getElementById('arq-responsable');
+  if(respEl && !respEl.value && currentUser) respEl.value = currentUser.nombre || '';
+
+  // Local por defecto según el local activo en la app
+  var localId = localIdMap[getLocal()] || 1;
+  var arqLocalEl = document.getElementById('arq-local');
+  if(arqLocalEl) arqLocalEl.value = String(localId);
+
+  arqueoLocalChange();
+  renderProveedores();
+  calcArqueo();
+  cargarHistoricoArqueos();
+}
+
+function arqueoLocalChange(){
+  var localId = parseInt(document.getElementById('arq-local').value);
+  var NOMBRES = {1:'La Cala', 2:"Roto's Burguer"};
+  var lbl = document.getElementById('arqueo-local-label');
+  if(lbl) lbl.textContent = NOMBRES[localId] || '';
+}
+
+function addProveedor(){
+  arqProvCounter++;
+  arqProveedores.push({id:arqProvCounter, nombre:'', importe:0});
+  renderProveedores();
+}
+
+function removeProveedor(id){
+  arqProveedores = arqProveedores.filter(function(p){ return p.id !== id; });
+  renderProveedores();
+  calcArqueo();
+}
+
+function updProveedor(id, field, val){
+  var p = arqProveedores.find(function(x){ return x.id===id; });
+  if(p){ p[field] = field==='importe' ? (parseFloat(val)||0) : val; }
+  calcArqueo();
+}
+
+function renderProveedores(){
+  var cont = document.getElementById('arq-proveedores-list');
+  var empty = document.getElementById('arq-proveedores-empty');
+  if(!cont) return;
+  if(!arqProveedores.length){
+    cont.innerHTML = '';
+    if(empty) empty.style.display = '';
+    return;
+  }
+  if(empty) empty.style.display = 'none';
+  cont.innerHTML = arqProveedores.map(function(p){
+    return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:7px">'
+      +'<input class="inp-sm" type="text" placeholder="Proveedor / concepto" value="'+p.nombre+'" '
+      +'oninput="updProveedor('+p.id+',\'nombre\',this.value)" style="flex:2">'
+      +'<input class="inp-sm" type="number" placeholder="0.00" value="'+(p.importe||'')+'" min="0" step="0.01" '
+      +'oninput="updProveedor('+p.id+',\'importe\',this.value)" style="flex:1;max-width:110px">'
+      +'<span style="font-size:11px;color:var(--muted)">€</span>'
+      +'<button onclick="removeProveedor('+p.id+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px">&#10005;</button>'
+      +'</div>';
+  }).join('');
+}
+
+function calcArqueo(){
+  var fondo       = parseFloat(document.getElementById('arq-fondo').value)       || 0;
+  var cambioExtra = parseFloat(document.getElementById('arq-cambio-extra').value) || 0;
+  var venta       = parseFloat(document.getElementById('arq-venta').value)        || 0;
+  var visa        = parseFloat(document.getElementById('arq-visa').value)         || 0;
+  var totalPagos  = arqProveedores.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); }, 0);
+
+  // Total en caja = fondo + cambio extra + venta
+  var totalCaja   = fondo + cambioExtra + venta;
+  // Total salidas = visa + pagos proveedores
+  var totalSalidas = visa + totalPagos;
+  // Efectivo recaudación = total en caja - total salidas
+  var efectivo    = totalCaja - totalSalidas;
+  // A ingresar en caja fuerte = efectivo - fondo (el fondo se queda)
+  var aIngresar   = efectivo - fondo;
+
+  var fmt = function(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
+
+  document.getElementById('arq-total-pagos').textContent   = fmt(totalPagos);
+  document.getElementById('arq-res-total').textContent     = fmt(totalCaja);
+  document.getElementById('arq-res-salidas').textContent   = fmt(totalSalidas);
+  document.getElementById('arq-res-efectivo').textContent  = fmt(efectivo);
+  document.getElementById('arq-res-ingresar').textContent  = fmt(Math.max(0, aIngresar));
+  document.getElementById('arq-res-fondo-label').textContent = fondo.toLocaleString('es-ES');
+
+  // Color resultado
+  var elEf = document.getElementById('arq-res-efectivo');
+  var elIn = document.getElementById('arq-res-ingresar');
+  if(elEf) elEf.style.color = efectivo >= 0 ? 'var(--accent)' : 'var(--red)';
+  if(elIn) elIn.style.color = aIngresar >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+async function guardarArqueo(){
+  var errEl = document.getElementById('arq-error');
+  var okEl  = document.getElementById('arq-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  var fecha      = document.getElementById('arq-fecha').value;
+  var turno      = document.getElementById('arq-turno').value;
+  var localId    = parseInt(document.getElementById('arq-local').value);
+  var responsable= document.getElementById('arq-responsable').value.trim();
+  var fondo      = parseFloat(document.getElementById('arq-fondo').value)       || 0;
+  var cambioExtra= parseFloat(document.getElementById('arq-cambio-extra').value)|| 0;
+  var venta      = parseFloat(document.getElementById('arq-venta').value)       || 0;
+  var visa       = parseFloat(document.getElementById('arq-visa').value)        || 0;
+  var notas      = document.getElementById('arq-notas').value.trim();
+  var totalPagos = arqProveedores.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); }, 0);
+  var efectivo   = (fondo + cambioExtra + venta) - (visa + totalPagos);
+
+  if(!fecha){ errEl.textContent='Selecciona una fecha'; errEl.style.display='block'; return; }
+
+  var datos = {
+    local_id: localId,
+    fecha: fecha,
+    turno: turno,
+    fondo: fondo,
+    cambio_extra: cambioExtra,
+    venta: venta,
+    visa: visa,
+    proveedores: JSON.stringify(arqProveedores),
+    efectivo_resultado: efectivo,
+    responsable: responsable || null,
+    notas: notas || null
+  };
+
+  try{
+    await sbPost('arqueos', datos);
+    okEl.textContent = '✓ Arqueo guardado correctamente';
+    okEl.style.display = 'block';
+    cargarHistoricoArqueos();
+  }catch(e){
+    errEl.textContent = 'Error al guardar: '+e.message;
+    errEl.style.display = 'block';
+    console.error('guardarArqueo error:',e);
+  }
+}
+
+async function cargarHistoricoArqueos(){
+  var cont = document.getElementById('arq-historico');
+  if(!cont) return;
+  cont.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">⏳ Cargando...</div>';
+  try{
+    var localId = parseInt((document.getElementById('arq-local')||{}).value || '1');
+    var rows = await sbGet('arqueos','local_id=eq.'+localId+'&order=fecha.desc,turno.desc&limit=10');
+    if(!rows || !rows.length){
+      cont.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">Sin arqueos guardados aún</div>';
+      return;
+    }
+    var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
+    var TURNOS  = {manana:'☀️ Mañana', noche:'🌙 Noche'};
+    var fmt = function(n){ return (parseFloat(n)||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
+    cont.innerHTML = rows.map(function(r){
+      var aIngresar = (r.efectivo_resultado||0) - (r.fondo||0);
+      var col = aIngresar >= 0 ? 'var(--green)' : 'var(--red)';
+      return '<div style="background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">'
+        +'<div>'
+        +'<div style="font-size:12px;font-weight:700;color:var(--text)">'+(TURNOS[r.turno]||r.turno)+' · '+r.fecha+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+(r.responsable||'Sin responsable')+' · Venta: '+fmt(r.venta)+'</div>'
+        +'</div>'
+        +'<div style="text-align:right">'
+        +'<div style="font-size:10px;color:var(--muted)">A ingresar</div>'
+        +'<div style="font-size:16px;font-weight:700;color:'+col+'">'+fmt(Math.max(0,aIngresar))+'</div>'
+        +'</div>'
+        +'</div>'
+        +(r.notas?'<div style="font-size:10px;color:var(--muted);margin-top:4px;border-top:1px solid var(--border);padding-top:4px">📝 '+r.notas+'</div>':'')
+        +'</div>';
+    }).join('');
+  }catch(e){
+    cont.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:10px">⚠ Error: '+e.message+'</div>';
+  }
+}
+
+function limpiarArqueo(){
+  document.getElementById('arq-venta').value = '0';
+  document.getElementById('arq-visa').value  = '0';
+  document.getElementById('arq-cambio-extra').value = '0';
+  document.getElementById('arq-notas').value = '';
+  arqProveedores = [];
+  arqProvCounter = 0;
+  renderProveedores();
+  calcArqueo();
+  var errEl = document.getElementById('arq-error');
+  var okEl  = document.getElementById('arq-ok');
+  if(errEl) errEl.style.display='none';
+  if(okEl)  okEl.style.display='none';
+}
+
+function imprimirArqueo(){
+  window.print();
+}
 </script>
 </body>
 </html>
