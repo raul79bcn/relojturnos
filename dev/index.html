@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v5.5 – Grupo El Reloj</title>
+<title>RelojTurnos v5.6 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.5</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.6</span></div>
   </div>
 </div>
 
@@ -737,7 +737,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         <div>
           <!-- Color de acento -->
           <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127775; Color principal</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px" data-i18n="p10_color">&#127775; Color principal</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
               <div onclick="aplicarColor('#e8a020')" style="width:32px;height:32px;border-radius:50%;background:#e8a020;cursor:pointer;border:3px solid #e8a020;box-shadow:0 0 0 2px var(--darker)" title="Dorado"></div>
               <div onclick="aplicarColor('#3498db')" style="width:32px;height:32px;border-radius:50%;background:#3498db;cursor:pointer" title="Azul"></div>
@@ -749,25 +749,25 @@ select,input[type=text],.inp-sm{font-size:14px!important}
               <div onclick="aplicarColor('#e91e63')" style="width:32px;height:32px;border-radius:50%;background:#e91e63;cursor:pointer" title="Rosa"></div>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
-              <label style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;margin:0">Personalizado:</label>
+              <label style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;margin:0" data-i18n="p10_color_custom">Personalizado:</label>
               <input type="color" id="color-custom" value="#e8a020" onchange="aplicarColor(this.value)" style="width:40px;height:28px;padding:2px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer">
             </div>
           </div>
 
           <!-- Tema -->
           <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127763; Tema</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px" data-i18n="p10_tema">&#127763; Tema</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onclick="aplicarTema('dark')" id="btn-tema-dark" class="btn btn-primary btn-sm">&#127762; Oscuro</button>
-              <button onclick="aplicarTema('light')" id="btn-tema-light" class="btn btn-ghost btn-sm">&#9728;&#65039; Claro</button>
-              <button onclick="aplicarTema('navy')" id="btn-tema-navy" class="btn btn-ghost btn-sm">&#128674; Marino</button>
+              <button onclick="aplicarTema('dark')" id="btn-tema-dark" class="btn btn-primary btn-sm" data-i18n="p10_tema_dark">&#127762; Oscuro</button>
+              <button onclick="aplicarTema('light')" id="btn-tema-light" class="btn btn-ghost btn-sm" data-i18n="p10_tema_light">&#9728;&#65039; Claro</button>
+              <button onclick="aplicarTema('navy')" id="btn-tema-navy" class="btn btn-ghost btn-sm" data-i18n="p10_tema_navy">&#128674; Marino</button>
             </div>
           </div>
 
           <!-- Logo -->
           <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">🖼️ Logo empresa</div>
-            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Header, login y documentos impresos</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px" data-i18n="p10_logo">🖼️ Logo empresa</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:10px" data-i18n="p10_logo_sub">Header, login y documentos impresos</div>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
               <div id="logo-preview-wrap" style="width:48px;height:48px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
                 <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain">
@@ -775,7 +775,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
               </div>
               <div style="flex:1">
                 <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-block;font-size:11px">
-                  📁 Subir imagen
+                  <span data-i18n="p10_logo_subir">📁 Subir imagen</span>
                   <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)">
                 </label>
                 <div style="font-size:9px;color:var(--muted);margin-top:4px">PNG · JPG · SVG</div>
@@ -786,7 +786,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
           <!-- Nombre empresa -->
           <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#127970; Nombre empresa</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px" data-i18n="p10_empresa">&#127970; Nombre empresa</div>
             <div style="display:flex;gap:8px;align-items:center">
               <input type="text" id="custom-empresa" placeholder="Ej: Grupo El Reloj" maxlength="40" style="flex:1" oninput="aplicarNombreEmpresa(this.value)">
               <button class="btn btn-ghost btn-sm" onclick="aplicarNombreEmpresa(document.getElementById('custom-empresa').value)">&#10003;</button>
@@ -795,7 +795,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
           <!-- Vista previa -->
           <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#128065; Vista previa</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px" data-i18n="p10_preview">&#128065; Vista previa</div>
             <div id="preview-personaliz" style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:12px">
               <div style="display:flex;align-items:center;gap:10px">
                 <div style="width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px">&#9201;</div>
@@ -805,8 +805,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
                 </div>
               </div>
               <div style="margin-top:8px;display:flex;gap:6px">
-                <span style="background:var(--accent);color:var(--darker);padding:5px 10px;border-radius:5px;font-size:11px;font-weight:700">Activo</span>
-                <span style="border:1px solid var(--border);padding:5px 10px;border-radius:5px;font-size:11px;color:var(--muted)">Normal</span>
+                <span style="background:var(--accent);color:var(--darker);padding:5px 10px;border-radius:5px;font-size:11px;font-weight:700" data-i18n="prev_activo">Activo</span>
+                <span style="border:1px solid var(--border);padding:5px 10px;border-radius:5px;font-size:11px;color:var(--muted)" data-i18n="prev_normal">Normal</span>
               </div>
             </div>
           </div>
@@ -816,35 +816,35 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         <div>
           <!-- Parámetros de coste -->
           <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">💰 Parámetros de coste</div>
-            <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Afectan a todos los cálculos de nómina y SS</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px" data-i18n="p10_costes_titulo">💰 Parámetros de coste</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:12px" data-i18n="p10_costes_sub">Afectan a todos los cálculos de nómina y SS</div>
             <div class="form-row">
               <div class="form-group">
-                <label>% SS empresa</label>
+                <label data-i18n="p10_ss_pct">% SS empresa</label>
                 <div style="display:flex;align-items:center;gap:6px">
                   <input type="number" id="cfg-ss" min="20" max="60" step="0.1" placeholder="39" style="flex:1" oninput="aplicarParamsCoste()">
                   <span style="font-size:11px;color:var(--muted)">%</span>
                 </div>
-                <div style="font-size:9px;color:var(--muted);margin-top:2px">Estándar hostelería: 39%</div>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px" data-i18n="p10_ss_hint2">Estándar hostelería: 39%</div>
               </div>
               <div class="form-group">
-                <label>Divisor mensual</label>
+                <label data-i18n="p10_divisor">Divisor mensual</label>
                 <div style="display:flex;align-items:center;gap:6px">
                   <input type="number" id="cfg-divisor" min="4" max="5" step="0.01" placeholder="4.33" style="flex:1" oninput="aplicarParamsCoste()">
                   <span style="font-size:11px;color:var(--muted)">sem</span>
                 </div>
-                <div style="font-size:9px;color:var(--muted);margin-top:2px">Estándar: 4,33</div>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px" data-i18n="p10_divisor_hint">Estándar: 4,33</div>
               </div>
             </div>
             <div id="cfg-coste-preview" style="margin-top:10px;background:var(--card);border-radius:7px;padding:8px 10px;font-size:11px;color:var(--muted)">
-              Ejemplo: 1.800€ → <span id="cfg-coste-ej" style="color:var(--green);font-weight:700">—</span> / sem
+              <span data-i18n="p10_ejemplo">Ejemplo: 1.800€ →</span> <span id="cfg-coste-ej" style="color:var(--green);font-weight:700">—</span> <span data-i18n="p10_sem">/ sem</span>
             </div>
           </div>
 
           <!-- WhatsApp -->
           <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📲 WhatsApp grupos</div>
-            <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Número del grupo de WhatsApp de cada local</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px" data-i18n="p10_wa_titulo">📲 WhatsApp grupos</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:12px" data-i18n="p10_wa_sub">Número del grupo de WhatsApp de cada local</div>
             <div class="form-group" style="margin-bottom:10px">
               <label>🍽 La Cala</label>
               <div style="display:flex;gap:6px;align-items:center">
@@ -857,24 +857,24 @@ select,input[type=text],.inp-sm{font-size:14px!important}
                 <input type="tel" id="cfg-wa-rotos" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
               </div>
             </div>
-            <div style="font-size:9px;color:var(--muted);padding:7px 9px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
+            <div style="font-size:9px;color:var(--muted);padding:7px 9px;background:var(--card);border-radius:6px;border:1px solid var(--border)" data-i18n="p10_wa_hint">
               💡 Teléfonos individuales de empleados se configuran en Gestión Usuarios
             </div>
           </div>
 
           <!-- Idioma -->
           <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🌍 Idioma</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px" data-i18n="p10_idioma">🌍 Idioma</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button onclick="aplicarIdioma('es')" id="btn-lang-es" class="btn btn-primary btn-sm">🇪🇸 Español</button>
               <button onclick="aplicarIdioma('ca')" id="btn-lang-ca" class="btn btn-ghost btn-sm">🏴󠁥󠁳󠁣󠁴󠁿 Català</button>
               <button onclick="aplicarIdioma('en')" id="btn-lang-en" class="btn btn-ghost btn-sm">🇬🇧 English</button>
             </div>
-            <div style="font-size:9px;color:var(--muted);margin-top:8px">⚠ Cambio parcial en esta versión</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:8px" data-i18n="p10_aviso_parcial">⚠ Cambio parcial en esta versión</div>
           </div>
 
           <!-- Nota guardado -->
-          <div style="background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 12px;font-size:11px;color:#8ddb8d">
+          <div style="background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 12px;font-size:11px;color:#8ddb8d" data-i18n="p10_nota">
             &#9432; Los cambios se guardan en tu navegador al instante.
           </div>
         </div>
@@ -884,8 +884,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <style>@media(max-width:640px){#screen10 .card > div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}}</style>
 
       <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(9)">&#8592; Usuarios</button>
-        <button class="btn btn-ghost btn-sm" onclick="resetPersonalizacion()" style="border-color:var(--red);color:var(--red)">&#8635; Restablecer por defecto</button>
+        <button class="btn btn-secondary" onclick="goStep(9)" data-i18n="p10_btn_usuarios">&#8592; Usuarios</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetPersonalizacion()" style="border-color:var(--red);color:var(--red)" data-i18n="p10_btn_reset">&#8635; Restablecer por defecto</button>
       </div>
     </div>
   </div>
@@ -896,32 +896,32 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <div class="card-title" data-i18n="p11_titulo">💰 Arqueo de Caja</div>
       <div class="card-sub">Registro de cierre de turno · <span id="arqueo-local-label" style="color:var(--accent)"></span></div>
       <!-- Banner edición activa -->
-      <div id="arq-edit-banner" style="display:none;background:#3d2a00;border:1px solid #ffc107;border-radius:8px;padding:9px 14px;font-size:11px;color:#ffc107;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+      <div id="arq-edit-banner" style="display:none;background:#3d2a00;border:1px solid #ffc107;border-radius:8px;padding:9px 14px;font-size:11px;color:#ffc107;margin-bottom:12px;display:flex;align-items:center;gap:8px" data-i18n="arq_edit_banner">
         ✏️ <strong>Modo edición</strong> — Estás modificando un arqueo guardado. Pulsa <strong>Guardar</strong> para confirmar o <strong>Limpiar</strong> para cancelar.
       </div>
 
       <!-- Selector local + turno + fecha -->
       <div class="form-row" style="margin-bottom:14px">
         <div class="form-group">
-          <label>Local</label>
+          <label data-i18n="arq_lbl_local">Local</label>
           <select id="arq-local" class="inp-sm" onchange="arqueoLocalChange()">
             <option value="1">&#127869; La Cala</option>
             <option value="2">&#127828; Roto's Burguer</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Turno</label>
+          <label data-i18n="arq_lbl_turno">Turno</label>
           <select id="arq-turno" class="inp-sm">
             <option value="manana">&#9728;&#65039; Mañana</option>
             <option value="noche">&#127769; Noche</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Fecha</label>
+          <label data-i18n="arq_lbl_fecha">Fecha</label>
           <input type="date" id="arq-fecha" class="inp-sm">
         </div>
         <div class="form-group">
-          <label>Responsable</label>
+          <label data-i18n="arq_lbl_resp">Responsable</label>
           <div id="arq-responsable-display" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--accent)"></div>
           <input type="hidden" id="arq-responsable">
         </div>
@@ -929,33 +929,33 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
       <!-- Fondo y cambio extra -->
       <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">&#128176; Efectivo inicial</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px" data-i18n="arq_sec_efectivo">&#128176; Efectivo inicial</div>
         <div class="form-row">
           <div class="form-group">
-            <label>Fondo de caja (€)</label>
+            <label data-i18n="arq_lbl_fondo">Fondo de caja (€)</label>
             <input type="number" id="arq-fondo" class="inp-sm" value="600" min="0" step="0.01" oninput="calcArqueo()">
-            <div style="font-size:9px;color:var(--muted);margin-top:2px">Importe fijo siempre en caja</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px" data-i18n="arq_hint_fondo">Importe fijo siempre en caja</div>
           </div>
           <div class="form-group">
-            <label>Cambio extra añadido (€)</label>
+            <label data-i18n="arq_lbl_cambio">Cambio extra añadido (€)</label>
             <input type="number" id="arq-cambio-extra" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
-            <div style="font-size:9px;color:var(--muted);margin-top:2px">Sacado de caja fuerte si faltaba</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px" data-i18n="arq_hint_cambio">Sacado de caja fuerte si faltaba</div>
           </div>
         </div>
       </div>
 
       <!-- Ingresos -->
       <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px">&#8679; Ingresos del turno</div>
+        <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px" data-i18n="arq_sec_ingresos">&#8679; Ingresos del turno</div>
         <div class="form-row">
           <div class="form-group">
-            <label>Venta total del turno (€)</label>
+            <label data-i18n="arq_lbl_venta">Venta total del turno (€)</label>
             <input type="number" id="arq-venta" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
           </div>
           <div class="form-group">
-            <label>Cobrado por VISA/TPV (€)</label>
+            <label data-i18n="arq_lbl_visa">Cobrado por VISA/TPV (€)</label>
             <input type="number" id="arq-visa" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
-            <div style="font-size:9px;color:var(--muted);margin-top:2px">Se descuenta del efectivo</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px" data-i18n="arq_hint_visa">Se descuenta del efectivo</div>
           </div>
         </div>
       </div>
@@ -963,41 +963,41 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <!-- Pagos proveedores -->
       <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;color:var(--red)">&#8681; Pagos a proveedores</div>
-          <button class="btn btn-ghost btn-sm" onclick="addProveedor()" style="font-size:11px;padding:4px 10px">&#65291; Añadir</button>
+          <div style="font-size:12px;font-weight:700;color:var(--red)" data-i18n="arq_sec_pagos">&#8681; Pagos a proveedores</div>
+          <button class="btn btn-ghost btn-sm" onclick="addProveedor()" style="font-size:11px;padding:4px 10px" data-i18n="arq_btn_anadir">&#65291; Añadir</button>
         </div>
         <div id="arq-proveedores-list"></div>
-        <div id="arq-proveedores-empty" style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0">Sin pagos a proveedores este turno</div>
+        <div id="arq-proveedores-empty" style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0" data-i18n="arq_sin_pagos">Sin pagos a proveedores este turno</div>
         <div style="display:flex;justify-content:flex-end;margin-top:8px;font-size:12px;color:var(--red)">
-          Total pagos: <strong style="margin-left:8px;color:var(--red)" id="arq-total-pagos">0,00 €</strong>
+          <span data-i18n="arq_total_pagos_lbl">Total pagos:</span> <strong style="margin-left:8px;color:var(--red)" id="arq-total-pagos">0,00 €</strong>
         </div>
       </div>
 
       <!-- Resultado -->
       <div style="background:var(--card);border:2px solid var(--accent);border-radius:12px;padding:16px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">&#128202; Resultado del turno</div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px" data-i18n="arq_sec_resultado">&#128202; Resultado del turno</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
           <div style="background:var(--darker);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Total en caja</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px" data-i18n="arq_total_caja">Total en caja</div>
             <div style="font-size:18px;font-weight:700;color:var(--green)" id="arq-res-total">0,00 €</div>
           </div>
           <div style="background:var(--darker);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Total salidas</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px" data-i18n="arq_total_salidas">Total salidas</div>
             <div style="font-size:18px;font-weight:700;color:var(--red)" id="arq-res-salidas">0,00 €</div>
           </div>
         </div>
         <div style="background:var(--accent)20;border:1px solid var(--accent)60;border-radius:10px;padding:14px;text-align:center">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">&#128181; EFECTIVO RECAUDACIÓN</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px" data-i18n="arq_ef_recaud">&#128181; EFECTIVO RECAUDACIÓN</div>
           <div style="font-size:28px;font-weight:700;color:var(--accent)" id="arq-res-efectivo">0,00 €</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:4px">A ingresar en caja fuerte (descontando fondo <span id="arq-res-fondo-label">600</span>€)</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px"><span data-i18n="arq_hint_ingresar">A ingresar en caja fuerte (descontando fondo</span> <span id="arq-res-fondo-label">600</span>€)</div>
           <div style="font-size:22px;font-weight:700;color:var(--green);margin-top:8px;border-top:1px solid var(--border);padding-top:8px" id="arq-res-ingresar">0,00 €</div>
-          <div style="font-size:10px;color:var(--muted)">= Efectivo a meter en caja fuerte</div>
+          <div style="font-size:10px;color:var(--muted)" data-i18n="arq_hint_fuerte">= Efectivo a meter en caja fuerte</div>
         </div>
       </div>
 
       <!-- Notas -->
       <div class="form-group" style="margin-bottom:14px">
-        <label>Notas / Incidencias</label>
+        <label data-i18n="arq_lbl_notas">Notas / Incidencias</label>
         <textarea id="arq-notas" class="inp-sm" rows="2" placeholder="Observaciones del turno..." style="width:100%;resize:vertical"></textarea>
       </div>
 
@@ -1005,17 +1005,17 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <div id="arq-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
 
       <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(8)">&#8592; Volver</button>
+        <button class="btn btn-secondary" onclick="goStep(8)" data-i18n="arq_btn_volver">&#8592; Volver</button>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="limpiarArqueo()" style="border-color:var(--muted);color:var(--muted)">&#8635; Limpiar</button>
-          <button class="btn btn-ghost btn-sm no-print" onclick="imprimirArqueo()" style="border-color:var(--accent);color:var(--accent)">&#128424; Imprimir</button>
-          <button class="btn btn-primary" onclick="guardarArqueo()">&#128190; Guardar arqueo</button>
+          <button class="btn btn-ghost btn-sm" onclick="limpiarArqueo()" style="border-color:var(--muted);color:var(--muted)" data-i18n="arq_btn_limpiar">&#8635; Limpiar</button>
+          <button class="btn btn-ghost btn-sm no-print" onclick="imprimirArqueo()" style="border-color:var(--accent);color:var(--accent)" data-i18n="arq_btn_imprimir">&#128424; Imprimir</button>
+          <button class="btn btn-primary" onclick="guardarArqueo()" data-i18n="arq_btn_guardar">&#128190; Guardar arqueo</button>
         </div>
       </div>
 
       <!-- Histórico -->
       <div style="margin-top:22px">
-        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">&#128197; Últimos arqueos guardados</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px" data-i18n="arq_historico_titulo">&#128197; Últimos arqueos guardados</div>
         <div id="arq-historico">
           <div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">Cargando...</div>
         </div>
@@ -1714,29 +1714,29 @@ function renderTurnosConfigGrid(){
   var ci=document.getElementById('hora-cierre').value;
   document.getElementById('info-box-turnos').innerHTML='&#10003; '+t('info_apertura')+' <strong>'+ap+'</strong> &middot; '+t('info_cierre')+' <strong>'+ci+'</strong> &middot; '+t('info_activa_turnos');
   var grid=document.getElementById('turnos-config-grid');grid.innerHTML='';
-  turnosConfig.forEach(function(t){
+  turnosConfig.forEach(function(tc){
     var opts=function(def){return Array.from({length:48},function(_,i){
       var h=Math.floor(i/2),m=i%2===0?'00':'30';
       var str=String(h).padStart(2,'0')+':'+m;
       return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
     }).join('');};
-    var dis=t.active?'':'opacity:0.45';
-    var timeRow = t.esPartido
-      ? '<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
-        +'<div><label>'+t('tc_tramo1_desde')+'</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
-        +'<div><label>'+t('tc_tramo1_hasta')+'</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
-        +'<div><label>'+t('tc_tramo2_desde')+'</label><select onchange="updTC(\''+t.id+'\',\'ini2\',this.value)">'+opts(t.ini2||'20:00')+'</select></div>'
-        +'<div><label>'+t('tc_tramo2_hasta')+'</label><select onchange="updTC(\''+t.id+'\',\'fin2\',this.value)">'+opts(t.fin2||'23:00')+'</select></div>'
+    var dis=tc.active?'':'opacity:0.45';
+    var timeRow = tc.esPartido
+      ? '<div class="turno-config-row" style="'+(tc.active?'':'pointer-events:none;opacity:0.5')+'">'
+        +'<div><label>'+t('tc_tramo1_desde')+'</label><select onchange="updTC(\''+tc.id+'\',\'ini\',this.value)">'+opts(tc.ini)+'</select></div>'
+        +'<div><label>'+t('tc_tramo1_hasta')+'</label><select onchange="updTC(\''+tc.id+'\',\'fin\',this.value)">'+opts(tc.fin)+'</select></div>'
+        +'<div><label>'+t('tc_tramo2_desde')+'</label><select onchange="updTC(\''+tc.id+'\',\'ini2\',this.value)">'+opts(tc.ini2||'20:00')+'</select></div>'
+        +'<div><label>'+t('tc_tramo2_hasta')+'</label><select onchange="updTC(\''+tc.id+'\',\'fin2\',this.value)">'+opts(tc.fin2||'23:00')+'</select></div>'
         +'</div>'
-      : '<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
-        +'<div><label>'+t('tc_desde')+'</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
-        +'<div><label>'+t('tc_hasta')+'</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
+      : '<div class="turno-config-row" style="'+(tc.active?'':'pointer-events:none;opacity:0.5')+'">'
+        +'<div><label>'+t('tc_desde')+'</label><select onchange="updTC(\''+tc.id+'\',\'ini\',this.value)">'+opts(tc.ini)+'</select></div>'
+        +'<div><label>'+t('tc_hasta')+'</label><select onchange="updTC(\''+tc.id+'\',\'fin\',this.value)">'+opts(tc.fin)+'</select></div>'
         +'</div>';
     grid.innerHTML+='<div class="turno-config-item" style="'+dis+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">'
-      +'<div class="turno-config-label" style="color:'+t.color+';margin-bottom:0">'+t.emoji+' '+t('tc_turno')+' '+t.nome+' <small style="color:var(--muted);font-weight:400">'+t.ini+'\u2013'+t.fin+(t.esPartido&&t.ini2?' / '+t.ini2+'\u2013'+(t.fin2||''):'')+'</small></div>'
-      +'<button onclick="toggleTurno(\''+t.id+'\')" class="toggle-btn '+(t.active?'on':'')+'">'
-      +'<div class="tog-dot"></div><span>'+(t.active?t('tc_activo'):t('tc_inactivo'))+'</span></button></div>'
+      +'<div class="turno-config-label" style="color:'+tc.color+';margin-bottom:0">'+tc.emoji+' '+t('tc_turno')+' '+tc.nome+' <small style="color:var(--muted);font-weight:400">'+tc.ini+'\u2013'+tc.fin+(tc.esPartido&&tc.ini2?' / '+tc.ini2+'\u2013'+(tc.fin2||''):'')+'</small></div>'
+      +'<button onclick="toggleTurno(\''+tc.id+'\')" class="toggle-btn '+(tc.active?'on':'')+'">'
+      +'<div class="tog-dot"></div><span>'+(tc.active?t('tc_activo'):t('tc_inactivo'))+'</span></button></div>'
       +timeRow
       +'</div>';
   });
@@ -1979,7 +1979,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v5.5 ==========
+// ========== LÓGICA FIESTAS v5.6 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -3310,7 +3310,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v5.5 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v5.6 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3913,6 +3913,24 @@ var I18N = {
     p10_wa_hint:'💡 Teléfonos individuales de empleados se configuran en Gestión Usuarios',
     p10_idioma:'🌍 Idioma',
     p10_nota:'ⓘ Los cambios se guardan en tu navegador al instante.',
+    p10_aviso_parcial:'⚠ Cambio parcial en esta versión',
+    p10_btn_usuarios:'← Usuarios', p10_btn_reset:'↺ Restablecer por defecto',
+    p10_ejemplo:'Ejemplo: 1.800€ →', p10_sem:'/ sem',
+    prev_activo:'Activo', prev_normal:'Normal',
+    arq_edit_banner:'✏️ Modo edición — Estás modificando un arqueo guardado. Pulsa Guardar para confirmar o Limpiar para cancelar.',
+    arq_lbl_local:'Local', arq_lbl_turno:'Turno', arq_lbl_fecha:'Fecha', arq_lbl_resp:'Responsable',
+    arq_sec_efectivo:'💰 Efectivo inicial', arq_lbl_fondo:'Fondo de caja (€)', arq_hint_fondo:'Importe fijo siempre en caja',
+    arq_lbl_cambio:'Cambio extra añadido (€)', arq_hint_cambio:'Sacado de caja fuerte si faltaba',
+    arq_sec_ingresos:'↑ Ingresos del turno', arq_lbl_venta:'Venta total del turno (€)',
+    arq_lbl_visa:'Cobrado por VISA/TPV (€)', arq_hint_visa:'Se descuenta del efectivo',
+    arq_sec_pagos:'↓ Pagos a proveedores', arq_btn_anadir:'＋ Añadir',
+    arq_sin_pagos:'Sin pagos a proveedores este turno', arq_total_pagos_lbl:'Total pagos:',
+    arq_sec_resultado:'📊 Resultado del turno', arq_total_caja:'Total en caja', arq_total_salidas:'Total salidas',
+    arq_ef_recaud:'💵 EFECTIVO RECAUDACIÓN', arq_hint_ingresar:'A ingresar en caja fuerte (descontando fondo',
+    arq_hint_fuerte:'= Efectivo a meter en caja fuerte',
+    arq_lbl_notas:'Notas / Incidencias',
+    arq_btn_volver:'← Volver', arq_btn_limpiar:'↺ Limpiar', arq_btn_imprimir:'🖨 Imprimir', arq_btn_guardar:'💾 Guardar arqueo',
+    arq_historico_titulo:'📅 Últimos arqueos guardados',
     // Paso 11 - Arqueo
     p11_titulo:'💰 Arqueo de Caja',
     p11_sub:'Registro de cierre de turno',
@@ -4157,6 +4175,24 @@ var I18N = {
     p10_wa_hint:'💡 Telèfons individuals d\'empleats es configuren a Gestió d\'Usuaris',
     p10_idioma:'🌍 Idioma',
     p10_nota:'ⓘ Els canvis es guarden al navegador al instant.',
+    p10_aviso_parcial:'⚠ Canvi parcial en aquesta versió',
+    p10_btn_usuarios:'← Usuaris', p10_btn_reset:'↺ Restablir per defecte',
+    p10_ejemplo:'Exemple: 1.800€ →', p10_sem:'/ set.',
+    prev_activo:'Actiu', prev_normal:'Normal',
+    arq_edit_banner:'✏️ Mode edició — Estàs modificant un arqueig guardat. Prem Guardar per confirmar o Netejar per cancel·lar.',
+    arq_lbl_local:'Local', arq_lbl_turno:'Torn', arq_lbl_fecha:'Data', arq_lbl_resp:'Responsable',
+    arq_sec_efectivo:'💰 Efectiu inicial', arq_lbl_fondo:'Fons de caixa (€)', arq_hint_fondo:'Import fix sempre a caixa',
+    arq_lbl_cambio:'Canvi extra afegit (€)', arq_hint_cambio:'Tret de la caixa forta si faltava',
+    arq_sec_ingresos:'↑ Ingressos del torn', arq_lbl_venta:'Venda total del torn (€)',
+    arq_lbl_visa:'Cobrat per VISA/TPV (€)', arq_hint_visa:'Es descompta de l\'efectiu',
+    arq_sec_pagos:'↓ Pagaments a proveïdors', arq_btn_anadir:'＋ Afegir',
+    arq_sin_pagos:'Sense pagaments a proveïdors aquest torn', arq_total_pagos_lbl:'Total pagaments:',
+    arq_sec_resultado:'📊 Resultat del torn', arq_total_caja:'Total a caixa', arq_total_salidas:'Total sortides',
+    arq_ef_recaud:'💵 EFECTIU RECAPTACIÓ', arq_hint_ingresar:'A ingressar a la caixa forta (descomptant fons',
+    arq_hint_fuerte:'= Efectiu a posar a la caixa forta',
+    arq_lbl_notas:'Notes / Incidències',
+    arq_btn_volver:'← Tornar', arq_btn_limpiar:'↺ Netejar', arq_btn_imprimir:'🖨 Imprimir', arq_btn_guardar:'💾 Guardar arqueig',
+    arq_historico_titulo:'📅 Últims arqueigs guardats',
     p11_titulo:'💰 Arqueig de Caixa',
     p11_sub:'Registre de tancament de torn',
     p11_fecha:'📅 Data', p11_turno:'Torn',
@@ -4392,6 +4428,24 @@ var I18N = {
     p10_wa_hint:'💡 Individual employee phones are set in User Management',
     p10_idioma:'🌍 Language',
     p10_nota:'ⓘ Changes are saved to your browser instantly.',
+    p10_aviso_parcial:'⚠ Partial change in this version',
+    p10_btn_usuarios:'← Users', p10_btn_reset:'↺ Reset to defaults',
+    p10_ejemplo:'Example: 1,800€ →', p10_sem:'/ wk',
+    prev_activo:'Active', prev_normal:'Normal',
+    arq_edit_banner:'✏️ Edit mode — You are modifying a saved cash register. Press Save to confirm or Clear to cancel.',
+    arq_lbl_local:'Venue', arq_lbl_turno:'Shift', arq_lbl_fecha:'Date', arq_lbl_resp:'Responsible',
+    arq_sec_efectivo:'💰 Opening cash', arq_lbl_fondo:'Cash float (€)', arq_hint_fondo:'Fixed amount always in register',
+    arq_lbl_cambio:'Extra change added (€)', arq_hint_cambio:'Taken from safe if short',
+    arq_sec_ingresos:'↑ Shift income', arq_lbl_venta:'Total shift sales (€)',
+    arq_lbl_visa:'Paid by VISA/POS (€)', arq_hint_visa:'Deducted from cash',
+    arq_sec_pagos:'↓ Supplier payments', arq_btn_anadir:'＋ Add',
+    arq_sin_pagos:'No supplier payments this shift', arq_total_pagos_lbl:'Total payments:',
+    arq_sec_resultado:'📊 Shift result', arq_total_caja:'Total in register', arq_total_salidas:'Total outgoings',
+    arq_ef_recaud:'💵 CASH COLLECTED', arq_hint_ingresar:'To deposit in safe (deducting float',
+    arq_hint_fuerte:'= Cash to put in safe',
+    arq_lbl_notas:'Notes / Incidents',
+    arq_btn_volver:'← Back', arq_btn_limpiar:'↺ Clear', arq_btn_imprimir:'🖨 Print', arq_btn_guardar:'💾 Save register',
+    arq_historico_titulo:'📅 Latest saved registers',
     p11_titulo:'💰 Cash Register',
     p11_sub:'End of shift report',
     p11_fecha:'📅 Date', p11_turno:'Shift',
@@ -5013,7 +5067,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.5</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.6</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
