@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v4.8 – Grupo El Reloj</title>
+<title>RelojTurnos v4.9 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V4.8</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V4.9</span></div>
   </div>
 </div>
 
@@ -963,7 +963,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.8</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v4.9</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1777,7 +1777,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v4.8 ==========
+// ========== LÓGICA FIESTAS v4.9 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -3105,7 +3105,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v4.8 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v4.9 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3222,12 +3222,19 @@ async function cargarUsuarios(){
     lista.innerHTML = rows.map(function(u){
       var col = u.rol==='directora'?'var(--accent)':u.rol==='directora_general'?'#c0a020':'var(--green)';
       var init = (u.nombre||'?').substring(0,2).toUpperCase();
-      var localLabel = !u.local_id ? "🌐 La Cala · Roto's Burguer" : (LOCALES[u.local_id]||'Local '+u.local_id);
+      // Dir. General: solo mostrar el rol. Directora o empleado: mostrar local(es)
+      var subInfo;
+      if(u.rol==='directora_general' || u.rol==='admin'){
+        subInfo = (ROLES[u.rol]||u.rol) + ' · DNI: '+(u.dni||'—');
+      } else {
+        var localLabel = !u.local_id ? "La Cala · Roto's Burguer" : (LOCALES[u.local_id]||'Local '+u.local_id);
+        subInfo = (ROLES[u.rol]||u.rol)+' · DNI: '+(u.dni||'—')+' · '+localLabel;
+      }
       return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px">'
         +'<div style="width:32px;height:32px;border-radius:50%;background:'+col+'20;color:'+col+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>'
         +'<div style="flex:1;min-width:0">'
         +'<div style="font-weight:700;font-size:13px;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(u.nombre||'Sin nombre')+'</div>'
-        +'<div style="font-size:10px;color:var(--muted)">'+(ROLES[u.rol]||u.rol)+' · DNI: '+(u.dni||'—')+' · '+localLabel+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+subInfo+'</div>'
         +'</div>'
         +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(u.activo?'#15351520':'#35151520')+';color:'+(u.activo?'var(--green)':'var(--red)')+';border:1px solid '+(u.activo?'var(--green)':'var(--red)')+'40;flex-shrink:0">'+(u.activo?'ACTIVO':'INACTIVO')+'</span>'
         +'</div>';
@@ -3751,6 +3758,12 @@ async function guardarArqueo(){
 
   if(!fecha){ errEl.textContent='Selecciona una fecha'; errEl.style.display='block'; return; }
 
+  // Auditoría obligatoria si modifica Dir. General
+  var auditSuffix = '';
+  if(currentUser && currentUser.rol === 'directora_general'){
+    auditSuffix = ' [MODIFICADO POR DIRECCIÓN GENERAL: '+(currentUser.nombre||currentUser.dni)+' · '+new Date().toLocaleString('es-ES')+']';
+  }
+
   var datos = {
     local_id: localId,
     fecha: fecha,
@@ -3762,7 +3775,7 @@ async function guardarArqueo(){
     proveedores: JSON.stringify(arqProveedores),
     efectivo_resultado: efectivo,
     responsable: responsable || null,
-    notas: notas || null
+    notas: (notas + auditSuffix).trim() || null
   };
 
   try{
@@ -3829,7 +3842,101 @@ function limpiarArqueo(){
 }
 
 function imprimirArqueo(){
-  window.print();
+  var fecha       = document.getElementById('arq-fecha').value || '—';
+  var turno       = document.getElementById('arq-turno').value;
+  var localId     = parseInt(document.getElementById('arq-local').value);
+  var responsable = document.getElementById('arq-responsable').value || '—';
+  var fondo       = parseFloat(document.getElementById('arq-fondo').value)||0;
+  var cambioExtra = parseFloat(document.getElementById('arq-cambio-extra').value)||0;
+  var venta       = parseFloat(document.getElementById('arq-venta').value)||0;
+  var visa        = parseFloat(document.getElementById('arq-visa').value)||0;
+  var notas       = document.getElementById('arq-notas').value || '';
+  var LOCALES     = {1:'La Cala', 2:"Roto's Burguer"};
+  var TURNOS      = {manana:'Mañana', noche:'Noche'};
+  var CIERRES_H   = {1:{manana:'17:00',noche:'03:00'}, 2:{manana:'17:00',noche:'00:00'}};
+  var totalPagos  = arqProveedores.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); }, 0);
+  var totalCaja   = fondo + cambioExtra + venta;
+  var totalSalidas= visa + totalPagos;
+  var efectivo    = totalCaja - totalSalidas;
+  var aIngresar   = Math.max(0, efectivo - fondo);
+  var fmt = function(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
+  var cierre      = (CIERRES_H[localId]||{})[turno] || '—';
+
+  var provHtml = arqProveedores.length
+    ? arqProveedores.map(function(p){ return '<tr><td>'+p.nombre+'</td><td class="r">'+fmt(p.importe||0)+'</td></tr>'; }).join('')
+    : '<tr><td colspan="2" style="color:#999;text-align:center">Sin pagos a proveedores</td></tr>';
+
+  // Auditoría si es Dir. General
+  var auditLine = '';
+  if(currentUser && currentUser.rol === 'directora_general'){
+    auditLine = '<div class="audit">⚠ Registro creado por Dirección General: <strong>'+(currentUser.nombre||currentUser.dni)+'</strong> · '+new Date().toLocaleString('es-ES')+'</div>';
+  }
+
+  var w = window.open('','_blank','width=800,height=900');
+  if(!w){ alert('Permite ventanas emergentes'); return; }
+  w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>Arqueo '+LOCALES[localId]+' '+TURNOS[turno]+' '+fecha+'</title>'
+    +'<style>'
+    +'@page{size:A4 portrait;margin:15mm}'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:20px;max-width:600px;margin:0 auto}'
+    +'.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #c07010;padding-bottom:10px;margin-bottom:16px}'
+    +'.titulo{font-size:18px;font-weight:700;color:#c07010}'
+    +'.subtitulo{font-size:11px;color:#666;margin-top:3px}'
+    +'.grupo{font-size:10px;color:#999;text-align:right}'
+    +'.seccion{margin-bottom:14px}'
+    +'.sec-title{font-size:10px;font-weight:700;text-transform:uppercase;color:#555;letter-spacing:1px;border-bottom:1px solid #eee;padding-bottom:4px;margin-bottom:8px}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'tr.alt{background:#f9f9f9}'
+    +'td{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}'
+    +'td.r{text-align:right;font-weight:600}'
+    +'td.l{color:#666}'
+    +'.total-row td{font-weight:700;font-size:12px;border-top:2px solid #ccc;background:#f5f5f5}'
+    +'.resultado{background:#fff8ee;border:2px solid #c07010;border-radius:6px;padding:14px;text-align:center;margin-top:14px}'
+    +'.res-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px}'
+    +'.res-val{font-size:24px;font-weight:700;color:#c07010;margin:4px 0}'
+    +'.res-sub{font-size:10px;color:#666}'
+    +'.res-ingresar{font-size:20px;font-weight:700;color:#2a7a2a;margin-top:10px;padding-top:10px;border-top:1px solid #ddd}'
+    +'.notas{background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:8px;font-size:10px;color:#555;margin-top:14px}'
+    +'.footer{text-align:center;font-size:9px;color:#aaa;margin-top:20px;border-top:1px solid #eee;padding-top:8px}'
+    +'.audit{background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:8px;font-size:10px;color:#856404;margin-top:10px}'
+    +'</style></head><body>'
+    +'<div class="header">'
+    +'<div><div class="titulo">💰 Arqueo de Caja</div>'
+    +'<div class="subtitulo">'+LOCALES[localId]+' · Turno '+TURNOS[turno]+' · Cierre '+cierre+'</div>'
+    +'<div class="subtitulo">'+fecha+' · Responsable: <strong>'+responsable+'</strong></div></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v4.9</span></div>'
+    +'</div>'
+
+    +'<div class="seccion"><div class="sec-title">Efectivo inicial</div>'
+    +'<table><tr class="alt"><td class="l">Fondo de caja</td><td class="r">'+fmt(fondo)+'</td></tr>'
+    +'<tr><td class="l">Cambio extra añadido</td><td class="r">'+fmt(cambioExtra)+'</td></tr>'
+    +'<tr class="total-row"><td>Total disponible</td><td class="r">'+fmt(fondo+cambioExtra)+'</td></tr></table></div>'
+
+    +'<div class="seccion"><div class="sec-title">Ingresos del turno</div>'
+    +'<table><tr class="alt"><td class="l">Venta total</td><td class="r">'+fmt(venta)+'</td></tr>'
+    +'<tr><td class="l">Cobrado por VISA/TPV</td><td class="r" style="color:#c00">− '+fmt(visa)+'</td></tr></table></div>'
+
+    +'<div class="seccion"><div class="sec-title">Pagos a proveedores</div>'
+    +'<table>'+provHtml
+    +'<tr class="total-row"><td>Total pagos</td><td class="r" style="color:#c00">− '+fmt(totalPagos)+'</td></tr></table></div>'
+
+    +'<div class="resultado">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px">'
+    +'<span>Total en caja: <strong>'+fmt(totalCaja)+'</strong></span>'
+    +'<span>Total salidas: <strong style="color:#c00">'+fmt(totalSalidas)+'</strong></span></div>'
+    +'<div class="res-label">Efectivo recaudación</div>'
+    +'<div class="res-val">'+fmt(efectivo)+'</div>'
+    +'<div class="res-sub">Fondo que queda en caja: '+fmt(fondo)+'</div>'
+    +'<div class="res-ingresar">▶ A ingresar en caja fuerte: '+fmt(aIngresar)+'</div>'
+    +'</div>'
+
+    +(notas?'<div class="notas">📝 <strong>Notas:</strong> '+notas+'</div>':'')
+    +auditLine
+    +'<div class="footer">RelojTurnos © 2026 · Grupo El Reloj · Impreso el '+new Date().toLocaleString('es-ES')+'</div>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 400);
 }
 </script>
 </body>
