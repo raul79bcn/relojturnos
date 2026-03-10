@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v5.1 – Grupo El Reloj</title>
+<title>RelojTurnos v5.3 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.1</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.3</span></div>
   </div>
 </div>
 
@@ -258,11 +258,13 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <div class="portal-nav">
     <button class="portal-tab active" onclick="portalTab('cuadrante')">&#128197; Cuadrante</button>
     <button class="portal-tab" onclick="portalTab('contrato')">&#128196; Mi contrato</button>
+    <button class="portal-tab" onclick="portalTab('actividad')">🗂 Mi actividad</button>
     <button class="portal-tab" onclick="portalTab('password')">&#128274; Contraseña</button>
   </div>
   <div class="portal-content">
     <div id="portal-cuadrante"></div>
     <div id="portal-contrato" style="display:none"></div>
+    <div id="portal-actividad" style="display:none"></div>
     <div id="portal-password" style="display:none">
       <div class="cambio-pass-form">
         <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">&#128274; Cambiar contraseña</div>
@@ -506,6 +508,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()">&#128065; Ocultar horas</button>
         <button class="btn btn-ghost btn-sm no-print" onclick="enviarCuadranteGrupoWA()" style="border-color:#25d366;color:#25d366">&#128242; Enviar grupo WA</button>
+        <button class="btn btn-ghost btn-sm no-print" onclick="enviarWATodos()" style="border-color:#25d366;color:#25d366;background:#25d36615">&#128242; WA a todos</button>
         <button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()">&#128424; Imprimir</button>
         <button class="btn btn-ghost btn-sm" id="btn-guardar-bd" onclick="guardarCuadranteEnBD()" style="border-color:var(--green);color:var(--green)">&#128190; Guardar en BD</button>
         <button class="btn btn-primary btn-sm" onclick="goStep(7)">&#128182; Ver costes</button>
@@ -602,6 +605,33 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <!-- Comparativa -->
       <div id="director-comparativa" style="margin-bottom:14px"></div>
 
+      <!-- Registro de actividad — solo Dir. General -->
+      <div id="director-audit-wrap" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">🗂 Registro de actividad</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="audit-filtro-local" onchange="cargarAuditLog()" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:10px">
+              <option value="">Todos los locales</option>
+              <option value="1">La Cala</option>
+              <option value="2">Roto's Burguer</option>
+            </select>
+            <select id="audit-filtro-accion" onchange="cargarAuditLog()" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:10px">
+              <option value="">Todas las acciones</option>
+              <option value="LOGIN">Login</option>
+              <option value="GUARDAR_CUADRANTE">Cuadrantes</option>
+              <option value="ACTUALIZAR_CUADRANTE">Cuadrantes (update)</option>
+              <option value="GUARDAR_ARQUEO">Arqueos</option>
+              <option value="EDITAR_ARQUEO">Arqueos (edición)</option>
+              <option value="CREAR_USUARIO">Usuarios</option>
+              <option value="CAMBIAR_PASSWORD">Contraseñas</option>
+            </select>
+          </div>
+        </div>
+        <div id="director-audit" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;padding:8px">
+          <div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">⏳ Cargando...</div>
+        </div>
+      </div>
+
       <div class="btn-row space" style="margin-top:18px">
         <button class="btn btn-secondary" onclick="goStep(7)">&#8592; Costes</button>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -657,6 +687,24 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         </div>
         <div id="nu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
         <div id="nu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
+        <!-- Datos de contacto opcionales -->
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Datos de contacto (opcionales)</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>📱 Teléfono / WhatsApp</label>
+              <input type="tel" id="nu-telefono" placeholder="34612345678" maxlength="15" class="inp-sm">
+            </div>
+            <div class="form-group">
+              <label>✉️ Email</label>
+              <input type="text" id="nu-email" placeholder="empleado@email.com" class="inp-sm">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>🏠 Dirección</label>
+            <input type="text" id="nu-direccion" placeholder="Calle, número, ciudad..." class="inp-sm">
+          </div>
+        </div>
         <button class="btn btn-primary btn-sm" onclick="crearUsuario()">&#128274; Crear usuario</button>
       </div>
 
@@ -682,149 +730,158 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       </div>
       <div class="card-sub">Adapta la apariencia de RelojTurnos a tu empresa</div>
 
-      <!-- Color de acento -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127775; Color principal</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-          <div onclick="aplicarColor('#e8a020')" style="width:36px;height:36px;border-radius:50%;background:#e8a020;cursor:pointer;border:3px solid #e8a020;box-shadow:0 0 0 2px var(--darker)" title="Dorado (por defecto)"></div>
-          <div onclick="aplicarColor('#3498db')" style="width:36px;height:36px;border-radius:50%;background:#3498db;cursor:pointer" title="Azul"></div>
-          <div onclick="aplicarColor('#2ecc71')" style="width:36px;height:36px;border-radius:50%;background:#2ecc71;cursor:pointer" title="Verde"></div>
-          <div onclick="aplicarColor('#e74c3c')" style="width:36px;height:36px;border-radius:50%;background:#e74c3c;cursor:pointer" title="Rojo"></div>
-          <div onclick="aplicarColor('#9b59b6')" style="width:36px;height:36px;border-radius:50%;background:#9b59b6;cursor:pointer" title="Morado"></div>
-          <div onclick="aplicarColor('#1abc9c')" style="width:36px;height:36px;border-radius:50%;background:#1abc9c;cursor:pointer" title="Turquesa"></div>
-          <div onclick="aplicarColor('#e67e22')" style="width:36px;height:36px;border-radius:50%;background:#e67e22;cursor:pointer" title="Naranja"></div>
-          <div onclick="aplicarColor('#e91e63')" style="width:36px;height:36px;border-radius:50%;background:#e91e63;cursor:pointer" title="Rosa"></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <label style="font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0">Color personalizado:</label>
-          <input type="color" id="color-custom" value="#e8a020" onchange="aplicarColor(this.value)" style="width:44px;height:32px;padding:2px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer">
-        </div>
-      </div>
+      <!-- 2 columnas en desktop, 1 en móvil -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
 
-      <!-- Tema claro / oscuro -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127763; Tema de color</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button onclick="aplicarTema('dark')" id="btn-tema-dark" class="btn btn-primary btn-sm">&#127762; Oscuro (actual)</button>
-          <button onclick="aplicarTema('light')" id="btn-tema-light" class="btn btn-ghost btn-sm">&#9728;&#65039; Claro</button>
-          <button onclick="aplicarTema('navy')" id="btn-tema-navy" class="btn btn-ghost btn-sm">&#128674; Marino</button>
-        </div>
-      </div>
-
-      <!-- Logo empresa -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">🖼️ Logo de la empresa</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Aparece en el header, pantalla de login y documentos impresos</div>
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <div id="logo-preview-wrap" style="width:56px;height:56px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
-            <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain">
-            <span id="logo-preview-placeholder" style="font-size:22px">⏱</span>
-          </div>
-          <div style="flex:1">
-            <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-block">
-              📁 Seleccionar imagen
-              <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)">
-            </label>
-            <div style="font-size:10px;color:var(--muted);margin-top:6px">PNG, JPG o SVG · Recomendado: fondo transparente</div>
-          </div>
-          <button class="btn btn-ghost btn-sm" onclick="quitarLogo()" style="border-color:var(--red);color:var(--red);flex-shrink:0">🗑 Quitar</button>
-        </div>
-      </div>
-
-      <!-- Nombre empresa -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127970; Nombre del grupo / empresa</div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <input type="text" id="custom-empresa" placeholder="Ej: Grupo El Reloj" maxlength="40" style="flex:1" oninput="aplicarNombreEmpresa(this.value)">
-          <button class="btn btn-ghost btn-sm" onclick="aplicarNombreEmpresa(document.getElementById('custom-empresa').value)">&#10003; Aplicar</button>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">Aparecerá en el header, login y pies de documentos</div>
-      </div>
-
-      <!-- Preview -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#128065; Vista previa</div>
-        <div id="preview-personaliz" style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:14px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">&#9201;</div>
-            <div>
-              <div style="font-size:16px;font-weight:700;color:var(--accent)" id="prev-nombre">RelojTurnos</div>
-              <div style="font-size:10px;color:var(--muted);letter-spacing:2px" id="prev-empresa">GRUPO EL RELOJ</div>
+        <!-- COLUMNA IZQUIERDA -->
+        <div>
+          <!-- Color de acento -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127775; Color principal</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+              <div onclick="aplicarColor('#e8a020')" style="width:32px;height:32px;border-radius:50%;background:#e8a020;cursor:pointer;border:3px solid #e8a020;box-shadow:0 0 0 2px var(--darker)" title="Dorado"></div>
+              <div onclick="aplicarColor('#3498db')" style="width:32px;height:32px;border-radius:50%;background:#3498db;cursor:pointer" title="Azul"></div>
+              <div onclick="aplicarColor('#2ecc71')" style="width:32px;height:32px;border-radius:50%;background:#2ecc71;cursor:pointer" title="Verde"></div>
+              <div onclick="aplicarColor('#e74c3c')" style="width:32px;height:32px;border-radius:50%;background:#e74c3c;cursor:pointer" title="Rojo"></div>
+              <div onclick="aplicarColor('#9b59b6')" style="width:32px;height:32px;border-radius:50%;background:#9b59b6;cursor:pointer" title="Morado"></div>
+              <div onclick="aplicarColor('#1abc9c')" style="width:32px;height:32px;border-radius:50%;background:#1abc9c;cursor:pointer" title="Turquesa"></div>
+              <div onclick="aplicarColor('#e67e22')" style="width:32px;height:32px;border-radius:50%;background:#e67e22;cursor:pointer" title="Naranja"></div>
+              <div onclick="aplicarColor('#e91e63')" style="width:32px;height:32px;border-radius:50%;background:#e91e63;cursor:pointer" title="Rosa"></div>
             </div>
-          </div>
-          <div style="margin-top:10px;display:flex;gap:7px">
-            <span style="background:var(--accent);color:var(--darker);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700">Botón activo</span>
-            <span style="border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;color:var(--muted)">Botón normal</span>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 14px;font-size:12px;color:#8ddb8d;margin-bottom:14px">
-        &#9432; Los cambios se guardan localmente en tu navegador y se aplican al instante. Para hacerlos permanentes en el servidor, contacta con el administrador.
-      </div>
-
-      <!-- Parámetros de coste -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">💰 Parámetros de coste</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Afectan a todos los cálculos de nómina y SS</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>% SS empresa</label>
             <div style="display:flex;align-items:center;gap:8px">
-              <input type="number" id="cfg-ss" min="20" max="60" step="0.1" placeholder="39" style="flex:1" oninput="aplicarParamsCoste()">
-              <span style="font-size:12px;color:var(--muted)">%</span>
+              <label style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;margin:0">Personalizado:</label>
+              <input type="color" id="color-custom" value="#e8a020" onchange="aplicarColor(this.value)" style="width:40px;height:28px;padding:2px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer">
             </div>
-            <div style="font-size:10px;color:var(--muted);margin-top:3px">Hostelería estándar: 39%</div>
           </div>
-          <div class="form-group">
-            <label>Divisor mensual</label>
-            <div style="display:flex;align-items:center;gap:8px">
-              <input type="number" id="cfg-divisor" min="4" max="5" step="0.01" placeholder="4.33" style="flex:1" oninput="aplicarParamsCoste()">
-              <span style="font-size:12px;color:var(--muted)">sem/mes</span>
+
+          <!-- Tema -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127763; Tema</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="aplicarTema('dark')" id="btn-tema-dark" class="btn btn-primary btn-sm">&#127762; Oscuro</button>
+              <button onclick="aplicarTema('light')" id="btn-tema-light" class="btn btn-ghost btn-sm">&#9728;&#65039; Claro</button>
+              <button onclick="aplicarTema('navy')" id="btn-tema-navy" class="btn btn-ghost btn-sm">&#128674; Marino</button>
             </div>
-            <div style="font-size:10px;color:var(--muted);margin-top:3px">Estándar: 4,33 semanas/mes</div>
+          </div>
+
+          <!-- Logo -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">🖼️ Logo empresa</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Header, login y documentos impresos</div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div id="logo-preview-wrap" style="width:48px;height:48px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+                <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain">
+                <span id="logo-preview-placeholder" style="font-size:20px">⏱</span>
+              </div>
+              <div style="flex:1">
+                <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-block;font-size:11px">
+                  📁 Subir imagen
+                  <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)">
+                </label>
+                <div style="font-size:9px;color:var(--muted);margin-top:4px">PNG · JPG · SVG</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="quitarLogo()" style="border-color:var(--red);color:var(--red);font-size:11px">🗑</button>
+            </div>
+          </div>
+
+          <!-- Nombre empresa -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#127970; Nombre empresa</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="custom-empresa" placeholder="Ej: Grupo El Reloj" maxlength="40" style="flex:1" oninput="aplicarNombreEmpresa(this.value)">
+              <button class="btn btn-ghost btn-sm" onclick="aplicarNombreEmpresa(document.getElementById('custom-empresa').value)">&#10003;</button>
+            </div>
+          </div>
+
+          <!-- Vista previa -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#128065; Vista previa</div>
+            <div id="preview-personaliz" style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px">&#9201;</div>
+                <div>
+                  <div style="font-size:14px;font-weight:700;color:var(--accent)" id="prev-nombre">RelojTurnos</div>
+                  <div style="font-size:9px;color:var(--muted);letter-spacing:2px" id="prev-empresa">GRUPO EL RELOJ</div>
+                </div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:6px">
+                <span style="background:var(--accent);color:var(--darker);padding:5px 10px;border-radius:5px;font-size:11px;font-weight:700">Activo</span>
+                <span style="border:1px solid var(--border);padding:5px 10px;border-radius:5px;font-size:11px;color:var(--muted)">Normal</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="cfg-coste-preview" style="margin-top:10px;background:var(--card);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--muted)">
-          Ejemplo: bruto 1.800€ → coste empresa <span id="cfg-coste-ej" style="color:var(--green);font-weight:700">—</span> / sem
+
+        <!-- COLUMNA DERECHA -->
+        <div>
+          <!-- Parámetros de coste -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">💰 Parámetros de coste</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Afectan a todos los cálculos de nómina y SS</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>% SS empresa</label>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input type="number" id="cfg-ss" min="20" max="60" step="0.1" placeholder="39" style="flex:1" oninput="aplicarParamsCoste()">
+                  <span style="font-size:11px;color:var(--muted)">%</span>
+                </div>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px">Estándar hostelería: 39%</div>
+              </div>
+              <div class="form-group">
+                <label>Divisor mensual</label>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input type="number" id="cfg-divisor" min="4" max="5" step="0.01" placeholder="4.33" style="flex:1" oninput="aplicarParamsCoste()">
+                  <span style="font-size:11px;color:var(--muted)">sem</span>
+                </div>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px">Estándar: 4,33</div>
+              </div>
+            </div>
+            <div id="cfg-coste-preview" style="margin-top:10px;background:var(--card);border-radius:7px;padding:8px 10px;font-size:11px;color:var(--muted)">
+              Ejemplo: 1.800€ → <span id="cfg-coste-ej" style="color:var(--green);font-weight:700">—</span> / sem
+            </div>
+          </div>
+
+          <!-- WhatsApp -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📲 WhatsApp grupos</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Número del grupo de WhatsApp de cada local</div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label>🍽 La Cala</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="tel" id="cfg-wa-lacala" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label>🍔 Roto's Burguer</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="tel" id="cfg-wa-rotos" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
+              </div>
+            </div>
+            <div style="font-size:9px;color:var(--muted);padding:7px 9px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
+              💡 Teléfonos individuales de empleados se configuran en Gestión Usuarios
+            </div>
+          </div>
+
+          <!-- Idioma -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🌍 Idioma</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="aplicarIdioma('es')" id="btn-lang-es" class="btn btn-primary btn-sm">🇪🇸 Español</button>
+              <button onclick="aplicarIdioma('ca')" id="btn-lang-ca" class="btn btn-ghost btn-sm">🏴󠁥󠁳󠁣󠁴󠁿 Català</button>
+              <button onclick="aplicarIdioma('en')" id="btn-lang-en" class="btn btn-ghost btn-sm">🇬🇧 English</button>
+            </div>
+            <div style="font-size:9px;color:var(--muted);margin-top:8px">⚠ Cambio parcial en esta versión</div>
+          </div>
+
+          <!-- Nota guardado -->
+          <div style="background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 12px;font-size:11px;color:#8ddb8d">
+            &#9432; Los cambios se guardan en tu navegador al instante.
+          </div>
         </div>
       </div>
 
-      <!-- WhatsApp -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📲 WhatsApp — Grupos por local</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Al pulsar "Enviar a grupo" se abre WhatsApp con el cuadrante completo de esa semana</div>
-        <div class="form-group" style="margin-bottom:10px">
-          <label>🍽 Nº grupo La Cala</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input type="tel" id="cfg-wa-lacala" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
-            <span style="font-size:18px">📱</span>
-          </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">Sin el + ni espacios · Ej: 34612345678</div>
-        </div>
-        <div class="form-group">
-          <label>🍔 Nº grupo Roto's Burguer</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input type="tel" id="cfg-wa-rotos" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
-            <span style="font-size:18px">📱</span>
-          </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">Sin el + ni espacios · Ej: 34612345678</div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:10px;padding:8px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
-          💡 El teléfono de cada empleado se configura en el <strong>Paso 3</strong> (tarjeta del empleado). El botón 📲 en el cuadrante envía el turno directamente a ese número.
-        </div>
-      </div>
-
-      <!-- Idioma -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🌍 Idioma de la app</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button onclick="aplicarIdioma('es')" id="btn-lang-es" class="btn btn-primary btn-sm">🇪🇸 Español</button>
-          <button onclick="aplicarIdioma('ca')" id="btn-lang-ca" class="btn btn-ghost btn-sm">🏴󠁥󠁳󠁣󠁴󠁿 Català</button>
-          <button onclick="aplicarIdioma('en')" id="btn-lang-en" class="btn btn-ghost btn-sm">🇬🇧 English</button>
-        </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:10px">⚠ El cambio de idioma es parcial en esta versión — días, turnos y etiquetas principales</div>
-      </div>
+      <!-- @media móvil — colapsar a 1 columna -->
+      <style>@media(max-width:640px){#screen10 .card > div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}}</style>
 
       <div class="btn-row space">
         <button class="btn btn-secondary" onclick="goStep(9)">&#8592; Usuarios</button>
@@ -967,11 +1024,6 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   </div>
 </div>
 
-<div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v5.1</span>
-  &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
-</div>
-
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
 var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
@@ -1017,7 +1069,91 @@ async function sbDelete(table, filters){
   if(!r.ok) throw new Error('DELETE '+table+' error '+r.status);
 }
 
-// Cache local→id de Supabase
+// ========== AUDIT LOG RENDER ==========
+
+var AUDIT_ICONOS = {
+  LOGIN:'🔑', GUARDAR_CUADRANTE:'📅', ACTUALIZAR_CUADRANTE:'🔄',
+  GUARDAR_ARQUEO:'💰', EDITAR_ARQUEO:'✏️', CREAR_USUARIO:'👤',
+  CAMBIAR_PASSWORD:'🔒'
+};
+var AUDIT_COLORES = {
+  LOGIN:'var(--blue)', GUARDAR_CUADRANTE:'var(--green)', ACTUALIZAR_CUADRANTE:'var(--orange)',
+  GUARDAR_ARQUEO:'var(--accent)', EDITAR_ARQUEO:'#ffc107', CREAR_USUARIO:'var(--purple)',
+  CAMBIAR_PASSWORD:'var(--muted)'
+};
+var LOCALES_NOMBRE = {1:'La Cala', 2:"Roto's Burguer"};
+
+function renderAuditRows(rows){
+  if(!rows||!rows.length) return '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">Sin registros</div>';
+  return rows.map(function(r){
+    var icono = AUDIT_ICONOS[r.accion] || '📋';
+    var col   = AUDIT_COLORES[r.accion] || 'var(--muted)';
+    var fecha = r.created_at ? new Date(r.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    var localTxt = r.local_id ? (LOCALES_NOMBRE[r.local_id]||'Local '+r.local_id) : '—';
+    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 6px;border-bottom:1px solid var(--border)20">'
+      +'<div style="font-size:16px;flex-shrink:0;margin-top:1px">'+icono+'</div>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+      +'<span style="font-size:11px;font-weight:700;color:'+col+'">'+r.accion+'</span>'
+      +'<span style="font-size:10px;color:var(--muted)">·</span>'
+      +'<span style="font-size:10px;font-weight:600;color:var(--text)">'+r.usuario_nombre+'</span>'
+      +'<span style="font-size:9px;color:var(--muted);background:var(--card);padding:1px 5px;border-radius:4px">'+r.rol+'</span>'
+      +'<span style="font-size:9px;color:var(--muted)">'+localTxt+'</span>'
+      +'</div>'
+      +(r.detalle?'<div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.detalle+'</div>':'')
+      +'</div>'
+      +'<div style="font-size:9px;color:var(--muted);flex-shrink:0;white-space:nowrap">'+fecha+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+async function cargarAuditLog(){
+  var el = document.getElementById('director-audit');
+  if(!el) return;
+  el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">⏳ Cargando...</div>';
+  try{
+    var filtros = 'order=created_at.desc&limit=50';
+    var fLocal  = (document.getElementById('audit-filtro-local')||{}).value;
+    var fAccion = (document.getElementById('audit-filtro-accion')||{}).value;
+    if(fLocal)  filtros = 'local_id=eq.'+fLocal+'&'+filtros;
+    if(fAccion) filtros = 'accion=eq.'+fAccion+'&'+filtros;
+    var rows = await sbGet('audit_log', filtros);
+    el.innerHTML = renderAuditRows(rows);
+  }catch(e){
+    el.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:14px">⚠ Error: '+e.message+'</div>';
+  }
+}
+
+async function cargarMiActividad(){
+  var el = document.getElementById('portal-actividad');
+  if(!el||!currentUser) return;
+  el.innerHTML = '<div style="padding:16px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">🗂 Mi actividad reciente</div>'
+    +'<div id="mi-actividad-list"><div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">⏳ Cargando...</div></div></div>';
+  try{
+    var rows = await sbGet('audit_log','usuario_dni=eq.'+encodeURIComponent(currentUser.dni)+'&order=created_at.desc&limit=30');
+    document.getElementById('mi-actividad-list').innerHTML = renderAuditRows(rows);
+  }catch(e){
+    document.getElementById('mi-actividad-list').innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:14px">⚠ Error cargando actividad</div>';
+  }
+}
+
+
+async function logAccion(accion, detalle, localId){
+  if(!currentUser) return;
+  // Fire-and-forget — no bloquea la UI si falla
+  try{
+    await sbPost('audit_log',{
+      usuario_nombre: currentUser.nombre || currentUser.dni,
+      usuario_dni:    currentUser.dni,
+      rol:            currentUser.rol,
+      accion:         accion,
+      detalle:        detalle || null,
+      local_id:       localId || currentUser.local_id || null
+    });
+  }catch(e){ console.warn('audit_log error (no crítico):', e.message); }
+}
+
+
 var localIdMap = {};   // {'La Cala': 1, "Roto's Burguer": 2}
 var empIdMap   = {};   // {empCounter_local_id: supabase_id}
 var currentCuadranteId = null;
@@ -1075,6 +1211,7 @@ async function doLogin(){
     currentUser = user;
     document.getElementById('login-screen').style.display = 'none';
     checkMostrarBtnUsuarios();
+    logAccion('LOGIN', 'Acceso correcto', user.local_id);
     if(user.rol === 'empleado'){
       abrirPortalEmpleado(user);
     } else if(user.rol === 'directora_general'){
@@ -1142,12 +1279,14 @@ async function abrirPortalEmpleado(user){
 }
 
 function portalTab(tab){
-  ['cuadrante','contrato','password'].forEach(function(t){
-    document.getElementById('portal-'+t).style.display = t===tab?'block':'none';
+  ['cuadrante','contrato','actividad','password'].forEach(function(t){
+    var el = document.getElementById('portal-'+t);
+    if(el) el.style.display = t===tab?'block':'none';
   });
   document.querySelectorAll('.portal-tab').forEach(function(btn, i){
-    btn.classList.toggle('active', ['cuadrante','contrato','password'][i]===tab);
+    btn.classList.toggle('active', ['cuadrante','contrato','actividad','password'][i]===tab);
   });
+  if(tab==='actividad') cargarMiActividad();
 }
 
 async function cargarPortalCuadrante(user){
@@ -1238,6 +1377,7 @@ async function cambiarPassword(){
     if(!rows.length||rows[0].password_hash!==actualHash){ errEl.textContent='La contraseña actual es incorrecta'; errEl.style.display='block'; return; }
     var nuevaHash = await hashPass(nueva);
     await sbPatch('usuarios', currentUser.id, {password_hash: nuevaHash});
+    logAccion('CAMBIAR_PASSWORD', 'Contraseña actualizada', currentUser.local_id);
     okEl.style.display='block';
     document.getElementById('pass-actual').value='';
     document.getElementById('pass-nueva').value='';
@@ -1303,9 +1443,11 @@ async function guardarCuadranteEnBD(){
       // Borrar turnos anteriores para regenerar
       await sbDelete('turnos_cuadrante','cuadrante_id=eq.'+cuadranteId);
       showToast('⏳ Actualizando cuadrante existente...','orange');
+      logAccion('ACTUALIZAR_CUADRANTE', semana, localId);
     } else {
       var cArr = await sbPost('cuadrantes',{local_id:localId, semana_label:semana});
       cuadranteId = cArr[0].id;
+      logAccion('GUARDAR_CUADRANTE', semana, localId);
     }
     currentCuadranteId = cuadranteId;
 
@@ -1801,10 +1943,6 @@ function renderEmpleados(){
       +'<option value="3"'+(emp.diasFiesta==3?' selected':'')+'>3 d\u00edas</option>'
       +'</select></div>'
       +'</div>'
-      +'<div class="form-row" style="margin-top:6px">'
-      +'<div class="form-group" style="flex:1"><label>📱 Tel\u00e9fono WhatsApp</label>'
-      +'<input class="inp-sm" type="tel" placeholder="34612345678" maxlength="15" value="'+(emp.telefono||'')+'" oninput="updEmp('+emp.id+',\'telefono\',this.value.replace(/\\s+/g,\'\'))" style="width:100%"></div>'
-      +'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; Las horas semanales se calculan autom\u00e1ticamente seg\u00fan los turnos asignados</div>'
       +'</div>';
   });
@@ -1840,7 +1978,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v5.1 ==========
+// ========== LÓGICA FIESTAS v5.3 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2866,6 +3004,9 @@ async function abrirVistaDirector(){
   // Navegar al paso 8 solo si no estamos ya en él
   var sc8 = document.getElementById('screen8');
   if(!sc8 || !sc8.classList.contains('active')) goStep(8);
+  // Mostrar/ocultar audit log según rol
+  var auditWrap = document.getElementById('director-audit-wrap');
+  if(auditWrap) auditWrap.style.display = (currentUser && currentUser.rol==='directora_general') ? '' : 'none';
   await poblarSelectorSemanas();
   await cargarVistaDirector();
 }
@@ -2934,7 +3075,8 @@ async function cargarVistaDirector(){
     }
 
     renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl);
-    // Debug info — se puede quitar después
+    // Cargar audit log
+    cargarAuditLog();
     console.log('[Director] Locales cargados:', locales.map(function(l){return l.id+':'+l.nombre;}));
     console.log('[Director] Cuadrantes encontrados:', (cuads||[]).map(function(c){return 'local'+c.local_id+' sem:'+c.semana_label;}));
     console.log('[Director] datosLocales:', datosLocales.map(function(d){return d.local.nombre+' cuad:'+(d.cuad?d.cuad.id:'null')+' emps:'+d.empleados.length;}));
@@ -3168,7 +3310,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v5.1 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v5.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3327,13 +3469,26 @@ async function crearUsuario(){
     var existing = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni));
     if(existing && existing.length){ errEl.textContent='Ya existe un usuario con ese DNI'; errEl.style.display='block'; return; }
 
-    var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
-    var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
-    await sbPost('usuarios', nuevo);
+  var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
+  var telefono  = (document.getElementById('nu-telefono')||{}).value||'';
+  var email     = (document.getElementById('nu-email')||{}).value||'';
+  var direccion = (document.getElementById('nu-direccion')||{}).value||'';
+  var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
+  await sbPost('usuarios', nuevo);
+  logAccion('CREAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
+  // Si hay datos de contacto y tiene local, guardar/actualizar en empleados
+  if(localId && (telefono||email||direccion)){
+    try{
+      var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(nombre));
+      if(empEx && empEx.length){
+        await sbPatch('empleados', empEx[0].id, {telefono:telefono||null, email:email||null, direccion:direccion||null});
+      }
+    }catch(e2){ console.warn('empleados contacto update:', e2); }
+  }
     okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
     okEl.style.display = 'block';
     // Limpiar form
-    ['nu-nombre','nu-dni','nu-ss'].forEach(function(id){ document.getElementById(id).value=''; });
+    ['nu-nombre','nu-dni','nu-ss','nu-telefono','nu-email','nu-direccion'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     cargarUsuarios();
   }catch(e){
     errEl.textContent = 'Error al crear usuario: '+e.message;
@@ -3589,6 +3744,33 @@ function enviarTurnoWA(empId){
   if(!abierto){
     showToast('\u26a0 A\u00f1ade el tel\u00e9fono del empleado en Paso 3 o el grupo en Ajustes','orange');
   }
+}
+
+// Enviar WA a TODOS los empleados — secuencial con delays
+function enviarWATodos(){
+  var conTelefono = empleados.filter(function(e){ return (e.telefono||'').replace(/\s+/g,'').length >= 9; });
+  var sinTelefono = empleados.filter(function(e){ return !(e.telefono||'').replace(/\s+/g,'').length >= 9; });
+
+  if(!conTelefono.length){
+    showToast('⚠ Ningún empleado tiene teléfono configurado en Usuarios','orange');
+    return;
+  }
+
+  var msg = '¿Enviar turno individual por WhatsApp a '+conTelefono.length+' empleado(s)?'
+    + (sinTelefono.length ? '\n\nSin teléfono (no se enviarán): '+sinTelefono.map(function(e){return e.nombre;}).join(', ') : '')
+    + '\n\nEl navegador abrirá una ventana por cada empleado.';
+
+  if(!confirm(msg)) return;
+
+  conTelefono.forEach(function(emp, i){
+    setTimeout(function(){
+      var mensaje = formatMsgTurno(emp);
+      var num = (emp.telefono||'').replace(/\s+/g,'');
+      window.open('https://wa.me/'+num+'?text='+encodeURIComponent(mensaje), '_blank');
+    }, i * 800); // 800ms entre cada uno para no saturar
+  });
+
+  showToast('📲 Enviando a '+conTelefono.length+' empleados...','green');
 }
 
 function guardarConfigWA(){
@@ -3850,6 +4032,7 @@ async function guardarArqueo(){
       await sbPatch('arqueos', arqEditId, datos);
       okEl.textContent = '✓ Arqueo actualizado correctamente (ID '+arqEditId+')';
       okEl.style.display = 'block';
+      logAccion('EDITAR_ARQUEO', 'ID '+arqEditId+' · '+fecha+' · turno '+turno, localId);
       arqEditId = null;
       var banner = document.getElementById('arq-edit-banner');
       if(banner) banner.style.display='none';
@@ -3858,6 +4041,7 @@ async function guardarArqueo(){
       await sbPost('arqueos', datos);
       okEl.textContent = '✓ Arqueo guardado correctamente';
       okEl.style.display = 'block';
+      logAccion('GUARDAR_ARQUEO', fecha+' · turno '+turno, localId);
     }
     cargarHistoricoArqueos();
   }catch(e){
@@ -4050,7 +4234,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">💰 Arqueo de Caja</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · Turno '+TURNOS[turno]+' · Cierre '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · Responsable: <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.1</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.3</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">Efectivo inicial</div>'
