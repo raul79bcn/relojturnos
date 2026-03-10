@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v5.2 – Grupo El Reloj</title>
+<title>RelojTurnos v5.3 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -213,16 +213,16 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <div class="logo-sub">Grupo El Reloj</div>
     </div>
     <div class="login-field">
-      <label>DNI / NIE</label>
+      <label data-i18n="login_dni">DNI / NIE</label>
       <input type="text" id="login-dni" placeholder="12345678A" autocomplete="username" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div class="login-field">
-      <label>Contraseña</label>
+      <label data-i18n="login_password">Contraseña</label>
       <input type="password" id="login-pass" placeholder="••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
-    <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.2</span></div>
+    <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
+    <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.4</span></div>
   </div>
 </div>
 
@@ -256,10 +256,10 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     <button onclick="doLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-size:11px;cursor:pointer">Salir</button>
   </div>
   <div class="portal-nav">
-    <button class="portal-tab active" onclick="portalTab('cuadrante')">&#128197; Cuadrante</button>
-    <button class="portal-tab" onclick="portalTab('contrato')">&#128196; Mi contrato</button>
-    <button class="portal-tab" onclick="portalTab('actividad')">🗂 Mi actividad</button>
-    <button class="portal-tab" onclick="portalTab('password')">&#128274; Contraseña</button>
+    <button class="portal-tab active" onclick="portalTab('cuadrante')" data-i18n="portal_cuadrante">📅 Cuadrante</button>
+    <button class="portal-tab" onclick="portalTab('contrato')" data-i18n="portal_contrato">📄 Mi contrato</button>
+    <button class="portal-tab" onclick="portalTab('actividad')" data-i18n="portal_actividad">🗂 Mi actividad</button>
+    <button class="portal-tab" onclick="portalTab('password')" data-i18n="portal_password">🔒 Contraseña</button>
   </div>
   <div class="portal-content">
     <div id="portal-cuadrante"></div>
@@ -267,13 +267,13 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     <div id="portal-actividad" style="display:none"></div>
     <div id="portal-password" style="display:none">
       <div class="cambio-pass-form">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">&#128274; Cambiar contraseña</div>
-        <div class="login-field"><label>Contraseña actual</label><input type="password" id="pass-actual" placeholder="••••"></div>
-        <div class="login-field"><label>Nueva contraseña</label><input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres"></div>
-        <div class="login-field"><label>Repetir nueva contraseña</label><input type="password" id="pass-repite" placeholder="Igual que la anterior"></div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px" data-i18n="portal_cambiar_pass">🔒 Cambiar contraseña</div>
+        <div class="login-field"><label data-i18n="portal_pass_actual">Contraseña actual</label><input type="password" id="pass-actual" placeholder="••••"></div>
+        <div class="login-field"><label data-i18n="portal_pass_nueva">Nueva contraseña</label><input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres"></div>
+        <div class="login-field"><label data-i18n="portal_pass_repite">Repetir nueva contraseña</label><input type="password" id="pass-repite" placeholder="Igual que la anterior"></div>
         <div class="login-error" id="pass-error" style="display:none"></div>
-        <div id="pass-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:8px;padding:10px;font-size:12px;color:#5ddb5d;margin-bottom:10px">✓ Contraseña cambiada correctamente</div>
-        <button class="login-btn" onclick="cambiarPassword()">Guardar nueva contraseña</button>
+        <div id="pass-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:8px;padding:10px;font-size:12px;color:#5ddb5d;margin-bottom:10px" data-i18n="toast_pass_cambiada">✓ Contraseña cambiada correctamente</div>
+        <button class="login-btn" onclick="cambiarPassword()" data-i18n="portal_pass_btn">🔒 Cambiar contraseña</button>
       </div>
     </div>
   </div>
@@ -292,48 +292,48 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
 <div class="container" style="display:none">
   <div class="steps">
-    <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text">Local</span></div>
-    <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text">Turnos</span></div>
-    <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text">Equipo</span></div>
-    <div class="step" id="step4" onclick="goStep(4)"><span class="step-num">4</span><span class="step-text">Asignar</span></div>
-    <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text">Eventos</span></div>
-    <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text">Cuadrante</span></div>
-    <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text">Costes</span></div>
-    <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text">Direcc. Gral.</span></div>
-    <div class="step" id="step9" onclick="goStep(9)" style="display:none"><span class="step-num">&#128101;</span><span class="step-text">Usuarios</span></div>
-    <div class="step" id="step10" onclick="goStep(10)" style="display:none"><span class="step-num">&#127912;</span><span class="step-text">Ajustes</span></div>
-    <div class="step" id="step11" onclick="goStep(11)" style="display:none"><span class="step-num">&#128181;</span><span class="step-text">Arqueo</span></div>
+    <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text" data-i18n="nav_local">Local</span></div>
+    <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text" data-i18n="nav_turnos">Turnos</span></div>
+    <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text" data-i18n="nav_equipo">Equipo</span></div>
+    <div class="step" id="step4" onclick="goStep(4)"><span class="step-num">4</span><span class="step-text" data-i18n="nav_asignar">Asignar</span></div>
+    <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text" data-i18n="nav_eventos">Eventos</span></div>
+    <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text" data-i18n="nav_cuadrante">Cuadrante</span></div>
+    <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text" data-i18n="nav_costes">Costes</span></div>
+    <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text" data-i18n="nav_direccion">Direcc. Gral.</span></div>
+    <div class="step" id="step9" onclick="goStep(9)" style="display:none"><span class="step-num">&#128101;</span><span class="step-text" data-i18n="nav_usuarios">Usuarios</span></div>
+    <div class="step" id="step10" onclick="goStep(10)" style="display:none"><span class="step-num">&#127912;</span><span class="step-text" data-i18n="nav_ajustes">Ajustes</span></div>
+    <div class="step" id="step11" onclick="goStep(11)" style="display:none"><span class="step-num">&#128181;</span><span class="step-text" data-i18n="nav_arqueo">Arqueo</span></div>
   </div>
 
   <!-- PASO 1 -->
   <div class="screen active" id="screen1">
     <div class="card">
-      <div class="card-title">&#191;Qu&#233; local y semana vamos a planificar?</div>
-      <div class="card-sub">Selecciona el restaurante, la semana y la configuraci&#243;n b&#225;sica</div>
+      <div class="card-title" data-i18n="p1_titulo">¿Qué local y semana vamos a planificar?</div>
+      <div class="card-sub" data-i18n="p1_sub">Selecciona el restaurante, la semana y la configuración básica</div>
       <div class="form-row">
         <div class="form-group">
-          <label>Local</label>
+          <label data-i18n="p1_local">Local</label>
           <select id="local-select" onchange="onLocalChange()">
-            <option value="">Selecciona local...</option>
+            <option value="" data-i18n="opt_selecciona_local">Selecciona local...</option>
             <option value="La Cala">Restaurante La Cala</option>
             <option value="Roto's Burguer">Roto's Burguer</option>
             <option value="Otro">Otro local</option>
           </select>
           <div id="otro-local-wrap" style="display:none">
-            <input class="otro-input" id="otro-local-input" type="text" placeholder="Escribe el nombre del local...">
+            <input class="otro-input" id="otro-local-input" type="text" data-i18n-placeholder="opt_selecciona_local" placeholder="Escribe el nombre del local...">
           </div>
         </div>
         <div class="form-group">
-          <label>Semana que empieza el</label>
+          <label data-i18n="p1_semana">Semana que empieza el</label>
           <select id="fecha-inicio"></select>
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Hora apertura</label><select id="hora-apertura"></select></div>
-        <div class="form-group"><label>Hora cierre</label><select id="hora-cierre"></select></div>
+        <div class="form-group"><label data-i18n="p1_apertura">Hora apertura</label><select id="hora-apertura"></select></div>
+        <div class="form-group"><label data-i18n="p1_cierre">Hora cierre</label><select id="hora-cierre"></select></div>
       </div>
       <div class="form-group">
-        <label>D&#237;as de menor afluencia (fiesta sugerida)</label>
+        <label data-i18n="p1_diasflojos">Días de menor afluencia (fiesta sugerida)</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--darker);border:1px solid var(--border);border-radius:8px">
           <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="0" checked onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> Lunes</label>
           <label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer"><input type="checkbox" value="1" onchange="syncDiasFlojos()" style="accent-color:var(--accent)"> Martes</label>
@@ -354,7 +354,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         </select>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="nextStep(1)">Siguiente &#8594; Configurar turnos</button>
+        <button class="btn btn-primary" onclick="nextStep(1)" data-i18n="p1_siguiente">Siguiente → Configurar turnos</button>
       </div>
     </div>
   </div>
@@ -362,14 +362,14 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <!-- PASO 2 -->
   <div class="screen" id="screen2">
     <div class="card">
-      <div class="card-title">Configura los turnos del local</div>
-      <div class="card-sub">Turnos calculados autom&#225;ticamente. Activa solo los que usa este local.</div>
+      <div class="card-title" data-i18n="p2_titulo">Configura los turnos del local</div>
+      <div class="card-sub" data-i18n="p2_sub">Turnos calculados automáticamente. Activa solo los que usa este local.</div>
       <div class="info-box" id="info-box-turnos"></div>
       <div class="turno-config-grid" id="turnos-config-grid"></div>
       <hr class="divider">
       <div class="form-row">
         <div class="form-group">
-          <label>Duraci&#243;n media fiesta (horas trabajadas)</label>
+          <label data-i18n="p2_media_fiesta">Duración media fiesta (horas trabajadas)</label>
           <select id="horas-media-fiesta">
             <option value="4">4 horas</option>
             <option value="4.5">4,5 horas</option>
@@ -377,7 +377,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
           </select>
         </div>
         <div class="form-group">
-          <label>Horas jornada completa</label>
+          <label data-i18n="p2_jornada">Horas jornada completa</label>
           <select id="horas-jornada">
             <option value="8">8 horas</option>
             <option value="8.5">8,5 horas</option>
@@ -388,8 +388,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         </div>
       </div>
       <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(1)">&#8592; Atr&#225;s</button>
-        <button class="btn btn-primary" onclick="nextStep(2)">Siguiente &#8594; Equipo</button>
+        <button class="btn btn-secondary" onclick="goStep(1)" data-i18n="p2_atras">← Atrás</button>
+        <button class="btn btn-primary" onclick="nextStep(2)" data-i18n="p2_siguiente">Siguiente → Equipo</button>
       </div>
     </div>
   </div>
@@ -397,10 +397,10 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <!-- PASO 3 -->
   <div class="screen" id="screen3">
     <div class="card">
-      <div class="card-title">&#191;Qui&#233;n trabaja en este local?</div>
-      <div class="card-sub">Empleados y su turno habitual. Las horas se calculan solas seg&#250;n los turnos asignados.</div>
+      <div class="card-title" data-i18n="p3_titulo">¿Quién trabaja en este local?</div>
+      <div class="card-sub" data-i18n="p3_sub">Empleados y su turno habitual. Las horas se calculan solas según los turnos asignados.</div>
       <div id="empleados-list" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
-      <button class="btn btn-ghost btn-sm" onclick="addEmpleado()" style="margin-top:4px">&#65291; A&#241;adir empleado</button>
+      <button class="btn btn-ghost btn-sm" onclick="addEmpleado()" style="margin-top:4px" data-i18n="p3_añadir">+ Añadir empleado</button>
 
       <!-- Sección Lorena Directora -->
       <div style="margin-top:16px;background:#0f1a0f;border:1px solid #c0a02040;border-radius:10px;padding:14px">
@@ -408,15 +408,15 @@ select,input[type=text],.inp-sm{font-size:14px!important}
           <div style="width:32px;height:32px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">LO</div>
           <div>
             <div style="font-weight:700;font-size:16px;color:#c0a020">LORENA <span style="font-size:11px;background:#c0a02020;color:#c0a020;padding:2px 7px;border-radius:4px;margin-left:4px">DIRECTORA</span></div>
-            <div style="font-size:13px;color:var(--muted)">Horario orientativo · No computa en cobertura de sala · <span style="color:var(--green)">Sí computa en costes</span></div>
+            <div style="font-size:13px;color:var(--muted)" data-i18n="p3_lorena_sub">Horario orientativo · No computa en cobertura de sala · Sí computa en costes</div>
           </div>
         </div>
         <div id="lorena-horario-list"></div>
       </div>
 
       <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(2)">&#8592; Atr&#225;s</button>
-        <button class="btn btn-primary" onclick="nextStep(3)">Siguiente &#8594; Asignar turnos</button>
+        <button class="btn btn-secondary" onclick="goStep(2)" data-i18n="p2_atras">← Atrás</button>
+        <button class="btn btn-primary" onclick="nextStep(3)" data-i18n="p3_siguiente">Siguiente → Asignar turnos</button>
       </div>
     </div>
   </div>
@@ -424,21 +424,21 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <!-- PASO 4 -->
   <div class="screen" id="screen4">
     <div class="card">
-      <div class="card-title">Asigna los turnos de la semana</div>
-      <div class="card-sub">Fiestas asignadas automáticamente según días flojos y mínimos de personal. Ajusta lo que necesites.</div>
+      <div class="card-title" data-i18n="p4_titulo">Asigna los turnos de la semana</div>
+      <div class="card-sub" data-i18n="p4_sub">Fiestas asignadas automáticamente según días flojos y mínimos de personal. Ajusta lo que necesites.</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="sugerirYRenderizar()" style="border-color:var(--green);color:var(--green)">&#9889; Recalcular fiestas</button>
-        <button class="btn btn-ghost btn-sm" onclick="rotarFiestas()" style="border-color:var(--purple);color:var(--purple)">&#128256; Rotar días (+1)</button>
+        <button class="btn btn-ghost btn-sm" onclick="sugerirYRenderizar()" style="border-color:var(--green);color:var(--green)" data-i18n="p4_recalcular">⚡ Recalcular fiestas</button>
+        <button class="btn btn-ghost btn-sm" onclick="rotarFiestas()" style="border-color:var(--purple);color:var(--purple)" data-i18n="p4_rotar">🔀 Rotar días (+1)</button>
       </div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--darker);border-radius:6px;border:1px solid var(--border);line-height:1.8">
-        &#9889; <strong style="color:var(--green)">Recalcular</strong> — borra las fiestas actuales y las vuelve a asignar desde cero según días flojos y mínimos de personal.<br>
-        &#128256; <strong style="color:var(--purple)">Rotar días</strong> — desplaza los días de descanso de cada empleado +1 día, útil para que no descansen siempre el mismo día de la semana.
+      <div id="p4-hints" style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--darker);border-radius:6px;border:1px solid var(--border);line-height:1.8">
+        ⚡ <strong style="color:var(--green)">Recalcular</strong> — borra las fiestas actuales y las vuelve a asignar desde cero según días flojos y mínimos de personal.<br>
+        🔀 <strong style="color:var(--purple)">Rotar días</strong> — desplaza los días de descanso de cada empleado +1 día, útil para que no descansen siempre el mismo día de la semana.
       </div>
       <div class="turno-legend" id="turno-legend"></div>
       <div id="turnos-asignacion"></div>
       <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(3)">&#8592; Atr&#225;s</button>
-        <button class="btn btn-primary" onclick="nextStep(4)">Siguiente &#8594; Eventos</button>
+        <button class="btn btn-secondary" onclick="goStep(3)" data-i18n="p2_atras">← Atrás</button>
+        <button class="btn btn-primary" onclick="nextStep(4)" data-i18n="p4_siguiente">Siguiente → Eventos</button>
       </div>
     </div>
   </div>
@@ -446,56 +446,56 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <!-- PASO 5 -->
   <div class="screen" id="screen5">
     <div class="card">
-      <div class="card-title">&#191;Hay eventos especiales esta semana?</div>
-      <div class="card-sub">Partidos, eventos, festivos que necesiten refuerzo de personal</div>
-      <div id="eventos-list"><div id="no-eventos" style="color:var(--muted);font-size:12px;padding:18px 0;text-align:center">No hay eventos a&#241;adidos</div></div>
+      <div class="card-title" data-i18n="p5_titulo">¿Hay eventos especiales esta semana?</div>
+      <div class="card-sub" data-i18n="p5_sub">Partidos, eventos, festivos que necesiten refuerzo de personal</div>
+      <div id="eventos-list"><div id="no-eventos" style="color:var(--muted);font-size:12px;padding:18px 0;text-align:center" data-i18n="p5_no_eventos">No hay eventos añadidos</div></div>
       <hr class="divider">
       <div class="form-row three">
         <div class="form-group">
-          <label>Tipo</label>
+          <label data-i18n="p5_tipo">Tipo</label>
           <select id="evento-tipo">
-            <option value="&#9917;">&#9917; Partido f&#250;tbol</option>
+            <option value="&#9917;">&#9917; Partido fútbol</option>
             <option value="&#127881;">&#127881; Evento especial</option>
             <option value="&#128197;">&#128197; Festivo local</option>
             <option value="&#127783;">&#127783; Mal tiempo</option>
-            <option value="&#127939;">&#127939; Marat&#243;n / Carrera popular</option>
+            <option value="&#127939;">&#127939; Maratón / Carrera popular</option>
             <option value="&#127925;">&#127925; Concierto cercano</option>
           </select>
         </div>
         <div class="form-group">
-          <label>D&#237;a</label>
+          <label data-i18n="p5_dia">Día</label>
           <select id="evento-dia">
             <option value="0">Lunes</option><option value="1">Martes</option>
-            <option value="2">Mi&#233;rcoles</option><option value="3">Jueves</option>
-            <option value="4">Viernes</option><option value="5">S&#225;bado</option>
+            <option value="2">Miércoles</option><option value="3">Jueves</option>
+            <option value="4">Viernes</option><option value="5">Sábado</option>
             <option value="6">Domingo</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Descripci&#243;n</label>
+          <label data-i18n="p5_descripcion">Descripción</label>
           <select id="evento-desc-sel">
-            <option value="">Selecciona...</option>
-            <option value="Bar&#231;a vs Madrid">Bar&#231;a vs Madrid</option>
-            <option value="Selecci&#243;n espa&#241;ola">Selecci&#243;n espa&#241;ola</option>
+            <option value="" data-i18n="opt_selecciona">Selecciona...</option>
+            <option value="Barça vs Madrid">Barça vs Madrid</option>
+            <option value="Selección española">Selección española</option>
             <option value="Champions League">Champions League</option>
             <option value="Concierto Forum">Concierto Forum</option>
             <option value="Festivo local Barcelona">Festivo local Barcelona</option>
             <option value="Sant Jordi">Sant Jordi</option>
-            <option value="Marat&#243;n Barcelona">Marat&#243;n Barcelona</option>
+            <option value="Maratón Barcelona">Maratón Barcelona</option>
             <option value="Cursa Popular">Cursa Popular</option>
             <option value="Evento especial">Evento especial</option>
           </select>
         </div>
       </div>
-      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Personas de refuerzo</div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px" data-i18n="p5_refuerzo">Personas de refuerzo</div>
       <div id="refuerzo-personas-list"></div>
-      <button class="btn btn-ghost btn-sm" onclick="addRefuerzoPersona()" style="margin-bottom:14px">&#65291; A&#241;adir persona de refuerzo</button>
+      <button class="btn btn-ghost btn-sm" onclick="addRefuerzoPersona()" style="margin-bottom:14px" data-i18n="p5_añadir_refuerzo">+ Añadir persona de refuerzo</button>
       <div style="margin-bottom:14px">
-        <button class="btn btn-primary btn-sm" onclick="addEvento()">&#10003; Confirmar y a&#241;adir evento</button>
+        <button class="btn btn-primary btn-sm" onclick="addEvento()" data-i18n="p5_confirmar">✓ Confirmar y añadir evento</button>
       </div>
       <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(4)">&#8592; Atr&#225;s</button>
-        <button class="btn btn-primary" onclick="generarCuadrante()">&#9889; Generar cuadrante</button>
+        <button class="btn btn-secondary" onclick="goStep(4)" data-i18n="p2_atras">← Atrás</button>
+        <button class="btn btn-primary" onclick="generarCuadrante()" data-i18n="p5_generar">⚡ Generar cuadrante</button>
       </div>
     </div>
   </div>
@@ -504,14 +504,15 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <div class="screen" id="screen6">
     <div id="cuadrante-output"></div>
     <div class="btn-row space">
-      <button class="btn btn-secondary" onclick="goStep(4)">&#8592; Editar</button>
+      <button class="btn btn-secondary" onclick="goStep(4)" data-i18n="p6_editar">← Editar</button>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()">&#128065; Ocultar horas</button>
-        <button class="btn btn-ghost btn-sm no-print" onclick="enviarCuadranteGrupoWA()" style="border-color:#25d366;color:#25d366">&#128242; Enviar grupo WA</button>
-        <button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()">&#128424; Imprimir</button>
-        <button class="btn btn-ghost btn-sm" id="btn-guardar-bd" onclick="guardarCuadranteEnBD()" style="border-color:var(--green);color:var(--green)">&#128190; Guardar en BD</button>
-        <button class="btn btn-primary btn-sm" onclick="goStep(7)">&#128182; Ver costes</button>
-        <button class="btn btn-ghost btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
+        <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()" data-i18n="p6_ocultar_horas">👁 Ocultar horas</button>
+        <button class="btn btn-ghost btn-sm no-print" onclick="enviarCuadranteGrupoWA()" style="border-color:#25d366;color:#25d366" data-i18n="p6_enviar_grupo">📲 Enviar grupo WA</button>
+        <button class="btn btn-ghost btn-sm no-print" onclick="enviarWATodos()" style="border-color:#25d366;color:#25d366;background:#25d36615" data-i18n="p6_wa_todos">📲 WA a todos</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirCuadrante()" data-i18n="p6_imprimir">🖨 Imprimir</button>
+        <button class="btn btn-ghost btn-sm" id="btn-guardar-bd" onclick="guardarCuadranteEnBD()" style="border-color:var(--green);color:var(--green)" data-i18n="p6_guardar_bd">💾 Guardar en BD</button>
+        <button class="btn btn-primary btn-sm" onclick="goStep(7)" data-i18n="p6_ver_costes">💰 Ver costes</button>
+        <button class="btn btn-ghost btn-sm" onclick="goStep(1)" data-i18n="p6_nueva_semana">+ Nueva semana</button>
       </div>
     </div>
   </div>
@@ -519,8 +520,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <!-- PASO 7: COSTES -->
   <div class="screen" id="screen7">
     <div class="card">
-      <div class="card-title">&#128182; Costes de personal</div>
-      <div class="card-sub" id="costes-subtitulo">Cuadrante · Bruto nómina + SS empresa + Extras reales</div>
+      <div class="card-title" data-i18n="p7_titulo">💰 Costes de personal</div>
+      <div class="card-sub" id="costes-subtitulo" data-i18n="p7_sub">Cuadrante · Bruto nómina + SS empresa + Extras reales</div>
 
       <!-- Aviso datos pendientes -->
       <div id="costes-aviso" style="display:none;background:#2d1a0a;border:1px solid #6b3a00;border-radius:8px;padding:11px 15px;margin-bottom:16px;font-size:12px;color:#ffaa40">
@@ -568,11 +569,11 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       </div>
 
       <div class="btn-row space" style="margin-top:18px">
-        <button class="btn btn-secondary" onclick="goStep(6)">&#8592; Cuadrante</button>
+        <button class="btn btn-secondary" onclick="goStep(6)" data-i18n="p7_atras">← Cuadrante</button>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="imprimirCostes()">&#128424; Imprimir informe</button>
-          <button class="btn btn-primary btn-sm" onclick="goStep(1)">&#65291; Nueva semana</button>
-          <button class="btn btn-ghost btn-sm" onclick="abrirVistaDirector()" style="border-color:#c0a020;color:#c0a020">&#128196; Dirección General</button>
+          <button class="btn btn-primary btn-sm" onclick="goStep(1)" data-i18n="p6_nueva_semana">+ Nueva semana</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirVistaDirector()" style="border-color:#c0a020;color:#c0a020" data-i18n="p7_dir_gral">📋 Dirección General</button>
         </div>
       </div>
     </div>
@@ -583,13 +584,13 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <div class="screen" id="screen8">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="card-title" style="margin:0">&#128196; Dirección General</div>
+        <div class="card-title" style="margin:0" data-i18n="p8_titulo">📋 Dirección General</div>
         <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:3px 9px;border-radius:12px;font-weight:700">GRUPO EL RELOJ</span>
       </div>
-      <div class="card-sub" id="director-subtitulo">Resumen semanal de todos los locales</div>
+      <div class="card-sub" id="director-subtitulo" data-i18n="p8_sub">Resumen semanal de todos los locales</div>
 
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="cargarVistaDirector()" style="border-color:var(--green);color:var(--green)">&#128257; Actualizar</button>
+        <button class="btn btn-ghost btn-sm" onclick="cargarVistaDirector()" style="border-color:var(--green);color:var(--green)" data-i18n="p8_actualizar">🔄 Actualizar</button>
         <select id="director-semana-sel" onchange="cargarVistaDirector()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:11px">
           <option value="">Semana actual</option>
         </select>
@@ -607,7 +608,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <!-- Registro de actividad — solo Dir. General -->
       <div id="director-audit-wrap" style="margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-          <div style="font-size:13px;font-weight:700;color:var(--text)">🗂 Registro de actividad</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)" data-i18n="p8_audit_titulo">🗂 Registro de actividad</div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <select id="audit-filtro-local" onchange="cargarAuditLog()" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:10px">
               <option value="">Todos los locales</option>
@@ -634,8 +635,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <div class="btn-row space" style="margin-top:18px">
         <button class="btn btn-secondary" onclick="goStep(7)">&#8592; Costes</button>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="imprimirDirector()">&#128424; Imprimir resumen</button>
-          <button class="btn btn-ghost btn-sm" onclick="goStep(11)" style="border-color:#f39c12;color:#f39c12">&#128181; Arqueo de caja</button>
+          <button class="btn btn-ghost btn-sm" onclick="imprimirDirector()" data-i18n="p8_imprimir">🖨 Imprimir resumen</button>
+          <button class="btn btn-ghost btn-sm" onclick="goStep(11)" style="border-color:#f39c12;color:#f39c12" data-i18n="p8_arqueo">💰 Arqueo de caja</button>
         </div>
       </div>
     </div>
@@ -644,32 +645,32 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <div class="screen" id="screen9">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="card-title" style="margin:0">&#128101; Gestión de Usuarios</div>
+        <div class="card-title" style="margin:0" data-i18n="p9_titulo">👥 Gestión de Usuarios</div>
         <span style="font-size:9px;background:#6b8fff20;color:#6b8fff;padding:3px 9px;border-radius:12px;font-weight:700">SOLO DIRECTORA</span>
       </div>
-      <div class="card-sub">Crea y gestiona los accesos del personal</div>
+      <div class="card-sub" data-i18n="p9_sub">Crea y gestiona los accesos del personal</div>
 
       <!-- Formulario nuevo usuario -->
       <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px">&#43; Nuevo usuario</div>
+        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px" data-i18n="p9_nuevo_usuario">+ Nuevo usuario</div>
         <div class="form-row">
           <div class="form-group">
-            <label>Nombre completo</label>
-            <input type="text" id="nu-nombre" placeholder="Ej: MARILYN" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
+            <label data-i18n="p9_nombre">Nombre completo</label>
+            <input type="text" id="nu-nombre" data-i18n-placeholder="p9_nombre" placeholder="Ej: MARILYN" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
           </div>
           <div class="form-group">
-            <label>DNI / NIE</label>
+            <label data-i18n="p9_dni">DNI / NIE</label>
             <input type="text" id="nu-dni" placeholder="12345678A" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Nº Afiliación Seg. Social</label>
+            <label data-i18n="p9_ss">Nº Afiliación Seg. Social</label>
             <input type="text" id="nu-ss" placeholder="081153483246" class="inp-sm">
-            <div style="font-size:9px;color:var(--muted);margin-top:3px">Los últimos 4 dígitos serán la contraseña inicial</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px" data-i18n="p9_ss_hint">Los últimos 4 dígitos serán la contraseña inicial</div>
           </div>
           <div class="form-group">
-            <label>Rol en la app</label>
+            <label data-i18n="p9_rol">Rol en la app</label>
             <select id="nu-rol" class="inp-sm" onchange="document.getElementById('nu-local-group').style.display=this.value==='directora_general'?'none':''">
               <option value="empleado">Empleado</option>
               <option value="directora">Directora</option>
@@ -677,7 +678,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
             </select>
           </div>
           <div class="form-group" id="nu-local-group">
-            <label>Local</label>
+            <label data-i18n="p9_local">Local</label>
             <select id="nu-local" class="inp-sm">
               <option value="1">La Cala</option>
               <option value="2">Roto's Burguer</option>
@@ -686,11 +687,29 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         </div>
         <div id="nu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
         <div id="nu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
-        <button class="btn btn-primary btn-sm" onclick="crearUsuario()">&#128274; Crear usuario</button>
+        <!-- Datos de contacto opcionales -->
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px" data-i18n="p9_contacto">Datos de contacto (opcionales)</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="p9_telefono">📱 Teléfono / WhatsApp</label>
+              <input type="tel" id="nu-telefono" placeholder="34612345678" maxlength="15" class="inp-sm">
+            </div>
+            <div class="form-group">
+              <label data-i18n="p9_email">✉️ Email</label>
+              <input type="text" id="nu-email" placeholder="empleado@email.com" class="inp-sm">
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="p9_direccion">🏠 Dirección</label>
+            <input type="text" id="nu-direccion" placeholder="Calle, número, ciudad..." class="inp-sm">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="crearUsuario()" data-i18n="p9_crear">🔒 Crear usuario</button>
       </div>
 
       <!-- Lista de usuarios -->
-      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Usuarios registrados</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px" data-i18n="p9_lista">Usuarios registrados</div>
       <div id="usuarios-lista">
         <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Cargando...</div>
       </div>
@@ -706,154 +725,163 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <div class="screen" id="screen10">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="card-title" style="margin:0">&#127912; Personalización</div>
+        <div class="card-title" style="margin:0" data-i18n="p10_titulo">🎨 Personalización</div>
         <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:3px 9px;border-radius:12px;font-weight:700">DIRECCIÓN</span>
       </div>
-      <div class="card-sub">Adapta la apariencia de RelojTurnos a tu empresa</div>
+      <div class="card-sub" data-i18n="p10_sub">Adapta la apariencia de RelojTurnos a tu empresa</div>
 
-      <!-- Color de acento -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127775; Color principal</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-          <div onclick="aplicarColor('#e8a020')" style="width:36px;height:36px;border-radius:50%;background:#e8a020;cursor:pointer;border:3px solid #e8a020;box-shadow:0 0 0 2px var(--darker)" title="Dorado (por defecto)"></div>
-          <div onclick="aplicarColor('#3498db')" style="width:36px;height:36px;border-radius:50%;background:#3498db;cursor:pointer" title="Azul"></div>
-          <div onclick="aplicarColor('#2ecc71')" style="width:36px;height:36px;border-radius:50%;background:#2ecc71;cursor:pointer" title="Verde"></div>
-          <div onclick="aplicarColor('#e74c3c')" style="width:36px;height:36px;border-radius:50%;background:#e74c3c;cursor:pointer" title="Rojo"></div>
-          <div onclick="aplicarColor('#9b59b6')" style="width:36px;height:36px;border-radius:50%;background:#9b59b6;cursor:pointer" title="Morado"></div>
-          <div onclick="aplicarColor('#1abc9c')" style="width:36px;height:36px;border-radius:50%;background:#1abc9c;cursor:pointer" title="Turquesa"></div>
-          <div onclick="aplicarColor('#e67e22')" style="width:36px;height:36px;border-radius:50%;background:#e67e22;cursor:pointer" title="Naranja"></div>
-          <div onclick="aplicarColor('#e91e63')" style="width:36px;height:36px;border-radius:50%;background:#e91e63;cursor:pointer" title="Rosa"></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <label style="font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0">Color personalizado:</label>
-          <input type="color" id="color-custom" value="#e8a020" onchange="aplicarColor(this.value)" style="width:44px;height:32px;padding:2px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer">
-        </div>
-      </div>
+      <!-- 2 columnas en desktop, 1 en móvil -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">
 
-      <!-- Tema claro / oscuro -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127763; Tema de color</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button onclick="aplicarTema('dark')" id="btn-tema-dark" class="btn btn-primary btn-sm">&#127762; Oscuro (actual)</button>
-          <button onclick="aplicarTema('light')" id="btn-tema-light" class="btn btn-ghost btn-sm">&#9728;&#65039; Claro</button>
-          <button onclick="aplicarTema('navy')" id="btn-tema-navy" class="btn btn-ghost btn-sm">&#128674; Marino</button>
-        </div>
-      </div>
-
-      <!-- Logo empresa -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">🖼️ Logo de la empresa</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Aparece en el header, pantalla de login y documentos impresos</div>
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <div id="logo-preview-wrap" style="width:56px;height:56px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
-            <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain">
-            <span id="logo-preview-placeholder" style="font-size:22px">⏱</span>
-          </div>
-          <div style="flex:1">
-            <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-block">
-              📁 Seleccionar imagen
-              <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)">
-            </label>
-            <div style="font-size:10px;color:var(--muted);margin-top:6px">PNG, JPG o SVG · Recomendado: fondo transparente</div>
-          </div>
-          <button class="btn btn-ghost btn-sm" onclick="quitarLogo()" style="border-color:var(--red);color:var(--red);flex-shrink:0">🗑 Quitar</button>
-        </div>
-      </div>
-
-      <!-- Nombre empresa -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127970; Nombre del grupo / empresa</div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <input type="text" id="custom-empresa" placeholder="Ej: Grupo El Reloj" maxlength="40" style="flex:1" oninput="aplicarNombreEmpresa(this.value)">
-          <button class="btn btn-ghost btn-sm" onclick="aplicarNombreEmpresa(document.getElementById('custom-empresa').value)">&#10003; Aplicar</button>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">Aparecerá en el header, login y pies de documentos</div>
-      </div>
-
-      <!-- Preview -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#128065; Vista previa</div>
-        <div id="preview-personaliz" style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:14px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">&#9201;</div>
-            <div>
-              <div style="font-size:16px;font-weight:700;color:var(--accent)" id="prev-nombre">RelojTurnos</div>
-              <div style="font-size:10px;color:var(--muted);letter-spacing:2px" id="prev-empresa">GRUPO EL RELOJ</div>
+        <!-- COLUMNA IZQUIERDA -->
+        <div>
+          <!-- Color de acento -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127775; Color principal</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+              <div onclick="aplicarColor('#e8a020')" style="width:32px;height:32px;border-radius:50%;background:#e8a020;cursor:pointer;border:3px solid #e8a020;box-shadow:0 0 0 2px var(--darker)" title="Dorado"></div>
+              <div onclick="aplicarColor('#3498db')" style="width:32px;height:32px;border-radius:50%;background:#3498db;cursor:pointer" title="Azul"></div>
+              <div onclick="aplicarColor('#2ecc71')" style="width:32px;height:32px;border-radius:50%;background:#2ecc71;cursor:pointer" title="Verde"></div>
+              <div onclick="aplicarColor('#e74c3c')" style="width:32px;height:32px;border-radius:50%;background:#e74c3c;cursor:pointer" title="Rojo"></div>
+              <div onclick="aplicarColor('#9b59b6')" style="width:32px;height:32px;border-radius:50%;background:#9b59b6;cursor:pointer" title="Morado"></div>
+              <div onclick="aplicarColor('#1abc9c')" style="width:32px;height:32px;border-radius:50%;background:#1abc9c;cursor:pointer" title="Turquesa"></div>
+              <div onclick="aplicarColor('#e67e22')" style="width:32px;height:32px;border-radius:50%;background:#e67e22;cursor:pointer" title="Naranja"></div>
+              <div onclick="aplicarColor('#e91e63')" style="width:32px;height:32px;border-radius:50%;background:#e91e63;cursor:pointer" title="Rosa"></div>
             </div>
-          </div>
-          <div style="margin-top:10px;display:flex;gap:7px">
-            <span style="background:var(--accent);color:var(--darker);padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700">Botón activo</span>
-            <span style="border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;color:var(--muted)">Botón normal</span>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 14px;font-size:12px;color:#8ddb8d;margin-bottom:14px">
-        &#9432; Los cambios se guardan localmente en tu navegador y se aplican al instante. Para hacerlos permanentes en el servidor, contacta con el administrador.
-      </div>
-
-      <!-- Parámetros de coste -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">💰 Parámetros de coste</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Afectan a todos los cálculos de nómina y SS</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>% SS empresa</label>
             <div style="display:flex;align-items:center;gap:8px">
-              <input type="number" id="cfg-ss" min="20" max="60" step="0.1" placeholder="39" style="flex:1" oninput="aplicarParamsCoste()">
-              <span style="font-size:12px;color:var(--muted)">%</span>
+              <label style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;margin:0">Personalizado:</label>
+              <input type="color" id="color-custom" value="#e8a020" onchange="aplicarColor(this.value)" style="width:40px;height:28px;padding:2px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer">
             </div>
-            <div style="font-size:10px;color:var(--muted);margin-top:3px">Hostelería estándar: 39%</div>
           </div>
-          <div class="form-group">
-            <label>Divisor mensual</label>
-            <div style="display:flex;align-items:center;gap:8px">
-              <input type="number" id="cfg-divisor" min="4" max="5" step="0.01" placeholder="4.33" style="flex:1" oninput="aplicarParamsCoste()">
-              <span style="font-size:12px;color:var(--muted)">sem/mes</span>
+
+          <!-- Tema -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">&#127763; Tema</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="aplicarTema('dark')" id="btn-tema-dark" class="btn btn-primary btn-sm">&#127762; Oscuro</button>
+              <button onclick="aplicarTema('light')" id="btn-tema-light" class="btn btn-ghost btn-sm">&#9728;&#65039; Claro</button>
+              <button onclick="aplicarTema('navy')" id="btn-tema-navy" class="btn btn-ghost btn-sm">&#128674; Marino</button>
             </div>
-            <div style="font-size:10px;color:var(--muted);margin-top:3px">Estándar: 4,33 semanas/mes</div>
+          </div>
+
+          <!-- Logo -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">🖼️ Logo empresa</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Header, login y documentos impresos</div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div id="logo-preview-wrap" style="width:48px;height:48px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+                <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain">
+                <span id="logo-preview-placeholder" style="font-size:20px">⏱</span>
+              </div>
+              <div style="flex:1">
+                <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-block;font-size:11px">
+                  📁 Subir imagen
+                  <input type="file" accept="image/*" style="display:none" onchange="subirLogo(this)">
+                </label>
+                <div style="font-size:9px;color:var(--muted);margin-top:4px">PNG · JPG · SVG</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="quitarLogo()" style="border-color:var(--red);color:var(--red);font-size:11px">🗑</button>
+            </div>
+          </div>
+
+          <!-- Nombre empresa -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#127970; Nombre empresa</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="custom-empresa" placeholder="Ej: Grupo El Reloj" maxlength="40" style="flex:1" oninput="aplicarNombreEmpresa(this.value)">
+              <button class="btn btn-ghost btn-sm" onclick="aplicarNombreEmpresa(document.getElementById('custom-empresa').value)">&#10003;</button>
+            </div>
+          </div>
+
+          <!-- Vista previa -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">&#128065; Vista previa</div>
+            <div id="preview-personaliz" style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px">&#9201;</div>
+                <div>
+                  <div style="font-size:14px;font-weight:700;color:var(--accent)" id="prev-nombre">RelojTurnos</div>
+                  <div style="font-size:9px;color:var(--muted);letter-spacing:2px" id="prev-empresa">GRUPO EL RELOJ</div>
+                </div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:6px">
+                <span style="background:var(--accent);color:var(--darker);padding:5px 10px;border-radius:5px;font-size:11px;font-weight:700">Activo</span>
+                <span style="border:1px solid var(--border);padding:5px 10px;border-radius:5px;font-size:11px;color:var(--muted)">Normal</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="cfg-coste-preview" style="margin-top:10px;background:var(--card);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--muted)">
-          Ejemplo: bruto 1.800€ → coste empresa <span id="cfg-coste-ej" style="color:var(--green);font-weight:700">—</span> / sem
+
+        <!-- COLUMNA DERECHA -->
+        <div>
+          <!-- Parámetros de coste -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">💰 Parámetros de coste</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Afectan a todos los cálculos de nómina y SS</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>% SS empresa</label>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input type="number" id="cfg-ss" min="20" max="60" step="0.1" placeholder="39" style="flex:1" oninput="aplicarParamsCoste()">
+                  <span style="font-size:11px;color:var(--muted)">%</span>
+                </div>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px">Estándar hostelería: 39%</div>
+              </div>
+              <div class="form-group">
+                <label>Divisor mensual</label>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input type="number" id="cfg-divisor" min="4" max="5" step="0.01" placeholder="4.33" style="flex:1" oninput="aplicarParamsCoste()">
+                  <span style="font-size:11px;color:var(--muted)">sem</span>
+                </div>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px">Estándar: 4,33</div>
+              </div>
+            </div>
+            <div id="cfg-coste-preview" style="margin-top:10px;background:var(--card);border-radius:7px;padding:8px 10px;font-size:11px;color:var(--muted)">
+              Ejemplo: 1.800€ → <span id="cfg-coste-ej" style="color:var(--green);font-weight:700">—</span> / sem
+            </div>
+          </div>
+
+          <!-- WhatsApp -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📲 WhatsApp grupos</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Número del grupo de WhatsApp de cada local</div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label>🍽 La Cala</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="tel" id="cfg-wa-lacala" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label>🍔 Roto's Burguer</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="tel" id="cfg-wa-rotos" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
+              </div>
+            </div>
+            <div style="font-size:9px;color:var(--muted);padding:7px 9px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
+              💡 Teléfonos individuales de empleados se configuran en Gestión Usuarios
+            </div>
+          </div>
+
+          <!-- Idioma -->
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🌍 Idioma</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="aplicarIdioma('es')" id="btn-lang-es" class="btn btn-primary btn-sm">🇪🇸 Español</button>
+              <button onclick="aplicarIdioma('ca')" id="btn-lang-ca" class="btn btn-ghost btn-sm">🏴󠁥󠁳󠁣󠁴󠁿 Català</button>
+              <button onclick="aplicarIdioma('en')" id="btn-lang-en" class="btn btn-ghost btn-sm">🇬🇧 English</button>
+            </div>
+            <div style="font-size:9px;color:var(--muted);margin-top:8px">⚠ Cambio parcial en esta versión</div>
+          </div>
+
+          <!-- Nota guardado -->
+          <div style="background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 12px;font-size:11px;color:#8ddb8d">
+            &#9432; Los cambios se guardan en tu navegador al instante.
+          </div>
         </div>
       </div>
 
-      <!-- WhatsApp -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📲 WhatsApp — Grupos por local</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Al pulsar "Enviar a grupo" se abre WhatsApp con el cuadrante completo de esa semana</div>
-        <div class="form-group" style="margin-bottom:10px">
-          <label>🍽 Nº grupo La Cala</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input type="tel" id="cfg-wa-lacala" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
-            <span style="font-size:18px">📱</span>
-          </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">Sin el + ni espacios · Ej: 34612345678</div>
-        </div>
-        <div class="form-group">
-          <label>🍔 Nº grupo Roto's Burguer</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input type="tel" id="cfg-wa-rotos" placeholder="34612345678" maxlength="15" style="flex:1" oninput="guardarConfigWA()">
-            <span style="font-size:18px">📱</span>
-          </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">Sin el + ni espacios · Ej: 34612345678</div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:10px;padding:8px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
-          💡 El teléfono de cada empleado se configura en el <strong>Paso 3</strong> (tarjeta del empleado). El botón 📲 en el cuadrante envía el turno directamente a ese número.
-        </div>
-      </div>
-
-      <!-- Idioma -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🌍 Idioma de la app</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button onclick="aplicarIdioma('es')" id="btn-lang-es" class="btn btn-primary btn-sm">🇪🇸 Español</button>
-          <button onclick="aplicarIdioma('ca')" id="btn-lang-ca" class="btn btn-ghost btn-sm">🏴󠁥󠁳󠁣󠁴󠁿 Català</button>
-          <button onclick="aplicarIdioma('en')" id="btn-lang-en" class="btn btn-ghost btn-sm">🇬🇧 English</button>
-        </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:10px">⚠ El cambio de idioma es parcial en esta versión — días, turnos y etiquetas principales</div>
-      </div>
+      <!-- @media móvil — colapsar a 1 columna -->
+      <style>@media(max-width:640px){#screen10 .card > div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}}</style>
 
       <div class="btn-row space">
         <button class="btn btn-secondary" onclick="goStep(9)">&#8592; Usuarios</button>
@@ -865,7 +893,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <!-- PASO 11: ARQUEO DE CAJA -->
   <div class="screen" id="screen11">
     <div class="card">
-      <div class="card-title">&#128181; Arqueo de Caja</div>
+      <div class="card-title" data-i18n="p11_titulo">💰 Arqueo de Caja</div>
       <div class="card-sub">Registro de cierre de turno · <span id="arqueo-local-label" style="color:var(--accent)"></span></div>
       <!-- Banner edición activa -->
       <div id="arq-edit-banner" style="display:none;background:#3d2a00;border:1px solid #ffc107;border-radius:8px;padding:9px 14px;font-size:11px;color:#ffc107;margin-bottom:12px;display:flex;align-items:center;gap:8px">
@@ -996,11 +1024,6 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   </div>
 </div>
 
-<div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v5.2</span>
-  &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
-</div>
-
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
 var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
@@ -1066,7 +1089,7 @@ function renderAuditRows(rows){
     var icono = AUDIT_ICONOS[r.accion] || '📋';
     var col   = AUDIT_COLORES[r.accion] || 'var(--muted)';
     var fecha = r.created_at ? new Date(r.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-    var localTxt = r.local_id ? (LOCALES_NOMBRE[r.local_id]||'Local '+r.local_id) : 'Global';
+    var localTxt = r.local_id ? (LOCALES_NOMBRE[r.local_id]||'Local '+r.local_id) : '—';
     return '<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 6px;border-bottom:1px solid var(--border)20">'
       +'<div style="font-size:16px;flex-shrink:0;margin-top:1px">'+icono+'</div>'
       +'<div style="flex:1;min-width:0">'
@@ -1175,19 +1198,20 @@ async function doLogin(){
         document.querySelector('header').style.display='';
         document.querySelector('.container').style.display='';
         showStep(1);
-        showToast('✓ Bienvenida '+demoUser.nombre,'green');
+        showToast(t('toast_bienvenida')+demoUser.nombre,'green');
       }
       return;
     }
     var rows = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni)+'&activo=eq.true');
-    if(!rows.length){ errEl.textContent='Usuario no encontrado'; errEl.style.display='block'; return; }
+    if(!rows.length){ errEl.textContent=t('login_error'); errEl.style.display='block'; return; }
     var user = rows[0];
     if(user.password_hash !== passHash){
-      errEl.textContent='Contraseña incorrecta'; errEl.style.display='block'; return;
+      errEl.textContent=t('login_error'); errEl.style.display='block'; return;
     }
     currentUser = user;
     document.getElementById('login-screen').style.display = 'none';
     checkMostrarBtnUsuarios();
+    aplicarTraducciones();
     logAccion('LOGIN', 'Acceso correcto', user.local_id);
     if(user.rol === 'empleado'){
       abrirPortalEmpleado(user);
@@ -1201,7 +1225,7 @@ async function doLogin(){
       document.querySelector('header').style.display = '';
       document.querySelector('.container').style.display = '';
       showStep(1);
-      showToast('✓ Bienvenida '+user.nombre,'green');
+      showToast(t('toast_bienvenida')+user.nombre,'green');
     }
   }catch(e){
     var OFFLINE_USERS = [
@@ -1216,9 +1240,9 @@ async function doLogin(){
       document.querySelector('header').style.display='';
       document.querySelector('.container').style.display='';
       if(offlineUser.rol==='directora_general'){ abrirVistaDirector(); } else { showStep(1); }
-      showToast('✓ Bienvenida '+offlineUser.nombre,'green');
+      showToast(t('toast_bienvenida')+offlineUser.nombre,'green');
     } else {
-      errEl.textContent='Usuario o contraseña incorrectos';
+      errEl.textContent=t('login_error');
       errEl.style.display='block';
     }
   }
@@ -1309,8 +1333,8 @@ function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
   });
   html += '</tbody></table></div>';
   html += '<div style="margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">';
-  [{l:'M',c:'var(--green)',t:'Mañana'},{l:'N',c:'#6b8fff',t:'Noche'},{l:'T',c:'#ffa040',t:'Tarde'},{l:'I',c:'#c080ff',t:'Intermedio'},{l:'🏖',c:'#ff6b6b',t:'Fiesta'},{l:'½',c:'#ffaa40',t:'Media fiesta'}]
-    .forEach(function(x){ html += '<span><strong style="color:'+x.c+'">'+x.l+'</strong> '+x.t+'</span>'; });
+  [{l:'M',c:'var(--green)',tk:'turno_m_label'},{l:'N',c:'#6b8fff',tk:'turno_n_label'},{l:'T',c:'#ffa040',tk:'turno_t_label'},{l:'I',c:'#c080ff',tk:'turno_i_label'},{l:'🏖',c:'#ff6b6b',tk:'turno_fiesta'},{l:'½',c:'#ffaa40',tk:'turno_mediafiesta'}]
+    .forEach(function(x){ html += '<span><strong style="color:'+x.c+'">'+x.l+'</strong> '+t(x.tk)+'</span>'; });
   html += '</div>';
   el.innerHTML = html;
 }
@@ -1344,14 +1368,14 @@ async function cambiarPassword(){
   var okEl = document.getElementById('pass-ok');
   errEl.style.display='none'; okEl.style.display='none';
 
-  if(!actual||!nueva||!repite){ errEl.textContent='Rellena todos los campos'; errEl.style.display='block'; return; }
-  if(nueva.length<4){ errEl.textContent='La contraseña debe tener al menos 4 caracteres'; errEl.style.display='block'; return; }
-  if(nueva!==repite){ errEl.textContent='Las contraseñas no coinciden'; errEl.style.display='block'; return; }
+  if(!actual||!nueva||!repite){ errEl.textContent=t('err_rellena'); errEl.style.display='block'; return; }
+  if(nueva.length<4){ errEl.textContent=t('err_pass_min'); errEl.style.display='block'; return; }
+  if(nueva!==repite){ errEl.textContent=t('err_pass_no_coincide'); errEl.style.display='block'; return; }
 
   try{
     var actualHash = await hashPass(actual);
     var rows = await sbGet('usuarios','id=eq.'+currentUser.id);
-    if(!rows.length||rows[0].password_hash!==actualHash){ errEl.textContent='La contraseña actual es incorrecta'; errEl.style.display='block'; return; }
+    if(!rows.length||rows[0].password_hash!==actualHash){ errEl.textContent=t('toast_password_incorrecta'); errEl.style.display='block'; return; }
     var nuevaHash = await hashPass(nueva);
     await sbPatch('usuarios', currentUser.id, {password_hash: nuevaHash});
     logAccion('CAMBIAR_PASSWORD', 'Contraseña actualizada', currentUser.local_id);
@@ -1360,7 +1384,7 @@ async function cambiarPassword(){
     document.getElementById('pass-nueva').value='';
     document.getElementById('pass-repite').value='';
   }catch(e){
-    errEl.textContent='Error al cambiar la contraseña. Inténtalo de nuevo.';
+    errEl.textContent=t('err_cambiar_pass');
     errEl.style.display='block';
   }
 }
@@ -1370,18 +1394,18 @@ async function initSupabase(){
     var locs = await sbGet('locales');
     if(locs && locs.length){
       locs.forEach(function(l){ localIdMap[l.nombre]=l.id; });
-      showToast('✓ Conectado a base de datos','green');
+      showToast(t('toast_conectado'),'green');
     } else {
       // Tabla locales vacía — usar fallback hardcoded
       localIdMap['La Cala'] = 1;
       localIdMap["Roto's Burguer"] = 2;
-      showToast('✓ Conectado (locales por defecto)','green');
+      showToast(t('toast_conectado_default'),'green');
     }
   }catch(e){
     // Sin tabla locales — usar fallback
     localIdMap['La Cala'] = 1;
     localIdMap["Roto's Burguer"] = 2;
-    showToast('⚠ Sin tabla locales — modo local','orange');
+    showToast(t('toast_sin_tabla'),'orange');
   }
 }
 
@@ -1405,7 +1429,7 @@ function showToast(msg, color){
 async function guardarCuadranteEnBD(){
   var local = getLocal();
   var localId = localIdMap[local];
-  if(!localId){ showToast('Local no encontrado en BD','red'); return; }
+  if(!localId){ showToast(t('toast_local_no_encontrado'),'red'); return; }
 
   var semana = getSemanaLabel();
   var btn = document.getElementById('btn-guardar-bd');
@@ -1419,7 +1443,7 @@ async function guardarCuadranteEnBD(){
       cuadranteId = existing[0].id;
       // Borrar turnos anteriores para regenerar
       await sbDelete('turnos_cuadrante','cuadrante_id=eq.'+cuadranteId);
-      showToast('⏳ Actualizando cuadrante existente...','orange');
+      showToast(t('toast_actualizando_cuad'),'orange');
       logAccion('ACTUALIZAR_CUADRANTE', semana, localId);
     } else {
       var cArr = await sbPost('cuadrantes',{local_id:localId, semana_label:semana});
@@ -1482,11 +1506,11 @@ async function guardarCuadranteEnBD(){
     }
 
     if(btn){ btn.textContent='✓ Guardado'; btn.style.background='var(--green)'; btn.style.color='var(--darker)'; btn.disabled=false; }
-    showToast('✓ Cuadrante guardado en base de datos','green');
+    showToast(t('toast_cuad_guardado'),'green');
   }catch(e){
     console.error(e);
     if(btn){ btn.textContent='💾 Guardar en BD'; btn.disabled=false; btn.style.background=''; btn.style.color='var(--green)'; }
-    showToast('Error al guardar: '+e.message,'red');
+    showToast(t('toast_cuad_error')+e.message,'red');
   }
 }
 
@@ -1568,7 +1592,7 @@ function goStep(n){
 }
 
 function nextStep(from){
-  if(from===1){if(!getLocal()){alert('Selecciona un local');return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
+  if(from===1){if(!getLocal()){alert(t('alert_selecciona_local'));return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
   else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
   else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();sugerirYRenderizar();goStep(4);}
   else if(from===4){initPaso5();goStep(5);}
@@ -1584,7 +1608,7 @@ async function cargarEmpleadosBD(){
     return;
   }
   try{
-    showToast('⏳ Cargando equipo...','orange');
+    showToast(t('toast_cargando_equipo'),'orange');
     var emps = await sbGet('empleados','local_id=eq.'+localId+'&activo=eq.true&order=id.asc');
     if(emps.length){
       empleados=[];
@@ -1630,16 +1654,16 @@ async function cargarEmpleadosBD(){
         // Mapear id local → id BD
         empIdMap[empCounter]=e.id;
       });
-      showToast('✓ Equipo cargado desde BD ('+emps.length+' empleados)','green');
+      showToast(t('toast_equipo_cargado')+'('+emps.length+')','green');
     } else {
       // No hay empleados en BD — usar por defecto
       if(empleados.length===0) initDef(local);
-      showToast('ℹ Sin empleados en BD — usando equipo por defecto','orange');
+      showToast(t('toast_sin_empleados'),'orange');
     }
   } catch(err){
     console.error(err);
     if(empleados.length===0) initDef(local);
-    showToast('⚠ Error cargando BD — usando equipo por defecto','orange');
+    showToast(t('toast_error_bd'),'orange');
   }
   renderEmpleados();
 }
@@ -1920,10 +1944,6 @@ function renderEmpleados(){
       +'<option value="3"'+(emp.diasFiesta==3?' selected':'')+'>3 d\u00edas</option>'
       +'</select></div>'
       +'</div>'
-      +'<div class="form-row" style="margin-top:6px">'
-      +'<div class="form-group" style="flex:1"><label>📱 Tel\u00e9fono WhatsApp</label>'
-      +'<input class="inp-sm" type="tel" placeholder="34612345678" maxlength="15" value="'+(emp.telefono||'')+'" oninput="updEmp('+emp.id+',\'telefono\',this.value.replace(/\\s+/g,\'\'))" style="width:100%"></div>'
-      +'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; Las horas semanales se calculan autom\u00e1ticamente seg\u00fan los turnos asignados</div>'
       +'</div>';
   });
@@ -1959,7 +1979,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v5.2 ==========
+// ========== LÓGICA FIESTAS v5.3 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2176,7 +2196,7 @@ function rotarFiestas(){
   });
   sugerirTurnosConOffset();
   renderTurnosAsig();
-  showToast('🔀 Fiestas rotadas — revisa el cuadrante','orange');
+  showToast(t('toast_fiestas_rotadas'),'orange');
 }
 
 function sugerirTurnosConOffset(){
@@ -2221,9 +2241,9 @@ function renderTurnosAsig(){
   var df=getDiasFlojos();
   var activeTurnos=turnosConfig.filter(function(t){return t.active;});
   var leg=document.getElementById('turno-legend');
-  leg.innerHTML=activeTurnos.map(function(t){return'<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span class="turno-badge '+t.badge+'">'+t.emoji+' '+t.nome+'</span> '+t.ini+'\u2013'+t.fin+'</span>';}).join('')
-    +'<span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd Media fiesta</span></span>'
-    +'<span style="font-size:10px"><span class="turno-badge badge-fiesta">\ud83c\udfd6 Fiesta</span></span>';
+  leg.innerHTML=activeTurnos.map(function(tc){return'<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span class="turno-badge '+tc.badge+'">'+tc.emoji+' '+tc.nome+'</span> '+tc.ini+'\u2013'+tc.fin+'</span>';}).join('')
+    +'<span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd '+t('turno_mediafiesta')+'</span></span>'
+    +'<span style="font-size:10px"><span class="turno-badge badge-fiesta">\ud83c\udfd6 '+t('turno_fiesta')+'</span></span>';
 
   var html='<div class="dias-grid-header"><div></div>';
   DIAS_SHORT.forEach(function(d,i){html+='<div class="dia-label-top" style="'+(df.includes(i)?'color:var(--red)':'')+'">'+d+'</div>';});
@@ -2234,8 +2254,8 @@ function renderTurnosAsig(){
     DIAS.forEach(function(_,di){
       var tv=emp.turnos?emp.turnos[di]:emp.turno;
       var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+'</option>';}).join('')
-        +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>\u00bd Media fiesta</option>'
-        +'<option value="fiesta"'+(tv==='fiesta'?' selected':'')+'>\ud83c\udfd6 Fiesta</option>';
+        +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>\u00bd '+t('turno_mediafiesta')+'</option>'
+        +'<option value="fiesta"'+(tv==='fiesta'?' selected':'')+'>🏖 '+t('turno_fiesta')+'</option>';
       html+='<div><select class="dia-select '+tv+'" onchange="updTurno('+emp.id+','+di+',this.value,this)">'+opts+'</select></div>';
     });
     html+='</div>';
@@ -2282,7 +2302,7 @@ function updRefuerzoPersona(id,field,val){var p=refuerzoPersonas.find(function(x
 function renderRefuerzoPersonas(){
   var cont=document.getElementById('refuerzo-personas-list');if(!cont)return;
   if(refuerzoPersonas.length===0){
-    cont.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:7px;background:var(--darker);border-radius:5px;border:1px dashed var(--border)">Añade al menos una persona de refuerzo para este evento</div>';
+    cont.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:7px;background:var(--darker);border-radius:5px;border:1px dashed var(--border)">'+t('alert_añade_refuerzo')+'</div>';
     return;
   }
   var allOpts=function(def){return Array.from({length:48},function(_,i){var h=Math.floor(i/2),m=i%2===0?'00':'30';var str=String(h).padStart(2,'0')+':'+m;return'<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';}).join('');};
@@ -2304,10 +2324,10 @@ function addEvento(){
   var tipo=document.getElementById('evento-tipo').value;
   var dia=+document.getElementById('evento-dia').value;
   var desc=document.getElementById('evento-desc-sel').value;
-  if(!desc){alert('Selecciona una descripci\u00f3n del evento');return;}
+  if(!desc){alert(t('alert_selecciona_desc'));return;}
   if(refuerzoPersonas.length===0){alert('A\u00f1ade al menos una persona de refuerzo');return;}
   var inv=refuerzoPersonas.filter(function(p){return!p.nombre.trim();});
-  if(inv.length>0){alert('Pon el nombre de cada persona de refuerzo');return;}
+  if(inv.length>0){alert(t('alert_pon_nombre_refuerzo'));return;}
   eventos.push({tipo:tipo,dia:dia,desc:desc,personas:refuerzoPersonas.map(function(p){return{id:p.id,nombre:p.nombre,desde:p.desde,hasta:p.hasta};})});
   refuerzoPersonas=[];refuerzoCounter=0;
   document.getElementById('evento-desc-sel').value='';
@@ -2446,7 +2466,7 @@ function generarCuadrante(){
 
   var eventosHtml='';
   if(numEventos>0){
-    eventosHtml='<hr class="divider"><div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--accent)">\u26a1 Eventos especiales de la semana</div>'
+    eventosHtml='<hr class="divider"><div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--accent)">'+t('cuad_eventos')+'</div>'
       +eventos.map(function(ev){
         return'<div class="evento-item"><div style="font-size:18px">'+ev.tipo+'</div>'
           +'<div><div style="font-size:12px;font-weight:600">'+ev.desc+' \u00b7 '+DIAS[ev.dia]+'</div>'
@@ -2458,7 +2478,7 @@ function generarCuadrante(){
     +' <span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd Media fiesta</span></span>';
 
   var html='<div class="card">'
-    +'<div style="margin-bottom:16px"><div class="card-title">\ud83d\udccb Cuadrante generado</div>'
+    +'<div style="margin-bottom:16px"><div class="card-title">'+t('cuad_generado')+'</div>'
     +'<div class="card-sub">'+local+' \u00b7 '+semana+' \u00b7 '+ap+' \u2013 '+ci+'</div></div>'
     +'<div class="stats-grid">'
     +'<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">Empleados</div></div>'
@@ -2473,7 +2493,7 @@ function generarCuadrante(){
     +'<th class="col-horas">HORAS</th></tr></thead>'
     +'<tbody>'+tbodyRows+refRows+'</tbody>'
     +'<tfoot><tr style="background:var(--darker)">'
-    +'<td colspan="2" style="padding:7px;font-weight:700;font-size:10px;color:var(--muted);border:1px solid var(--border)">COBERTURA</td>'
+    +'<td colspan="2" style="padding:7px;font-weight:700;font-size:10px;color:var(--muted);border:1px solid var(--border)">'+t('cuad_cobertura')+'</td>'
     +cobRow
     +'<td class="col-horas" style="border:1px solid var(--border)"></td>'
     +'</tr></tfoot>'
@@ -2489,7 +2509,7 @@ function generarCuadrante(){
       lorenaHtml+='<div style="width:26px;height:26px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">LO</div>';
       lorenaHtml+='<div>';
       lorenaHtml+='<div style="font-weight:700;font-size:12px;color:#c0a020">LORENA <span style="font-size:9px;background:#2a2200;color:#c0a020;padding:1px 6px;border-radius:4px;margin-left:4px;border:1px solid #c0a02060">DIRECTORA</span></div>';
-      lorenaHtml+='<div style="font-size:9px;color:#888">Apoyo operativo · No computa en cobertura</div>';
+      lorenaHtml+='<div style="font-size:9px;color:#888">'+t('cuad_lorena_sub')+'</div>';
       lorenaHtml+='</div></div>';
       lorenaHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">';
       LORENA_SEMANA.forEach(function(d){
@@ -2512,8 +2532,8 @@ function generarCuadrante(){
     +'<div style="display:flex;gap:7px;flex-wrap:wrap">'+legendaHtml+'</div>'
     +eventosHtml
     +'<hr class="divider">'
-    +'<div class="footer-credits">Generado por <strong>RelojTurnos</strong> \u00b7 Grupo El Reloj \u00b7 '+new Date().toLocaleDateString('es-ES')+'<br>'
-    +'Desarrollado por <strong>Raul H.B.</strong> \u00b7 <a href="mailto:raul.gestionlocal@gmail.com">raul.gestionlocal@gmail.com</a> \u00b7 Todos los derechos reservados</div>'
+    +'<div class="footer-credits">'+t('cuad_generado_por')+' <strong>RelojTurnos</strong> \u00b7 Grupo El Reloj \u00b7 '+new Date().toLocaleDateString('es-ES')+'<br>'
+    +'Desarrollado por <strong>Raul H.B.</strong> \u00b7 <a href="mailto:raul.gestionlocal@gmail.com">raul.gestionlocal@gmail.com</a> \u00b7 '+t('cuad_derechos')+'</div>'
     +'</div>';
 
   // Vista móvil — tarjetas por empleado
@@ -2553,7 +2573,7 @@ function guardarImagen(){
   var local=(getLocal()||'cuadrante').replace(/\s+/g,'_');
   var semana=getSemanaLabel().replace(/\s/g,'').replace(/\u2013/g,'-');
   var ventana=window.open('','_blank','width=1000,height=750');
-  if(!ventana){alert('Permite las ventanas emergentes para esta p\u00e1gina y vuelve a intentarlo.');return;}
+  if(!ventana){alert(t('alert_permite_popups'));return;}
   ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
     +'<meta name="viewport" content="width=device-width,initial-scale=1.0">'
     +'<title>RelojTurnos_'+local+'_'+semana+'</title>'
@@ -2605,7 +2625,7 @@ function imprimirCuadrante(){
   clon.querySelectorAll('[class*="mobile"]').forEach(function(el){el.remove();});
   var contenido=clon.innerHTML;
   var ventana=window.open('','_blank','width=1200,height=800');
-  if(!ventana){alert('Permite las ventanas emergentes y vuelve a intentarlo.');return;}
+  if(!ventana){alert(t('alert_permite_popups2'));return;}
   ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
     +'<title>RelojTurnos \u2013 Cuadrante</title>'
     +'<style>'
@@ -2985,6 +3005,9 @@ async function abrirVistaDirector(){
   // Navegar al paso 8 solo si no estamos ya en él
   var sc8 = document.getElementById('screen8');
   if(!sc8 || !sc8.classList.contains('active')) goStep(8);
+  // Mostrar/ocultar audit log según rol
+  var auditWrap = document.getElementById('director-audit-wrap');
+  if(auditWrap) auditWrap.style.display = (currentUser && currentUser.rol==='directora_general') ? '' : 'none';
   await poblarSelectorSemanas();
   await cargarVistaDirector();
 }
@@ -3202,9 +3225,9 @@ function renderMiniCuadrante(datos, col){
 
 function imprimirDirector(){
   var el = document.getElementById('screen8');
-  if(!el){ alert('No hay datos que imprimir'); return; }
+  if(!el){ alert(t('alert_no_datos_imprimir')); return; }
   var ventana = window.open('','_blank','width=900,height=700');
-  if(!ventana){ alert('Permite las ventanas emergentes'); return; }
+  if(!ventana){ alert(t('alert_permite_popups3')); return; }
   ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Vista Director - Grupo El Reloj</title>'
     +'<style>body{font-family:Arial,sans-serif;background:#0f1923;color:#e8edf2;padding:20px}'
     +'*{box-sizing:border-box}</style></head><body>'
@@ -3255,7 +3278,7 @@ function imprimirCostes(){
   }).join(''):'';
 
   var ventana=window.open('','_blank','width=1100,height=750');
-  if(!ventana){alert('Permite ventanas emergentes');return;}
+  if(!ventana){alert(t('alert_permite_popups3'));return;}
   ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
     +'<title>Costes – '+local+' – '+semana+'</title>'
     +'<style>@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box;margin:0;padding:0}'
@@ -3288,7 +3311,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v5.2 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v5.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3313,7 +3336,7 @@ function aplicarColor(hex){
   localStorage.setItem('rt_accent', hex);
   // preview
   renderPersonalizacion();
-  showToast('✓ Color aplicado','green');
+  showToast(t('toast_color'),'green');
 }
 
 function aplicarTema(tema){
@@ -3326,7 +3349,7 @@ function aplicarTema(tema){
     if(btn) btn.className = 'btn btn-sm '+(n===tema?'btn-primary':'btn-ghost');
   });
   renderPersonalizacion();
-  showToast('✓ Tema aplicado','green');
+  showToast(t('toast_tema'),'green');
 }
 
 function aplicarNombreEmpresa(nombre){
@@ -3337,7 +3360,7 @@ function aplicarNombreEmpresa(nombre){
     el.textContent = nombre.toUpperCase();
   });
   renderPersonalizacion();
-  showToast('✓ Nombre actualizado','green');
+  showToast(t('toast_nombre'),'green');
 }
 
 function renderPersonalizacion(){
@@ -3364,7 +3387,7 @@ function resetPersonalizacion(){
   var inp = document.getElementById('custom-empresa');
   if(inp) inp.value = '';
   renderPersonalizacion();
-  showToast('✓ Ajustes restablecidos','green');
+  showToast(t('toast_restablecido'),'green');
 }
 
 function cargarPersonalizacionGuardada(){
@@ -3438,26 +3461,38 @@ async function crearUsuario(){
   errEl.style.display='none'; okEl.style.display='none';
 
   if(!nombre||!dni||!ss){ errEl.textContent='Rellena todos los campos'; errEl.style.display='block'; return; }
-  if(ss.length < 4){ errEl.textContent='El nº de afiliación debe tener al menos 4 dígitos'; errEl.style.display='block'; return; }
+  if(ss.length < 4){ errEl.textContent=t('err_ss_min'); errEl.style.display='block'; return; }
 
   var pass = ss.slice(-4);
   var passHash = await hashPass(pass);
   try{
     // Comprobar si ya existe
     var existing = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni));
-    if(existing && existing.length){ errEl.textContent='Ya existe un usuario con ese DNI'; errEl.style.display='block'; return; }
+    if(existing && existing.length){ errEl.textContent=t('err_dni_existe'); errEl.style.display='block'; return; }
 
-    var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
-    var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
-    await sbPost('usuarios', nuevo);
-    logAccion('CREAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
+  var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
+  var telefono  = (document.getElementById('nu-telefono')||{}).value||'';
+  var email     = (document.getElementById('nu-email')||{}).value||'';
+  var direccion = (document.getElementById('nu-direccion')||{}).value||'';
+  var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
+  await sbPost('usuarios', nuevo);
+  logAccion('CREAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
+  // Si hay datos de contacto y tiene local, guardar/actualizar en empleados
+  if(localId && (telefono||email||direccion)){
+    try{
+      var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(nombre));
+      if(empEx && empEx.length){
+        await sbPatch('empleados', empEx[0].id, {telefono:telefono||null, email:email||null, direccion:direccion||null});
+      }
+    }catch(e2){ console.warn('empleados contacto update:', e2); }
+  }
     okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
     okEl.style.display = 'block';
     // Limpiar form
-    ['nu-nombre','nu-dni','nu-ss'].forEach(function(id){ document.getElementById(id).value=''; });
+    ['nu-nombre','nu-dni','nu-ss','nu-telefono','nu-email','nu-direccion'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     cargarUsuarios();
   }catch(e){
-    errEl.textContent = 'Error al crear usuario: '+e.message;
+    errEl.textContent = t('err_crear_usuario')+e.message;
     errEl.style.display='block';
     console.error('crearUsuario error:',e);
   }
@@ -3483,13 +3518,13 @@ function showStep(n){ goStep(n); }
 function subirLogo(input){
   var file = input.files[0];
   if(!file) return;
-  if(file.size > 500000){ showToast('⚠ Imagen muy grande (máx 500KB)','orange'); return; }
+  if(file.size > 500000){ showToast(t('toast_logo_grande'),'orange'); return; }
   var reader = new FileReader();
   reader.onload = function(e){
     var dataUrl = e.target.result;
     localStorage.setItem('rt_logo', dataUrl);
     aplicarLogoGuardado(dataUrl);
-    showToast('✓ Logo actualizado','green');
+    showToast(t('toast_logo_ok'),'green');
   };
   reader.readAsDataURL(file);
 }
@@ -3497,7 +3532,7 @@ function subirLogo(input){
 function quitarLogo(){
   localStorage.removeItem('rt_logo');
   aplicarLogoGuardado(null);
-  showToast('✓ Logo eliminado','green');
+  showToast(t('toast_logo_quitado'),'green');
 }
 
 function aplicarLogoGuardado(dataUrl){
@@ -3671,11 +3706,11 @@ async function cargarVistaPublica(cuadId){
 function enviarCuadranteGrupoWA(){
   var numGrupo = getNumGrupoLocal();
   if(!numGrupo){
-    showToast('⚠ Configura el número del grupo en Ajustes → WhatsApp','orange');
+    showToast(t('toast_wa_configura'),'orange');
     return;
   }
   if(!currentCuadranteId){
-    showToast('⚠ Primero guarda el cuadrante en BD (botón 💾)','orange');
+    showToast(t('toast_wa_guarda_bd'),'orange');
     return;
   }
   var semana = getSemanaLabel();
@@ -3692,7 +3727,7 @@ function enviarCuadranteGrupoWA(){
 // Enviar turno individual — al empleado + al grupo
 function enviarTurnoWA(empId){
   var emp = empleados.find(function(e){ return e.id===empId; });
-  if(!emp){ showToast('Empleado no encontrado','orange'); return; }
+  if(!emp){ showToast(t('toast_empleado_no_encontrado'),'orange'); return; }
   var msg = formatMsgTurno(emp);
   var numEmp = (emp.telefono||'').replace(/\s+/g,'');
   var numGrupo = getNumGrupoLocal();
@@ -3708,8 +3743,35 @@ function enviarTurnoWA(empId){
     abierto = true;
   }
   if(!abierto){
-    showToast('\u26a0 A\u00f1ade el tel\u00e9fono del empleado en Paso 3 o el grupo en Ajustes','orange');
+    showToast(t('toast_wa_sin_telefono'),'orange');
   }
+}
+
+// Enviar WA a TODOS los empleados — secuencial con delays
+function enviarWATodos(){
+  var conTelefono = empleados.filter(function(e){ return (e.telefono||'').replace(/\s+/g,'').length >= 9; });
+  var sinTelefono = empleados.filter(function(e){ return !(e.telefono||'').replace(/\s+/g,'').length >= 9; });
+
+  if(!conTelefono.length){
+    showToast(t('toast_wa_sin_telefonos'),'orange');
+    return;
+  }
+
+  var msg = t('wa_confirm_prefix')+conTelefono.length+t('wa_confirm_pax')
+    + (sinTelefono.length ? t('wa_confirm_sin_tel')+sinTelefono.map(function(e){return e.nombre;}).join(', ') : '')
+    + t('wa_confirm_nota');
+
+  if(!confirm(msg)) return;
+
+  conTelefono.forEach(function(emp, i){
+    setTimeout(function(){
+      var mensaje = formatMsgTurno(emp);
+      var num = (emp.telefono||'').replace(/\s+/g,'');
+      window.open('https://wa.me/'+num+'?text='+encodeURIComponent(mensaje), '_blank');
+    }, i * 800); // 800ms entre cada uno para no saturar
+  });
+
+  showToast(t('toast_wa_enviando')+conTelefono.length+t('toast_wa_empleados'),'green');
 }
 
 function guardarConfigWA(){
@@ -3717,7 +3779,7 @@ function guardarConfigWA(){
   var rotos  = (document.getElementById('cfg-wa-rotos')||{}).value  || '';
   localStorage.setItem('rt_wa_lacala', lacala.replace(/\s+/g,''));
   localStorage.setItem('rt_wa_rotos',  rotos.replace(/\s+/g,''));
-  showToast('\u2713 N\u00fameros guardados','green');
+  showToast(t('toast_wa_numeros'),'green');
 }
 
 // ========== PARÁMETROS COSTE ==========
@@ -3736,7 +3798,7 @@ function aplicarParamsCoste(){
   var ejEl = document.getElementById('cfg-coste-ej');
   if(ejEl) ejEl.textContent = ej+' €';
   if(typeof renderCostes==='function' && document.getElementById('screen7') && document.getElementById('screen7').classList.contains('active')) renderCostes();
-  showToast('✓ Parámetros actualizados','green');
+  showToast(t('toast_params'),'green');
 }
 
 function cargarParamsCosteGuardados(){
@@ -3755,34 +3817,634 @@ function cargarParamsCosteGuardados(){
 }
 
 // ========== IDIOMA ==========
-var IDIOMAS = {
-  es: { dias: ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],
-        diasShort: ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'],
-        manana: 'Mañana', noche: 'Noche', tarde: 'Tarde', intermedio: 'Intermedio', fiesta: 'Fiesta' },
-  ca: { dias: ['Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte','Diumenge'],
-        diasShort: ['DLL','DIM','DMC','DIJ','DIV','DIS','DIU'],
-        manana: 'Matí', noche: 'Nit', tarde: 'Tarda', intermedio: 'Intermedi', fiesta: 'Festa' },
-  en: { dias: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
-        diasShort: ['MON','TUE','WED','THU','FRI','SAT','SUN'],
-        manana: 'Morning', noche: 'Night', tarde: 'Afternoon', intermedio: 'Split', fiesta: 'Day off' }
+// ========== SISTEMA i18n COMPLETO ==========
+var LANG_ACTUAL = 'es';
+
+var I18N = {
+  es: {
+    // Días
+    dias: ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],
+    diasShort: ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'],
+    // Turnos
+    turno_manana:'Mañana', turno_noche:'Noche', turno_tarde:'Tarde',
+    turno_intermedio:'Intermedio', turno_partido:'Partido', turno_fiesta:'Fiesta', turno_mediafiesta:'½ Media fiesta',
+    // Nav pasos
+    nav_local:'Local', nav_turnos:'Turnos', nav_equipo:'Equipo', nav_asignar:'Asignar',
+    nav_eventos:'Eventos', nav_cuadrante:'Cuadrante', nav_costes:'Costes',
+    nav_direccion:'Direcc. Gral.', nav_usuarios:'Usuarios', nav_ajustes:'Ajustes', nav_arqueo:'Arqueo',
+    // Paso 1
+    p1_titulo:'¿Qué local y semana vamos a planificar?',
+    p1_sub:'Selecciona el restaurante, la semana y la configuración básica',
+    p1_local:'Local', p1_semana:'Semana que empieza el',
+    p1_apertura:'Hora apertura', p1_cierre:'Hora cierre',
+    p1_diasflojos:'Días de menor afluencia (fiesta sugerida)',
+    p1_siguiente:'Siguiente → Configurar turnos',
+    opt_selecciona_local:'Selecciona local...',
+    // Paso 2
+    p2_titulo:'Configura los turnos del local',
+    p2_sub:'Turnos calculados automáticamente. Activa solo los que usa este local.',
+    p2_media_fiesta:'Duración media fiesta (horas trabajadas)',
+    p2_jornada:'Horas jornada completa',
+    p2_atras:'← Atrás', p2_siguiente:'Siguiente → Equipo',
+    // Paso 3
+    p3_titulo:'¿Quién trabaja en este local?',
+    p3_sub:'Empleados y su turno habitual. Las horas se calculan solas según los turnos asignados.',
+    p3_añadir:'+ Añadir empleado',
+    p3_lorena_sub:'Horario orientativo · No computa en cobertura de sala · Sí computa en costes',
+    p3_siguiente:'Siguiente → Asignar turnos',
+    p3_horas_auto:'Las horas semanales se calculan automáticamente según los turnos asignados',
+    p3_nombre_empleado:'Nombre empleado',
+    p3_turno_habitual:'Turno habitual',
+    // Paso 4
+    p4_titulo:'Asigna los turnos de la semana',
+    p4_sub:'Fiestas asignadas automáticamente según días flojos y mínimos de personal. Ajusta lo que necesites.',
+    p4_recalcular:'⚡ Recalcular fiestas', p4_rotar:'🔀 Rotar días (+1)',
+    p4_hint_recalcular:'<strong style="color:var(--green)">Recalcular</strong> — borra las fiestas actuales y las vuelve a asignar desde cero según días flojos y mínimos de personal.',
+    p4_hint_rotar:'<strong style="color:var(--purple)">Rotar días</strong> — desplaza los días de descanso de cada empleado +1 día, útil para que no descansen siempre el mismo día.',
+    p4_siguiente:'Siguiente → Eventos',
+    // Paso 5
+    p5_titulo:'¿Hay eventos especiales esta semana?',
+    p5_sub:'Partidos, eventos, festivos que necesiten refuerzo de personal',
+    p5_no_eventos:'No hay eventos añadidos',
+    p5_tipo:'Tipo', p5_dia:'Día', p5_descripcion:'Descripción',
+    p5_refuerzo:'Personas de refuerzo',
+    p5_añadir_refuerzo:'+ Añadir persona de refuerzo',
+    p5_confirmar:'✓ Confirmar y añadir evento',
+    p5_generar:'⚡ Generar cuadrante',
+    // Paso 6 (botones)
+    p6_ocultar_horas:'👁 Ocultar horas', p6_mostrar_horas:'👁 Mostrar horas',
+    p6_enviar_grupo:'📲 Enviar grupo WA', p6_wa_todos:'📲 WA a todos',
+    p6_imprimir:'🖨 Imprimir', p6_guardar_bd:'💾 Guardar en BD',
+    p6_ver_costes:'💰 Ver costes', p6_nueva_semana:'+ Nueva semana',
+    p6_editar:'← Editar',
+    // Paso 7
+    p7_titulo:'💰 Costes de personal',
+    p7_sub:'Cuadrante · Bruto nómina + SS empresa + Extras reales',
+    p7_atras:'← Cuadrante', p7_dir_gral:'📋 Dirección General',
+    // Paso 8
+    p8_titulo:'📋 Dirección General',
+    p8_sub:'Resumen semanal de todos los locales',
+    p8_actualizar:'🔄 Actualizar',
+    p8_imprimir:'🖨 Imprimir resumen', p8_arqueo:'💰 Arqueo de caja',
+    p8_audit_titulo:'🗂 Registro de actividad',
+    // Paso 9
+    p9_titulo:'👥 Gestión de Usuarios',
+    p9_sub:'Crea y gestiona los accesos del personal',
+    p9_nuevo_usuario:'+ Nuevo usuario',
+    p9_nombre:'Nombre completo', p9_dni:'DNI / NIE',
+    p9_ss:'Nº Afiliación Seg. Social', p9_ss_hint:'Los últimos 4 dígitos serán la contraseña inicial',
+    p9_rol:'Rol en la app', p9_local:'Local',
+    p9_contacto:'Datos de contacto (opcionales)',
+    p9_telefono:'📱 Teléfono / WhatsApp', p9_email:'✉️ Email', p9_direccion:'🏠 Dirección',
+    p9_crear:'🔒 Crear usuario',
+    p9_lista:'Usuarios registrados', p9_actualizar:'🔄 Actualizar lista',
+    // Paso 10
+    p10_titulo:'🎨 Personalización',
+    p10_sub:'Adapta la apariencia de RelojTurnos a tu empresa',
+    p10_color:'✨ Color principal', p10_color_custom:'Personalizado:',
+    p10_tema:'🌙 Tema', p10_tema_dark:'🌑 Oscuro', p10_tema_light:'☀️ Claro', p10_tema_navy:'⚓ Marino',
+    p10_logo:'🖼️ Logo empresa', p10_logo_sub:'Header, login y documentos impresos',
+    p10_logo_subir:'📁 Subir imagen', p10_logo_quitar:'🗑',
+    p10_empresa:'🏢 Nombre empresa',
+    p10_preview:'👁 Vista previa',
+    p10_costes_titulo:'💰 Parámetros de coste', p10_costes_sub:'Afectan a todos los cálculos de nómina y SS',
+    p10_ss_pct:'% SS empresa', p10_divisor:'Divisor mensual',
+    p10_ss_hint2:'Estándar hostelería: 39%', p10_divisor_hint:'Estándar: 4,33',
+    p10_wa_titulo:'📲 WhatsApp grupos', p10_wa_sub:'Número del grupo de WhatsApp de cada local',
+    p10_wa_hint:'💡 Teléfonos individuales de empleados se configuran en Gestión Usuarios',
+    p10_idioma:'🌍 Idioma',
+    p10_nota:'ⓘ Los cambios se guardan en tu navegador al instante.',
+    // Paso 11 - Arqueo
+    p11_titulo:'💰 Arqueo de Caja',
+    p11_sub:'Registro de cierre de turno',
+    p11_fecha:'📅 Fecha', p11_turno:'Turno',
+    p11_turno_m:'Mañana', p11_turno_n:'Noche', p11_turno_t:'Tarde',
+    p11_responsable:'Responsable',
+    p11_fondo:'💵 Fondo inicial caja', p11_venta:'🧾 Venta total declarada',
+    p11_visa:'💳 VISA / TPV', p11_efectivo:'💵 Efectivo (Venta - VISA)',
+    p11_entregado:'💰 Efectivo entregado', p11_diferencia:'⚖️ Diferencia',
+    p11_proveedores:'📦 Pagos a proveedores',
+    p11_añadir_prov:'+ Añadir proveedor',
+    p11_notas:'📝 Notas / incidencias',
+    p11_guardar:'💾 Guardar arqueo', p11_limpiar:'🗑 Limpiar', p11_imprimir:'🖨 Imprimir',
+    p11_historico:'📋 Histórico de arqueos',
+    p11_editar_banner:'✏️ Editando arqueo ID ',
+    p11_cancelar:'Cancelar edición',
+    // Login
+    login_dni:'DNI / NIE', login_password:'Contraseña', login_btn:'Entrar',
+    login_demo:'DEMO', login_error:'Usuario o contraseña incorrectos',
+    login_footer:'Gestión de turnos para hostelería',
+    // Portal empleado
+    portal_cuadrante:'📅 Cuadrante', portal_contrato:'📄 Mi contrato',
+    portal_actividad:'🗂 Mi actividad', portal_password:'🔒 Contraseña',
+    portal_cambiar_pass:'Cambiar contraseña',
+    portal_pass_actual:'Contraseña actual', portal_pass_nueva:'Nueva contraseña',
+    portal_pass_repite:'Repetir nueva contraseña',
+    portal_pass_btn:'🔒 Cambiar contraseña',
+    portal_cerrar:'← Cerrar sesión',
+    // Toasts
+    toast_bienvenida:'✓ Bienvenida/o ',
+    toast_conectado:'✓ Conectado a base de datos',
+    toast_conectado_default:'✓ Conectado (locales por defecto)',
+    toast_sin_tabla:'⚠ Sin tabla locales — modo local',
+    toast_local_no_encontrado:'Local no encontrado en BD',
+    toast_actualizando_cuad:'⏳ Actualizando cuadrante existente...',
+    toast_cuad_guardado:'✓ Cuadrante guardado en base de datos',
+    toast_cuad_error:'Error al guardar: ',
+    toast_cargando_equipo:'⏳ Cargando equipo...',
+    toast_equipo_cargado:'✓ Equipo cargado desde BD ',
+    toast_sin_empleados:'ℹ Sin empleados en BD — usando equipo por defecto',
+    toast_error_bd:'⚠ Error cargando BD — usando equipo por defecto',
+    toast_fiestas_rotadas:'🔀 Fiestas rotadas — revisa el cuadrante',
+    toast_color:'✓ Color aplicado', toast_tema:'✓ Tema aplicado',
+    toast_nombre:'✓ Nombre actualizado', toast_restablecido:'✓ Ajustes restablecidos',
+    toast_logo_grande:'⚠ Imagen muy grande (máx 500KB)',
+    toast_logo_ok:'✓ Logo actualizado', toast_logo_quitado:'✓ Logo eliminado',
+    toast_wa_configura:'⚠ Configura el número del grupo en Ajustes → WhatsApp',
+    toast_wa_guarda_bd:'⚠ Primero guarda el cuadrante en BD (botón 💾)',
+    toast_empleado_no_encontrado:'Empleado no encontrado',
+    toast_wa_sin_telefono:'⚠ Añade el teléfono del empleado en Usuarios',
+    toast_wa_sin_telefonos:'⚠ Ningún empleado tiene teléfono configurado en Usuarios',
+    toast_wa_enviando:'📲 Enviando a ',
+    toast_wa_empleados:' empleados...',
+    toast_wa_numeros:'✓ Números guardados',
+    toast_params:'✓ Parámetros actualizados',
+    toast_idioma:'✓ Idioma aplicado',
+    toast_arq_invalido:'ID de arqueo inválido',
+    toast_arq_no_encontrado:'Arqueo no encontrado',
+    toast_arq_cargado:'✏️ Arqueo cargado para edición',
+    toast_arq_error_carga:'Error cargando arqueo: ',
+    toast_edicion_cancelada:'Edición cancelada — formulario limpio',
+    toast_pass_cambiada:'✓ Contraseña cambiada correctamente',
+    toast_usuario_creado:'✓ Usuario creado',
+    toast_password_incorrecta:'La contraseña actual es incorrecta',
+    // Misc
+    cobertura:'COBERTURA', personas:'pers.',
+    turno_m_label:'Mañana', turno_n_label:'Noche', turno_t_label:'Tarde',
+    turno_i_label:'Intermedio', turno_p_label:'Partido', turno_mf_label:'½ Media fiesta',
+    apoyo_operativo:'Apoyo operativo · No computa en cobertura',
+    generado_por:'Generado por', todos_derechos:'Todos los derechos reservados',
+    wa_confirm_prefix:'¿Enviar turno individual por WhatsApp a ',
+    wa_confirm_pax:' empleado(s)?',
+    wa_confirm_sin_tel:'\n\nSin teléfono (no se enviarán): ',
+    wa_confirm_nota:'\n\nEl navegador abrirá una ventana por cada empleado.',
+    horas_short:'h', fiestas_btn:'Fiestas', eventos_btn:'Eventos',
+    opt_selecciona:'Selecciona...',
+    err_rellena:'Rellena todos los campos',
+    err_pass_min:'La contraseña debe tener al menos 4 caracteres',
+    err_pass_no_coincide:'Las contraseñas no coinciden',
+    err_ss_min:'El nº de afiliación debe tener al menos 4 dígitos',
+    err_dni_existe:'Ya existe un usuario con ese DNI',
+    err_crear_usuario:'Error al crear usuario: ',
+    err_cambiar_pass:'Error al cambiar la contraseña. Inténtalo de nuevo.',
+    lbl_salario_bruto:'Salario bruto/mes', lbl_horas_contrato:'Horas contrato/semana',
+    nominas_proximamente:'Las nóminas digitales estarán disponibles próximamente',
+    sin_datos_contrato:'No hay datos de contrato disponibles',
+    err_datos_contrato:'No se pudieron cargar los datos',
+    audit_sin_registros:'Sin registros',
+    audit_cargando:'⏳ Cargando...',
+    vacaciones:'VACACIONES',
+    // Alerts
+    alert_selecciona_local:'Selecciona un local',
+    alert_selecciona_desc:'Selecciona una descripción del evento',
+    alert_pon_nombre_refuerzo:'Pon el nombre de cada persona de refuerzo',
+    alert_añade_empleado:'Añade al menos un empleado',
+    alert_añade_refuerzo:'Añade al menos una persona de refuerzo',
+    alert_no_datos_imprimir:'No hay datos que imprimir',
+    alert_permite_popups:'Permite las ventanas emergentes para esta página y vuelve a intentarlo.',
+    alert_permite_popups2:'Permite las ventanas emergentes y vuelve a intentarlo.',
+    alert_permite_popups3:'Permite ventanas emergentes',
+    // Cuadrante generado
+    cuad_generado:'📋 Cuadrante generado',
+    cuad_cobertura:'COBERTURA',
+    cuad_lorena_sub:'Apoyo operativo · No computa en cobertura',
+    cuad_eventos:'⚡ Eventos especiales de la semana',
+    cuad_generado_por:'Generado por',
+    cuad_desarrollado:'Desarrollado por',
+    cuad_derechos:'Todos los derechos reservados',
+  },
+
+  ca: {
+    dias: ['Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte','Diumenge'],
+    diasShort: ['DLL','DIM','DMC','DIJ','DIV','DIS','DIU'],
+    turno_manana:'Matí', turno_noche:'Nit', turno_tarde:'Tarda',
+    turno_intermedio:'Intermedi', turno_partido:'Partit', turno_fiesta:'Festa', turno_mediafiesta:'½ Mitja festa',
+    nav_local:'Local', nav_turnos:'Torns', nav_equipo:'Equip', nav_asignar:'Assignar',
+    nav_eventos:'Esdeveniments', nav_cuadrante:'Quadrant', nav_costes:'Costos',
+    nav_direccion:'Dir. General', nav_usuarios:'Usuaris', nav_ajustes:'Ajustos', nav_arqueo:'Arqueig',
+    p1_titulo:'Quin local i setmana planificarem?',
+    p1_sub:'Selecciona el restaurant, la setmana i la configuració bàsica',
+    p1_local:'Local', p1_semana:'Setmana que comença el',
+    p1_apertura:'Hora obertura', p1_cierre:'Hora tancament',
+    p1_diasflojos:'Dies de menor afluència (festa suggerida)',
+    p1_siguiente:'Següent → Configurar torns',
+    opt_selecciona_local:'Selecciona local...',
+    p2_titulo:'Configura els torns del local',
+    p2_sub:'Torns calculats automàticament. Activa només els que usa aquest local.',
+    p2_media_fiesta:'Durada mitja festa (hores treballades)',
+    p2_jornada:'Hores jornada completa',
+    p2_atras:'← Enrere', p2_siguiente:'Següent → Equip',
+    p3_titulo:'Qui treballa en aquest local?',
+    p3_sub:'Empleats i el seu torn habitual. Les hores es calculen soles.',
+    p3_añadir:'+ Afegir empleat',
+    p3_lorena_sub:'Horari orientatiu · No computa en cobertura de sala · Sí computa en costos',
+    p3_siguiente:'Següent → Assignar torns',
+    p3_horas_auto:'Les hores setmanals es calculen automàticament segons els torns assignats',
+    p3_nombre_empleado:'Nom empleat',
+    p3_turno_habitual:'Torn habitual',
+    p4_titulo:'Assigna els torns de la setmana',
+    p4_sub:'Festes assignades automàticament. Ajusta el que necessitis.',
+    p4_recalcular:'⚡ Recalcular festes', p4_rotar:'🔀 Rotar dies (+1)',
+    p4_hint_recalcular:'<strong style="color:var(--green)">Recalcular</strong> — esborra les festes actuals i les torna a assignar des de zero.',
+    p4_hint_rotar:'<strong style="color:var(--purple)">Rotar dies</strong> — desplaça els dies de descans de cada empleat +1 dia.',
+    p4_siguiente:'Següent → Esdeveniments',
+    p5_titulo:'Hi ha esdeveniments especials aquesta setmana?',
+    p5_sub:'Partits, events, festius que necessitin reforç de personal',
+    p5_no_eventos:'No hi ha esdeveniments afegits',
+    p5_tipo:'Tipus', p5_dia:'Dia', p5_descripcion:'Descripció',
+    p5_refuerzo:'Persones de reforç',
+    p5_añadir_refuerzo:'+ Afegir persona de reforç',
+    p5_confirmar:'✓ Confirmar i afegir esdeveniment',
+    p5_generar:'⚡ Generar quadrant',
+    p6_ocultar_horas:'👁 Ocultar hores', p6_mostrar_horas:'👁 Mostrar hores',
+    p6_enviar_grupo:'📲 Enviar grup WA', p6_wa_todos:'📲 WA a tots',
+    p6_imprimir:'🖨 Imprimir', p6_guardar_bd:'💾 Guardar a BD',
+    p6_ver_costes:'💰 Veure costos', p6_nueva_semana:'+ Nova setmana',
+    p6_editar:'← Editar',
+    p7_titulo:'💰 Costos de personal',
+    p7_sub:'Quadrant · Brut nòmina + SS empresa + Extres reals',
+    p7_atras:'← Quadrant', p7_dir_gral:'📋 Direcció General',
+    p8_titulo:'📋 Direcció General',
+    p8_sub:'Resum setmanal de tots els locals',
+    p8_actualizar:'🔄 Actualitzar',
+    p8_imprimir:'🖨 Imprimir resum', p8_arqueo:'💰 Arqueig de caixa',
+    p8_audit_titulo:'🗂 Registre d\'activitat',
+    p9_titulo:'👥 Gestió d\'Usuaris',
+    p9_sub:'Crea i gestiona els accessos del personal',
+    p9_nuevo_usuario:'+ Nou usuari',
+    p9_nombre:'Nom complet', p9_dni:'DNI / NIE',
+    p9_ss:'Nº Afiliació Seg. Social', p9_ss_hint:'Els últims 4 dígits seran la contrasenya inicial',
+    p9_rol:'Rol a l\'app', p9_local:'Local',
+    p9_contacto:'Dades de contacte (opcionals)',
+    p9_telefono:'📱 Telèfon / WhatsApp', p9_email:'✉️ Email', p9_direccion:'🏠 Adreça',
+    p9_crear:'🔒 Crear usuari',
+    p9_lista:'Usuaris registrats', p9_actualizar:'🔄 Actualitzar llista',
+    p10_titulo:'🎨 Personalització',
+    p10_sub:'Adapta l\'aparença de RelojTurnos a la teva empresa',
+    p10_color:'✨ Color principal', p10_color_custom:'Personalitzat:',
+    p10_tema:'🌙 Tema', p10_tema_dark:'🌑 Fosc', p10_tema_light:'☀️ Clar', p10_tema_navy:'⚓ Marí',
+    p10_logo:'🖼️ Logo empresa', p10_logo_sub:'Capçalera, login i documents impresos',
+    p10_logo_subir:'📁 Pujar imatge', p10_logo_quitar:'🗑',
+    p10_empresa:'🏢 Nom empresa',
+    p10_preview:'👁 Previsualització',
+    p10_costes_titulo:'💰 Paràmetres de cost', p10_costes_sub:'Afecten tots els càlculs de nòmina i SS',
+    p10_ss_pct:'% SS empresa', p10_divisor:'Divisor mensual',
+    p10_ss_hint2:'Estàndard hostaleria: 39%', p10_divisor_hint:'Estàndard: 4,33',
+    p10_wa_titulo:'📲 WhatsApp grups', p10_wa_sub:'Número del grup de WhatsApp de cada local',
+    p10_wa_hint:'💡 Telèfons individuals d\'empleats es configuren a Gestió d\'Usuaris',
+    p10_idioma:'🌍 Idioma',
+    p10_nota:'ⓘ Els canvis es guarden al navegador al instant.',
+    p11_titulo:'💰 Arqueig de Caixa',
+    p11_sub:'Registre de tancament de torn',
+    p11_fecha:'📅 Data', p11_turno:'Torn',
+    p11_turno_m:'Matí', p11_turno_n:'Nit', p11_turno_t:'Tarda',
+    p11_responsable:'Responsable',
+    p11_fondo:'💵 Fons inicial caixa', p11_venta:'🧾 Venda total declarada',
+    p11_visa:'💳 VISA / TPV', p11_efectivo:'💵 Efectiu (Venda - VISA)',
+    p11_entregado:'💰 Efectiu lliurat', p11_diferencia:'⚖️ Diferència',
+    p11_proveedores:'📦 Pagaments a proveïdors',
+    p11_añadir_prov:'+ Afegir proveïdor',
+    p11_notas:'📝 Notes / incidències',
+    p11_guardar:'💾 Guardar arqueig', p11_limpiar:'🗑 Netejar', p11_imprimir:'🖨 Imprimir',
+    p11_historico:'📋 Historial d\'arqueigs',
+    p11_editar_banner:'✏️ Editant arqueig ID ',
+    p11_cancelar:'Cancel·lar edició',
+    login_dni:'DNI / NIE', login_password:'Contrasenya', login_btn:'Entrar',
+    login_demo:'DEMO', login_error:'Usuari o contrasenya incorrectes',
+    login_footer:'Gestió de torns per a hostaleria',
+    portal_cuadrante:'📅 Quadrant', portal_contrato:'📄 El meu contracte',
+    portal_actividad:'🗂 La meva activitat', portal_password:'🔒 Contrasenya',
+    portal_cambiar_pass:'Canviar contrasenya',
+    portal_pass_actual:'Contrasenya actual', portal_pass_nueva:'Nova contrasenya',
+    portal_pass_repite:'Repetir nova contrasenya',
+    portal_pass_btn:'🔒 Canviar contrasenya',
+    portal_cerrar:'← Tancar sessió',
+    toast_bienvenida:'✓ Benvinguda/ut ',
+    toast_conectado:'✓ Connectat a base de dades',
+    toast_conectado_default:'✓ Connectat (locals per defecte)',
+    toast_sin_tabla:'⚠ Sense taula locals — mode local',
+    toast_local_no_encontrado:'Local no trobat a BD',
+    toast_actualizando_cuad:'⏳ Actualitzant quadrant existent...',
+    toast_cuad_guardado:'✓ Quadrant guardat a la base de dades',
+    toast_cuad_error:'Error en guardar: ',
+    toast_cargando_equipo:'⏳ Carregant equip...',
+    toast_equipo_cargado:'✓ Equip carregat des de BD ',
+    toast_sin_empleados:'ℹ Sense empleats a BD — usant equip per defecte',
+    toast_error_bd:'⚠ Error carregant BD — usant equip per defecte',
+    toast_fiestas_rotadas:'🔀 Festes rotades — revisa el quadrant',
+    toast_color:'✓ Color aplicat', toast_tema:'✓ Tema aplicat',
+    toast_nombre:'✓ Nom actualitzat', toast_restablecido:'✓ Ajustos restablerts',
+    toast_logo_grande:'⚠ Imatge massa gran (màx 500KB)',
+    toast_logo_ok:'✓ Logo actualitzat', toast_logo_quitado:'✓ Logo eliminat',
+    toast_wa_configura:'⚠ Configura el número del grup a Ajustos → WhatsApp',
+    toast_wa_guarda_bd:'⚠ Primer guarda el quadrant a BD (botó 💾)',
+    toast_empleado_no_encontrado:'Empleat no trobat',
+    toast_wa_sin_telefono:'⚠ Afegeix el telèfon de l\'empleat a Usuaris',
+    toast_wa_sin_telefonos:'⚠ Cap empleat té telèfon configurat a Usuaris',
+    toast_wa_enviando:'📲 Enviant a ',
+    toast_wa_empleados:' empleats...',
+    toast_wa_numeros:'✓ Números guardats',
+    toast_params:'✓ Paràmetres actualitzats',
+    toast_idioma:'✓ Idioma aplicat',
+    toast_arq_invalido:'ID d\'arqueig invàlid',
+    toast_arq_no_encontrado:'Arqueig no trobat',
+    toast_arq_cargado:'✏️ Arqueig carregat per editar',
+    toast_arq_error_carga:'Error carregant arqueig: ',
+    toast_edicion_cancelada:'Edició cancel·lada — formulari net',
+    toast_pass_cambiada:'✓ Contrasenya canviada correctament',
+    toast_usuario_creado:'✓ Usuari creat',
+    toast_password_incorrecta:'La contrasenya actual és incorrecta',
+    err_rellena:'Omple tots els camps',
+    err_pass_min:'La contrasenya ha de tenir almenys 4 caràcters',
+    err_pass_no_coincide:'Les contrasenyes no coincideixen',
+    err_ss_min:'El nº d\'afiliació ha de tenir almenys 4 dígits',
+    err_dni_existe:'Ja existeix un usuari amb aquest DNI',
+    err_crear_usuario:'Error en crear usuari: ',
+    err_cambiar_pass:'Error en canviar la contrasenya. Torna-ho a intentar.',
+    cobertura:'COBERTURA', personas:'pers.',
+    turno_m_label:'Matí', turno_n_label:'Nit', turno_t_label:'Tarda',
+    turno_i_label:'Intermedi', turno_p_label:'Partit', turno_mf_label:'½ Mitja festa',
+    apoyo_operativo:'Horari orientatiu · No computa en cobertura',
+    generado_por:'Generat per', todos_derechos:'Tots els drets reservats',
+    wa_confirm_prefix:'Enviar torn individual per WhatsApp a ',
+    wa_confirm_pax:' empleat(s)?',
+    wa_confirm_sin_tel:'\n\nSense telèfon (no s\'enviaran): ',
+    wa_confirm_nota:'\n\nEl navegador obrirà una finestra per a cada empleat.',
+    horas_short:'h', opt_selecciona:'Selecciona...',
+    lbl_salario_bruto:'Salari brut/mes', lbl_horas_contrato:'Hores contracte/setmana',
+    nominas_proximamente:'Les nòmines digitals estaran disponibles aviat',
+    sin_datos_contrato:'No hi ha dades de contracte disponibles',
+    err_datos_contrato:'No s\'han pogut carregar les dades',
+    audit_sin_registros:'Sense registres',
+    audit_cargando:'⏳ Carregant...',
+    vacaciones:'VACANCES',
+    alert_selecciona_local:'Selecciona un local',
+    alert_selecciona_desc:'Selecciona una descripció de l\'esdeveniment',
+    alert_pon_nombre_refuerzo:'Posa el nom de cada persona de reforç',
+    alert_añade_empleado:'Afegeix almenys un empleat',
+    alert_añade_refuerzo:'Afegeix almenys una persona de reforç',
+    alert_no_datos_imprimir:'No hi ha dades per imprimir',
+    alert_permite_popups:'Permet les finestres emergents per a aquesta pàgina i torna-ho a intentar.',
+    alert_permite_popups2:'Permet les finestres emergents i torna-ho a intentar.',
+    alert_permite_popups3:'Permet les finestres emergents',
+    cuad_generado:'📋 Quadrant generat',
+    cuad_cobertura:'COBERTURA',
+    cuad_lorena_sub:'Horari orientatiu · No computa en cobertura',
+    cuad_eventos:'⚡ Esdeveniments especials de la setmana',
+    cuad_generado_por:'Generat per', cuad_desenvolupado:'Desenvolupat per',
+    cuad_derechos:'Tots els drets reservats',
+  },
+
+  en: {
+    dias: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
+    diasShort: ['MON','TUE','WED','THU','FRI','SAT','SUN'],
+    turno_manana:'Morning', turno_noche:'Night', turno_tarde:'Afternoon',
+    turno_intermedio:'Split', turno_partido:'Split shift', turno_fiesta:'Day off', turno_mediafiesta:'½ Half day off',
+    nav_local:'Venue', nav_turnos:'Shifts', nav_equipo:'Team', nav_asignar:'Assign',
+    nav_eventos:'Events', nav_cuadrante:'Schedule', nav_costes:'Costs',
+    nav_direccion:'Head Office', nav_usuarios:'Users', nav_ajustes:'Settings', nav_arqueo:'Cash',
+    p1_titulo:'Which venue and week are we planning?',
+    p1_sub:'Select the restaurant, week and basic configuration',
+    p1_local:'Venue', p1_semana:'Week starting on',
+    p1_apertura:'Opening time', p1_cierre:'Closing time',
+    p1_diasflojos:'Slow days (suggested day off)',
+    p1_siguiente:'Next → Configure shifts',
+    opt_selecciona_local:'Select venue...',
+    p2_titulo:'Configure venue shifts',
+    p2_sub:'Shifts calculated automatically. Only enable the ones this venue uses.',
+    p2_media_fiesta:'Half day off duration (hours worked)',
+    p2_jornada:'Full shift hours',
+    p2_atras:'← Back', p2_siguiente:'Next → Team',
+    p3_titulo:'Who works at this venue?',
+    p3_sub:'Employees and their usual shift. Hours are calculated automatically.',
+    p3_añadir:'+ Add employee',
+    p3_lorena_sub:'Guide schedule · Not counted in floor coverage · Counted in costs',
+    p3_siguiente:'Next → Assign shifts',
+    p3_horas_auto:'Weekly hours are calculated automatically based on assigned shifts',
+    p3_nombre_empleado:'Employee name',
+    p3_turno_habitual:'Usual shift',
+    p4_titulo:'Assign this week\'s shifts',
+    p4_sub:'Days off assigned automatically based on slow days and minimum staffing. Adjust as needed.',
+    p4_recalcular:'⚡ Recalculate days off', p4_rotar:'🔀 Rotate days (+1)',
+    p4_hint_recalcular:'<strong style="color:var(--green)">Recalculate</strong> — clears current days off and reassigns from scratch based on slow days and minimum staff.',
+    p4_hint_rotar:'<strong style="color:var(--purple)">Rotate days</strong> — shifts each employee\'s day off by +1 day, so they don\'t always rest on the same day.',
+    p4_siguiente:'Next → Events',
+    p5_titulo:'Any special events this week?',
+    p5_sub:'Matches, events, public holidays that need extra staff',
+    p5_no_eventos:'No events added',
+    p5_tipo:'Type', p5_dia:'Day', p5_descripcion:'Description',
+    p5_refuerzo:'Reinforcement staff',
+    p5_añadir_refuerzo:'+ Add reinforcement person',
+    p5_confirmar:'✓ Confirm and add event',
+    p5_generar:'⚡ Generate schedule',
+    p6_ocultar_horas:'👁 Hide hours', p6_mostrar_horas:'👁 Show hours',
+    p6_enviar_grupo:'📲 Send to WA group', p6_wa_todos:'📲 WA to all',
+    p6_imprimir:'🖨 Print', p6_guardar_bd:'💾 Save to DB',
+    p6_ver_costes:'💰 View costs', p6_nueva_semana:'+ New week',
+    p6_editar:'← Edit',
+    p7_titulo:'💰 Staff costs',
+    p7_sub:'Schedule · Gross salary + Social Security + Real extras',
+    p7_atras:'← Schedule', p7_dir_gral:'📋 Head Office',
+    p8_titulo:'📋 Head Office',
+    p8_sub:'Weekly summary of all venues',
+    p8_actualizar:'🔄 Refresh',
+    p8_imprimir:'🖨 Print summary', p8_arqueo:'💰 Cash register',
+    p8_audit_titulo:'🗂 Activity log',
+    p9_titulo:'👥 User Management',
+    p9_sub:'Create and manage staff access',
+    p9_nuevo_usuario:'+ New user',
+    p9_nombre:'Full name', p9_dni:'ID number',
+    p9_ss:'Social Security affiliation number', p9_ss_hint:'Last 4 digits will be the initial password',
+    p9_rol:'App role', p9_local:'Venue',
+    p9_contacto:'Contact details (optional)',
+    p9_telefono:'📱 Phone / WhatsApp', p9_email:'✉️ Email', p9_direccion:'🏠 Address',
+    p9_crear:'🔒 Create user',
+    p9_lista:'Registered users', p9_actualizar:'🔄 Refresh list',
+    p10_titulo:'🎨 Customisation',
+    p10_sub:'Adapt the look of RelojTurnos to your business',
+    p10_color:'✨ Main colour', p10_color_custom:'Custom:',
+    p10_tema:'🌙 Theme', p10_tema_dark:'🌑 Dark', p10_tema_light:'☀️ Light', p10_tema_navy:'⚓ Navy',
+    p10_logo:'🖼️ Company logo', p10_logo_sub:'Header, login and printed documents',
+    p10_logo_subir:'📁 Upload image', p10_logo_quitar:'🗑',
+    p10_empresa:'🏢 Company name',
+    p10_preview:'👁 Preview',
+    p10_costes_titulo:'💰 Cost parameters', p10_costes_sub:'Affect all payroll and SS calculations',
+    p10_ss_pct:'% Employer SS', p10_divisor:'Monthly divisor',
+    p10_ss_hint2:'Standard hospitality: 39%', p10_divisor_hint:'Standard: 4.33',
+    p10_wa_titulo:'📲 WhatsApp groups', p10_wa_sub:'WhatsApp group number for each venue',
+    p10_wa_hint:'💡 Individual employee phones are set in User Management',
+    p10_idioma:'🌍 Language',
+    p10_nota:'ⓘ Changes are saved to your browser instantly.',
+    p11_titulo:'💰 Cash Register',
+    p11_sub:'End of shift report',
+    p11_fecha:'📅 Date', p11_turno:'Shift',
+    p11_turno_m:'Morning', p11_turno_n:'Night', p11_turno_t:'Afternoon',
+    p11_responsable:'Responsible',
+    p11_fondo:'💵 Opening float', p11_venta:'🧾 Total declared sales',
+    p11_visa:'💳 Card / POS', p11_efectivo:'💵 Cash (Sales - Card)',
+    p11_entregado:'💰 Cash handed over', p11_diferencia:'⚖️ Difference',
+    p11_proveedores:'📦 Supplier payments',
+    p11_añadir_prov:'+ Add supplier',
+    p11_notas:'📝 Notes / incidents',
+    p11_guardar:'💾 Save', p11_limpiar:'🗑 Clear', p11_imprimir:'🖨 Print',
+    p11_historico:'📋 Cash register history',
+    p11_editar_banner:'✏️ Editing cash register ID ',
+    p11_cancelar:'Cancel edit',
+    login_dni:'ID number', login_password:'Password', login_btn:'Log in',
+    login_demo:'DEMO', login_error:'Incorrect username or password',
+    login_footer:'Shift management for hospitality',
+    portal_cuadrante:'📅 Schedule', portal_contrato:'📄 My contract',
+    portal_actividad:'🗂 My activity', portal_password:'🔒 Password',
+    portal_cambiar_pass:'Change password',
+    portal_pass_actual:'Current password', portal_pass_nueva:'New password',
+    portal_pass_repite:'Repeat new password',
+    portal_pass_btn:'🔒 Change password',
+    portal_cerrar:'← Log out',
+    toast_bienvenida:'✓ Welcome ',
+    toast_conectado:'✓ Connected to database',
+    toast_conectado_default:'✓ Connected (default venues)',
+    toast_sin_tabla:'⚠ No venues table — local mode',
+    toast_local_no_encontrado:'Venue not found in DB',
+    toast_actualizando_cuad:'⏳ Updating existing schedule...',
+    toast_cuad_guardado:'✓ Schedule saved to database',
+    toast_cuad_error:'Error saving: ',
+    toast_cargando_equipo:'⏳ Loading team...',
+    toast_equipo_cargado:'✓ Team loaded from DB ',
+    toast_sin_empleados:'ℹ No employees in DB — using default team',
+    toast_error_bd:'⚠ Error loading DB — using default team',
+    toast_fiestas_rotadas:'🔀 Days off rotated — review the schedule',
+    toast_color:'✓ Colour applied', toast_tema:'✓ Theme applied',
+    toast_nombre:'✓ Name updated', toast_restablecido:'✓ Settings reset',
+    toast_logo_grande:'⚠ Image too large (max 500KB)',
+    toast_logo_ok:'✓ Logo updated', toast_logo_quitado:'✓ Logo removed',
+    toast_wa_configura:'⚠ Set the group number in Settings → WhatsApp',
+    toast_wa_guarda_bd:'⚠ First save the schedule to DB (💾 button)',
+    toast_empleado_no_encontrado:'Employee not found',
+    toast_wa_sin_telefono:'⚠ Add employee phone in User Management',
+    toast_wa_sin_telefonos:'⚠ No employees have a phone configured',
+    toast_wa_enviando:'📲 Sending to ',
+    toast_wa_empleados:' employees...',
+    toast_wa_numeros:'✓ Numbers saved',
+    toast_params:'✓ Parameters updated',
+    toast_idioma:'✓ Language applied',
+    toast_arq_invalido:'Invalid cash register ID',
+    toast_arq_no_encontrado:'Cash register not found',
+    toast_arq_cargado:'✏️ Cash register loaded for editing',
+    toast_arq_error_carga:'Error loading cash register: ',
+    toast_edicion_cancelada:'Edit cancelled — form cleared',
+    toast_pass_cambiada:'✓ Password changed successfully',
+    toast_usuario_creado:'✓ User created',
+    toast_password_incorrecta:'Current password is incorrect',
+    err_rellena:'Please fill in all fields',
+    err_pass_min:'Password must be at least 4 characters',
+    err_pass_no_coincide:'Passwords do not match',
+    err_ss_min:'Affiliation number must be at least 4 digits',
+    err_dni_existe:'A user with that ID already exists',
+    err_crear_usuario:'Error creating user: ',
+    err_cambiar_pass:'Error changing password. Please try again.',
+    cobertura:'COVERAGE', personas:'staff',
+    turno_m_label:'Morning', turno_n_label:'Night', turno_t_label:'Afternoon',
+    turno_i_label:'Split', turno_p_label:'Split shift', turno_mf_label:'½ Half day off',
+    apoyo_operativo:'Guide schedule · Not counted in floor coverage',
+    generado_por:'Generated by', todos_derechos:'All rights reserved',
+    wa_confirm_prefix:'Send individual WhatsApp to ',
+    wa_confirm_pax:' employee(s)?',
+    wa_confirm_sin_tel:'\n\nNo phone (will not be sent): ',
+    wa_confirm_nota:'\n\nThe browser will open one window per employee.',
+    horas_short:'h', opt_selecciona:'Select...',
+    lbl_salario_bruto:'Gross salary/month', lbl_horas_contrato:'Contract hours/week',
+    nominas_proximamente:'Digital payslips coming soon',
+    sin_datos_contrato:'No contract data available',
+    err_datos_contrato:'Could not load data',
+    audit_sin_registros:'No records',
+    audit_cargando:'⏳ Loading...',
+    vacaciones:'ON LEAVE',
+    alert_selecciona_local:'Select a venue',
+    alert_selecciona_desc:'Select an event description',
+    alert_pon_nombre_refuerzo:'Enter the name of each reinforcement person',
+    alert_añade_empleado:'Add at least one employee',
+    alert_añade_refuerzo:'Add at least one reinforcement person',
+    alert_no_datos_imprimir:'No data to print',
+    alert_permite_popups:'Allow pop-ups for this page and try again.',
+    alert_permite_popups2:'Allow pop-ups and try again.',
+    alert_permite_popups3:'Allow pop-ups',
+    cuad_generado:'📋 Generated schedule',
+    cuad_cobertura:'COVERAGE',
+    cuad_lorena_sub:'Guide schedule · Not counted in floor coverage',
+    cuad_eventos:'⚡ Special events this week',
+    cuad_generado_por:'Generated by', cuad_desarrollado:'Developed by',
+    cuad_derechos:'All rights reserved',
+  }
 };
 
-function aplicarIdioma(lang){
-  var l = IDIOMAS[lang];
-  if(!l) return;
+// Función de traducción — t('clave')
+function t(key){ return (I18N[LANG_ACTUAL]||I18N.es)[key] || (I18N.es[key] || key); }
+
+// Aplica todas las traducciones al DOM via data-i18n
+function aplicarTraducciones(){
+  var l = I18N[LANG_ACTUAL] || I18N.es;
+  // Actualizar arrays globales
   DIAS = l.dias;
   DIAS_SHORT = l.diasShort;
+
+  // Todos los elementos con data-i18n="clave"
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key = el.getAttribute('data-i18n');
+    var val = t(key);
+    if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'){
+      el.placeholder = val;
+    } else if(el.tagName === 'OPTION'){
+      el.textContent = val;
+    } else {
+      el.innerHTML = val;
+    }
+  });
+
+  // data-i18n-placeholder
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+}
+
+function aplicarIdioma(lang){
+  if(!I18N[lang]) return;
+  LANG_ACTUAL = lang;
   localStorage.setItem('rt_lang', lang);
+  aplicarTraducciones();
+  // Actualizar botones activos
   ['es','ca','en'].forEach(function(n){
     var btn = document.getElementById('btn-lang-'+n);
     if(btn) btn.className = 'btn btn-sm '+(n===lang?'btn-primary':'btn-ghost');
   });
-  showToast('✓ Idioma aplicado','green');
+  showToast(t('toast_idioma'),'green');
+  // Re-render cuadrante si está activo
+  var sc6 = document.getElementById('screen6');
+  if(sc6 && sc6.classList.contains('active') && empleados.length){
+    generarCuadrante();
+  }
 }
 
 function cargarIdiomaGuardado(){
-  var lang = localStorage.getItem('rt_lang');
-  if(lang && IDIOMAS[lang]) aplicarIdioma(lang);
+  var lang = localStorage.getItem('rt_lang') || 'es';
+  LANG_ACTUAL = lang;
+  var l = I18N[lang] || I18N.es;
+  DIAS = l.dias;
+  DIAS_SHORT = l.diasShort;
+  aplicarTraducciones();
+  ['es','ca','en'].forEach(function(n){
+    var btn = document.getElementById('btn-lang-'+n);
+    if(btn) btn.className = 'btn btn-sm '+(n===lang?'btn-primary':'btn-ghost');
+  });
 }
 
 // ========== INIT ==========
@@ -4042,10 +4704,10 @@ var arqEditId = null; // ID del arqueo que se está editando
 async function editarArqueo(id){
   // Cargar datos del arqueo desde BD — forzar id a entero
   id = parseInt(id);
-  if(!id){ showToast('ID de arqueo inválido','orange'); return; }
+  if(!id){ showToast(t('toast_arq_invalido'),'orange'); return; }
   try{
     var rows = await sbGet('arqueos','id=eq.'+id);
-    if(!rows||!rows.length){ showToast('Arqueo no encontrado','orange'); return; }
+    if(!rows||!rows.length){ showToast(t('toast_arq_no_encontrado'),'orange'); return; }
     var r = rows[0];
     arqEditId = r.id;
 
@@ -4083,9 +4745,9 @@ async function editarArqueo(id){
 
     // Scroll al top del formulario
     window.scrollTo(0,0);
-    showToast('✏️ Arqueo cargado para edición','orange');
+    showToast(t('toast_arq_cargado'),'orange');
   }catch(e){
-    showToast('Error cargando arqueo: '+e.message,'orange');
+    showToast(t('toast_arq_error_carga')+e.message,'orange');
   }
 }
 
@@ -4106,7 +4768,7 @@ function limpiarArqueo(){
   if(okEl)  okEl.style.display='none';
   var banner = document.getElementById('arq-edit-banner');
   if(banner) banner.style.display='none';
-  if(eraEdicion) showToast('Edición cancelada — formulario limpio','orange');
+  if(eraEdicion) showToast(t('toast_edicion_cancelada'),'orange');
 }
 
 function imprimirArqueo(){
@@ -4173,7 +4835,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">💰 Arqueo de Caja</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · Turno '+TURNOS[turno]+' · Cierre '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · Responsable: <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.2</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.3</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">Efectivo inicial</div>'
