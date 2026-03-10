@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v5.3 – Grupo El Reloj</title>
+<title>RelojTurnos v5.5 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.4</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.5</span></div>
   </div>
 </div>
 
@@ -1084,7 +1084,7 @@ var AUDIT_COLORES = {
 var LOCALES_NOMBRE = {1:'La Cala', 2:"Roto's Burguer"};
 
 function renderAuditRows(rows){
-  if(!rows||!rows.length) return '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">Sin registros</div>';
+  if(!rows||!rows.length) return '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">'+t('audit_sin_registros')+'</div>';
   return rows.map(function(r){
     var icono = AUDIT_ICONOS[r.accion] || '📋';
     var col   = AUDIT_COLORES[r.accion] || 'var(--muted)';
@@ -1110,7 +1110,7 @@ function renderAuditRows(rows){
 async function cargarAuditLog(){
   var el = document.getElementById('director-audit');
   if(!el) return;
-  el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">⏳ Cargando...</div>';
+  el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">'+t('audit_cargando')+'</div>';
   try{
     var filtros = 'order=created_at.desc&limit=50';
     var fLocal  = (document.getElementById('audit-filtro-local')||{}).value;
@@ -1127,13 +1127,13 @@ async function cargarAuditLog(){
 async function cargarMiActividad(){
   var el = document.getElementById('portal-actividad');
   if(!el||!currentUser) return;
-  el.innerHTML = '<div style="padding:16px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">🗂 Mi actividad reciente</div>'
-    +'<div id="mi-actividad-list"><div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">⏳ Cargando...</div></div></div>';
+  el.innerHTML = '<div style="padding:16px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">'+t('portal_mi_actividad')+'</div>'
+    +'<div id="mi-actividad-list"><div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">'+t('audit_cargando')+'</div></div></div>';
   try{
     var rows = await sbGet('audit_log','usuario_dni=eq.'+encodeURIComponent(currentUser.dni)+'&order=created_at.desc&limit=30');
     document.getElementById('mi-actividad-list').innerHTML = renderAuditRows(rows);
   }catch(e){
-    document.getElementById('mi-actividad-list').innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:14px">⚠ Error cargando actividad</div>';
+    document.getElementById('mi-actividad-list').innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:14px">⚠ '+t('err_datos_contrato')+'</div>';
   }
 }
 
@@ -1292,17 +1292,17 @@ function portalTab(tab){
 
 async function cargarPortalCuadrante(user){
   var el = document.getElementById('portal-cuadrante');
-  el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">⏳ Cargando cuadrante...</div>';
+  el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">'+t('portal_cargando_cuad')+'</div>';
   try{
     // Cargar cuadrante más reciente del local
     var cuads = await sbGet('cuadrantes','local_id=eq.'+user.local_id+'&order=id.desc&limit=1');
-    if(!cuads.length){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay cuadrante disponible esta semana</div>'; return; }
+    if(!cuads.length){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">'+t('portal_no_cuad')+'</div>'; return; }
     var cuad = cuads[0];
     var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id);
     var emps = await sbGet('empleados','local_id=eq.'+user.local_id+'&activo=eq.true');
     renderPortalCuadrante(el, cuad, emps, turnos, user.empleado_id);
   }catch(e){
-    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">No se pudo cargar el cuadrante</div>';
+    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">'+t('portal_error_cuad')+'</div>';
   }
 }
 
@@ -1313,7 +1313,7 @@ function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
 
   var html = '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-align:center">'+cuad.semana_label+'</div>';
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">';
-  html += '<thead><tr><th style="padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);color:var(--muted)">EMPLEADO</th>';
+  html += '<thead><tr><th style="padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);color:var(--muted)">'+t('col_empleado')+'</th>';
   DIAS_S.forEach(function(d){ html += '<th style="padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);color:var(--muted)">'+d+'</th>'; });
   html += '</tr></thead><tbody>';
 
@@ -1346,17 +1346,17 @@ async function cargarPortalContrato(user){
     var sal = sals.length ? sals[0] : null;
     var emps = await sbGet('empleados','id=eq.'+user.empleado_id);
     var emp = emps.length ? emps[0] : null;
-    if(!sal && !emp){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay datos de contrato disponibles</div>'; return; }
+    if(!sal && !emp){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">'+t('portal_no_contrato')+'</div>'; return; }
     el.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px">'
-      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">📄 Mis datos de contrato</div>'
-      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Nombre:</span> <strong>'+emp.nombre+'</strong></div>':'')
-      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Rol:</span> <strong>'+emp.rol+'</strong></div>':'')
-      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Salario bruto/mes:</span> <strong style="color:var(--green)">'+sal.bruto_mes+' €</strong></div>':'')
-      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">Horas contrato/semana:</span> <strong>'+sal.horas_contrato+'h</strong></div>':'')
-      +'<div style="margin-top:14px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px">Las nóminas digitales estarán disponibles próximamente</div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">'+t('portal_mis_datos')+'</div>'
+      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_nombre')+'</span> <strong>'+emp.nombre+'</strong></div>':'')
+      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_rol_lbl')+'</span> <strong>'+emp.rol+'</strong></div>':'')
+      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_sal_bruto')+'</span> <strong style="color:var(--green)">'+sal.bruto_mes+' €</strong></div>':'')
+      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_h_contrato')+'</span> <strong>'+sal.horas_contrato+'h</strong></div>':'')
+      +'<div style="margin-top:14px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px">'+t('nominas_proximamente')+'</div>'
       +'</div>';
   }catch(e){
-    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">No se pudieron cargar los datos</div>';
+    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">'+t('portal_error_contrato')+'</div>';
   }
 }
 
@@ -1712,7 +1712,7 @@ function toggleTurno(id){
 function renderTurnosConfigGrid(){
   var ap=document.getElementById('hora-apertura').value;
   var ci=document.getElementById('hora-cierre').value;
-  document.getElementById('info-box-turnos').innerHTML='&#10003; Apertura <strong>'+ap+'</strong> &middot; Cierre <strong>'+ci+'</strong> &middot; Activa solo los turnos que usa este local.';
+  document.getElementById('info-box-turnos').innerHTML='&#10003; '+t('info_apertura')+' <strong>'+ap+'</strong> &middot; '+t('info_cierre')+' <strong>'+ci+'</strong> &middot; '+t('info_activa_turnos');
   var grid=document.getElementById('turnos-config-grid');grid.innerHTML='';
   turnosConfig.forEach(function(t){
     var opts=function(def){return Array.from({length:48},function(_,i){
@@ -1723,20 +1723,20 @@ function renderTurnosConfigGrid(){
     var dis=t.active?'':'opacity:0.45';
     var timeRow = t.esPartido
       ? '<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
-        +'<div><label>Tramo 1 desde</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
-        +'<div><label>Tramo 1 hasta</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
-        +'<div><label>Tramo 2 desde</label><select onchange="updTC(\''+t.id+'\',\'ini2\',this.value)">'+opts(t.ini2||'20:00')+'</select></div>'
-        +'<div><label>Tramo 2 hasta</label><select onchange="updTC(\''+t.id+'\',\'fin2\',this.value)">'+opts(t.fin2||'23:00')+'</select></div>'
+        +'<div><label>'+t('tc_tramo1_desde')+'</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
+        +'<div><label>'+t('tc_tramo1_hasta')+'</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
+        +'<div><label>'+t('tc_tramo2_desde')+'</label><select onchange="updTC(\''+t.id+'\',\'ini2\',this.value)">'+opts(t.ini2||'20:00')+'</select></div>'
+        +'<div><label>'+t('tc_tramo2_hasta')+'</label><select onchange="updTC(\''+t.id+'\',\'fin2\',this.value)">'+opts(t.fin2||'23:00')+'</select></div>'
         +'</div>'
       : '<div class="turno-config-row" style="'+(t.active?'':'pointer-events:none;opacity:0.5')+'">'
-        +'<div><label>Desde</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
-        +'<div><label>Hasta</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
+        +'<div><label>'+t('tc_desde')+'</label><select onchange="updTC(\''+t.id+'\',\'ini\',this.value)">'+opts(t.ini)+'</select></div>'
+        +'<div><label>'+t('tc_hasta')+'</label><select onchange="updTC(\''+t.id+'\',\'fin\',this.value)">'+opts(t.fin)+'</select></div>'
         +'</div>';
     grid.innerHTML+='<div class="turno-config-item" style="'+dis+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">'
-      +'<div class="turno-config-label" style="color:'+t.color+';margin-bottom:0">'+t.emoji+' Turno '+t.nome+' <small style="color:var(--muted);font-weight:400">'+t.ini+'\u2013'+t.fin+(t.esPartido&&t.ini2?' / '+t.ini2+'\u2013'+(t.fin2||''):'')+'</small></div>'
+      +'<div class="turno-config-label" style="color:'+t.color+';margin-bottom:0">'+t.emoji+' '+t('tc_turno')+' '+t.nome+' <small style="color:var(--muted);font-weight:400">'+t.ini+'\u2013'+t.fin+(t.esPartido&&t.ini2?' / '+t.ini2+'\u2013'+(t.fin2||''):'')+'</small></div>'
       +'<button onclick="toggleTurno(\''+t.id+'\')" class="toggle-btn '+(t.active?'on':'')+'">'
-      +'<div class="tog-dot"></div><span>'+(t.active?'Activo':'Inactivo')+'</span></button></div>'
+      +'<div class="tog-dot"></div><span>'+(t.active?t('tc_activo'):t('tc_inactivo'))+'</span></button></div>'
       +timeRow
       +'</div>';
   });
@@ -1770,8 +1770,8 @@ function removeEmpleado(id){empleados=empleados.filter(function(e){return e.id!=
 function renderLorenaHorario(){
   var cont = document.getElementById('lorena-horario-list');
   if(!cont) return;
-  var DIAS_S = ['L','M','X','J','V','S','D'];
-  var DIAS_L = ['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
+  var DIAS_S = DIAS_SHORT;
+  var DIAS_L = DIAS;
   var TIPO_COLOR = {fiesta:'#ff6b6b', seguido:'var(--green)', partido:'#ffa040', apoyo:'#6b8fff'};
   var TIPO_ICON  = {fiesta:'\ud83c\udfd6', seguido:'\u23f0', partido:'\u2702\ufe0f', apoyo:'\ud83e\udd1d'};
   var TIPOS = ['fiesta','seguido','partido','apoyo'];
@@ -1815,7 +1815,7 @@ function renderLorenaHorario(){
     html += '<td style="padding:5px 6px"><span style="font-weight:700;font-size:13px;color:'+col+'">'+DIAS_S[idx]+'</span><span style="font-size:13px;color:var(--muted);margin-left:5px">'+DIAS_L[idx]+'</span></td>';
     html += '<td style="padding:3px 6px"><select id="ltipo'+idx+'" onchange="updLorena('+idx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 4px;color:'+col+';font-size:10px;font-weight:600">'+tipoOpts+'</select></td>';
     if(esFiesta){
-      html += '<td colspan="4" style="padding:3px 6px;text-align:center;color:#ff6b6b;font-size:10px">\ud83c\udfd6 Día libre</td>';
+      html += '<td colspan="4" style="padding:3px 6px;text-align:center;color:#ff6b6b;font-size:10px">🏖 '+t('turno_fiesta')+'</td>';
     } else {
       html += '<td style="padding:3px 4px;text-align:center">'+sel('lini'+idx, d.ini||'12:00')+'</td>';
       html += '<td style="padding:3px 4px;text-align:center">'+sel('lfin'+idx, d.fin||'21:00')+'</td>';
@@ -1923,7 +1923,7 @@ function renderEmpleados(){
     var allNames = bdNombres.length ? bdNombres : nombresDisp;
     // Asegurar que el nombre actual esté en la lista
     if(emp.nombre && allNames.indexOf(emp.nombre)<0) allNames = [emp.nombre].concat(allNames);
-    var nameOpts = '<option value="">— Seleccionar empleado —</option>'
+    var nameOpts = '<option value="">'+t('sel_empleado')+'</option>'
       + allNames.map(function(n){
           return '<option value="'+n+'"'+(emp.nombre===n?' selected':'')+'>'+n+'</option>';
         }).join('');
@@ -1934,17 +1934,17 @@ function renderEmpleados(){
       +'<select class="emp-name-input" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:13px;font-weight:600" onchange="updNom('+emp.id+',this.value)">'+nameOpts+'</select>'
       +'<button class="remove-btn" onclick="removeEmpleado('+emp.id+')">&#10005;</button></div>'
       +'<div class="form-row">'
-      +'<div class="form-group"><label>Rol</label><select onchange="updEmp('+emp.id+',\'rol\',this.value)">'+rOpts+'</select></div>'
-      +'<div class="form-group"><label>Turno habitual</label><select onchange="updEmp('+emp.id+',\'turno\',this.value)">'+tOpts+'</select></div>'
-      +'<div class="form-group"><label>D\u00edas fiesta / semana</label>'
+      +'<div class="form-group"><label>'+t('lbl_rol')+'</label><select onchange="updEmp('+emp.id+',\'rol\',this.value)">'+rOpts+'</select></div>'
+      +'<div class="form-group"><label>'+t('lbl_turno_hab')+'</label><select onchange="updEmp('+emp.id+',\'turno\',this.value)">'+tOpts+'</select></div>'
+      +'<div class="form-group"><label>'+t('lbl_dias_fiesta')+'</label>'
       +'<select class="inp-sm" onchange="updEmp('+emp.id+',\'diasFiesta\',this.value)">'
-      +'<option value="1"'+(emp.diasFiesta==1?' selected':'')+'>1 d\u00eda</option>'
-      +'<option value="1.5"'+(!emp.diasFiesta||emp.diasFiesta==1.5?' selected':'')+'>1,5 d\u00edas (recomendado)</option>'
-      +'<option value="2"'+(emp.diasFiesta==2?' selected':'')+'>2 d\u00edas</option>'
-      +'<option value="3"'+(emp.diasFiesta==3?' selected':'')+'>3 d\u00edas</option>'
+      +'<option value="1"'+(emp.diasFiesta==1?' selected':'')+'>'+t('opt_1dia')+'</option>'
+      +'<option value="1.5"'+(!emp.diasFiesta||emp.diasFiesta==1.5?' selected':'')+'>'+t('opt_15dias')+'</option>'
+      +'<option value="2"'+(emp.diasFiesta==2?' selected':'')+'>'+t('opt_2dias')+'</option>'
+      +'<option value="3"'+(emp.diasFiesta==3?' selected':'')+'>'+t('opt_3dias')+'</option>'
       +'</select></div>'
       +'</div>'
-      +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; Las horas semanales se calculan autom\u00e1ticamente seg\u00fan los turnos asignados</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; '+t('p3_horas_auto')+'</div>'
       +'</div>';
   });
 }
@@ -1979,7 +1979,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v5.3 ==========
+// ========== LÓGICA FIESTAS v5.5 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2433,7 +2433,7 @@ function generarCuadrante(){
     return'<tr>'
       +'<td class="emp-name"><div style="display:flex;align-items:center;gap:6px">'
       +'<div style="width:24px;height:24px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">'+init+'</div>'
-      +(emp.nombre||'Empleado '+emp.id)
+      +(emp.nombre||t('kpi_empleados')+' '+emp.id)
       +'<span onclick="enviarTurnoWA('+emp.id+')" title="Enviar turno por WhatsApp" style="cursor:pointer;font-size:13px;opacity:0.75;flex-shrink:0" class="wa-btn no-print">📲</span>'
       +'</div></td>'
       +'<td style="font-size:13px;color:var(--muted)">'+emp.rol+'</td>'
@@ -2453,15 +2453,14 @@ function generarCuadrante(){
         +'<td class="emp-name"><div style="display:flex;align-items:center;gap:7px">'
         +'<div style="width:24px;height:24px;border-radius:50%;background:#ffd04020;color:#ffd040;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">\u26a1</div>'
         +(p.nombre||'REFUERZO')+'</div></td>'
-        +'<td style="font-size:10px;color:#ffd040">'+ev.tipo+' Evento</td>'
-        +cells
+        +'<td style="font-size:10px;color:#ffd040">'+ev.tipo+' Evento</td>'        +cells
         +'<td class="col-horas" style="font-weight:700;color:#ffd040;font-size:12px">'+horas.toFixed(1)+'h</td></tr>';
     });
   });
 
   var cobRow=cob.map(function(c){
     var cl=c>=minP?'cob-ok':c===minP-1?'cob-warn':'cob-low';
-    return'<td style="border:1px solid var(--border);padding:5px;text-align:center"><span class="'+cl+'">'+c+'</span><br><span style="font-size:9px;color:var(--muted)">pers.</span></td>';
+    return'<td style="border:1px solid var(--border);padding:5px;text-align:center"><span class="'+cl+'">'+c+'</span><br><span style="font-size:9px;color:var(--muted)">'+t('personas')+'</span></td>';
   }).join('');
 
   var eventosHtml='';
@@ -2481,16 +2480,16 @@ function generarCuadrante(){
     +'<div style="margin-bottom:16px"><div class="card-title">'+t('cuad_generado')+'</div>'
     +'<div class="card-sub">'+local+' \u00b7 '+semana+' \u00b7 '+ap+' \u2013 '+ci+'</div></div>'
     +'<div class="stats-grid">'
-    +'<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">Empleados</div></div>'
-    +'<div class="stat-card"><div class="stat-val">'+totalH.toFixed(0)+'h</div><div class="stat-label">Horas totales</div></div>'
-    +'<div class="stat-card"><div class="stat-val">'+Math.min.apply(null,cob)+'\u2013'+Math.max.apply(null,cob)+'</div><div class="stat-label">Cobertura/d\u00eda</div></div>'
-    +'<div class="stat-card"><div class="stat-val">'+numEventos+'</div><div class="stat-label">Eventos</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">'+t('kpi_empleados')+'</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+totalH.toFixed(0)+'h</div><div class="stat-label">'+t('kpi_horas_tot')+'</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+Math.min.apply(null,cob)+'\u2013'+Math.max.apply(null,cob)+'</div><div class="stat-label">'+t('kpi_cob_dia')+'</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+numEventos+'</div><div class="stat-label">'+t('kpi_eventos')+'</div></div>'
     +'</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-bottom:6px;display:none" class="mobile-scroll-hint">← Desliza para ver toda la tabla →</div>'
     +'<div class="cuadrante-scroll-wrap" style="overflow-x:auto"><table class="schedule-table">'
-    +'<thead><tr><th class="emp-col">EMPLEADO</th><th>ROL</th>'
+    +'<thead><tr><th class="emp-col">'+t('col_empleado')+'</th><th>'+t('col_rol')+'</th>'
     +DIAS_SHORT.map(function(d,i){return'<th>'+d+(epd[i].length?' '+epd[i].map(function(e){return e.tipo;}).join(''):'')+'</th>';}).join('')
-    +'<th class="col-horas">HORAS</th></tr></thead>'
+    +'<th class="col-horas">'+t('col_horas')+'</th></tr></thead>'
     +'<tbody>'+tbodyRows+refRows+'</tbody>'
     +'<tfoot><tr style="background:var(--darker)">'
     +'<td colspan="2" style="padding:7px;font-weight:700;font-size:10px;color:var(--muted);border:1px solid var(--border)">'+t('cuad_cobertura')+'</td>'
@@ -2545,7 +2544,7 @@ function generarCuadrante(){
     mobileHtml+='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">';
     mobileHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
     mobileHtml+='<div style="width:32px;height:32px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">'+init+'</div>';
-    mobileHtml+='<div><div style="font-weight:700;font-size:13px;color:'+color+'">'+( emp.nombre||'Emp '+emp.id)+'</div><div style="font-size:10px;color:var(--muted)">'+emp.rol+'</div></div>';
+    mobileHtml+='<div><div style="font-weight:700;font-size:13px;color:'+color+'">'+( emp.nombre||t('kpi_empleados')+' '+emp.id)+'</div><div style="font-size:10px;color:var(--muted)">'+emp.rol+'</div></div>';
     mobileHtml+='</div>';
     mobileHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
     DIAS_SHORT.forEach(function(dLabel,di){
@@ -2564,7 +2563,7 @@ function generarCuadrante(){
 
   document.getElementById('cuadrante-output').innerHTML=html+mobileHtml;
   mostrarHoras=true;
-  var btn=document.getElementById('btn-toggle-horas');if(btn)btn.textContent='\ud83d\udc41 Ocultar horas';
+  var btn=document.getElementById('btn-toggle-horas');if(btn)btn.textContent=t('p6_ocultar_horas');
   goStep(6);
 }
 
@@ -2767,11 +2766,11 @@ function renderExtras(){
   var cont=document.getElementById('extras-lista');
   if(!cont) return;
   if(!extrasDia.length){
-    cont.innerHTML='<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;background:var(--darker);border-radius:8px;border:1px dashed var(--border)">Sin extras registradas esta semana</div>';
+    cont.innerHTML='<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;background:var(--darker);border-radius:8px;border:1px dashed var(--border)">'+t('sin_extras')+'</div>';
     renderResumenExtras(); return;
   }
   var empOpts=empleados.map(function(e){
-    return'<option value="'+e.id+'">'+(e.nombre||'Emp '+e.id)+'</option>';
+    return'<option value="'+e.id+'">'+(e.nombre||t('lbl_empleado')+' '+e.id)+'</option>';
   }).join('');
   var diaOpts=DIAS.map(function(d,i){return'<option value="'+i+'">'+d+'</option>';}).join('');
 
@@ -2788,18 +2787,18 @@ function renderExtras(){
     var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
     return'<div style="background:var(--darker);border:1px solid #4a2800;border-radius:9px;padding:13px;margin-bottom:9px">'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
-      +'<div><label>Empleado</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'empId\',this.value)">'+empOptsEx+'</select></div>'
-      +'<div><label>Día</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'dia\',this.value)">'+diaOptsEx+'</select></div>'
+      +'<div><label>'+t('lbl_empleado')+'</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'empId\',this.value)">'+empOptsEx+'</select></div>'
+      +'<div><label>'+t('lbl_dia')+'</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'dia\',this.value)">'+diaOptsEx+'</select></div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
-      +'<div><label>Horas extra</label><input type="number" min="0.5" step="0.5" placeholder="ej: 2" value="'+ex.horas+'" oninput="updExtra('+ex.id+',\'horas\',this.value)" class="inp-sm"></div>'
-      +'<div><label>€ / hora extra</label><input type="number" min="0" step="0.5" placeholder="ej: 10" value="'+ex.precioHora+'" oninput="updExtra('+ex.id+',\'precioHora\',this.value)" class="inp-sm"></div>'
+      +'<div><label>'+t('lbl_h_extra')+'</label><input type="number" min="0.5" step="0.5" placeholder="ej: 2" value="'+ex.horas+'" oninput="updExtra('+ex.id+',\'horas\',this.value)" class="inp-sm"></div>'
+      +'<div><label>'+t('lbl_eur_h')+'</label><input type="number" min="0" step="0.5" placeholder="ej: 10" value="'+ex.precioHora+'" oninput="updExtra('+ex.id+',\'precioHora\',this.value)" class="inp-sm"></div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:end">'
-      +'<div><label>Motivo</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'motivo\',this.value)">'+motivoOpts+'</select></div>'
+      +'<div><label>'+t('lbl_motivo')+'</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'motivo\',this.value)">'+motivoOpts+'</select></div>'
       +'<button class="remove-btn" onclick="removeExtra('+ex.id+')" style="margin-bottom:2px;font-size:18px">&#10005;</button>'
       +'</div>'
-      +(coste>0?'<div style="margin-top:10px;padding:8px 12px;background:#2d1a00;border-radius:6px;font-size:13px;font-weight:700;color:var(--orange)">⚡ Coste extra: '+coste.toFixed(2)+' €</div>':'')
+      +(coste>0?'<div style="margin-top:10px;padding:8px 12px;background:#2d1a00;border-radius:6px;font-size:13px;font-weight:700;color:var(--orange)">'+t('coste_extra_lbl')+' '+coste.toFixed(2)+' €</div>':'')
       +'</div>';
   }).join('');
   renderResumenExtras();
@@ -2811,8 +2810,8 @@ function renderResumenExtras(){
   var totH=extrasDia.reduce(function(s,e){return s+(parseFloat(e.horas)||0);},0);
   var totE=extrasDia.reduce(function(s,e){return s+(parseFloat(e.horas)||0)*(parseFloat(e.precioHora)||0);},0);
   cont.innerHTML='<div style="background:#2d1a00;border:1px solid var(--orange);border-radius:8px;padding:12px 16px;display:flex;gap:24px;flex-wrap:wrap">'
-    +'<div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+totH.toFixed(1)+'h</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Total h. extra</div></div>'
-    +'<div><div style="font-size:20px;font-weight:700;color:var(--accent)">'+totE.toFixed(2)+' €</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Coste extras semana</div></div>'
+    +'<div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+totH.toFixed(1)+'h</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">'+t('h_extra_tot')+'</div></div>'
+    +'<div><div style="font-size:20px;font-weight:700;color:var(--accent)">'+totE.toFixed(2)+' €</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">'+t('coste_extras_sem')+'</div></div>'
     +'</div>';
 }
 
@@ -2833,14 +2832,14 @@ function renderCostes(){
 
   // KPIs
   document.getElementById('costes-kpis').innerHTML=
-    '<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">Empleados</div></div>'
-   +'<div class="stat-card"><div class="stat-val">'+totHPact.toFixed(0)+'h</div><div class="stat-label">H. pactadas</div></div>'
-   +'<div class="stat-card"><div class="stat-val">'+(totFijoSem!==null?totFijoSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">Coste fijo sem.</div></div>'
-   +'<div class="stat-card"><div class="stat-val">'+(totExtras>0?'+'+totExtras.toFixed(0)+' €':'0 €')+'</div><div class="stat-label">Extras sem.</div></div>'
-   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null?totSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">Total semana</div></div>'
-   +'<div class="stat-card"><div class="stat-val">'+(totMes!==null?totMes.toFixed(0)+' €':'—')+'</div><div class="stat-label">Total mes est.</div></div>'
-   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null&&totHCuad?(totSem/totHCuad).toFixed(2)+' €':'—')+'</div><div class="stat-label">€/hora real</div></div>'
-   +'<div class="stat-card"><div class="stat-val">'+extrasDia.length+'</div><div class="stat-label">Extras anotadas</div></div>';
+    '<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">'+t('kpi_empleados')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+totHPact.toFixed(0)+'h</div><div class="stat-label">'+t('kpi_h_pactadas')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totFijoSem!==null?totFijoSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">'+t('kpi_coste_fijo')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totExtras>0?'+'+totExtras.toFixed(0)+' €':'0 €')+'</div><div class="stat-label">'+t('kpi_extras_sem')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null?totSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">'+t('kpi_total_sem')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totMes!==null?totMes.toFixed(0)+' €':'—')+'</div><div class="stat-label">'+t('kpi_total_mes')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null&&totHCuad?(totSem/totHCuad).toFixed(2)+' €':'—')+'</div><div class="stat-label">'+t('kpi_eur_hora')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+extrasDia.length+'</div><div class="stat-label">'+t('kpi_extras_anotadas')+'</div></div>';
 
   // TARJETAS por empleado (sin tabla, sin desbordamiento)
   var cards=document.getElementById('costes-cards');
@@ -2852,15 +2851,15 @@ function renderCostes(){
       var cMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
       return '<div class="costes-emp-card">'
         +'<div style="font-size:13px;font-weight:700;color:'+lorColor+';margin-bottom:12px">LORENA'
-        +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Directora</span></div>'
+        +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+t('directora_lbl')+'</span></div>'
         +'<div class="form-row three">'
-        +'<div class="form-group"><label>H. Pactadas / semana</label>'
+        +'<div class="form-group"><label>'+t('lbl_h_pactadas')+'</label>'
         +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:13px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
-        +'<div class="form-group"><label>Coste / semana</label>'
+        +'<div class="form-group"><label>'+t('lbl_coste_sem')+'</label>'
         +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
         +'<span style="color:var(--green);font-weight:700">'+cSem.toFixed(2)+' € / sem</span>'
         +'</div></div>'
-        +'<div class="form-group"><label>Coste / mes (con SS)</label>'
+        +'<div class="form-group"><label>'+t('lbl_coste_mes_ss')+'</label>'
         +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
         +'<span style="color:var(--muted);font-size:11px">'+cMes.toFixed(0)+' €</span>'
         +'</div></div>'
@@ -2870,21 +2869,21 @@ function renderCostes(){
     cards.innerHTML=lorCard+empleados.map(function(emp,idx){
       var c=calcs[idx], color=COLORS[idx%COLORS.length];
       var extrasEmp=extrasDia.filter(function(e){return e.empId===emp.id;});
-      var costeSemVal = c.costeFijoSem!==null ? c.costeFijoSem.toFixed(2)+' € / sem' : 'Sin datos';
+      var costeSemVal = c.costeFijoSem!==null ? c.costeFijoSem.toFixed(2)+' € / sem' : t('sin_datos');
       var costeMesVal = c.costeFijoMes!==null ? c.costeFijoMes.toFixed(0)+' € / mes (con SS)' : '—';
       return'<div class="costes-emp-card">'
-        +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||'Empleado '+emp.id)
+        +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||t('kpi_empleados')+' '+emp.id)
         +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+emp.rol+'</span></div>'
         +'<div class="form-row three">'
-        +'<div class="form-group"><label>H. Pactadas / semana</label>'
+        +'<div class="form-group"><label>'+t('lbl_h_pactadas')+'</label>'
         +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:13px;font-weight:700;color:var(--muted)">'+c.hPact.toFixed(0)+'h</div></div>'
-        +'<div class="form-group"><label>Coste / semana</label>'
+        +'<div class="form-group"><label>'+t('lbl_coste_sem')+'</label>'
         +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
         +(c.costeFijoSem!==null
           ?'<span style="color:var(--green);font-weight:700">'+c.costeFijoSem.toFixed(2)+' € / sem</span>'
-          :'<span style="color:var(--muted)">Sin datos salariales</span>')
+          :'<span style="color:var(--muted)">'+t('sin_datos_sal')+'</span>')
         +'</div></div>'
-        +'<div class="form-group"><label>Coste / mes (con SS)</label>'
+        +'<div class="form-group"><label>'+t('lbl_coste_mes_ss')+'</label>'
         +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
         +(c.costeFijoMes!==null
           ?'<span style="color:var(--muted);font-size:11px">'+c.costeFijoMes.toFixed(0)+' €</span>'
@@ -2894,7 +2893,7 @@ function renderCostes(){
         // Extras de este empleado si las hay
         +(extrasEmp.length?
           '<div style="margin-top:9px;padding:8px 10px;background:#2d1a00;border:1px solid #6b3a00;border-radius:7px">'
-          +'<div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:5px">⚡ EXTRAS REGISTRADAS</div>'
+          +'<div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:5px">'+t('extras_registradas')+'</div>'
           +extrasEmp.map(function(ex){
             var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
             return'<div style="font-size:11px;color:var(--text);display:flex;justify-content:space-between;margin-bottom:2px">'
@@ -2904,7 +2903,7 @@ function renderCostes(){
           +(c.costeExtras>0?'<div style="font-size:11px;font-weight:700;color:var(--orange);margin-top:4px;text-align:right">Total extras: '+c.costeExtras.toFixed(2)+' €</div>':'')
           +'</div>'
         :'')
-        +(c.bruto===null?'<div style="margin-top:8px;font-size:11px;color:var(--red);padding:6px 10px;background:#2d1515;border-radius:6px">⚠ Sin datos salariales — introduce en pestaña Salarios</div>':'')
+        +(c.bruto===null?'<div style="margin-top:8px;font-size:11px;color:var(--red);padding:6px 10px;background:#2d1515;border-radius:6px">⚠ '+t('sin_datos_sal')+' — '+t('lbl_salario_bruto')+'</div>':'')
         +'</div>';
     }).join('');
   }
@@ -2980,7 +2979,7 @@ function renderCostes(){
   document.getElementById('costes-editor').innerHTML=lorenaCardEditor+empleados.map(function(emp,idx){
     var color=COLORS[idx%COLORS.length], s=getSalario(emp.id), c=calcs[idx];
     return'<div class="costes-emp-card">'
-      +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||'Empleado '+emp.id)
+      +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||t('kpi_empleados')+' '+emp.id)
       +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+emp.rol+'</span></div>'
       +'<div class="form-row three">'
       +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
@@ -3037,7 +3036,7 @@ async function cargarVistaDirector(){
   var compEl = document.getElementById('director-comparativa');
   var subtEl = document.getElementById('director-subtitulo');
 
-  if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">⏳ Cargando datos...</div>';
+  if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">'+t('director_cargando')+'</div>';
 
   try{
     // Cargar todos los locales
@@ -3122,13 +3121,13 @@ function calcResumenLocal(datos){
     cobMax: coberturaMax,
     coste: totalCoste,
     fiestas: fiestas,
-    semana: datos.cuad ? datos.cuad.semana_label : 'Sin datos'
+    semana: datos.cuad ? datos.cuad.semana_label : t('sin_datos')
   };
 }
 
 function renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl){
-  var semLabel = semanaFiltro || (datosLocales[0]&&datosLocales[0].cuad ? datosLocales[0].cuad.semana_label : 'Sin datos');
-  if(subtEl) subtEl.textContent = 'Semana: '+semLabel+' · '+datosLocales.length+' locales';
+  var semLabel = semanaFiltro || (datosLocales[0]&&datosLocales[0].cuad ? datosLocales[0].cuad.semana_label : t('sin_datos'));
+  if(subtEl) subtEl.textContent = t('director_semana')+' '+semLabel+' · '+datosLocales.length+' '+t('locales_activos_lbl');
 
   var resúmenes = datosLocales.map(calcResumenLocal);
   var totEmps = resúmenes.reduce(function(s,r){ return s+r.numEmpleados; },0);
@@ -3138,10 +3137,10 @@ function renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, locales
   // KPIs globales
   if(kpisEl){
     kpisEl.innerHTML = [
-      {v: datosLocales.length, l: 'LOCALES ACTIVOS', c: '#c0a020'},
-      {v: totEmps+' pers.', l: 'TOTAL EMPLEADOS', c: 'var(--green)'},
-      {v: totCoste.toFixed(0)+' €', l: 'COSTE TOTAL SEMANA', c: 'var(--accent2)'},
-      {v: cobGlobal+' mín.', l: 'COBERTURA MÍNIMA', c: 'var(--orange)'},
+      {v: datosLocales.length, l: t('director_locales_activos'), c: '#c0a020'},
+      {v: totEmps+' '+t('personas'), l: t('director_total_emps'), c: 'var(--green)'},
+      {v: totCoste.toFixed(0)+' €', l: t('director_coste_total'), c: 'var(--accent2)'},
+      {v: cobGlobal+' mín.', l: t('director_cob_min'), c: 'var(--orange)'},
     ].map(function(k){
       return '<div class="stat-card"><div class="stat-val" style="color:'+k.c+'">'+k.v+'</div><div class="stat-label">'+k.l+'</div></div>';
     }).join('');
@@ -3160,23 +3159,23 @@ function renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, locales
         +'<div style="font-size:15px;font-weight:700;color:'+col+'">'+datos.local.nombre+'</div>'
         +(tieneDatos
           ?'<span style="font-size:9px;background:'+col+'20;color:'+col+';padding:2px 8px;border-radius:10px">'+r.semana+'</span>'
-          :'<span style="font-size:9px;background:#3d1515;color:#ff6b6b;padding:2px 8px;border-radius:10px">Sin cuadrante esta semana</span>')
+          :'<span style="font-size:9px;background:#3d1515;color:#ff6b6b;padding:2px 8px;border-radius:10px">'+t('director_sin_cuad')+'</span>')
         +'</div>'
         // KPIs del local
         +(tieneDatos
           ?'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">'
           +[
-            {v:r.numEmpleados, l:'EMPLEADOS'},
-            {v:r.cobMin+'-'+r.cobMax, l:'COBERTURA/DÍA'},
-            {v:r.coste.toFixed(0)+' €', l:'COSTE/SEM'},
-            {v:r.fiestas, l:'FIESTAS SEM'},
+            {v:r.numEmpleados, l:t('kpi_empleados')},
+            {v:r.cobMin+'-'+r.cobMax, l:t('director_cob_dia')},
+            {v:r.coste.toFixed(0)+' €', l:t('director_coste_sem')},
+            {v:r.fiestas, l:t('director_fiestas_sem')},
           ].map(function(k){
             return '<div style="background:var(--darker);border-radius:6px;padding:7px;text-align:center">'
               +'<div style="font-size:14px;font-weight:700;color:'+col+'">'+k.v+'</div>'
               +'<div style="font-size:8px;color:var(--muted);margin-top:2px">'+k.l+'</div>'
               +'</div>';
           }).join('')+'</div>'
-          :'<div style="font-size:11px;color:var(--muted);padding:10px;text-align:center">Genera el cuadrante para ver datos</div>')
+          :'<div style="font-size:11px;color:var(--muted);padding:10px;text-align:center">'+t('director_genera_cuad')+'</div>')
         // Mini cuadrante visual (cobertura por día)
         +(tieneDatos ? renderMiniCuadrante(datos, col) : '')
         +'</div>';
@@ -3187,7 +3186,7 @@ function renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, locales
   if(compEl && datosLocales.length > 1){
     var maxCoste = Math.max.apply(null, resúmenes.map(function(r){ return r.coste; }));
     compEl.innerHTML = '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px">'
-      +'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Comparativa de coste semanal</div>'
+      +'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">'+t('director_comp')+'</div>'
       +datosLocales.map(function(datos, idx){
         var r = resúmenes[idx];
         var col = ['#e8a020','#3498db'][idx] || '#2ecc71';
@@ -3259,7 +3258,7 @@ function imprimirCostes(){
 
   var rows=empleados.map(function(emp,i){
     var c=calcs[i];
-    return'<tr><td>'+(emp.nombre||'Emp '+emp.id)+'</td><td>'+emp.rol+'</td>'
+    return'<tr><td>'+(emp.nombre||t('lbl_empleado')+' '+emp.id)+'</td><td>'+emp.rol+'</td>'
       +'<td>'+c.hPact.toFixed(0)+'h</td><td>'+c.hCuad.toFixed(1)+'h</td>'
       +'<td>'+(c.bruto!==null?c.bruto.toFixed(0)+' €':'sin dato')+'</td>'
       +'<td>'+(c.costeFijoSem!==null?c.costeFijoSem.toFixed(2)+' €':'—')+'</td>'
@@ -3311,7 +3310,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v5.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v5.5 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3439,7 +3438,7 @@ async function cargarUsuarios(){
       return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px">'
         +'<div style="width:32px;height:32px;border-radius:50%;background:'+col+'20;color:'+col+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>'
         +'<div style="flex:1;min-width:0">'
-        +'<div style="font-weight:700;font-size:13px;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(u.nombre||'Sin nombre')+'</div>'
+        +'<div style="font-weight:700;font-size:13px;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(u.nombre||t('p3_nombre_empleado'))+'</div>'
         +'<div style="font-size:10px;color:var(--muted)">'+subInfo+'</div>'
         +'</div>'
         +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(u.activo?'#15351520':'#35151520')+';color:'+(u.activo?'var(--green)':'var(--red)')+';border:1px solid '+(u.activo?'var(--green)':'var(--red)')+'40;flex-shrink:0">'+(u.activo?'ACTIVO':'INACTIVO')+'</span>'
@@ -4022,6 +4021,60 @@ var I18N = {
     cuad_generado_por:'Generado por',
     cuad_desarrollado:'Desarrollado por',
     cuad_derechos:'Todos los derechos reservados',
+    // Dynamic render strings
+    tc_activo:'Activo', tc_inactivo:'Inactivo',
+    tc_turno:'Turno', tc_tramo1_desde:'Tramo 1 desde', tc_tramo1_hasta:'Tramo 1 hasta',
+    tc_tramo2_desde:'Tramo 2 desde', tc_tramo2_hasta:'Tramo 2 hasta',
+    tc_desde:'Desde', tc_hasta:'Hasta',
+    lbl_rol:'Rol', lbl_turno_hab:'Turno habitual',
+    lbl_dias_fiesta:'Días fiesta / semana',
+    opt_1dia:'1 día', opt_15dias:'1,5 días (recomendado)', opt_2dias:'2 días', opt_3dias:'3 días',
+    sel_empleado:'— Seleccionar empleado —',
+    col_empleado:'EMPLEADO', col_rol:'ROL', col_horas:'HORAS',
+    kpi_empleados:'Empleados', kpi_horas_tot:'Horas totales', kpi_cob_dia:'Cobertura/día', kpi_eventos:'Eventos',
+    kpi_h_pactadas:'H. pactadas', kpi_coste_fijo:'Coste fijo sem.', kpi_extras_sem:'Extras sem.',
+    kpi_total_sem:'Total semana', kpi_total_mes:'Total mes est.', kpi_eur_hora:'€/hora real', kpi_extras_anotadas:'Extras anotadas',
+    lbl_h_pactadas:'H. Pactadas / semana', lbl_coste_sem:'Coste / semana', lbl_coste_mes_ss:'Coste / mes (con SS)',
+    sin_datos_sal:'Sin datos salariales', extras_registradas:'⚡ EXTRAS REGISTRADAS',
+    coste_extra_lbl:'⚡ Coste extra:',
+    sin_extras:'Sin extras registradas esta semana',
+    h_extra_tot:'Total h. extra', coste_extras_sem:'Coste extras semana',
+    lbl_empleado:'Empleado', lbl_dia:'Día', lbl_h_extra:'Horas extra', lbl_eur_h:'€ / hora extra', lbl_motivo:'Motivo',
+    director_locales_activos:'LOCALES ACTIVOS', director_total_emps:'TOTAL EMPLEADOS',
+    director_coste_total:'COSTE TOTAL SEMANA', director_cob_min:'COBERTURA MÍNIMA',
+    director_semana:'Semana:', director_sin_cuad:'Sin cuadrante esta semana',
+    director_genera_cuad:'Genera el cuadrante para ver datos',
+    director_cob_dia:'COBERTURA/DÍA', director_coste_sem:'COSTE/SEM', director_fiestas_sem:'FIESTAS SEM',
+    director_comp:'Comparativa de coste semanal',
+    director_cargando:'⏳ Cargando datos...',
+    portal_cargando_cuad:'⏳ Cargando cuadrante...',
+    portal_no_cuad:'No hay cuadrante disponible esta semana',
+    portal_error_cuad:'No se pudo cargar el cuadrante',
+    portal_mis_datos:'📄 Mis datos de contrato',
+    portal_nombre:'Nombre:', portal_rol_lbl:'Rol:',
+    portal_sal_bruto:'Salario bruto/mes:', portal_h_contrato:'Horas contrato/semana:',
+    portal_no_contrato:'No hay datos de contrato disponibles',
+    portal_error_contrato:'No se pudieron cargar los datos',
+    portal_mi_actividad:'🗂 Mi actividad reciente',
+    arq_sin_arqueos:'Sin arqueos guardados aún',
+    arq_venta:'Venta:', arq_a_ingresar:'A ingresar',
+    arq_editar:'✏️ Editar',
+    arq_print_titulo:'💰 Arqueo de Caja',
+    arq_print_turno:'Turno', arq_print_cierre:'Cierre', arq_print_resp:'Responsable:',
+    arq_print_ef_inicial:'Efectivo inicial', arq_print_fondo:'Fondo de caja',
+    arq_print_cambio:'Cambio extra añadido', arq_print_total_disp:'Total disponible',
+    arq_print_ingresos:'Ingresos del turno', arq_print_venta:'Venta total',
+    arq_print_visa:'Cobrado por VISA/TPV', arq_print_pagos_prov:'Pagos a proveedores',
+    arq_print_total_pagos:'Total pagos', arq_print_total_caja:'Total en caja:',
+    arq_print_total_sal:'Total salidas:', arq_print_ef_recaud:'Efectivo recaudación',
+    arq_print_fondo_queda:'Fondo que queda en caja:',
+    arq_print_a_ingresar:'▶ A ingresar en caja fuerte:',
+    arq_print_notas:'Notas:', arq_print_sin_prov:'Sin pagos a proveedores',
+    arq_audit_line:'⚠ Registro creado por Dirección General:',
+    info_apertura:'✓ Apertura', info_cierre:'Cierre', info_activa_turnos:'Activa solo los turnos que usa este local.',
+    sin_datos:'Sin datos', locales_activos_lbl:'locales',
+    lbl_nombre_emp:'Nombre:', directora_lbl:'Directora',
+    arq_modificado:'Modificado por Dirección General',
   },
 
   ca: {
@@ -4203,6 +4256,60 @@ var I18N = {
     cuad_eventos:'⚡ Esdeveniments especials de la setmana',
     cuad_generado_por:'Generat per', cuad_desenvolupado:'Desenvolupat per',
     cuad_derechos:'Tots els drets reservats',
+    tc_activo:'Actiu', tc_inactivo:'Inactiu',
+    tc_turno:'Torn', tc_tramo1_desde:'Tram 1 des de', tc_tramo1_hasta:'Tram 1 fins a',
+    tc_tramo2_desde:'Tram 2 des de', tc_tramo2_hasta:'Tram 2 fins a',
+    tc_desde:'Des de', tc_hasta:'Fins a',
+    lbl_rol:'Rol', lbl_turno_hab:'Torn habitual',
+    lbl_dias_fiesta:'Dies festa / setmana',
+    opt_1dia:'1 dia', opt_15dias:'1,5 dies (recomanat)', opt_2dias:'2 dies', opt_3dias:'3 dies',
+    sel_empleado:'— Seleccionar empleat —',
+    col_empleado:'EMPLEAT', col_rol:'ROL', col_horas:'HORES',
+    kpi_empleados:'Empleats', kpi_horas_tot:'Hores totals', kpi_cob_dia:'Cobertura/dia', kpi_eventos:'Esdeveniments',
+    kpi_h_pactadas:'H. pactades', kpi_coste_fijo:'Cost fix set.', kpi_extras_sem:'Extres set.',
+    kpi_total_sem:'Total setmana', kpi_total_mes:'Total mes est.', kpi_eur_hora:'€/hora real', kpi_extras_anotadas:'Extres anotades',
+    lbl_h_pactadas:'H. Pactades / setmana', lbl_coste_sem:'Cost / setmana', lbl_coste_mes_ss:'Cost / mes (amb SS)',
+    sin_datos_sal:'Sense dades salarials', extras_registradas:'⚡ EXTRES REGISTRADES',
+    coste_extra_lbl:'⚡ Cost extra:',
+    sin_extras:'Sense extres registrades aquesta setmana',
+    h_extra_tot:'Total h. extra', coste_extras_sem:'Cost extres setmana',
+    lbl_empleado:'Empleat', lbl_dia:'Dia', lbl_h_extra:'Hores extra', lbl_eur_h:'€ / hora extra', lbl_motivo:'Motiu',
+    director_locales_activos:'LOCALS ACTIUS', director_total_emps:'TOTAL EMPLEATS',
+    director_coste_total:'COST TOTAL SETMANA', director_cob_min:'COBERTURA MÍNIMA',
+    director_semana:'Setmana:', director_sin_cuad:'Sense quadrant aquesta setmana',
+    director_genera_cuad:'Genera el quadrant per veure dades',
+    director_cob_dia:'COBERTURA/DIA', director_coste_sem:'COST/SET', director_fiestas_sem:'FESTES SET',
+    director_comp:'Comparativa de cost setmanal',
+    director_cargando:'⏳ Carregant dades...',
+    portal_cargando_cuad:'⏳ Carregant quadrant...',
+    portal_no_cuad:'No hi ha quadrant disponible aquesta setmana',
+    portal_error_cuad:'No s\'ha pogut carregar el quadrant',
+    portal_mis_datos:'📄 Les meves dades de contracte',
+    portal_nombre:'Nom:', portal_rol_lbl:'Rol:',
+    portal_sal_bruto:'Salari brut/mes:', portal_h_contrato:'Hores contracte/setmana:',
+    portal_no_contrato:'No hi ha dades de contracte disponibles',
+    portal_error_contrato:'No s\'han pogut carregar les dades',
+    portal_mi_actividad:'🗂 La meva activitat recent',
+    arq_sin_arqueos:'Sense arqueigs guardats encara',
+    arq_venta:'Venda:', arq_a_ingresar:'A ingressar',
+    arq_editar:'✏️ Editar',
+    arq_print_titulo:'💰 Arqueig de Caixa',
+    arq_print_turno:'Torn', arq_print_cierre:'Tancament', arq_print_resp:'Responsable:',
+    arq_print_ef_inicial:'Efectiu inicial', arq_print_fondo:'Fons de caixa',
+    arq_print_cambio:'Canvi extra afegit', arq_print_total_disp:'Total disponible',
+    arq_print_ingresos:'Ingressos del torn', arq_print_venta:'Venda total',
+    arq_print_visa:'Cobrat per VISA/TPV', arq_print_pagos_prov:'Pagaments a proveïdors',
+    arq_print_total_pagos:'Total pagaments', arq_print_total_caja:'Total a caixa:',
+    arq_print_total_sal:'Total sortides:', arq_print_ef_recaud:'Efectiu recaptació',
+    arq_print_fondo_queda:'Fons que queda a caixa:',
+    arq_print_a_ingresar:'▶ A ingressar a caixa forta:',
+    arq_print_notas:'Notes:', arq_print_sin_prov:'Sense pagaments a proveïdors',
+    arq_audit_line:'⚠ Registre creat per Direcció General:',
+    info_apertura:'✓ Obertura', info_cierre:'Tancament', info_activa_turnos:'Activa només els torns que usa aquest local.',
+    sin_datos:'Sense dades', locales_activos_lbl:'locals',
+    lbl_nombre_emp:'Nom:', directora_lbl:'Directora',
+    arq_modificado:'Modificat per Direcció General',
+    fiestas_btn:'Festes', eventos_btn:'Esdeveniments',
   },
 
   en: {
@@ -4384,6 +4491,60 @@ var I18N = {
     cuad_eventos:'⚡ Special events this week',
     cuad_generado_por:'Generated by', cuad_desarrollado:'Developed by',
     cuad_derechos:'All rights reserved',
+    tc_activo:'Active', tc_inactivo:'Inactive',
+    tc_turno:'Shift', tc_tramo1_desde:'Leg 1 from', tc_tramo1_hasta:'Leg 1 until',
+    tc_tramo2_desde:'Leg 2 from', tc_tramo2_hasta:'Leg 2 until',
+    tc_desde:'From', tc_hasta:'Until',
+    lbl_rol:'Role', lbl_turno_hab:'Usual shift',
+    lbl_dias_fiesta:'Days off / week',
+    opt_1dia:'1 day', opt_15dias:'1.5 days (recommended)', opt_2dias:'2 days', opt_3dias:'3 days',
+    sel_empleado:'— Select employee —',
+    col_empleado:'EMPLOYEE', col_rol:'ROLE', col_horas:'HOURS',
+    kpi_empleados:'Employees', kpi_horas_tot:'Total hours', kpi_cob_dia:'Coverage/day', kpi_eventos:'Events',
+    kpi_h_pactadas:'Contracted h.', kpi_coste_fijo:'Fixed cost wk.', kpi_extras_sem:'Extras wk.',
+    kpi_total_sem:'Total week', kpi_total_mes:'Total month est.', kpi_eur_hora:'€/real hour', kpi_extras_anotadas:'Extras logged',
+    lbl_h_pactadas:'Contracted hrs / week', lbl_coste_sem:'Cost / week', lbl_coste_mes_ss:'Cost / month (incl. SS)',
+    sin_datos_sal:'No salary data', extras_registradas:'⚡ LOGGED EXTRAS',
+    coste_extra_lbl:'⚡ Extra cost:',
+    sin_extras:'No extras logged this week',
+    h_extra_tot:'Total extra h.', coste_extras_sem:'Extra cost this week',
+    lbl_empleado:'Employee', lbl_dia:'Day', lbl_h_extra:'Extra hours', lbl_eur_h:'€ / extra hour', lbl_motivo:'Reason',
+    director_locales_activos:'ACTIVE VENUES', director_total_emps:'TOTAL EMPLOYEES',
+    director_coste_total:'TOTAL WEEKLY COST', director_cob_min:'MINIMUM COVERAGE',
+    director_semana:'Week:', director_sin_cuad:'No schedule this week',
+    director_genera_cuad:'Generate schedule to see data',
+    director_cob_dia:'COVERAGE/DAY', director_coste_sem:'COST/WK', director_fiestas_sem:'DAYS OFF WK',
+    director_comp:'Weekly cost comparison',
+    director_cargando:'⏳ Loading data...',
+    portal_cargando_cuad:'⏳ Loading schedule...',
+    portal_no_cuad:'No schedule available this week',
+    portal_error_cuad:'Could not load schedule',
+    portal_mis_datos:'📄 My contract details',
+    portal_nombre:'Name:', portal_rol_lbl:'Role:',
+    portal_sal_bruto:'Gross salary/month:', portal_h_contrato:'Contract hours/week:',
+    portal_no_contrato:'No contract data available',
+    portal_error_contrato:'Could not load data',
+    portal_mi_actividad:'🗂 My recent activity',
+    arq_sin_arqueos:'No cash records saved yet',
+    arq_venta:'Sales:', arq_a_ingresar:'To deposit',
+    arq_editar:'✏️ Edit',
+    arq_print_titulo:'💰 Cash Register',
+    arq_print_turno:'Shift', arq_print_cierre:'Close', arq_print_resp:'Responsible:',
+    arq_print_ef_inicial:'Opening cash', arq_print_fondo:'Opening float',
+    arq_print_cambio:'Extra change added', arq_print_total_disp:'Total available',
+    arq_print_ingresos:'Shift takings', arq_print_venta:'Total sales',
+    arq_print_visa:'Paid by card/POS', arq_print_pagos_prov:'Supplier payments',
+    arq_print_total_pagos:'Total payments', arq_print_total_caja:'Total in till:',
+    arq_print_total_sal:'Total outgoings:', arq_print_ef_recaud:'Cash takings',
+    arq_print_fondo_queda:'Float remaining in till:',
+    arq_print_a_ingresar:'▶ To deposit in safe:',
+    arq_print_notas:'Notes:', arq_print_sin_prov:'No supplier payments',
+    arq_audit_line:'⚠ Record created by Head Office:',
+    info_apertura:'✓ Opening', info_cierre:'Closing', info_activa_turnos:'Only enable shifts this venue uses.',
+    sin_datos:'No data', locales_activos_lbl:'venues',
+    lbl_nombre_emp:'Name:', directora_lbl:'Manager',
+    arq_modificado:'Modified by Head Office',
+    fiestas_btn:'Days off', eventos_btn:'Events',
   }
 };
 
@@ -4427,10 +4588,28 @@ function aplicarIdioma(lang){
     if(btn) btn.className = 'btn btn-sm '+(n===lang?'btn-primary':'btn-ghost');
   });
   showToast(t('toast_idioma'),'green');
+  // Re-render secciones dinámicas
+  if(empleados.length){
+    renderEmpleados();
+    renderTurnosConfigGrid();
+    renderCostes();
+  }
+  renderLorenaHorario();
+  renderEventos();
   // Re-render cuadrante si está activo
   var sc6 = document.getElementById('screen6');
   if(sc6 && sc6.classList.contains('active') && empleados.length){
     generarCuadrante();
+  }
+  // Re-render director si está activo
+  var sc8 = document.getElementById('screen8');
+  if(sc8 && sc8.classList.contains('active')){
+    cargarVistaDirector();
+  }
+  // Re-render histórico arqueo si visible
+  var arqHist = document.getElementById('arq-historico');
+  if(arqHist && arqHist.innerHTML && arqHist.innerHTML.length > 50){
+    cargarHistoricoArqueos();
   }
 }
 
@@ -4655,16 +4834,16 @@ async function guardarArqueo(){
 async function cargarHistoricoArqueos(){
   var cont = document.getElementById('arq-historico');
   if(!cont) return;
-  cont.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">⏳ Cargando...</div>';
+  cont.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">'+t('audit_cargando')+'</div>';
   try{
     var localId = parseInt((document.getElementById('arq-local')||{}).value || '1');
     var rows = await sbGet('arqueos','local_id=eq.'+localId+'&order=fecha.desc,turno.desc&limit=10');
     if(!rows || !rows.length){
-      cont.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">Sin arqueos guardados aún</div>';
+      cont.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">'+t('arq_sin_arqueos')+'</div>';
       return;
     }
     var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
-    var TURNOS  = {manana:'☀️ Mañana', noche:'🌙 Noche'};
+    var TURNOS  = {manana:'☀️ '+t('p11_turno_m'), noche:'🌙 '+t('p11_turno_n')};
     var fmt = function(n){ return (parseFloat(n)||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
     cont.innerHTML = rows.map(function(r){
       var aIngresar = (r.efectivo_resultado||0) - (r.fondo||0);
@@ -4674,23 +4853,22 @@ async function cargarHistoricoArqueos(){
       var notasLimpias = r.notas ? r.notas.replace(/\s*\[MODIFICADO.*?\]/,'').trim() : '';
       var provs = []; try{ provs = JSON.parse(r.proveedores||'[]'); }catch(e){}
       var totalPagosProv = provs.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); },0);
-      var rData = encodeURIComponent(JSON.stringify(r));
       return '<div style="background:var(--darker);border:1.5px solid '+(tieneAudit?'#ffc107':'var(--border)')+';border-radius:9px;padding:10px 12px;margin-bottom:8px">'
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">'
         +'<div style="flex:1">'
         +'<div style="font-size:12px;font-weight:700;color:var(--text)">'+(TURNOS[r.turno]||r.turno)+' &nbsp;·&nbsp; '+r.fecha+'</div>'
         +'<div style="font-size:10px;color:var(--muted);margin-top:3px">👤 '+(r.responsable||'—')+'</div>'
-        +'<div style="font-size:10px;color:var(--muted)">Venta: <strong>'+fmt(r.venta)+'</strong> · VISA: '+fmt(r.visa)+' · Prov: '+fmt(totalPagosProv)+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+t('arq_venta')+' <strong>'+fmt(r.venta)+'</strong> · VISA: '+fmt(r.visa)+' · Prov: '+fmt(totalPagosProv)+'</div>'
         +'</div>'
         +'<div style="text-align:right;flex-shrink:0">'
-        +'<div style="font-size:9px;color:var(--muted)">A ingresar</div>'
+        +'<div style="font-size:9px;color:var(--muted)">'+t('arq_a_ingresar')+'</div>'
         +'<div style="font-size:18px;font-weight:700;color:'+col+'">'+fmt(Math.max(0,aIngresar))+'</div>'
         +'</div>'
         +'</div>'
-        +(tieneAudit?'<div style="background:#ffc10715;border:1px solid #ffc10750;border-radius:5px;padding:5px 8px;font-size:9px;color:#ffc107;margin-top:7px">⚠ '+(auditMatch?auditMatch[0].replace(/[\[\]]/g,''):'Modificado por Dirección General')+'</div>':'')
+        +(tieneAudit?'<div style="background:#ffc10715;border:1px solid #ffc10750;border-radius:5px;padding:5px 8px;font-size:9px;color:#ffc107;margin-top:7px">⚠ '+(auditMatch?auditMatch[0].replace(/[\[\]]/g,''):t('arq_modificado'))+'</div>':'')
         +(notasLimpias?'<div style="font-size:10px;color:var(--muted);margin-top:5px;padding-top:5px;border-top:1px solid var(--border)20">📝 '+notasLimpias+'</div>':'')
         +'<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">'
-        +'<button onclick="editarArqueo('+r.id+')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 10px;border-color:var(--accent);color:var(--accent)">✏️ Editar</button>'
+        +'<button onclick="editarArqueo('+r.id+')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 10px;border-color:var(--accent);color:var(--accent)">'+t('arq_editar')+'</button>'
         +'</div>'
         +'</div>';
     }).join('');
@@ -4782,7 +4960,7 @@ function imprimirArqueo(){
   var visa        = parseFloat(document.getElementById('arq-visa').value)||0;
   var notas       = document.getElementById('arq-notas').value || '';
   var LOCALES     = {1:'La Cala', 2:"Roto's Burguer"};
-  var TURNOS      = {manana:'Mañana', noche:'Noche'};
+  var TURNOS      = {manana:t('p11_turno_m'), noche:t('p11_turno_n')};
   var CIERRES_H   = {1:{manana:'17:00',noche:'03:00'}, 2:{manana:'17:00',noche:'00:00'}};
   var totalPagos  = arqProveedores.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); }, 0);
   var totalCaja   = fondo + cambioExtra + venta;
@@ -4794,16 +4972,16 @@ function imprimirArqueo(){
 
   var provHtml = arqProveedores.length
     ? arqProveedores.map(function(p){ return '<tr><td>'+p.nombre+'</td><td class="r">'+fmt(p.importe||0)+'</td></tr>'; }).join('')
-    : '<tr><td colspan="2" style="color:#999;text-align:center">Sin pagos a proveedores</td></tr>';
+    : '<tr><td colspan="2" style="color:#999;text-align:center">'+t('arq_print_sin_prov')+'</td></tr>';
 
   // Auditoría si es Dir. General
   var auditLine = '';
   if(currentUser && currentUser.rol === 'directora_general'){
-    auditLine = '<div class="audit">⚠ Registro creado por Dirección General: <strong>'+(currentUser.nombre||currentUser.dni)+'</strong> · '+new Date().toLocaleString('es-ES')+'</div>';
+    auditLine = '<div class="audit">'+t('arq_audit_line')+' <strong>'+(currentUser.nombre||currentUser.dni)+'</strong> · '+new Date().toLocaleString('es-ES')+'</div>';
   }
 
   var w = window.open('','_blank','width=800,height=900');
-  if(!w){ alert('Permite ventanas emergentes'); return; }
+  if(!w){ alert(t('alert_permite_popups3')); return; }
   w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
     +'<title>Arqueo '+LOCALES[localId]+' '+TURNOS[turno]+' '+fecha+'</title>'
     +'<style>'
@@ -4832,36 +5010,36 @@ function imprimirArqueo(){
     +'.audit{background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:8px;font-size:10px;color:#856404;margin-top:10px}'
     +'</style></head><body>'
     +'<div class="header">'
-    +'<div><div class="titulo">💰 Arqueo de Caja</div>'
-    +'<div class="subtitulo">'+LOCALES[localId]+' · Turno '+TURNOS[turno]+' · Cierre '+cierre+'</div>'
-    +'<div class="subtitulo">'+fecha+' · Responsable: <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.3</span></div>'
+    +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
+    +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
+    +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.5</span></div>'
     +'</div>'
 
-    +'<div class="seccion"><div class="sec-title">Efectivo inicial</div>'
-    +'<table><tr class="alt"><td class="l">Fondo de caja</td><td class="r">'+fmt(fondo)+'</td></tr>'
-    +'<tr><td class="l">Cambio extra añadido</td><td class="r">'+fmt(cambioExtra)+'</td></tr>'
-    +'<tr class="total-row"><td>Total disponible</td><td class="r">'+fmt(fondo+cambioExtra)+'</td></tr></table></div>'
+    +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
+    +'<table><tr class="alt"><td class="l">'+t('arq_print_fondo')+'</td><td class="r">'+fmt(fondo)+'</td></tr>'
+    +'<tr><td class="l">'+t('arq_print_cambio')+'</td><td class="r">'+fmt(cambioExtra)+'</td></tr>'
+    +'<tr class="total-row"><td>'+t('arq_print_total_disp')+'</td><td class="r">'+fmt(fondo+cambioExtra)+'</td></tr></table></div>'
 
-    +'<div class="seccion"><div class="sec-title">Ingresos del turno</div>'
-    +'<table><tr class="alt"><td class="l">Venta total</td><td class="r">'+fmt(venta)+'</td></tr>'
-    +'<tr><td class="l">Cobrado por VISA/TPV</td><td class="r" style="color:#c00">− '+fmt(visa)+'</td></tr></table></div>'
+    +'<div class="seccion"><div class="sec-title">'+t('arq_print_ingresos')+'</div>'
+    +'<table><tr class="alt"><td class="l">'+t('arq_print_venta')+'</td><td class="r">'+fmt(venta)+'</td></tr>'
+    +'<tr><td class="l">'+t('arq_print_visa')+'</td><td class="r" style="color:#c00">− '+fmt(visa)+'</td></tr></table></div>'
 
-    +'<div class="seccion"><div class="sec-title">Pagos a proveedores</div>'
+    +'<div class="seccion"><div class="sec-title">'+t('arq_print_pagos_prov')+'</div>'
     +'<table>'+provHtml
-    +'<tr class="total-row"><td>Total pagos</td><td class="r" style="color:#c00">− '+fmt(totalPagos)+'</td></tr></table></div>'
+    +'<tr class="total-row"><td>'+t('arq_print_total_pagos')+'</td><td class="r" style="color:#c00">− '+fmt(totalPagos)+'</td></tr></table></div>'
 
     +'<div class="resultado">'
     +'<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px">'
-    +'<span>Total en caja: <strong>'+fmt(totalCaja)+'</strong></span>'
-    +'<span>Total salidas: <strong style="color:#c00">'+fmt(totalSalidas)+'</strong></span></div>'
-    +'<div class="res-label">Efectivo recaudación</div>'
+    +'<span>'+t('arq_print_total_caja')+' <strong>'+fmt(totalCaja)+'</strong></span>'
+    +'<span>'+t('arq_print_total_sal')+' <strong style="color:#c00">'+fmt(totalSalidas)+'</strong></span></div>'
+    +'<div class="res-label">'+t('arq_print_ef_recaud')+'</div>'
     +'<div class="res-val">'+fmt(efectivo)+'</div>'
-    +'<div class="res-sub">Fondo que queda en caja: '+fmt(fondo)+'</div>'
-    +'<div class="res-ingresar">▶ A ingresar en caja fuerte: '+fmt(aIngresar)+'</div>'
+    +'<div class="res-sub">'+t('arq_print_fondo_queda')+' '+fmt(fondo)+'</div>'
+    +'<div class="res-ingresar">'+t('arq_print_a_ingresar')+' '+fmt(aIngresar)+'</div>'
     +'</div>'
 
-    +(notas?'<div class="notas">📝 <strong>Notas:</strong> '+notas+'</div>':'')
+    +(notas?'<div class="notas">📝 <strong>'+t('arq_print_notas')+'</strong> '+notas+'</div>':'')
     +auditLine
     +'<div class="footer">RelojTurnos © 2026 · Grupo El Reloj · Impreso el '+new Date().toLocaleString('es-ES')+'</div>'
     +'</body></html>');
