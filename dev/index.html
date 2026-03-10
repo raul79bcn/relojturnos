@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v5.0 – Grupo El Reloj</title>
+<title>RelojTurnos v5.2 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">&#128274; Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.0</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.2</span></div>
   </div>
 </div>
 
@@ -258,11 +258,13 @@ select,input[type=text],.inp-sm{font-size:14px!important}
   <div class="portal-nav">
     <button class="portal-tab active" onclick="portalTab('cuadrante')">&#128197; Cuadrante</button>
     <button class="portal-tab" onclick="portalTab('contrato')">&#128196; Mi contrato</button>
+    <button class="portal-tab" onclick="portalTab('actividad')">🗂 Mi actividad</button>
     <button class="portal-tab" onclick="portalTab('password')">&#128274; Contraseña</button>
   </div>
   <div class="portal-content">
     <div id="portal-cuadrante"></div>
     <div id="portal-contrato" style="display:none"></div>
+    <div id="portal-actividad" style="display:none"></div>
     <div id="portal-password" style="display:none">
       <div class="cambio-pass-form">
         <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">&#128274; Cambiar contraseña</div>
@@ -602,6 +604,33 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <!-- Comparativa -->
       <div id="director-comparativa" style="margin-bottom:14px"></div>
 
+      <!-- Registro de actividad — solo Dir. General -->
+      <div id="director-audit-wrap" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">🗂 Registro de actividad</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="audit-filtro-local" onchange="cargarAuditLog()" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:10px">
+              <option value="">Todos los locales</option>
+              <option value="1">La Cala</option>
+              <option value="2">Roto's Burguer</option>
+            </select>
+            <select id="audit-filtro-accion" onchange="cargarAuditLog()" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:10px">
+              <option value="">Todas las acciones</option>
+              <option value="LOGIN">Login</option>
+              <option value="GUARDAR_CUADRANTE">Cuadrantes</option>
+              <option value="ACTUALIZAR_CUADRANTE">Cuadrantes (update)</option>
+              <option value="GUARDAR_ARQUEO">Arqueos</option>
+              <option value="EDITAR_ARQUEO">Arqueos (edición)</option>
+              <option value="CREAR_USUARIO">Usuarios</option>
+              <option value="CAMBIAR_PASSWORD">Contraseñas</option>
+            </select>
+          </div>
+        </div>
+        <div id="director-audit" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;padding:8px">
+          <div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">⏳ Cargando...</div>
+        </div>
+      </div>
+
       <div class="btn-row space" style="margin-top:18px">
         <button class="btn btn-secondary" onclick="goStep(7)">&#8592; Costes</button>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -838,6 +867,10 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     <div class="card">
       <div class="card-title">&#128181; Arqueo de Caja</div>
       <div class="card-sub">Registro de cierre de turno · <span id="arqueo-local-label" style="color:var(--accent)"></span></div>
+      <!-- Banner edición activa -->
+      <div id="arq-edit-banner" style="display:none;background:#3d2a00;border:1px solid #ffc107;border-radius:8px;padding:9px 14px;font-size:11px;color:#ffc107;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        ✏️ <strong>Modo edición</strong> — Estás modificando un arqueo guardado. Pulsa <strong>Guardar</strong> para confirmar o <strong>Limpiar</strong> para cancelar.
+      </div>
 
       <!-- Selector local + turno + fecha -->
       <div class="form-row" style="margin-bottom:14px">
@@ -964,7 +997,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 </div>
 
 <div style="text-align:center;padding:14px 0 22px;font-size:10px;color:var(--muted)">
-  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v5.0</span>
+  <span style="background:var(--dark);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">v5.2</span>
   &nbsp;&middot;&nbsp; RelojTurnos &copy; 2026 &nbsp;&middot;&nbsp; Desarrollado por <strong style="color:var(--text)">Raul H.B.</strong> &nbsp;&middot;&nbsp; <a href="/cdn-cgi/l/email-protection#e19380948dcf86849295888e8f8d8e82808da1868c80888dcf828e8c" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="deacbfabb2f0b9bbadaab7b1b0b2b1bdbfb29eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
 </div>
 
@@ -1013,7 +1046,91 @@ async function sbDelete(table, filters){
   if(!r.ok) throw new Error('DELETE '+table+' error '+r.status);
 }
 
-// Cache local→id de Supabase
+// ========== AUDIT LOG RENDER ==========
+
+var AUDIT_ICONOS = {
+  LOGIN:'🔑', GUARDAR_CUADRANTE:'📅', ACTUALIZAR_CUADRANTE:'🔄',
+  GUARDAR_ARQUEO:'💰', EDITAR_ARQUEO:'✏️', CREAR_USUARIO:'👤',
+  CAMBIAR_PASSWORD:'🔒'
+};
+var AUDIT_COLORES = {
+  LOGIN:'var(--blue)', GUARDAR_CUADRANTE:'var(--green)', ACTUALIZAR_CUADRANTE:'var(--orange)',
+  GUARDAR_ARQUEO:'var(--accent)', EDITAR_ARQUEO:'#ffc107', CREAR_USUARIO:'var(--purple)',
+  CAMBIAR_PASSWORD:'var(--muted)'
+};
+var LOCALES_NOMBRE = {1:'La Cala', 2:"Roto's Burguer"};
+
+function renderAuditRows(rows){
+  if(!rows||!rows.length) return '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">Sin registros</div>';
+  return rows.map(function(r){
+    var icono = AUDIT_ICONOS[r.accion] || '📋';
+    var col   = AUDIT_COLORES[r.accion] || 'var(--muted)';
+    var fecha = r.created_at ? new Date(r.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    var localTxt = r.local_id ? (LOCALES_NOMBRE[r.local_id]||'Local '+r.local_id) : 'Global';
+    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 6px;border-bottom:1px solid var(--border)20">'
+      +'<div style="font-size:16px;flex-shrink:0;margin-top:1px">'+icono+'</div>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+      +'<span style="font-size:11px;font-weight:700;color:'+col+'">'+r.accion+'</span>'
+      +'<span style="font-size:10px;color:var(--muted)">·</span>'
+      +'<span style="font-size:10px;font-weight:600;color:var(--text)">'+r.usuario_nombre+'</span>'
+      +'<span style="font-size:9px;color:var(--muted);background:var(--card);padding:1px 5px;border-radius:4px">'+r.rol+'</span>'
+      +'<span style="font-size:9px;color:var(--muted)">'+localTxt+'</span>'
+      +'</div>'
+      +(r.detalle?'<div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.detalle+'</div>':'')
+      +'</div>'
+      +'<div style="font-size:9px;color:var(--muted);flex-shrink:0;white-space:nowrap">'+fecha+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+async function cargarAuditLog(){
+  var el = document.getElementById('director-audit');
+  if(!el) return;
+  el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">⏳ Cargando...</div>';
+  try{
+    var filtros = 'order=created_at.desc&limit=50';
+    var fLocal  = (document.getElementById('audit-filtro-local')||{}).value;
+    var fAccion = (document.getElementById('audit-filtro-accion')||{}).value;
+    if(fLocal)  filtros = 'local_id=eq.'+fLocal+'&'+filtros;
+    if(fAccion) filtros = 'accion=eq.'+fAccion+'&'+filtros;
+    var rows = await sbGet('audit_log', filtros);
+    el.innerHTML = renderAuditRows(rows);
+  }catch(e){
+    el.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:14px">⚠ Error: '+e.message+'</div>';
+  }
+}
+
+async function cargarMiActividad(){
+  var el = document.getElementById('portal-actividad');
+  if(!el||!currentUser) return;
+  el.innerHTML = '<div style="padding:16px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">🗂 Mi actividad reciente</div>'
+    +'<div id="mi-actividad-list"><div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">⏳ Cargando...</div></div></div>';
+  try{
+    var rows = await sbGet('audit_log','usuario_dni=eq.'+encodeURIComponent(currentUser.dni)+'&order=created_at.desc&limit=30');
+    document.getElementById('mi-actividad-list').innerHTML = renderAuditRows(rows);
+  }catch(e){
+    document.getElementById('mi-actividad-list').innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:14px">⚠ Error cargando actividad</div>';
+  }
+}
+
+
+async function logAccion(accion, detalle, localId){
+  if(!currentUser) return;
+  // Fire-and-forget — no bloquea la UI si falla
+  try{
+    await sbPost('audit_log',{
+      usuario_nombre: currentUser.nombre || currentUser.dni,
+      usuario_dni:    currentUser.dni,
+      rol:            currentUser.rol,
+      accion:         accion,
+      detalle:        detalle || null,
+      local_id:       localId || currentUser.local_id || null
+    });
+  }catch(e){ console.warn('audit_log error (no crítico):', e.message); }
+}
+
+
 var localIdMap = {};   // {'La Cala': 1, "Roto's Burguer": 2}
 var empIdMap   = {};   // {empCounter_local_id: supabase_id}
 var currentCuadranteId = null;
@@ -1043,13 +1160,14 @@ async function doLogin(){
     // Comprobar usuarios demo primero
     var DEMO_USERS = [
       {id:0, dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA (DEMO)', local_id:1, empleado_id:null},
-      {id:0, dni:'DEMO0002', password_hash:'', rol:'direccion_general', nombre:'MIRYAM (DEMO)', local_id:null, empleado_id:null},
+      {id:0, dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM (DEMO)', local_id:null, empleado_id:null},
     ];
     var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
     if(demoUser && pass==='1234'){
       currentUser = demoUser;
       document.getElementById('login-screen').style.display='none';
-      if(demoUser.rol==='direccion_general'){
+      checkMostrarBtnUsuarios();
+      if(demoUser.rol==='directora_general'){
         document.querySelector('header').style.display='';
         document.querySelector('.container').style.display='';
         abrirVistaDirector();
@@ -1070,6 +1188,7 @@ async function doLogin(){
     currentUser = user;
     document.getElementById('login-screen').style.display = 'none';
     checkMostrarBtnUsuarios();
+    logAccion('LOGIN', 'Acceso correcto', user.local_id);
     if(user.rol === 'empleado'){
       abrirPortalEmpleado(user);
     } else if(user.rol === 'directora_general'){
@@ -1137,12 +1256,14 @@ async function abrirPortalEmpleado(user){
 }
 
 function portalTab(tab){
-  ['cuadrante','contrato','password'].forEach(function(t){
-    document.getElementById('portal-'+t).style.display = t===tab?'block':'none';
+  ['cuadrante','contrato','actividad','password'].forEach(function(t){
+    var el = document.getElementById('portal-'+t);
+    if(el) el.style.display = t===tab?'block':'none';
   });
   document.querySelectorAll('.portal-tab').forEach(function(btn, i){
-    btn.classList.toggle('active', ['cuadrante','contrato','password'][i]===tab);
+    btn.classList.toggle('active', ['cuadrante','contrato','actividad','password'][i]===tab);
   });
+  if(tab==='actividad') cargarMiActividad();
 }
 
 async function cargarPortalCuadrante(user){
@@ -1233,6 +1354,7 @@ async function cambiarPassword(){
     if(!rows.length||rows[0].password_hash!==actualHash){ errEl.textContent='La contraseña actual es incorrecta'; errEl.style.display='block'; return; }
     var nuevaHash = await hashPass(nueva);
     await sbPatch('usuarios', currentUser.id, {password_hash: nuevaHash});
+    logAccion('CAMBIAR_PASSWORD', 'Contraseña actualizada', currentUser.local_id);
     okEl.style.display='block';
     document.getElementById('pass-actual').value='';
     document.getElementById('pass-nueva').value='';
@@ -1290,9 +1412,21 @@ async function guardarCuadranteEnBD(){
   if(btn){ btn.textContent='⏳ Guardando...'; btn.disabled=true; }
 
   try{
-    // 1. Crear cuadrante
-    var cArr = await sbPost('cuadrantes',{local_id:localId, semana_label:semana});
-    currentCuadranteId = cArr[0].id;
+    // 1. Upsert cuadrante: si ya existe para este local+semana, reutilizar
+    var existing = await sbGet('cuadrantes','local_id=eq.'+localId+'&semana_label=eq.'+encodeURIComponent(semana)+'&order=id.desc&limit=1');
+    var cuadranteId;
+    if(existing && existing.length){
+      cuadranteId = existing[0].id;
+      // Borrar turnos anteriores para regenerar
+      await sbDelete('turnos_cuadrante','cuadrante_id=eq.'+cuadranteId);
+      showToast('⏳ Actualizando cuadrante existente...','orange');
+      logAccion('ACTUALIZAR_CUADRANTE', semana, localId);
+    } else {
+      var cArr = await sbPost('cuadrantes',{local_id:localId, semana_label:semana});
+      cuadranteId = cArr[0].id;
+      logAccion('GUARDAR_CUADRANTE', semana, localId);
+    }
+    currentCuadranteId = cuadranteId;
 
     // 2. Guardar/actualizar empleados en BD
     for(var i=0;i<empleados.length;i++){
@@ -1464,6 +1598,15 @@ async function cargarEmpleadosBD(){
       window._empleadosBDNombres = emps
         .filter(function(e){ return EXCLUIR_DIRS.indexOf((e.nombre||'').toUpperCase())<0; })
         .map(function(e){ return e.nombre; });
+      // Mapa nombre → datos BD para auto-rellenar turno/rol al seleccionar
+      window._empleadosBDDatos = {};
+      emps.forEach(function(e){
+        window._empleadosBDDatos[e.nombre] = {
+          turno: e.turno_habitual||'manana',
+          rol: e.rol||'Cam. Mañana',
+          telefono: e.telefono||''
+        };
+      });
       emps.forEach(function(e){
         empCounter++;
         var sal = salMap[e.id]||null;
@@ -1786,7 +1929,23 @@ function renderEmpleados(){
   });
 }
 
-function updNom(id,v){var e=empleados.find(function(x){return x.id===id;});if(e)e.nombre=v;var av=document.getElementById('ea-'+id);if(av)av.textContent=v?v.substring(0,2).toUpperCase():'??';}
+function updNom(id,v){
+  var e=empleados.find(function(x){return x.id===id;});
+  if(e){
+    e.nombre=v;
+    // Auto-rellenar turno y rol desde datos BD si están disponibles
+    var bdDatos = window._empleadosBDDatos && window._empleadosBDDatos[v];
+    if(bdDatos){
+      e.turno = bdDatos.turno;
+      e.telefono = bdDatos.telefono;
+      // Re-render para reflejar el turno actualizado en el select
+      renderEmpleados();
+      return;
+    }
+  }
+  var av=document.getElementById('ea-'+id);
+  if(av) av.textContent=v?v.substring(0,2).toUpperCase():'??';
+}
 function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(e)e[f]=v;}
 
 
@@ -1800,7 +1959,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v5.0 ==========
+// ========== LÓGICA FIESTAS v5.2 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2894,7 +3053,8 @@ async function cargarVistaDirector(){
     }
 
     renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl);
-    // Debug info — se puede quitar después
+    // Cargar audit log
+    cargarAuditLog();
     console.log('[Director] Locales cargados:', locales.map(function(l){return l.id+':'+l.nombre;}));
     console.log('[Director] Cuadrantes encontrados:', (cuads||[]).map(function(c){return 'local'+c.local_id+' sem:'+c.semana_label;}));
     console.log('[Director] datosLocales:', datosLocales.map(function(d){return d.local.nombre+' cuad:'+(d.cuad?d.cuad.id:'null')+' emps:'+d.empleados.length;}));
@@ -3128,7 +3288,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v5.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v5.2 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3290,6 +3450,7 @@ async function crearUsuario(){
     var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
     var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
     await sbPost('usuarios', nuevo);
+    logAccion('CREAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
     okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
     okEl.style.display = 'block';
     // Limpiar form
@@ -3810,12 +3971,16 @@ async function guardarArqueo(){
       await sbPatch('arqueos', arqEditId, datos);
       okEl.textContent = '✓ Arqueo actualizado correctamente (ID '+arqEditId+')';
       okEl.style.display = 'block';
+      logAccion('EDITAR_ARQUEO', 'ID '+arqEditId+' · '+fecha+' · turno '+turno, localId);
       arqEditId = null;
+      var banner = document.getElementById('arq-edit-banner');
+      if(banner) banner.style.display='none';
     } else {
       // NUEVO: POST
       await sbPost('arqueos', datos);
       okEl.textContent = '✓ Arqueo guardado correctamente';
       okEl.style.display = 'block';
+      logAccion('GUARDAR_ARQUEO', fecha+' · turno '+turno, localId);
     }
     cargarHistoricoArqueos();
   }catch(e){
@@ -3875,7 +4040,9 @@ async function cargarHistoricoArqueos(){
 var arqEditId = null; // ID del arqueo que se está editando
 
 async function editarArqueo(id){
-  // Cargar datos del arqueo desde BD
+  // Cargar datos del arqueo desde BD — forzar id a entero
+  id = parseInt(id);
+  if(!id){ showToast('ID de arqueo inválido','orange'); return; }
   try{
     var rows = await sbGet('arqueos','id=eq.'+id);
     if(!rows||!rows.length){ showToast('Arqueo no encontrado','orange'); return; }
@@ -3911,6 +4078,8 @@ async function editarArqueo(id){
     // Indicador de edición
     var okEl = document.getElementById('arq-ok');
     if(okEl){ okEl.textContent='✏️ Editando arqueo ID '+r.id+' · '+r.fecha+' ('+r.turno+') — Guarda para actualizar'; okEl.style.display='block'; }
+    var banner = document.getElementById('arq-edit-banner');
+    if(banner) banner.style.display='flex';
 
     // Scroll al top del formulario
     window.scrollTo(0,0);
@@ -3921,6 +4090,7 @@ async function editarArqueo(id){
 }
 
 function limpiarArqueo(){
+  var eraEdicion = !!arqEditId;
   arqEditId = null; // cancelar cualquier edición activa
   document.getElementById('arq-venta').value = '0';
   document.getElementById('arq-visa').value  = '0';
@@ -3934,6 +4104,9 @@ function limpiarArqueo(){
   var okEl  = document.getElementById('arq-ok');
   if(errEl) errEl.style.display='none';
   if(okEl)  okEl.style.display='none';
+  var banner = document.getElementById('arq-edit-banner');
+  if(banner) banner.style.display='none';
+  if(eraEdicion) showToast('Edición cancelada — formulario limpio','orange');
 }
 
 function imprimirArqueo(){
@@ -4000,7 +4173,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">💰 Arqueo de Caja</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · Turno '+TURNOS[turno]+' · Cierre '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · Responsable: <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.0</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.2</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">Efectivo inicial</div>'
