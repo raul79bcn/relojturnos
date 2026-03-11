@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v5.9 – Grupo El Reloj</title>
+<title>RelojTurnos v5.11 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.9</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.11</span></div>
   </div>
 </div>
 
@@ -978,7 +978,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px" data-i18n="arq_sec_resultado">&#128202; Resultado del turno</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
           <div style="background:var(--darker);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:10px;color:var(--muted);margin-bottom:4px" data-i18n="arq_total_caja">Total en caja</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px" data-i18n="arq_total_caja">Total entradas</div>
             <div style="font-size:18px;font-weight:700;color:var(--green)" id="arq-res-total">0,00 €</div>
           </div>
           <div style="background:var(--darker);border-radius:8px;padding:10px;text-align:center">
@@ -987,11 +987,10 @@ select,input[type=text],.inp-sm{font-size:14px!important}
           </div>
         </div>
         <div style="background:var(--accent)20;border:1px solid var(--accent)60;border-radius:10px;padding:14px;text-align:center">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px" data-i18n="arq_ef_recaud">&#128181; EFECTIVO RECAUDACIÓN</div>
-          <div style="font-size:28px;font-weight:700;color:var(--accent)" id="arq-res-efectivo">0,00 €</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:4px"><span data-i18n="arq_hint_ingresar">A ingresar en caja fuerte (descontando fondo</span> <span id="arq-res-fondo-label">600</span>€)</div>
-          <div style="font-size:22px;font-weight:700;color:var(--green);margin-top:8px;border-top:1px solid var(--border);padding-top:8px" id="arq-res-ingresar">0,00 €</div>
-          <div style="font-size:10px;color:var(--muted)" data-i18n="arq_hint_fuerte">= Efectivo a meter en caja fuerte</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px" data-i18n="arq_ef_recaud">&#128181; EFECTIVO RECAUDACIÓN → CAJA FUERTE</div>
+          <div style="font-size:32px;font-weight:700;color:var(--green)" id="arq-res-efectivo">0,00 €</div>
+          <div id="arq-res-ingresar" style="display:none"></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:8px" data-i18n="arq_hint_fuerte">El fondo de <strong id="arq-res-fondo-label" style="color:var(--accent)">600</strong>€ queda en el cajón para el siguiente turno</div>
         </div>
       </div>
 
@@ -1986,7 +1985,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v5.9 ==========
+// ========== LÓGICA FIESTAS v5.11 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -3324,7 +3323,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v5.9 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v5.11 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3939,9 +3938,9 @@ var I18N = {
     arq_lbl_visa:'Cobrado por VISA/TPV (€)', arq_hint_visa:'Se descuenta del efectivo',
     arq_sec_pagos:'↓ Pagos a proveedores', arq_btn_anadir:'＋ Añadir',
     arq_sin_pagos:'Sin pagos a proveedores este turno', arq_total_pagos_lbl:'Total pagos:',
-    arq_sec_resultado:'📊 Resultado del turno', arq_total_caja:'Total en caja', arq_total_salidas:'Total salidas',
-    arq_ef_recaud:'💵 EFECTIVO RECAUDACIÓN', arq_hint_ingresar:'A ingresar en caja fuerte (descontando fondo',
-    arq_hint_fuerte:'= Efectivo a meter en caja fuerte',
+    arq_sec_resultado:'📊 Resultado del turno', arq_total_caja:'Total entradas (venta + extracambio)', arq_total_salidas:'Total salidas (VISA + proveedores)',
+    arq_ef_recaud:'💵 EFECTIVO RECAUDACIÓN → CAJA FUERTE', arq_hint_ingresar:'A ingresar en caja fuerte (descontando fondo',
+    arq_hint_fuerte:'El fondo queda en el cajón para el siguiente turno',
     arq_lbl_notas:'Notas / Incidencias',
     arq_btn_volver:'← Volver', arq_btn_limpiar:'↺ Limpiar', arq_btn_imprimir:'🖨 Imprimir', arq_btn_guardar:'💾 Guardar arqueo',
     arq_historico_titulo:'📅 Últimos arqueos guardados',
@@ -4201,9 +4200,9 @@ var I18N = {
     arq_lbl_visa:'Cobrat per VISA/TPV (€)', arq_hint_visa:'Es descompta de l\'efectiu',
     arq_sec_pagos:'↓ Pagaments a proveïdors', arq_btn_anadir:'＋ Afegir',
     arq_sin_pagos:'Sense pagaments a proveïdors aquest torn', arq_total_pagos_lbl:'Total pagaments:',
-    arq_sec_resultado:'📊 Resultat del torn', arq_total_caja:'Total a caixa', arq_total_salidas:'Total sortides',
-    arq_ef_recaud:'💵 EFECTIU RECAPTACIÓ', arq_hint_ingresar:'A ingressar a la caixa forta (descomptant fons',
-    arq_hint_fuerte:'= Efectiu a posar a la caixa forta',
+    arq_sec_resultado:'📊 Resultat del torn', arq_total_caja:'Total entrades (venda + extracambi)', arq_total_salidas:'Total sortides (VISA + proveïdors)',
+    arq_ef_recaud:'💵 EFECTIU RECAPTACIÓ → CAIXA FORTA', arq_hint_ingresar:'A ingressar a la caixa forta (descomptant fons',
+    arq_hint_fuerte:'El fons queda al calaix per al torn següent',
     arq_lbl_notas:'Notes / Incidències',
     arq_btn_volver:'← Tornar', arq_btn_limpiar:'↺ Netejar', arq_btn_imprimir:'🖨 Imprimir', arq_btn_guardar:'💾 Guardar arqueig',
     arq_historico_titulo:'📅 Últims arqueigs guardats',
@@ -4454,9 +4453,9 @@ var I18N = {
     arq_lbl_visa:'Paid by VISA/POS (€)', arq_hint_visa:'Deducted from cash',
     arq_sec_pagos:'↓ Supplier payments', arq_btn_anadir:'＋ Add',
     arq_sin_pagos:'No supplier payments this shift', arq_total_pagos_lbl:'Total payments:',
-    arq_sec_resultado:'📊 Shift result', arq_total_caja:'Total in register', arq_total_salidas:'Total outgoings',
-    arq_ef_recaud:'💵 CASH COLLECTED', arq_hint_ingresar:'To deposit in safe (deducting float',
-    arq_hint_fuerte:'= Cash to put in safe',
+    arq_sec_resultado:'📊 Shift result', arq_total_caja:'Total inputs (sales + extra change)', arq_total_salidas:'Total outgoings (VISA + suppliers)',
+    arq_ef_recaud:'💵 CASH COLLECTED → SAFE', arq_hint_ingresar:'To deposit in safe (deducting float',
+    arq_hint_fuerte:'Float stays in the till for the next shift',
     arq_lbl_notas:'Notes / Incidents',
     arq_btn_volver:'← Back', arq_btn_limpiar:'↺ Clear', arq_btn_imprimir:'🖨 Print', arq_btn_guardar:'💾 Save register',
     arq_historico_titulo:'📅 Latest saved registers',
@@ -4814,29 +4813,27 @@ function calcArqueo(){
   var visa        = parseFloat(document.getElementById('arq-visa').value)         || 0;
   var totalPagos  = arqProveedores.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); }, 0);
 
-  // Total en caja = fondo + cambio extra + venta
-  var totalCaja   = fondo + cambioExtra + venta;
-  // Total salidas = visa + pagos proveedores
-  var totalSalidas = visa + totalPagos;
-  // Efectivo recaudación = total en caja - total salidas
-  var efectivo    = totalCaja - totalSalidas;
-  // A ingresar en caja fuerte = efectivo - fondo (el fondo se queda)
-  var aIngresar   = efectivo - fondo;
+  // ENTRADAS: venta total + extracambio
+  var totalEntradas = venta + cambioExtra;
+  // SALIDAS: VISA + pagos proveedores
+  var totalSalidas  = visa + totalPagos;
+  // EFECTIVO RECAUDACIÓN = entradas - salidas
+  // (el fondo de 600€ ya está en el cajón desde el inicio, no entra en el cálculo)
+  var efectivo = totalEntradas - totalSalidas;
 
   var fmt = function(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
 
   document.getElementById('arq-total-pagos').textContent   = fmt(totalPagos);
-  document.getElementById('arq-res-total').textContent     = fmt(totalCaja);
+  document.getElementById('arq-res-total').textContent     = fmt(totalEntradas);
   document.getElementById('arq-res-salidas').textContent   = fmt(totalSalidas);
   document.getElementById('arq-res-efectivo').textContent  = fmt(efectivo);
-  document.getElementById('arq-res-ingresar').textContent  = fmt(Math.max(0, aIngresar));
+  document.getElementById('arq-res-ingresar').textContent  = fmt(Math.max(0, efectivo));
   document.getElementById('arq-res-fondo-label').textContent = fondo.toLocaleString('es-ES');
 
-  // Color resultado
   var elEf = document.getElementById('arq-res-efectivo');
   var elIn = document.getElementById('arq-res-ingresar');
   if(elEf) elEf.style.color = efectivo >= 0 ? 'var(--accent)' : 'var(--red)';
-  if(elIn) elIn.style.color = aIngresar >= 0 ? 'var(--green)' : 'var(--red)';
+  if(elIn) elIn.style.color = efectivo >= 0 ? 'var(--green)' : 'var(--red)';
 }
 
 async function guardarArqueo(){
@@ -5085,7 +5082,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.9</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.11</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
