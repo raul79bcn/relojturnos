@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v5.11 – Grupo El Reloj</title>
+<title>RelojTurnos v6.0 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V5.11</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.0</span></div>
   </div>
 </div>
 
@@ -303,6 +303,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     <div class="step" id="step9" onclick="goStep(9)" style="display:none"><span class="step-num">&#128101;</span><span class="step-text" data-i18n="nav_usuarios">Usuarios</span></div>
     <div class="step" id="step10" onclick="goStep(10)" style="display:none"><span class="step-num">&#127912;</span><span class="step-text" data-i18n="nav_ajustes">Ajustes</span></div>
     <div class="step" id="step11" onclick="goStep(11)" style="display:none"><span class="step-num">&#128181;</span><span class="step-text" data-i18n="nav_arqueo">Arqueo</span></div>
+    <div class="step" id="step12" onclick="goStep(12)" style="display:none"><span class="step-num">&#128722;</span><span class="step-text" data-i18n="nav_compras">Compras</span></div>
   </div>
 
   <!-- PASO 1 -->
@@ -1021,13 +1022,281 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       </div>
     </div>
   </div>
-</div>
+  <!-- PASO 12: GESTIÓN DE COMPRAS -->
+  <div class="screen" id="screen12">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="card-title" style="margin:0" data-i18n="p12_titulo">🛒 Gestión de Compras</div>
+        <span style="font-size:9px;background:#c0a02020;color:#c0a020;padding:3px 9px;border-radius:12px;font-weight:700">DIRECCIÓN</span>
+      </div>
+      <div class="card-sub" data-i18n="p12_sub">Artículos, proveedores, precios y análisis de rentabilidad</div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+      <!-- TABS -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 0 0;border-bottom:1px solid var(--border);padding-bottom:0">
+        <button class="cmp-tab active" onclick="cmpTab('articulos')" id="cmp-tab-articulos" data-i18n="p12_tab_articulos">📦 Artículos</button>
+        <button class="cmp-tab" onclick="cmpTab('proveedores')" id="cmp-tab-proveedores" data-i18n="p12_tab_proveedores">🏭 Proveedores</button>
+        <button class="cmp-tab" onclick="cmpTab('precios')" id="cmp-tab-precios" data-i18n="p12_tab_precios">💶 Precios</button>
+        <button class="cmp-tab" onclick="cmpTab('analisis')" id="cmp-tab-analisis" data-i18n="p12_tab_analisis">📊 Análisis</button>
+      </div>
+
+      <style>
+        .cmp-tab{background:none;border:none;border-bottom:3px solid transparent;padding:8px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;margin-bottom:-1px;transition:.2s}
+        .cmp-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+        .cmp-tab:hover{color:var(--text)}
+        .cmp-panel{display:none}.cmp-panel.active{display:block}
+        .cmp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+        .cmp-table th{background:var(--darker);padding:8px 10px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+        .cmp-table td{padding:8px 10px;border-bottom:1px solid var(--border)20;vertical-align:middle}
+        .cmp-table tr:hover td{background:var(--darker)80}
+        .cmp-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+        .margin-ok{background:#1a4a1a;color:#2ecc71}
+        .margin-warn{background:#3d2a00;color:#ffa040}
+        .margin-bad{background:#3d1515;color:#e74c3c}
+      </style>
+
+      <!-- PANEL ARTÍCULOS -->
+      <div class="cmp-panel active" id="cmp-panel-articulos">
+        <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap">
+          <input type="text" id="cmp-art-search" placeholder="🔍 Buscar artículo..." style="flex:1;min-width:150px" oninput="cmpRenderArticulos()">
+          <select id="cmp-art-familia-filter" style="min-width:130px" onchange="cmpRenderArticulos()">
+            <option value="">Todas las familias</option>
+          </select>
+          <select id="cmp-art-local-filter" style="min-width:130px" onchange="cmpRenderArticulos()">
+            <option value="">Todos los locales</option>
+            <option value="1">🍽 La Cala</option>
+            <option value="2">🍔 Roto's Burguer</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="cmpAbrirModalArticulo()" data-i18n="p12_nuevo_art">+ Artículo</button>
+        </div>
+        <div id="cmp-articulos-list"></div>
+      </div>
+
+      <!-- PANEL PROVEEDORES -->
+      <div class="cmp-panel" id="cmp-panel-proveedores">
+        <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap">
+          <input type="text" id="cmp-prov-search" placeholder="🔍 Buscar proveedor..." style="flex:1" oninput="cmpRenderProveedores()">
+          <button class="btn btn-primary btn-sm" onclick="cmpAbrirModalProveedor()" data-i18n="p12_nuevo_prov">+ Proveedor</button>
+        </div>
+        <div id="cmp-proveedores-list"></div>
+      </div>
+
+      <!-- PANEL PRECIOS -->
+      <div class="cmp-panel" id="cmp-panel-precios">
+        <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap">
+          <select id="cmp-precio-art" style="flex:1;min-width:180px" onchange="cmpRenderPrecios()">
+            <option value="">— Seleccionar artículo —</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="cmpAbrirModalPrecio()" data-i18n="p12_nuevo_precio">+ Precio</button>
+        </div>
+        <div id="cmp-precios-list"></div>
+      </div>
+
+      <!-- PANEL ANÁLISIS -->
+      <div class="cmp-panel" id="cmp-panel-analisis">
+        <div style="margin-top:14px">
+          <!-- KPIs top -->
+          <div id="cmp-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
+          <!-- Subtabs análisis -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="btn btn-sm btn-primary" id="cmp-an-tab-margen" onclick="cmpAnTab('margen')">💰 Margen por producto</button>
+            <button class="btn btn-sm btn-ghost" id="cmp-an-tab-familia" onclick="cmpAnTab('familia')">🗂 Por familia</button>
+            <button class="btn btn-sm btn-ghost" id="cmp-an-tab-prov" onclick="cmpAnTab('prov')">🏭 Comparativa proveedores</button>
+            <button class="btn btn-sm btn-ghost" id="cmp-an-tab-evol" onclick="cmpAnTab('evol')">📈 Evolución precios</button>
+            <button class="btn btn-sm btn-ghost" id="cmp-an-tab-top" onclick="cmpAnTab('top')">🏆 Top ventas</button>
+          </div>
+          <div id="cmp-analisis-content"></div>
+        </div>
+      </div>
+
+      <div class="btn-row space" style="margin-top:18px">
+        <button class="btn btn-secondary" onclick="goStep(11)">← Arqueo</button>
+      </div>
+    </div>
+
+    <!-- MODAL ARTÍCULO -->
+    <div id="cmp-modal-articulo" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;display:flex;align-items:center;justify-content:center">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(480px,95vw);max-height:90vh;overflow-y:auto">
+        <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="cmp-modal-art-titulo">📦 Nuevo Artículo</div>
+        <input type="hidden" id="cmp-art-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre artículo</label>
+            <input type="text" id="cmp-art-nombre" placeholder="Ej: Aceite Oliva 5L">
+          </div>
+          <div class="form-group">
+            <label>Familia</label>
+            <select id="cmp-art-familia">
+              <option value="">— Seleccionar —</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Unidad de medida</label>
+            <select id="cmp-art-unidad">
+              <option value="ud">Unidad</option>
+              <option value="kg">Kg</option>
+              <option value="g">Gramo</option>
+              <option value="l">Litro</option>
+              <option value="cl">Centilitro</option>
+              <option value="caja">Caja</option>
+              <option value="bote">Bote</option>
+              <option value="botella">Botella</option>
+              <option value="sobre">Sobre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Local</label>
+            <select id="cmp-art-local">
+              <option value="1">🍽 La Cala</option>
+              <option value="2">🍔 Roto's Burguer</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Precio venta carta (€)</label>
+            <input type="number" id="cmp-art-pvp" placeholder="0.00" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Unidades vendidas/semana (est.)</label>
+            <input type="number" id="cmp-art-ventas" placeholder="0" step="1" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descripción / notas</label>
+          <input type="text" id="cmp-art-desc" placeholder="Opcional">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="cmpGuardarArticulo()">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL PROVEEDOR -->
+    <div id="cmp-modal-proveedor" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(480px,95vw);max-height:90vh;overflow-y:auto">
+        <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="cmp-modal-prov-titulo">🏭 Nuevo Proveedor</div>
+        <input type="hidden" id="cmp-prov-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre comercial</label>
+            <input type="text" id="cmp-prov-nombre" placeholder="Ej: Makro Barcelona">
+          </div>
+          <div class="form-group">
+            <label>Razón social</label>
+            <input type="text" id="cmp-prov-razon" placeholder="Ej: Metro Cash&Carry S.A.">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>CIF / NIF</label>
+            <input type="text" id="cmp-prov-cif" placeholder="A12345678">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="cmp-prov-tel" placeholder="93 XXX XX XX">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="cmp-prov-email" placeholder="pedidos@proveedor.com">
+          </div>
+          <div class="form-group">
+            <label>Persona de contacto</label>
+            <input type="text" id="cmp-prov-contacto" placeholder="Nombre contacto">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" id="cmp-prov-direccion" placeholder="Calle, número, ciudad">
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <input type="text" id="cmp-prov-notas" placeholder="Días de reparto, condiciones...">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="cmpGuardarProveedor()">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL PRECIO -->
+    <div id="cmp-modal-precio" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(420px,95vw)">
+        <div style="font-size:14px;font-weight:700;margin-bottom:16px">💶 Registrar Precio de Compra</div>
+        <input type="hidden" id="cmp-precio-id">
+        <div class="form-group">
+          <label>Artículo</label>
+          <select id="cmp-precio-art-sel"></select>
+        </div>
+        <div class="form-group">
+          <label>Proveedor</label>
+          <select id="cmp-precio-prov-sel"></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Precio compra (€)</label>
+            <input type="number" id="cmp-precio-compra" placeholder="0.00" step="0.01" min="0" oninput="cmpCalcMargen()">
+          </div>
+          <div class="form-group">
+            <label>Fecha precio</label>
+            <input type="date" id="cmp-precio-fecha">
+          </div>
+        </div>
+        <div id="cmp-precio-margen-preview" style="background:var(--darker);border-radius:8px;padding:10px;margin:8px 0;font-size:11px;display:none">
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:var(--muted)">PVP carta:</span><span id="cmp-pm-pvp" style="color:var(--text)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="color:var(--muted)">Precio compra:</span><span id="cmp-pm-coste" style="color:var(--red)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">
+            <span style="font-weight:700">Margen bruto:</span><span id="cmp-pm-margen" style="font-weight:700">—</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notas (opcional)</label>
+          <input type="text" id="cmp-precio-notas" placeholder="Oferta puntual, tarifa especial...">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="cmpGuardarPrecio()">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL FAMILIA -->
+    <div id="cmp-modal-familia" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(360px,95vw)">
+        <div style="font-size:14px;font-weight:700;margin-bottom:16px">🗂 Nueva Familia</div>
+        <div class="form-group">
+          <label>Nombre familia</label>
+          <input type="text" id="cmp-fam-nombre" placeholder="Ej: Bebidas alcohólicas">
+        </div>
+        <div class="form-group">
+          <label>Emoji / icono</label>
+          <input type="text" id="cmp-fam-emoji" placeholder="🍺" maxlength="4" style="width:80px">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="cmpGuardarFamilia()">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
 var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
 var COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800'];
 var ROLES=['Resp. Ma\u00f1ana','Resp. Noche','Cam. Ma\u00f1ana','Cam. Noche','Cam. Tarde','Cam. Intermedio','Cocinero','Ayud. Cocina','Encargado','Barman'];
+
+// ========== COMPRAS DATA ==========
+var cmpFamilias=[], cmpArticulos=[], cmpProveedores=[], cmpPrecios=[];
+var cmpTabActual='articulos', cmpAnTabActual='margen';
 
 // ========== SUPABASE CONFIG ==========
 const SUPA_URL = 'https://ttewezdnroiqtetmgyrh.supabase.co';
@@ -1583,7 +1852,7 @@ function onLocalChange(){
 }
 
 function goStep(n){
-  for(var i=1;i<=11;i++){
+  for(var i=1;i<=12;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
@@ -1592,6 +1861,7 @@ function goStep(n){
   if(n===9) cargarUsuarios();
   if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
   if(n===11){ initArqueo(); }
+  if(n===12){ initCompras(); }
   window.scrollTo(0,0);
 }
 
@@ -1985,7 +2255,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v5.11 ==========
+// ========== LÓGICA FIESTAS v6.0 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -3323,7 +3593,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v5.11 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v6.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3516,10 +3786,12 @@ function checkMostrarBtnUsuarios(){
   var s9  = document.getElementById('step9');
   var s10 = document.getElementById('step10');
   var s11 = document.getElementById('step11');
+  var s12 = document.getElementById('step12');
   if(u.rol==='directora'||u.rol==='directora_general'||u.rol==='admin'){
     if(s9)  s9.style.display='';
     if(s10) s10.style.display='';
     if(s11) s11.style.display='';
+    if(s12) s12.style.display='';
   }
 }
 
@@ -3843,7 +4115,7 @@ var I18N = {
     // Nav pasos
     nav_local:'Local', nav_turnos:'Turnos', nav_equipo:'Equipo', nav_asignar:'Asignar',
     nav_eventos:'Eventos', nav_cuadrante:'Cuadrante', nav_costes:'Costes',
-    nav_direccion:'Direcc. Gral.', nav_usuarios:'Usuarios', nav_ajustes:'Ajustes', nav_arqueo:'Arqueo',
+    nav_direccion:'Direcc. Gral.', nav_usuarios:'Usuarios', nav_ajustes:'Ajustes', nav_arqueo:'Arqueo', nav_compras:'Compras',
     // Paso 1
     p1_titulo:'¿Qué local y semana vamos a planificar?',
     p1_sub:'Selecciona el restaurante, la semana y la configuración básica',
@@ -3960,6 +4232,11 @@ var I18N = {
     p11_historico:'📋 Histórico de arqueos',
     p11_editar_banner:'✏️ Editando arqueo ID ',
     p11_cancelar:'Cancelar edición',
+    // Paso 12 - Compras
+    p12_titulo:'🛒 Gestión de Compras', p12_sub:'Artículos, proveedores, precios y análisis de rentabilidad',
+    p12_tab_articulos:'📦 Artículos', p12_tab_proveedores:'🏭 Proveedores',
+    p12_tab_precios:'💶 Precios', p12_tab_analisis:'📊 Análisis',
+    p12_nuevo_art:'+ Artículo', p12_nuevo_prov:'+ Proveedor', p12_nuevo_precio:'+ Precio',
     // Login
     login_dni:'DNI / NIE', login_password:'Contraseña', login_btn:'Entrar',
     login_demo:'DEMO', login_error:'Usuario o contraseña incorrectos',
@@ -4115,7 +4392,7 @@ var I18N = {
     turno_intermedio:'Intermedi', turno_partido:'Partit', turno_fiesta:'Festa', turno_mediafiesta:'½ Mitja festa',
     nav_local:'Local', nav_turnos:'Torns', nav_equipo:'Equip', nav_asignar:'Assignar',
     nav_eventos:'Esdeveniments', nav_cuadrante:'Quadrant', nav_costes:'Costos',
-    nav_direccion:'Dir. General', nav_usuarios:'Usuaris', nav_ajustes:'Ajustos', nav_arqueo:'Arqueig',
+    nav_direccion:'Dir. General', nav_usuarios:'Usuaris', nav_ajustes:'Ajustos', nav_arqueo:'Arqueig', nav_compras:'Compres',
     p1_titulo:'Quin local i setmana planificarem?',
     p1_sub:'Selecciona el restaurant, la setmana i la configuració bàsica',
     p1_local:'Local', p1_semana:'Setmana que comença el',
@@ -4368,7 +4645,7 @@ var I18N = {
     turno_intermedio:'Split', turno_partido:'Split shift', turno_fiesta:'Day off', turno_mediafiesta:'½ Half day off',
     nav_local:'Venue', nav_turnos:'Shifts', nav_equipo:'Team', nav_asignar:'Assign',
     nav_eventos:'Events', nav_cuadrante:'Schedule', nav_costes:'Costs',
-    nav_direccion:'Head Office', nav_usuarios:'Users', nav_ajustes:'Settings', nav_arqueo:'Cash',
+    nav_direccion:'Head Office', nav_usuarios:'Users', nav_ajustes:'Settings', nav_arqueo:'Cash', nav_compras:'Purchasing',
     p1_titulo:'Which venue and week are we planning?',
     p1_sub:'Select the restaurant, week and basic configuration',
     p1_local:'Venue', p1_semana:'Week starting on',
@@ -5082,7 +5359,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v5.11</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.0</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
@@ -5115,6 +5392,645 @@ function imprimirArqueo(){
   w.document.close();
   setTimeout(function(){ w.print(); }, 400);
 }
+
+// ========== MÓDULO COMPRAS v6.0 ==========
+
+async function initCompras(){
+  await cmpCargarDatos();
+  cmpTab(cmpTabActual);
+}
+
+async function cmpCargarDatos(){
+  try{
+    var fams = await sbGet('cmp_familias','order=nombre.asc');
+    cmpFamilias = fams||[];
+  }catch(e){ cmpFamilias=[]; }
+  try{
+    var arts = await sbGet('cmp_articulos','order=nombre.asc');
+    cmpArticulos = arts||[];
+  }catch(e){ cmpArticulos=[]; }
+  try{
+    var provs = await sbGet('cmp_proveedores','order=nombre.asc');
+    cmpProveedores = provs||[];
+  }catch(e){ cmpProveedores=[]; }
+  try{
+    var precs = await sbGet('cmp_precios','order=fecha.desc');
+    cmpPrecios = precs||[];
+  }catch(e){ cmpPrecios=[]; }
+  cmpPopularFiltros();
+}
+
+function cmpPopularFiltros(){
+  // Familias en filtro y modal
+  var famSels = ['cmp-art-familia-filter','cmp-art-familia'];
+  famSels.forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var first = el.options[0] ? el.options[0].text : '';
+    el.innerHTML = (id==='cmp-art-familia-filter'?'<option value="">Todas las familias</option>':'<option value="">— Seleccionar —</option>');
+    cmpFamilias.forEach(function(f){
+      el.innerHTML += '<option value="'+f.id+'">'+(f.emoji||'')+ ' '+f.nombre+'</option>';
+    });
+  });
+  // Artículos en selector precios
+  ['cmp-precio-art','cmp-precio-art-sel'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = '<option value="">— Seleccionar artículo —</option>';
+    cmpArticulos.forEach(function(a){
+      el.innerHTML += '<option value="'+a.id+'">'+a.nombre+'</option>';
+    });
+  });
+  // Proveedores en selector precios
+  var psel = document.getElementById('cmp-precio-prov-sel');
+  if(psel){
+    psel.innerHTML = '<option value="">— Seleccionar proveedor —</option>';
+    cmpProveedores.forEach(function(p){
+      psel.innerHTML += '<option value="'+p.id+'">'+p.nombre+'</option>';
+    });
+  }
+}
+
+function cmpTab(tab){
+  cmpTabActual = tab;
+  ['articulos','proveedores','precios','analisis'].forEach(function(t){
+    var btn = document.getElementById('cmp-tab-'+t);
+    var panel = document.getElementById('cmp-panel-'+t);
+    if(btn) btn.className = 'cmp-tab'+(t===tab?' active':'');
+    if(panel) panel.className = 'cmp-panel'+(t===tab?' active':'');
+  });
+  if(tab==='articulos') cmpRenderArticulos();
+  if(tab==='proveedores') cmpRenderProveedores();
+  if(tab==='precios') cmpRenderPrecios();
+  if(tab==='analisis'){ cmpRenderKpis(); cmpAnTab(cmpAnTabActual); }
+}
+
+function cmpAnTab(tab){
+  cmpAnTabActual = tab;
+  ['margen','familia','prov','evol','top'].forEach(function(t){
+    var btn = document.getElementById('cmp-an-tab-'+t);
+    if(btn) btn.className = 'btn btn-sm '+(t===tab?'btn-primary':'btn-ghost');
+  });
+  var cont = document.getElementById('cmp-analisis-content');
+  if(!cont) return;
+  if(tab==='margen')  cont.innerHTML = cmpHtmlMargen();
+  if(tab==='familia') cont.innerHTML = cmpHtmlFamilia();
+  if(tab==='prov')    cont.innerHTML = cmpHtmlComparativaProv();
+  if(tab==='evol')    cont.innerHTML = cmpHtmlEvolucion();
+  if(tab==='top')     cont.innerHTML = cmpHtmlTopVentas();
+}
+
+// ---- RENDER ARTÍCULOS ----
+function cmpRenderArticulos(){
+  var cont = document.getElementById('cmp-articulos-list');
+  if(!cont) return;
+  var search = (document.getElementById('cmp-art-search')||{}).value||'';
+  var famF   = (document.getElementById('cmp-art-familia-filter')||{}).value||'';
+  var locF   = (document.getElementById('cmp-art-local-filter')||{}).value||'';
+  var arts = cmpArticulos.filter(function(a){
+    if(search && a.nombre.toLowerCase().indexOf(search.toLowerCase())<0) return false;
+    if(famF && String(a.familia_id)!==String(famF)) return false;
+    if(locF && String(a.local_id)!==String(locF)) return false;
+    return true;
+  });
+  if(!arts.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin artículos. Pulsa <strong>+ Artículo</strong> para añadir.</div>';
+    return;
+  }
+  var html='<table class="cmp-table"><thead><tr>'
+    +'<th>Artículo</th><th>Familia</th><th>Unidad</th><th>Local</th><th>PVP</th><th>Mejor precio</th><th>Margen</th><th></th></tr></thead><tbody>';
+  arts.forEach(function(a){
+    var fam = cmpFamilias.find(function(f){ return f.id===a.familia_id; });
+    var localNom = a.local_id===1?'La Cala':a.local_id===2?"Roto's":'—';
+    var pvp = a.precio_venta||0;
+    // Mejor precio de compra (más reciente de cada proveedor, luego el menor)
+    var preciosArt = cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    var bestPrecio = null;
+    if(preciosArt.length){
+      // último precio por proveedor
+      var byProv={};
+      preciosArt.forEach(function(p){
+        if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p;
+      });
+      var ultimos = Object.values(byProv);
+      bestPrecio = ultimos.reduce(function(min,p){ return p.precio_compra<min.precio_compra?p:min; }, ultimos[0]);
+    }
+    var margenHtml='<span style="color:var(--muted)">—</span>';
+    if(pvp>0 && bestPrecio){
+      var margen = pvp - bestPrecio.precio_compra;
+      var pct = (margen/pvp*100).toFixed(1);
+      var cls = pct>=60?'margin-ok':pct>=30?'margin-warn':'margin-bad';
+      margenHtml='<span class="cmp-badge '+cls+'">'+pct+'% · '+margen.toFixed(2)+'€</span>';
+    }
+    html+='<tr>'
+      +'<td style="font-weight:600">'+a.nombre+'</td>'
+      +'<td>'+(fam?(fam.emoji||'')+' '+fam.nombre:'—')+'</td>'
+      +'<td style="color:var(--muted)">'+a.unidad+'</td>'
+      +'<td style="color:var(--muted);font-size:11px">'+localNom+'</td>'
+      +'<td style="color:var(--green)">'+(pvp>0?pvp.toFixed(2)+'€':'—')+'</td>'
+      +'<td style="color:var(--red)">'+(bestPrecio?bestPrecio.precio_compra.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+margenHtml+'</td>'
+      +'<td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px" onclick="cmpAbrirModalArticulo('+a.id+')">✏️</button>'
+      +'<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;border-color:var(--red);color:var(--red)" onclick="cmpEliminarArticulo('+a.id+')">🗑</button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  // Botón nueva familia inline
+  html+='<div style="margin-top:10px;font-size:11px;color:var(--muted)">Familias: ';
+  cmpFamilias.forEach(function(f){ html+='<span style="margin-right:6px">'+(f.emoji||'')+ f.nombre+'</span>'; });
+  html+='<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;margin-left:8px" onclick="cmpAbrirModalFamilia()">+ Familia</button></div>';
+  cont.innerHTML=html;
+}
+
+// ---- RENDER PROVEEDORES ----
+function cmpRenderProveedores(){
+  var cont = document.getElementById('cmp-proveedores-list');
+  if(!cont) return;
+  var search = (document.getElementById('cmp-prov-search')||{}).value||'';
+  var provs = cmpProveedores.filter(function(p){
+    return !search || p.nombre.toLowerCase().indexOf(search.toLowerCase())>=0;
+  });
+  if(!provs.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin proveedores. Pulsa <strong>+ Proveedor</strong> para añadir.</div>';
+    return;
+  }
+  var html='<table class="cmp-table"><thead><tr><th>Proveedor</th><th>Razón social</th><th>CIF</th><th>Contacto</th><th>Teléfono</th><th>Artículos</th><th></th></tr></thead><tbody>';
+  provs.forEach(function(p){
+    var numArts = cmpPrecios.filter(function(pr){ return pr.proveedor_id===p.id; });
+    var artsUnicos = [...new Set(numArts.map(function(x){ return x.articulo_id; }))].length;
+    html+='<tr>'
+      +'<td style="font-weight:600">'+p.nombre+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(p.razon_social||'—')+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(p.cif||'—')+'</td>'
+      +'<td style="font-size:11px">'+(p.contacto||'—')+'</td>'
+      +'<td style="font-size:11px">'+(p.telefono||'—')+'</td>'
+      +'<td><span class="cmp-badge" style="background:var(--darker);color:var(--accent)">'+artsUnicos+' arts.</span></td>'
+      +'<td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px" onclick="cmpAbrirModalProveedor('+p.id+')">✏️</button>'
+      +'<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;border-color:var(--red);color:var(--red)" onclick="cmpEliminarProveedor('+p.id+')">🗑</button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  cont.innerHTML=html;
+}
+
+// ---- RENDER PRECIOS ----
+function cmpRenderPrecios(){
+  var cont = document.getElementById('cmp-precios-list');
+  if(!cont) return;
+  var artF = (document.getElementById('cmp-precio-art')||{}).value||'';
+  // También actualizar select
+  var sel = document.getElementById('cmp-precio-art');
+  if(sel && !sel.innerHTML.includes('option value="') ){
+    sel.innerHTML='<option value="">— Todos los artículos —</option>';
+    cmpArticulos.forEach(function(a){ sel.innerHTML+='<option value="'+a.id+'">'+a.nombre+'</option>'; });
+  }
+  var precs = artF ? cmpPrecios.filter(function(p){ return String(p.articulo_id)===String(artF); }) : cmpPrecios;
+  if(!precs.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin precios registrados. Pulsa <strong>+ Precio</strong>.</div>';
+    return;
+  }
+  var html='<table class="cmp-table"><thead><tr><th>Artículo</th><th>Proveedor</th><th>Precio compra</th><th>PVP carta</th><th>Margen</th><th>Fecha</th><th>Notas</th><th></th></tr></thead><tbody>';
+  precs.sort(function(a,b){ return b.fecha>a.fecha?1:-1; }).forEach(function(p){
+    var art = cmpArticulos.find(function(a){ return a.id===p.articulo_id; });
+    var prov = cmpProveedores.find(function(v){ return v.id===p.proveedor_id; });
+    var pvp = art?art.precio_venta||0:0;
+    var margenHtml='<span style="color:var(--muted)">—</span>';
+    if(pvp>0){
+      var m=pvp-p.precio_compra, pct=(m/pvp*100).toFixed(1);
+      var cls=pct>=60?'margin-ok':pct>=30?'margin-warn':'margin-bad';
+      margenHtml='<span class="cmp-badge '+cls+'">'+pct+'%</span>';
+    }
+    html+='<tr>'
+      +'<td style="font-weight:600">'+(art?art.nombre:'—')+'</td>'
+      +'<td>'+(prov?prov.nombre:'—')+'</td>'
+      +'<td style="color:var(--red);font-weight:700">'+p.precio_compra.toFixed(2)+'€</td>'
+      +'<td style="color:var(--green)">'+(pvp>0?pvp.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+margenHtml+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+p.fecha+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(p.notas||'')+'</td>'
+      +'<td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;border-color:var(--red);color:var(--red)" onclick="cmpEliminarPrecio('+p.id+')">🗑</button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  cont.innerHTML=html;
+}
+
+// ---- ANÁLISIS ----
+function cmpRenderKpis(){
+  var cont = document.getElementById('cmp-kpis');
+  if(!cont) return;
+  var totalArts = cmpArticulos.length;
+  var totalProvs = cmpProveedores.length;
+  // Margen promedio
+  var margenes=[];
+  cmpArticulos.forEach(function(a){
+    var pvp=a.precio_venta||0; if(!pvp) return;
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    if(!precs.length) return;
+    var byProv={};
+    precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+    var best=Object.values(byProv).reduce(function(m,p){ return p.precio_compra<m.precio_compra?p:m; },Object.values(byProv)[0]);
+    margenes.push((pvp-best.precio_compra)/pvp*100);
+  });
+  var avgMargen = margenes.length ? (margenes.reduce(function(s,m){return s+m;},0)/margenes.length).toFixed(1) : '—';
+  cont.innerHTML=''
+    +'<div class="stat-card"><div class="stat-val">'+totalArts+'</div><div class="stat-label">Artículos</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+totalProvs+'</div><div class="stat-label">Proveedores</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+(avgMargen==='—'?'—':avgMargen+'%')+'</div><div class="stat-label">Margen medio</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+cmpPrecios.length+'</div><div class="stat-label">Precios registrados</div></div>';
+}
+
+function cmpHtmlMargen(){
+  var rows=[];
+  cmpArticulos.forEach(function(a){
+    var pvp=a.precio_venta||0;
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    var bestPrecio=null;
+    if(precs.length){
+      var byProv={};
+      precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+      bestPrecio=Object.values(byProv).reduce(function(m,p){ return p.precio_compra<m.precio_compra?p:m; },Object.values(byProv)[0]);
+    }
+    var margen=pvp>0&&bestPrecio?pvp-bestPrecio.precio_compra:null;
+    var pct=pvp>0&&bestPrecio?(margen/pvp*100):null;
+    rows.push({a:a,pvp:pvp,coste:bestPrecio?bestPrecio.precio_compra:null,margen:margen,pct:pct});
+  });
+  rows.sort(function(a,b){ return (b.pct||0)-(a.pct||0); });
+  var html='<table class="cmp-table"><thead><tr><th>Artículo</th><th>PVP</th><th>Mejor coste</th><th>Margen €</th><th>Margen %</th><th>Barra</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var pct=r.pct!==null?r.pct.toFixed(1):null;
+    var cls=pct!==null?(pct>=60?'margin-ok':pct>=30?'margin-warn':'margin-bad'):'';
+    var barra=pct!==null?'<div style="background:var(--border);border-radius:4px;height:8px;width:100px"><div style="background:'+(pct>=60?'#2ecc71':pct>=30?'#ffa040':'#e74c3c')+';height:8px;border-radius:4px;width:'+Math.min(100,Math.max(0,pct))+'%"></div></div>':'—';
+    html+='<tr>'
+      +'<td style="font-weight:600">'+r.a.nombre+'</td>'
+      +'<td style="color:var(--green)">'+(r.pvp>0?r.pvp.toFixed(2)+'€':'—')+'</td>'
+      +'<td style="color:var(--red)">'+(r.coste!==null?r.coste.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+(r.margen!==null?r.margen.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+(pct!==null?'<span class="cmp-badge '+cls+'">'+pct+'%</span>':'—')+'</td>'
+      +'<td>'+barra+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  return html;
+}
+
+function cmpHtmlFamilia(){
+  var famData={};
+  cmpFamilias.forEach(function(f){ famData[f.id]={fam:f,arts:[],margenes:[],ventas:0}; });
+  cmpArticulos.forEach(function(a){
+    if(!famData[a.familia_id]) return;
+    famData[a.familia_id].arts.push(a);
+    famData[a.familia_id].ventas+=(a.unidades_semana||0);
+    var pvp=a.precio_venta||0;
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    if(pvp>0&&precs.length){
+      var byProv={};
+      precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+      var best=Object.values(byProv).reduce(function(m,p){ return p.precio_compra<m.precio_compra?p:m; },Object.values(byProv)[0]);
+      famData[a.familia_id].margenes.push((pvp-best.precio_compra)/pvp*100);
+    }
+  });
+  var html='<table class="cmp-table"><thead><tr><th>Familia</th><th>Artículos</th><th>Margen medio</th><th>Barra</th></tr></thead><tbody>';
+  Object.values(famData).forEach(function(fd){
+    var avg=fd.margenes.length?(fd.margenes.reduce(function(s,m){return s+m;},0)/fd.margenes.length):null;
+    var cls=avg!==null?(avg>=60?'margin-ok':avg>=30?'margin-warn':'margin-bad'):'';
+    var barra=avg!==null?'<div style="background:var(--border);border-radius:4px;height:8px;width:120px"><div style="background:'+(avg>=60?'#2ecc71':avg>=30?'#ffa040':'#e74c3c')+';height:8px;border-radius:4px;width:'+Math.min(100,Math.max(0,avg))+'%"></div></div>':'—';
+    html+='<tr>'
+      +'<td style="font-weight:600">'+(fd.fam.emoji||'')+' '+fd.fam.nombre+'</td>'
+      +'<td>'+fd.arts.length+'</td>'
+      +'<td>'+(avg!==null?'<span class="cmp-badge '+cls+'">'+avg.toFixed(1)+'%</span>':'—')+'</td>'
+      +'<td>'+barra+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  return html;
+}
+
+function cmpHtmlComparativaProv(){
+  // Para cada artículo, mostrar precio de cada proveedor (último registrado)
+  var html='';
+  cmpArticulos.forEach(function(a){
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    if(!precs.length) return;
+    var byProv={};
+    precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+    var rows=Object.values(byProv).sort(function(a,b){ return a.precio_compra-b.precio_compra; });
+    if(rows.length<2) return; // solo mostrar si hay 2+ proveedores
+    var pvp=a.precio_venta||0;
+    html+='<div style="background:var(--darker);border-radius:10px;padding:12px;margin-bottom:12px">'
+      +'<div style="font-weight:700;margin-bottom:8px;font-size:13px">'+a.nombre+(pvp>0?' <span style="color:var(--green);font-size:11px">PVP: '+pvp.toFixed(2)+'€</span>':'')+'</div>'
+      +'<table class="cmp-table" style="margin-top:0"><thead><tr><th>Proveedor</th><th>Precio</th><th>Margen</th><th>Diferencia vs mejor</th></tr></thead><tbody>';
+    var mejor=rows[0].precio_compra;
+    rows.forEach(function(r,i){
+      var prov=cmpProveedores.find(function(v){ return v.id===r.proveedor_id; });
+      var diff=r.precio_compra-mejor;
+      var m=pvp>0?((pvp-r.precio_compra)/pvp*100):null;
+      var cls=m!==null?(m>=60?'margin-ok':m>=30?'margin-warn':'margin-bad'):'';
+      html+='<tr style="'+(i===0?'background:var(--card)':'')+'">'
+        +'<td style="font-weight:'+(i===0?'700':'400')+'">'+(i===0?'🥇 ':'')+(prov?prov.nombre:'—')+'</td>'
+        +'<td style="color:var(--red);font-weight:700">'+r.precio_compra.toFixed(2)+'€</td>'
+        +'<td>'+(m!==null?'<span class="cmp-badge '+cls+'">'+m.toFixed(1)+'%</span>':'—')+'</td>'
+        +'<td style="color:'+(i===0?'var(--green)':'var(--red)')+'">'+( i===0?'✓ Mejor precio':'+'+diff.toFixed(2)+'€')+'</td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  });
+  if(!html) html='<div style="text-align:center;color:var(--muted);padding:30px">Registra precios de 2+ proveedores para el mismo artículo para ver la comparativa.</div>';
+  return html;
+}
+
+function cmpHtmlEvolucion(){
+  // Selector de artículo + historial de precios por proveedor
+  var artSel='<select onchange="cmpRenderEvol(this.value)" style="margin-bottom:14px;min-width:200px"><option value="">— Seleccionar artículo —</option>';
+  cmpArticulos.forEach(function(a){ artSel+='<option value="'+a.id+'">'+a.nombre+'</option>'; });
+  artSel+='</select>';
+  return '<div>'+artSel+'<div id="cmp-evol-content"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Selecciona un artículo para ver la evolución de precios.</div></div></div>';
+}
+
+function cmpRenderEvol(artId){
+  var cont=document.getElementById('cmp-evol-content');
+  if(!cont) return;
+  if(!artId){ cont.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Selecciona un artículo.</div>'; return; }
+  var precs=cmpPrecios.filter(function(p){ return String(p.articulo_id)===String(artId); });
+  if(!precs.length){ cont.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Sin precios registrados para este artículo.</div>'; return; }
+  precs.sort(function(a,b){ return a.fecha>b.fecha?1:-1; });
+  var html='<table class="cmp-table"><thead><tr><th>Fecha</th><th>Proveedor</th><th>Precio compra</th><th>PVP</th><th>Margen</th><th>Notas</th></tr></thead><tbody>';
+  var art=cmpArticulos.find(function(a){ return String(a.id)===String(artId); });
+  var pvp=art?art.precio_venta||0:0;
+  precs.forEach(function(p){
+    var prov=cmpProveedores.find(function(v){ return v.id===p.proveedor_id; });
+    var m=pvp>0?((pvp-p.precio_compra)/pvp*100):null;
+    var cls=m!==null?(m>=60?'margin-ok':m>=30?'margin-warn':'margin-bad'):'';
+    html+='<tr>'
+      +'<td style="color:var(--muted)">'+p.fecha+'</td>'
+      +'<td>'+(prov?prov.nombre:'—')+'</td>'
+      +'<td style="color:var(--red);font-weight:700">'+p.precio_compra.toFixed(2)+'€</td>'
+      +'<td style="color:var(--green)">'+(pvp>0?pvp.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+(m!==null?'<span class="cmp-badge '+cls+'">'+m.toFixed(1)+'%</span>':'—')+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(p.notas||'')+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  cont.innerHTML=html;
+}
+
+function cmpHtmlTopVentas(){
+  var arts=cmpArticulos.filter(function(a){ return (a.unidades_semana||0)>0; });
+  arts.sort(function(a,b){ return (b.unidades_semana||0)-(a.unidades_semana||0); });
+  if(!arts.length) return '<div style="text-align:center;color:var(--muted);padding:30px">Introduce unidades vendidas/semana en los artículos para ver el ranking.</div>';
+  var top10=arts.slice(0,10);
+  var bot5=arts.slice(-5).reverse();
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  // Top 10
+  html+='<div><div style="font-weight:700;margin-bottom:10px;color:var(--green)">🏆 Top 10 más vendidos</div><table class="cmp-table"><thead><tr><th>#</th><th>Artículo</th><th>Uds/sem</th><th>Margen sem</th></tr></thead><tbody>';
+  top10.forEach(function(a,i){
+    var pvp=a.precio_venta||0;
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    var margenSem=null;
+    if(pvp>0&&precs.length){
+      var byProv={};
+      precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+      var best=Object.values(byProv).reduce(function(m,p){ return p.precio_compra<m.precio_compra?p:m; },Object.values(byProv)[0]);
+      margenSem=(pvp-best.precio_compra)*(a.unidades_semana||0);
+    }
+    html+='<tr><td style="color:var(--accent);font-weight:700">'+(i+1)+'</td><td>'+a.nombre+'</td><td style="color:var(--accent)">'+(a.unidades_semana||0)+'</td><td style="color:var(--green)">'+(margenSem!==null?margenSem.toFixed(2)+'€':'—')+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  // Bottom 5
+  html+='<div><div style="font-weight:700;margin-bottom:10px;color:var(--red)">⚠️ 5 menos vendidos</div><table class="cmp-table"><thead><tr><th>#</th><th>Artículo</th><th>Uds/sem</th></tr></thead><tbody>';
+  bot5.forEach(function(a,i){
+    html+='<tr><td style="color:var(--red)">'+(i+1)+'</td><td>'+a.nombre+'</td><td style="color:var(--muted)">'+(a.unidades_semana||0)+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  html+='</div>';
+  return html;
+}
+
+// ---- MODALES ----
+function cmpAbrirModalArticulo(id){
+  cmpPopularFiltros();
+  var m=document.getElementById('cmp-modal-articulo');
+  m.style.display='flex';
+  if(id){
+    var a=cmpArticulos.find(function(x){ return x.id===id; });
+    if(!a) return;
+    document.getElementById('cmp-modal-art-titulo').textContent='📦 Editar Artículo';
+    document.getElementById('cmp-art-id').value=a.id;
+    document.getElementById('cmp-art-nombre').value=a.nombre||'';
+    document.getElementById('cmp-art-familia').value=a.familia_id||'';
+    document.getElementById('cmp-art-unidad').value=a.unidad||'ud';
+    document.getElementById('cmp-art-local').value=a.local_id||1;
+    document.getElementById('cmp-art-pvp').value=a.precio_venta||'';
+    document.getElementById('cmp-art-ventas').value=a.unidades_semana||'';
+    document.getElementById('cmp-art-desc').value=a.descripcion||'';
+  } else {
+    document.getElementById('cmp-modal-art-titulo').textContent='📦 Nuevo Artículo';
+    document.getElementById('cmp-art-id').value='';
+    ['cmp-art-nombre','cmp-art-desc','cmp-art-pvp','cmp-art-ventas'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById('cmp-art-familia').value='';
+    document.getElementById('cmp-art-unidad').value='ud';
+    document.getElementById('cmp-art-local').value='1';
+  }
+}
+
+function cmpAbrirModalProveedor(id){
+  var m=document.getElementById('cmp-modal-proveedor');
+  m.style.display='flex';
+  if(id){
+    var p=cmpProveedores.find(function(x){ return x.id===id; });
+    if(!p) return;
+    document.getElementById('cmp-modal-prov-titulo').textContent='🏭 Editar Proveedor';
+    document.getElementById('cmp-prov-id').value=p.id;
+    document.getElementById('cmp-prov-nombre').value=p.nombre||'';
+    document.getElementById('cmp-prov-razon').value=p.razon_social||'';
+    document.getElementById('cmp-prov-cif').value=p.cif||'';
+    document.getElementById('cmp-prov-tel').value=p.telefono||'';
+    document.getElementById('cmp-prov-email').value=p.email||'';
+    document.getElementById('cmp-prov-contacto').value=p.contacto||'';
+    document.getElementById('cmp-prov-direccion').value=p.direccion||'';
+    document.getElementById('cmp-prov-notas').value=p.notas||'';
+  } else {
+    document.getElementById('cmp-modal-prov-titulo').textContent='🏭 Nuevo Proveedor';
+    document.getElementById('cmp-prov-id').value='';
+    ['cmp-prov-nombre','cmp-prov-razon','cmp-prov-cif','cmp-prov-tel','cmp-prov-email','cmp-prov-contacto','cmp-prov-direccion','cmp-prov-notas'].forEach(function(id){ document.getElementById(id).value=''; });
+  }
+}
+
+function cmpAbrirModalPrecio(){
+  cmpPopularFiltros();
+  var m=document.getElementById('cmp-modal-precio');
+  m.style.display='flex';
+  document.getElementById('cmp-precio-id').value='';
+  document.getElementById('cmp-precio-compra').value='';
+  document.getElementById('cmp-precio-notas').value='';
+  document.getElementById('cmp-precio-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('cmp-precio-margen-preview').style.display='none';
+  // Pre-seleccionar artículo si hay uno filtrado
+  var artF=(document.getElementById('cmp-precio-art')||{}).value||'';
+  if(artF) document.getElementById('cmp-precio-art-sel').value=artF;
+}
+
+function cmpAbrirModalFamilia(){
+  var m=document.getElementById('cmp-modal-familia');
+  m.style.display='flex';
+  document.getElementById('cmp-fam-nombre').value='';
+  document.getElementById('cmp-fam-emoji').value='';
+}
+
+function cmpCerrarModales(){
+  ['cmp-modal-articulo','cmp-modal-proveedor','cmp-modal-precio','cmp-modal-familia'].forEach(function(id){
+    var m=document.getElementById(id); if(m) m.style.display='none';
+  });
+}
+
+function cmpCalcMargen(){
+  var artId=document.getElementById('cmp-precio-art-sel').value;
+  var coste=parseFloat(document.getElementById('cmp-precio-compra').value)||0;
+  var prev=document.getElementById('cmp-precio-margen-preview');
+  if(!artId||!coste){ prev.style.display='none'; return; }
+  var art=cmpArticulos.find(function(a){ return String(a.id)===String(artId); });
+  var pvp=art?art.precio_venta||0:0;
+  if(!pvp){ prev.style.display='none'; return; }
+  var m=pvp-coste, pct=(m/pvp*100);
+  prev.style.display='block';
+  document.getElementById('cmp-pm-pvp').textContent=pvp.toFixed(2)+'€';
+  document.getElementById('cmp-pm-coste').textContent=coste.toFixed(2)+'€';
+  var mEl=document.getElementById('cmp-pm-margen');
+  mEl.textContent=m.toFixed(2)+'€ ('+pct.toFixed(1)+'%)';
+  mEl.style.color=pct>=60?'#2ecc71':pct>=30?'#ffa040':'#e74c3c';
+}
+
+// ---- GUARDAR EN BD ----
+async function cmpGuardarArticulo(){
+  var id=document.getElementById('cmp-art-id').value;
+  var datos={
+    nombre:document.getElementById('cmp-art-nombre').value.trim(),
+    familia_id:parseInt(document.getElementById('cmp-art-familia').value)||null,
+    unidad:document.getElementById('cmp-art-unidad').value,
+    local_id:parseInt(document.getElementById('cmp-art-local').value)||1,
+    precio_venta:parseFloat(document.getElementById('cmp-art-pvp').value)||null,
+    unidades_semana:parseInt(document.getElementById('cmp-art-ventas').value)||null,
+    descripcion:document.getElementById('cmp-art-desc').value.trim()||null
+  };
+  if(!datos.nombre){ showToast('Introduce el nombre del artículo','orange'); return; }
+  try{
+    if(id){
+      await sbPatch('cmp_articulos',id,datos);
+      logAccion('EDITAR_ARTICULO','Artículo: '+datos.nombre,datos.local_id);
+    } else {
+      await sbPost('cmp_articulos',datos);
+      logAccion('NUEVO_ARTICULO','Artículo: '+datos.nombre,datos.local_id);
+    }
+    showToast('✓ Artículo guardado','green');
+    cmpCerrarModales();
+    await cmpCargarDatos();
+    cmpRenderArticulos();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpGuardarProveedor(){
+  var id=document.getElementById('cmp-prov-id').value;
+  var datos={
+    nombre:document.getElementById('cmp-prov-nombre').value.trim(),
+    razon_social:document.getElementById('cmp-prov-razon').value.trim()||null,
+    cif:document.getElementById('cmp-prov-cif').value.trim()||null,
+    telefono:document.getElementById('cmp-prov-tel').value.trim()||null,
+    email:document.getElementById('cmp-prov-email').value.trim()||null,
+    contacto:document.getElementById('cmp-prov-contacto').value.trim()||null,
+    direccion:document.getElementById('cmp-prov-direccion').value.trim()||null,
+    notas:document.getElementById('cmp-prov-notas').value.trim()||null
+  };
+  if(!datos.nombre){ showToast('Introduce el nombre del proveedor','orange'); return; }
+  try{
+    if(id){
+      await sbPatch('cmp_proveedores',id,datos);
+      logAccion('EDITAR_PROVEEDOR','Proveedor: '+datos.nombre,null);
+    } else {
+      await sbPost('cmp_proveedores',datos);
+      logAccion('NUEVO_PROVEEDOR','Proveedor: '+datos.nombre,null);
+    }
+    showToast('✓ Proveedor guardado','green');
+    cmpCerrarModales();
+    await cmpCargarDatos();
+    cmpRenderProveedores();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpGuardarPrecio(){
+  var datos={
+    articulo_id:parseInt(document.getElementById('cmp-precio-art-sel').value)||null,
+    proveedor_id:parseInt(document.getElementById('cmp-precio-prov-sel').value)||null,
+    precio_compra:parseFloat(document.getElementById('cmp-precio-compra').value)||null,
+    fecha:document.getElementById('cmp-precio-fecha').value,
+    notas:document.getElementById('cmp-precio-notas').value.trim()||null
+  };
+  if(!datos.articulo_id||!datos.proveedor_id||!datos.precio_compra){ showToast('Rellena artículo, proveedor y precio','orange'); return; }
+  try{
+    await sbPost('cmp_precios',datos);
+    var art=cmpArticulos.find(function(a){ return a.id===datos.articulo_id; });
+    logAccion('NUEVO_PRECIO',(art?art.nombre:'art '+datos.articulo_id)+' · '+datos.precio_compra+'€',null);
+    showToast('✓ Precio registrado','green');
+    cmpCerrarModales();
+    await cmpCargarDatos();
+    cmpRenderPrecios();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpGuardarFamilia(){
+  var datos={
+    nombre:document.getElementById('cmp-fam-nombre').value.trim(),
+    emoji:document.getElementById('cmp-fam-emoji').value.trim()||null
+  };
+  if(!datos.nombre){ showToast('Introduce el nombre de la familia','orange'); return; }
+  try{
+    await sbPost('cmp_familias',datos);
+    logAccion('NUEVA_FAMILIA','Familia: '+datos.nombre,null);
+    showToast('✓ Familia creada','green');
+    cmpCerrarModales();
+    await cmpCargarDatos();
+    cmpRenderArticulos();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpEliminarArticulo(id){
+  if(!confirm('¿Eliminar este artículo? Se eliminarán también sus precios.')) return;
+  try{
+    await sbDelete('cmp_precios','articulo_id=eq.'+id);
+    await sbDelete('cmp_articulos','id=eq.'+id);
+    logAccion('ELIMINAR_ARTICULO','ID '+id,null);
+    showToast('Artículo eliminado','orange');
+    await cmpCargarDatos();
+    cmpRenderArticulos();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpEliminarProveedor(id){
+  if(!confirm('¿Eliminar este proveedor?')) return;
+  try{
+    await sbDelete('cmp_proveedores','id=eq.'+id);
+    logAccion('ELIMINAR_PROVEEDOR','ID '+id,null);
+    showToast('Proveedor eliminado','orange');
+    await cmpCargarDatos();
+    cmpRenderProveedores();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpEliminarPrecio(id){
+  if(!confirm('¿Eliminar este registro de precio?')) return;
+  try{
+    await sbDelete('cmp_precios','id=eq.'+id);
+    logAccion('ELIMINAR_PRECIO','ID '+id,null);
+    showToast('Precio eliminado','orange');
+    await cmpCargarDatos();
+    cmpRenderPrecios();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+// Cerrar modales clicando fuera
+document.addEventListener('click',function(e){
+  ['cmp-modal-articulo','cmp-modal-proveedor','cmp-modal-precio','cmp-modal-familia'].forEach(function(id){
+    var m=document.getElementById(id);
+    if(m&&m.style.display==='flex'&&e.target===m) m.style.display='none';
+  });
+});
 </script>
-</body>
-</html>
