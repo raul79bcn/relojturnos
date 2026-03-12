@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v6.0 – Grupo El Reloj</title>
+<title>RelojTurnos v6.1 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.0</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.1</span></div>
   </div>
 </div>
 
@@ -897,7 +897,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <div class="card-title" data-i18n="p11_titulo">💰 Arqueo de Caja</div>
       <div class="card-sub">Registro de cierre de turno · <span id="arqueo-local-label" style="color:var(--accent)"></span></div>
       <!-- Banner edición activa -->
-      <div id="arq-edit-banner" style="display:none;background:#3d2a00;border:1px solid #ffc107;border-radius:8px;padding:9px 14px;font-size:11px;color:#ffc107;margin-bottom:12px;display:flex;align-items:center;gap:8px" data-i18n="arq_edit_banner">
+      <div id="arq-edit-banner" style="display:none;background:#3d2a00;border:1px solid #ffc107;border-radius:8px;padding:9px 14px;font-size:11px;color:#ffc107;margin-bottom:12px;align-items:center;gap:8px" data-i18n="arq_edit_banner">
         ✏️ <strong>Modo edición</strong> — Estás modificando un arqueo guardado. Pulsa <strong>Guardar</strong> para confirmar o <strong>Limpiar</strong> para cancelar.
       </div>
 
@@ -1015,9 +1015,18 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
       <!-- Histórico -->
       <div style="margin-top:22px">
-        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px" data-i18n="arq_historico_titulo">&#128197; Últimos arqueos guardados</div>
-        <div id="arq-historico">
-          <div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">Cargando...</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--text)" data-i18n="arq_historico_titulo">&#128197; Últimos arqueos guardados</div>
+          <button id="arq-hist-expand-btn" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 10px;display:none" onclick="arqExpandirHistorico()">Ver todos &#9660;</button>
+        </div>
+        <!-- Vista resumida: solo 3 -->
+        <div id="arq-historico-preview"></div>
+        <!-- Vista expandida: todos con scroll -->
+        <div id="arq-historico-full" style="display:none;max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:10px">
+          <div id="arq-historico-full-inner"></div>
+          <div style="text-align:center;margin-top:8px">
+            <button class="btn btn-ghost btn-sm" style="font-size:10px" onclick="arqColapsarHistorico()">&#9650; Colapsar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1067,6 +1076,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
             <option value="2">🍔 Roto's Burguer</option>
           </select>
           <button class="btn btn-primary btn-sm" onclick="cmpAbrirModalArticulo()" data-i18n="p12_nuevo_art">+ Artículo</button>
+          <button class="btn btn-ghost btn-sm" onclick="cmpAbrirModalFamilia()" style="border-color:var(--accent);color:var(--accent)">+ Familia</button>
+          <button class="btn btn-ghost btn-sm" onclick="cmpAbrirImport('articulos')" style="border-color:var(--muted);color:var(--muted)">📥 Importar</button>
         </div>
         <div id="cmp-articulos-list"></div>
       </div>
@@ -1076,6 +1087,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap">
           <input type="text" id="cmp-prov-search" placeholder="🔍 Buscar proveedor..." style="flex:1" oninput="cmpRenderProveedores()">
           <button class="btn btn-primary btn-sm" onclick="cmpAbrirModalProveedor()" data-i18n="p12_nuevo_prov">+ Proveedor</button>
+          <button class="btn btn-ghost btn-sm" onclick="cmpAbrirImport('proveedores')" style="border-color:var(--muted);color:var(--muted)">📥 Importar</button>
         </div>
         <div id="cmp-proveedores-list"></div>
       </div>
@@ -1284,6 +1296,47 @@ select,input[type=text],.inp-sm{font-size:14px!important}
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
           <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
           <button class="btn btn-primary btn-sm" onclick="cmpGuardarFamilia()">💾 Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL IMPORTAR -->
+    <div id="cmp-modal-import" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(600px,95vw);max-height:90vh;overflow-y:auto">
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px" id="cmp-import-titulo">📥 Importar</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px" id="cmp-import-sub"></div>
+
+        <!-- Plantilla descargable -->
+        <div style="background:var(--darker);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px">
+          <div style="font-weight:700;margin-bottom:6px;color:var(--accent)">📋 Columnas requeridas:</div>
+          <div id="cmp-import-cols" style="font-family:monospace;color:var(--text);letter-spacing:.3px"></div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:10px" onclick="cmpDescargarPlantilla()">⬇️ Descargar plantilla CSV</button>
+        </div>
+
+        <!-- Drop zone / file input -->
+        <div id="cmp-import-drop" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.2s"
+          onclick="document.getElementById('cmp-import-file').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+          ondragleave="this.style.borderColor='var(--border)'"
+          ondrop="cmpDropImport(event)">
+          <div style="font-size:28px;margin-bottom:6px">📂</div>
+          <div style="font-size:12px;color:var(--muted)">Arrastra un archivo <strong>.csv</strong> o <strong>.xlsx</strong> aquí</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">o haz clic para seleccionar</div>
+          <input type="file" id="cmp-import-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="cmpLeerImport(this)">
+        </div>
+
+        <!-- Preview tabla -->
+        <div id="cmp-import-preview" style="display:none;margin-top:14px">
+          <div style="font-size:11px;font-weight:700;margin-bottom:6px" id="cmp-import-preview-titulo"></div>
+          <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+            <table class="cmp-table" id="cmp-import-preview-table"></table>
+          </div>
+          <div id="cmp-import-errores" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:10px;color:#ff8080;margin-top:8px"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" id="cmp-import-btn-ok" style="display:none" onclick="cmpEjecutarImport()">⬆️ Importar <span id="cmp-import-count"></span> registros</button>
         </div>
       </div>
     </div>
@@ -2257,7 +2310,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v6.0 ==========
+// ========== LÓGICA FIESTAS v6.1 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -3595,7 +3648,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v6.0 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v6.1 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5012,6 +5065,12 @@ var CIERRES_LOCAL = {
 };
 
 function initArqueo(){
+  // Reset estado — evita datos residuales de visita anterior
+  if(!arqEditId){
+    arqProveedores = [];
+    arqProvCounter = 0;
+  }
+
   // Fecha de hoy por defecto
   var hoy = new Date();
   var yyyy = hoy.getFullYear();
@@ -5180,21 +5239,27 @@ async function guardarArqueo(){
 }
 
 async function cargarHistoricoArqueos(){
-  var cont = document.getElementById('arq-historico');
-  if(!cont) return;
-  cont.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">'+t('audit_cargando')+'</div>';
+  var preview = document.getElementById('arq-historico-preview');
+  var fullInner = document.getElementById('arq-historico-full-inner');
+  var expandBtn = document.getElementById('arq-hist-expand-btn');
+  if(!preview) return;
+
+  preview.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">'+t('audit_cargando')+'</div>';
+
   try{
     var localId = parseInt((document.getElementById('arq-local')||{}).value || '1');
-    var rows = await sbGet('arqueos','local_id=eq.'+localId+'&order=fecha.desc,turno.desc&limit=10');
+    var rows = await sbGet('arqueos','local_id=eq.'+localId+'&order=fecha.desc,turno.desc&limit=50');
     if(!rows || !rows.length){
-      cont.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">'+t('arq_sin_arqueos')+'</div>';
+      preview.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">'+t('arq_sin_arqueos')+'</div>';
+      if(expandBtn) expandBtn.style.display='none';
       return;
     }
-    var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
-    var TURNOS  = {manana:'☀️ '+t('p11_turno_m'), noche:'🌙 '+t('p11_turno_n')};
+
+    var TURNOS = {manana:'☀️ '+t('p11_turno_m'), noche:'🌙 '+t('p11_turno_n')};
     var fmt = function(n){ return (parseFloat(n)||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
-    cont.innerHTML = rows.map(function(r){
-      var aIngresar = (r.efectivo_resultado||0) - (r.fondo||0);
+
+    var renderRow = function(r){
+      var aIngresar = r.efectivo_resultado || 0;
       var col = aIngresar >= 0 ? 'var(--green)' : 'var(--red)';
       var tieneAudit = r.notas && r.notas.indexOf('MODIFICADO POR DIRECCIÓN GENERAL')>=0;
       var auditMatch = tieneAudit ? r.notas.match(/\[MODIFICADO.*?\]/) : null;
@@ -5219,10 +5284,33 @@ async function cargarHistoricoArqueos(){
         +'<button onclick="editarArqueo('+r.id+')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 10px;border-color:var(--accent);color:var(--accent)">'+t('arq_editar')+'</button>'
         +'</div>'
         +'</div>';
-    }).join('');
+    };
+
+    // Preview: solo los 3 primeros
+    preview.innerHTML = rows.slice(0,3).map(renderRow).join('');
+
+    // Full: todos
+    if(fullInner) fullInner.innerHTML = rows.map(renderRow).join('');
+
+    // Botón expandir solo si hay más de 3
+    if(expandBtn) expandBtn.style.display = rows.length > 3 ? '' : 'none';
+    if(expandBtn && rows.length > 3) expandBtn.textContent = 'Ver todos ('+rows.length+') ▼';
+
   }catch(e){
-    cont.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:10px">⚠ Error: '+e.message+'</div>';
+    preview.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:10px">⚠ Error: '+e.message+'</div>';
   }
+}
+
+function arqExpandirHistorico(){
+  document.getElementById('arq-historico-preview').style.display = 'none';
+  document.getElementById('arq-historico-full').style.display = '';
+  document.getElementById('arq-hist-expand-btn').style.display = 'none';
+}
+
+function arqColapsarHistorico(){
+  document.getElementById('arq-historico-preview').style.display = '';
+  document.getElementById('arq-historico-full').style.display = 'none';
+  document.getElementById('arq-hist-expand-btn').style.display = '';
 }
 
 var arqEditId = null; // ID del arqueo que se está editando
@@ -5361,7 +5449,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.0</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.1</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
@@ -5395,7 +5483,7 @@ function imprimirArqueo(){
   setTimeout(function(){ w.print(); }, 400);
 }
 
-// ========== MÓDULO COMPRAS v6.0 ==========
+// ========== MÓDULO COMPRAS v6.1 ==========
 
 async function initCompras(){
   await cmpCargarDatos();
@@ -5537,10 +5625,6 @@ function cmpRenderArticulos(){
       +'</tr>';
   });
   html+='</tbody></table>';
-  // Botón nueva familia inline
-  html+='<div style="margin-top:10px;font-size:11px;color:var(--muted)">Familias: ';
-  cmpFamilias.forEach(function(f){ html+='<span style="margin-right:6px">'+(f.emoji||'')+ f.nombre+'</span>'; });
-  html+='<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;margin-left:8px" onclick="cmpAbrirModalFamilia()">+ Familia</button></div>';
   cont.innerHTML=html;
 }
 
@@ -5880,7 +5964,7 @@ function cmpAbrirModalFamilia(){
 }
 
 function cmpCerrarModales(){
-  ['cmp-modal-articulo','cmp-modal-proveedor','cmp-modal-precio','cmp-modal-familia'].forEach(function(id){
+  ['cmp-modal-articulo','cmp-modal-proveedor','cmp-modal-precio','cmp-modal-familia','cmp-modal-import'].forEach(function(id){
     var m=document.getElementById(id); if(m) m.style.display='none';
   });
 }
@@ -6028,11 +6112,267 @@ async function cmpEliminarPrecio(id){
   }catch(e){ showToast('Error: '+e.message,'red'); }
 }
 
-// Cerrar modales clicando fuera
-document.addEventListener('click',function(e){
-  ['cmp-modal-articulo','cmp-modal-proveedor','cmp-modal-precio','cmp-modal-familia'].forEach(function(id){
-    var m=document.getElementById(id);
-    if(m&&m.style.display==='flex'&&e.target===m) m.style.display='none';
+
+// ========== IMPORTACIÓN CSV / XLSX ==========
+
+var cmpImportTipo = '';
+var cmpImportDatos = [];
+
+var CMP_IMPORT_CONFIG = {
+  familias: {
+    titulo: '🗂 Importar Familias',
+    sub: 'Carga múltiples familias de golpe desde un CSV o Excel.',
+    cols: ['nombre', 'emoji'],
+    colsDesc: 'nombre (obligatorio) · emoji (opcional, ej: 🍺)',
+    tabla: 'cmp_familias',
+    obligatorios: ['nombre'],
+    mapear: function(row){ return { nombre: row.nombre||'', emoji: row.emoji||null }; },
+    validar: function(row){ return (row.nombre||'').trim() ? null : 'Falta nombre'; }
+  },
+  articulos: {
+    titulo: '📦 Importar Artículos',
+    sub: 'Carga múltiples artículos. La familia debe coincidir con el nombre exacto de una familia existente.',
+    cols: ['nombre', 'familia', 'unidad', 'local', 'precio_venta', 'unidades_semana', 'descripcion'],
+    colsDesc: 'nombre* · familia (nombre exacto) · unidad (ud/kg/l...) · local (1=La Cala, 2=Roto\'s) · precio_venta · unidades_semana · descripcion',
+    tabla: 'cmp_articulos',
+    obligatorios: ['nombre'],
+    mapear: function(row){
+      var famNombre = (row.familia||'').trim().toLowerCase();
+      var fam = cmpFamilias.find(function(f){ return f.nombre.toLowerCase()===famNombre; });
+      return {
+        nombre: (row.nombre||'').trim(),
+        familia_id: fam ? fam.id : null,
+        unidad: (row.unidad||'ud').trim(),
+        local_id: parseInt(row.local)||1,
+        precio_venta: parseFloat(row.precio_venta)||null,
+        unidades_semana: parseInt(row.unidades_semana)||null,
+        descripcion: (row.descripcion||'').trim()||null
+      };
+    },
+    validar: function(row){ return (row.nombre||'').trim() ? null : 'Falta nombre'; }
+  },
+  proveedores: {
+    titulo: '🏭 Importar Proveedores',
+    sub: 'Carga múltiples proveedores desde un CSV o Excel.',
+    cols: ['nombre', 'razon_social', 'cif', 'telefono', 'email', 'contacto', 'direccion', 'notas'],
+    colsDesc: 'nombre* · razon_social · cif · telefono · email · contacto · direccion · notas',
+    tabla: 'cmp_proveedores',
+    obligatorios: ['nombre'],
+    mapear: function(row){
+      return {
+        nombre: (row.nombre||'').trim(),
+        razon_social: (row.razon_social||'').trim()||null,
+        cif: (row.cif||'').trim()||null,
+        telefono: (row.telefono||'').trim()||null,
+        email: (row.email||'').trim()||null,
+        contacto: (row.contacto||'').trim()||null,
+        direccion: (row.direccion||'').trim()||null,
+        notas: (row.notas||'').trim()||null
+      };
+    },
+    validar: function(row){ return (row.nombre||'').trim() ? null : 'Falta nombre'; }
+  }
+};
+
+function cmpAbrirImport(tipo){
+  cmpImportTipo = tipo;
+  cmpImportDatos = [];
+  var cfg = CMP_IMPORT_CONFIG[tipo];
+  if(!cfg) return;
+  document.getElementById('cmp-import-titulo').textContent = cfg.titulo;
+  document.getElementById('cmp-import-sub').textContent = cfg.sub;
+  document.getElementById('cmp-import-cols').textContent = cfg.colsDesc;
+  document.getElementById('cmp-import-preview').style.display = 'none';
+  document.getElementById('cmp-import-btn-ok').style.display = 'none';
+  document.getElementById('cmp-import-errores').style.display = 'none';
+  var fileEl = document.getElementById('cmp-import-file');
+  if(fileEl) fileEl.value = '';
+  document.getElementById('cmp-modal-import').style.display = 'flex';
+}
+
+function cmpDropImport(e){
+  e.preventDefault();
+  document.getElementById('cmp-import-drop').style.borderColor = 'var(--border)';
+  var file = e.dataTransfer.files[0];
+  if(file) cmpProcesarArchivo(file);
+}
+
+function cmpLeerImport(input){
+  var file = input.files[0];
+  if(file) cmpProcesarArchivo(file);
+}
+
+function cmpProcesarArchivo(file){
+  var nombre = file.name.toLowerCase();
+  if(nombre.endsWith('.csv')){
+    var reader = new FileReader();
+    reader.onload = function(e){ cmpParsearCSV(e.target.result); };
+    reader.readAsText(file, 'UTF-8');
+  } else if(nombre.endsWith('.xlsx')||nombre.endsWith('.xls')){
+    var reader = new FileReader();
+    reader.onload = function(e){ cmpParsearXLSX(e.target.result); };
+    reader.readAsArrayBuffer(file);
+  } else {
+    showToast('Formato no soportado. Usa .csv o .xlsx','orange');
+  }
+}
+
+function cmpParsearCSV(text){
+  var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+  if(lines.length < 2){ showToast('El CSV debe tener cabecera y al menos una fila','orange'); return; }
+  // Detectar separador: ; o ,
+  var sep = lines[0].indexOf(';') >= 0 ? ';' : ',';
+  var headers = lines[0].split(sep).map(function(h){ return h.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_'); });
+  var rows = [];
+  for(var i=1;i<lines.length;i++){
+    var vals = lines[i].split(sep);
+    var row = {};
+    headers.forEach(function(h,idx){ row[h] = (vals[idx]||'').trim().replace(/^["']|["']$/g,''); });
+    rows.push(row);
+  }
+  cmpMostrarPreview(rows);
+}
+
+function cmpParsearXLSX(buffer){
+  // Parseo manual de XLSX (formato ZIP + XML) sin librerías externas
+  // Fallback: pedir CSV si no hay SheetJS disponible
+  try{
+    // Intentar usar SheetJS si está cargado
+    if(typeof XLSX !== 'undefined'){
+      var wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var json = XLSX.utils.sheet_to_json(ws, {defval:''});
+      var rows = json.map(function(row){
+        var clean = {};
+        Object.keys(row).forEach(function(k){
+          clean[k.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_')] = String(row[k]||'').trim();
+        });
+        return clean;
+      });
+      cmpMostrarPreview(rows);
+    } else {
+      showToast('Para Excel usa formato .csv (Guardar como → CSV UTF-8 en Excel)','orange');
+    }
+  }catch(e){
+    showToast('Error leyendo Excel: '+e.message+'. Prueba con CSV.','red');
+  }
+}
+
+function cmpMostrarPreview(rows){
+  var cfg = CMP_IMPORT_CONFIG[cmpImportTipo];
+  if(!cfg) return;
+
+  // Normalizar claves al nombre de columna esperado (tolerancia a nombres similares)
+  var alias = {
+    'nombre_comercial':'nombre','company':'nombre','proveedor':'nombre',
+    'articulo':'nombre','product':'nombre','familia_nombre':'familia',
+    'category':'familia','precio':'precio_venta','pvp':'precio_venta',
+    'unidades':'unidades_semana','ventas':'unidades_semana',
+    'local_id':'local','telephone':'telefono','phone':'telefono',
+    'mail':'email','contact':'contacto','address':'direccion'
+  };
+  rows = rows.map(function(row){
+    var norm = {};
+    Object.keys(row).forEach(function(k){
+      var key = alias[k]||k;
+      norm[key] = row[k];
+    });
+    return norm;
+  }).filter(function(row){
+    return cfg.obligatorios.some(function(ob){ return (row[ob]||'').trim(); });
   });
-});
+
+  if(!rows.length){
+    showToast('No se encontraron filas válidas. Comprueba la cabecera del archivo.','orange');
+    return;
+  }
+
+  // Validar
+  var errores = [];
+  rows.forEach(function(row, i){
+    var err = cfg.validar(row);
+    if(err) errores.push('Fila '+(i+2)+': '+err);
+  });
+
+  var preview = document.getElementById('cmp-import-preview');
+  var previewTit = document.getElementById('cmp-import-preview-titulo');
+  var previewTable = document.getElementById('cmp-import-preview-table');
+  var errDiv = document.getElementById('cmp-import-errores');
+  var btnOk = document.getElementById('cmp-import-btn-ok');
+  var countEl = document.getElementById('cmp-import-count');
+
+  preview.style.display = '';
+  previewTit.textContent = rows.length+' registros encontrados'+(errores.length?' · '+errores.length+' con error':'');
+
+  // Tabla preview (primeras 8 filas)
+  var cols = cfg.cols;
+  var thead = '<thead><tr>'+cols.map(function(c){ return '<th>'+c+'</th>'; }).join('')+'<th>Estado</th></tr></thead>';
+  var tbody = '<tbody>'+rows.slice(0,8).map(function(row, i){
+    var err = cfg.validar(row);
+    return '<tr>'+cols.map(function(c){ return '<td style="font-size:10px">'+(row[c]||'<span style="color:var(--muted)">—</span>')+'</td>'; }).join('')
+      +'<td>'+(err?'<span style="color:var(--red);font-size:10px">⚠ '+err+'</span>':'<span style="color:var(--green);font-size:10px">✓</span>')+'</td>'
+      +'</tr>';
+  }).join('')+(rows.length>8?'<tr><td colspan="'+(cols.length+1)+'" style="text-align:center;color:var(--muted);font-size:10px">... y '+(rows.length-8)+' más</td></tr>':'')+'</tbody>';
+  previewTable.innerHTML = thead+tbody;
+
+  if(errores.length){
+    errDiv.style.display = '';
+    errDiv.innerHTML = '⚠ '+errores.slice(0,5).join('<br>')+(errores.length>5?'<br>...y '+(errores.length-5)+' más':'');
+  } else {
+    errDiv.style.display = 'none';
+  }
+
+  var validos = rows.filter(function(row){ return !cfg.validar(row); });
+  cmpImportDatos = validos;
+
+  if(validos.length > 0){
+    btnOk.style.display = '';
+    countEl.textContent = validos.length;
+  } else {
+    btnOk.style.display = 'none';
+  }
+}
+
+async function cmpEjecutarImport(){
+  var cfg = CMP_IMPORT_CONFIG[cmpImportTipo];
+  if(!cfg || !cmpImportDatos.length) return;
+  var btnOk = document.getElementById('cmp-import-btn-ok');
+  btnOk.disabled = true;
+  btnOk.textContent = '⏳ Importando...';
+  var ok = 0, err = 0;
+  for(var i=0; i<cmpImportDatos.length; i++){
+    try{
+      var datos = cfg.mapear(cmpImportDatos[i]);
+      await sbPost(cfg.tabla, datos);
+      ok++;
+    }catch(e){ err++; }
+  }
+  logAccion('IMPORT_'+cmpImportTipo.toUpperCase(), ok+' registros importados'+(err?' · '+err+' errores':''), null);
+  showToast('✓ '+ok+' importados'+(err?' · '+err+' errores':''), ok>0?'green':'orange');
+  btnOk.disabled = false;
+  cmpCerrarModales();
+  await cmpCargarDatos();
+  if(cmpImportTipo==='articulos') cmpRenderArticulos();
+  if(cmpImportTipo==='proveedores') cmpRenderProveedores();
+  if(cmpImportTipo==='familias'){ cmpTab('articulos'); }
+}
+
+function cmpDescargarPlantilla(){
+  var cfg = CMP_IMPORT_CONFIG[cmpImportTipo];
+  if(!cfg) return;
+  var sep = ';';
+  var cabecera = cfg.cols.join(sep);
+  // Fila de ejemplo
+  var ejemplos = {
+    familias: 'Bebidas alcohólicas;🍺',
+    articulos: 'Aceite Oliva 5L;Aceites;l;1;12.50;20;Variedad arbequina',
+    proveedores: 'Makro Barcelona;Metro Cash&Carry S.A.;A12345678;93 123 45 67;pedidos@makro.es;Juan García;C/ Industria 10 Barcelona;Reparto lunes y jueves'
+  };
+  var csv = cabecera + '\n' + (ejemplos[cmpImportTipo]||'');
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'plantilla_'+cmpImportTipo+'.csv';
+  a.click();
+}
 </script>
