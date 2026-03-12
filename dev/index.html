@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v6.1 – Grupo El Reloj</title>
+<title>RelojTurnos v6.2 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.1</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.2</span></div>
   </div>
 </div>
 
@@ -718,6 +718,60 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <div class="btn-row space" style="margin-top:18px">
         <button class="btn btn-secondary" onclick="goStep(8)">&#8592; Dirección General</button>
         <button class="btn btn-ghost btn-sm" onclick="cargarUsuarios()" style="border-color:var(--green);color:var(--green)">&#128257; Actualizar lista</button>
+      </div>
+    </div>
+
+    <!-- MODAL EDITAR USUARIO -->
+    <div id="modal-editar-usuario" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(440px,95vw);max-height:90vh;overflow-y:auto">
+        <div style="font-size:14px;font-weight:700;margin-bottom:16px">✏️ Editar Usuario</div>
+        <input type="hidden" id="eu-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="eu-nombre" placeholder="Nombre completo">
+          </div>
+          <div class="form-group">
+            <label>DNI / NIE</label>
+            <input type="text" id="eu-dni" placeholder="12345678X">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Rol</label>
+            <select id="eu-rol" onchange="euRolChange()">
+              <option value="empleado">Empleado</option>
+              <option value="directora">Directora</option>
+              <option value="directora_general">Dir. General</option>
+            </select>
+          </div>
+          <div class="form-group" id="eu-local-group">
+            <label>Local</label>
+            <select id="eu-local">
+              <option value="1">🍽 La Cala</option>
+              <option value="2">🍔 Roto's Burguer</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="eu-activo">
+              <option value="1">✅ Activo</option>
+              <option value="0">❌ Inactivo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nueva contraseña (opcional)</label>
+            <input type="text" id="eu-pass" placeholder="Dejar vacío = sin cambios">
+          </div>
+        </div>
+        <div id="eu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:8px"></div>
+        <div id="eu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost btn-sm" onclick="cerrarEditarUsuario()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="guardarEditarUsuario()">💾 Guardar cambios</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2310,7 +2364,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v6.1 ==========
+// ========== LÓGICA FIESTAS v6.2 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2899,9 +2953,12 @@ function generarCuadrante(){
   mobileHtml+='</div>';
 
   document.getElementById('cuadrante-output').innerHTML=html+mobileHtml;
-  mostrarHoras=true;
+  // No resetear mostrarHoras aquí — respetar el estado actual
+  if(!mostrarHoras){
+    document.querySelectorAll('.col-horas').forEach(function(el){ el.style.display='none'; });
+  }
   var btn=document.getElementById('btn-toggle-horas');
-  if(btn){ btn.textContent=t('p6_ocultar_horas'); btn.setAttribute('data-i18n','p6_ocultar_horas'); }
+  if(btn){ btn.textContent=t(mostrarHoras?'p6_ocultar_horas':'p6_mostrar_horas'); btn.setAttribute('data-i18n',mostrarHoras?'p6_ocultar_horas':'p6_mostrar_horas'); }
   goStep(6);
 }
 
@@ -3648,7 +3705,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v6.1 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v6.2 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3780,6 +3837,7 @@ async function cargarUsuarios(){
         +'<div style="font-size:10px;color:var(--muted)">'+subInfo+'</div>'
         +'</div>'
         +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(u.activo?'#15351520':'#35151520')+';color:'+(u.activo?'var(--green)':'var(--red)')+';border:1px solid '+(u.activo?'var(--green)':'var(--red)')+'40;flex-shrink:0">'+(u.activo?'ACTIVO':'INACTIVO')+'</span>'
+        +'<button onclick="abrirEditarUsuario('+u.id+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>'
         +'</div>';
     }).join('');
   }catch(e){
@@ -5035,11 +5093,13 @@ function cargarIdiomaGuardado(){
   var urlParams = new URLSearchParams(window.location.search);
   var cuadParam = urlParams.get('cuadrante');
   if(cuadParam){
-    // Modo vista pública — no mostrar login
+    // Modo vista pública — ocultar TODO excepto vista-publica
     document.getElementById('login-screen').style.display='none';
-    // Init Supabase primero, luego cargar
-    const SUPA_URL2='https://ttewezdnroiqtetmgyrh.supabase.co';
-    const SUPA_KEY2='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0ZXdlemRucm9pcXRldG1neXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTExMDIsImV4cCI6MjA4ODM2NzEwMn0.mA5tWItknmHmBe7-8AZpN9579RRwEaM3ZybYpQBc2Pw';
+    var hdr = document.querySelector('header'); if(hdr) hdr.style.display='none';
+    var cnt = document.querySelector('.container'); if(cnt) cnt.style.display='none';
+    var pe  = document.getElementById('portal-empleado'); if(pe) pe.style.display='none';
+    document.body.style.background='var(--bg)';
+    document.body.style.margin='0';
     cargarPersonalizacionGuardada();
     cargarVistaPublica(parseInt(cuadParam));
     return;
@@ -5449,7 +5509,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.1</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.2</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
@@ -5483,7 +5543,70 @@ function imprimirArqueo(){
   setTimeout(function(){ w.print(); }, 400);
 }
 
-// ========== MÓDULO COMPRAS v6.1 ==========
+// ========== EDITAR USUARIO ==========
+var euUsuarioActual = null;
+
+async function abrirEditarUsuario(id){
+  try{
+    var rows = await sbGet('usuarios','id=eq.'+id);
+    if(!rows||!rows.length){ showToast('Usuario no encontrado','orange'); return; }
+    var u = rows[0];
+    euUsuarioActual = u;
+    document.getElementById('eu-id').value = u.id;
+    document.getElementById('eu-nombre').value = u.nombre||'';
+    document.getElementById('eu-dni').value = u.dni||'';
+    document.getElementById('eu-rol').value = u.rol||'empleado';
+    document.getElementById('eu-local').value = u.local_id||'1';
+    document.getElementById('eu-activo').value = u.activo?'1':'0';
+    document.getElementById('eu-pass').value = '';
+    document.getElementById('eu-error').style.display='none';
+    document.getElementById('eu-ok').style.display='none';
+    euRolChange();
+    document.getElementById('modal-editar-usuario').style.display='flex';
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+function euRolChange(){
+  var rol = document.getElementById('eu-rol').value;
+  var localGrp = document.getElementById('eu-local-group');
+  if(localGrp) localGrp.style.display = (rol==='directora_general'||rol==='admin') ? 'none' : '';
+}
+
+function cerrarEditarUsuario(){
+  document.getElementById('modal-editar-usuario').style.display='none';
+  euUsuarioActual = null;
+}
+
+async function guardarEditarUsuario(){
+  var id      = document.getElementById('eu-id').value;
+  var nombre  = document.getElementById('eu-nombre').value.trim();
+  var dni     = document.getElementById('eu-dni').value.trim().toUpperCase();
+  var rol     = document.getElementById('eu-rol').value;
+  var activo  = document.getElementById('eu-activo').value==='1';
+  var passNueva = document.getElementById('eu-pass').value.trim();
+  var localId = (rol==='directora_general'||rol==='admin') ? null : parseInt(document.getElementById('eu-local').value);
+  var errEl = document.getElementById('eu-error');
+  var okEl  = document.getElementById('eu-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  if(!nombre||!dni){ errEl.textContent='Nombre y DNI son obligatorios'; errEl.style.display='block'; return; }
+  try{
+    var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo };
+    if(passNueva){ datos.password_hash = await hashPass(passNueva); }
+    await sbPatch('usuarios', id, datos);
+    logAccion('EDITAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
+    okEl.textContent = '✓ Usuario actualizado correctamente';
+    okEl.style.display = 'block';
+    setTimeout(function(){ cerrarEditarUsuario(); cargarUsuarios(); }, 1200);
+  }catch(e){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
+}
+
+// Cerrar modal editar usuario clicando fuera
+document.addEventListener('click',function(e){
+  var m=document.getElementById('modal-editar-usuario');
+  if(m&&m.style.display==='flex'&&e.target===m) cerrarEditarUsuario();
+});
+
+// ========== MÓDULO COMPRAS v6.2 ==========
 
 async function initCompras(){
   await cmpCargarDatos();
