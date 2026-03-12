@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v6.2 – Grupo El Reloj</title>
+<title>RelojTurnos v6.3 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.2</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.3</span></div>
   </div>
 </div>
 
@@ -2364,7 +2364,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v6.2 ==========
+// ========== LÓGICA FIESTAS v6.3 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -3705,7 +3705,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v6.2 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v6.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5509,7 +5509,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.2</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.3</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
@@ -5606,7 +5606,7 @@ document.addEventListener('click',function(e){
   if(m&&m.style.display==='flex'&&e.target===m) cerrarEditarUsuario();
 });
 
-// ========== MÓDULO COMPRAS v6.2 ==========
+// ========== MÓDULO COMPRAS v6.3 ==========
 
 async function initCompras(){
   await cmpCargarDatos();
