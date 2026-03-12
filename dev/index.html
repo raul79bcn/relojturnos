@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v6.3 – Grupo El Reloj</title>
+<title>RelojTurnos v6.4 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -222,7 +222,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.3</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.4</span></div>
   </div>
 </div>
 
@@ -766,6 +766,26 @@ select,input[type=text],.inp-sm{font-size:14px!important}
             <input type="text" id="eu-pass" placeholder="Dejar vacío = sin cambios">
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Seguridad Social</label>
+            <input type="text" id="eu-ss" placeholder="XXXXXXXXXXX">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="eu-telefono" placeholder="6XX XXX XXX">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="eu-email" placeholder="empleado@email.com">
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input type="text" id="eu-direccion" placeholder="Calle, número, ciudad">
+          </div>
+        </div>
         <div id="eu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:8px"></div>
         <div id="eu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:8px"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
@@ -1179,220 +1199,241 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       </div>
     </div>
 
-    <!-- MODAL ARTÍCULO -->
-    <div id="cmp-modal-articulo" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;display:flex;align-items:center;justify-content:center">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(480px,95vw);max-height:90vh;overflow-y:auto">
-        <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="cmp-modal-art-titulo">📦 Nuevo Artículo</div>
-        <input type="hidden" id="cmp-art-id">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nombre artículo</label>
-            <input type="text" id="cmp-art-nombre" placeholder="Ej: Aceite Oliva 5L">
-          </div>
-          <div class="form-group">
-            <label>Familia</label>
-            <select id="cmp-art-familia">
-              <option value="">— Seleccionar —</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Unidad de medida</label>
-            <select id="cmp-art-unidad">
-              <option value="ud">Unidad</option>
-              <option value="kg">Kg</option>
-              <option value="g">Gramo</option>
-              <option value="l">Litro</option>
-              <option value="cl">Centilitro</option>
-              <option value="caja">Caja</option>
-              <option value="bote">Bote</option>
-              <option value="botella">Botella</option>
-              <option value="sobre">Sobre</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Local</label>
-            <select id="cmp-art-local">
-              <option value="1">🍽 La Cala</option>
-              <option value="2">🍔 Roto's Burguer</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Precio venta carta (€)</label>
-            <input type="number" id="cmp-art-pvp" placeholder="0.00" step="0.01" min="0">
-          </div>
-          <div class="form-group">
-            <label>Unidades vendidas/semana (est.)</label>
-            <input type="number" id="cmp-art-ventas" placeholder="0" step="1" min="0">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Descripción / notas</label>
-          <input type="text" id="cmp-art-desc" placeholder="Opcional">
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
-          <button class="btn btn-primary btn-sm" onclick="cmpGuardarArticulo()">💾 Guardar</button>
-        </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODALES COMPRAS (nivel body para evitar herencia display:none de screen) -->
+<!-- MODAL ARTÍCULO -->
+<div id="cmp-modal-articulo" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(480px,95vw);max-height:90vh;overflow-y:auto">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="cmp-modal-art-titulo">📦 Nuevo Artículo</div>
+    <input type="hidden" id="cmp-art-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nombre artículo *</label>
+        <input type="text" id="cmp-art-nombre" placeholder="Ej: Aceite Oliva 5L">
+      </div>
+      <div class="form-group">
+        <label>Familia</label>
+        <select id="cmp-art-familia">
+          <option value="">— Seleccionar —</option>
+        </select>
       </div>
     </div>
-
-    <!-- MODAL PROVEEDOR -->
-    <div id="cmp-modal-proveedor" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(480px,95vw);max-height:90vh;overflow-y:auto">
-        <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="cmp-modal-prov-titulo">🏭 Nuevo Proveedor</div>
-        <input type="hidden" id="cmp-prov-id">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nombre comercial</label>
-            <input type="text" id="cmp-prov-nombre" placeholder="Ej: Makro Barcelona">
-          </div>
-          <div class="form-group">
-            <label>Razón social</label>
-            <input type="text" id="cmp-prov-razon" placeholder="Ej: Metro Cash&Carry S.A.">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>CIF / NIF</label>
-            <input type="text" id="cmp-prov-cif" placeholder="A12345678">
-          </div>
-          <div class="form-group">
-            <label>Teléfono</label>
-            <input type="tel" id="cmp-prov-tel" placeholder="93 XXX XX XX">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="cmp-prov-email" placeholder="pedidos@proveedor.com">
-          </div>
-          <div class="form-group">
-            <label>Persona de contacto</label>
-            <input type="text" id="cmp-prov-contacto" placeholder="Nombre contacto">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Dirección</label>
-          <input type="text" id="cmp-prov-direccion" placeholder="Calle, número, ciudad">
-        </div>
-        <div class="form-group">
-          <label>Notas</label>
-          <input type="text" id="cmp-prov-notas" placeholder="Días de reparto, condiciones...">
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
-          <button class="btn btn-primary btn-sm" onclick="cmpGuardarProveedor()">💾 Guardar</button>
-        </div>
+    <div class="form-row" id="cmp-art-row-proveedor">
+      <div class="form-group">
+        <label>Proveedor habitual *</label>
+        <select id="cmp-art-proveedor">
+          <option value="">— Seleccionar proveedor —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Precio compra (€) *</label>
+        <input type="number" id="cmp-art-precio-compra" placeholder="0.00" step="0.01" min="0" oninput="cmpCalcMargenModal()">
       </div>
     </div>
-
-    <!-- MODAL PRECIO -->
-    <div id="cmp-modal-precio" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(420px,95vw)">
-        <div style="font-size:14px;font-weight:700;margin-bottom:16px">💶 Registrar Precio de Compra</div>
-        <input type="hidden" id="cmp-precio-id">
-        <div class="form-group">
-          <label>Artículo</label>
-          <select id="cmp-precio-art-sel"></select>
-        </div>
-        <div class="form-group">
-          <label>Proveedor</label>
-          <select id="cmp-precio-prov-sel"></select>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Precio compra (€)</label>
-            <input type="number" id="cmp-precio-compra" placeholder="0.00" step="0.01" min="0" oninput="cmpCalcMargen()">
-          </div>
-          <div class="form-group">
-            <label>Fecha precio</label>
-            <input type="date" id="cmp-precio-fecha">
-          </div>
-        </div>
-        <div id="cmp-precio-margen-preview" style="background:var(--darker);border-radius:8px;padding:10px;margin:8px 0;font-size:11px;display:none">
-          <div style="display:flex;justify-content:space-between">
-            <span style="color:var(--muted)">PVP carta:</span><span id="cmp-pm-pvp" style="color:var(--text)">—</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-top:4px">
-            <span style="color:var(--muted)">Precio compra:</span><span id="cmp-pm-coste" style="color:var(--red)">—</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">
-            <span style="font-weight:700">Margen bruto:</span><span id="cmp-pm-margen" style="font-weight:700">—</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Notas (opcional)</label>
-          <input type="text" id="cmp-precio-notas" placeholder="Oferta puntual, tarifa especial...">
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
-          <button class="btn btn-primary btn-sm" onclick="cmpGuardarPrecio()">💾 Guardar</button>
-        </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Unidad de medida</label>
+        <select id="cmp-art-unidad">
+          <option value="ud">Unidad</option>
+          <option value="kg">Kg</option>
+          <option value="g">Gramo</option>
+          <option value="l">Litro</option>
+          <option value="cl">Centilitro</option>
+          <option value="caja">Caja</option>
+          <option value="bote">Bote</option>
+          <option value="botella">Botella</option>
+          <option value="sobre">Sobre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Local</label>
+        <select id="cmp-art-local">
+          <option value="1">🍽 La Cala</option>
+          <option value="2">🍔 Roto's Burguer</option>
+        </select>
       </div>
     </div>
-
-    <!-- MODAL FAMILIA -->
-    <div id="cmp-modal-familia" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(360px,95vw)">
-        <div style="font-size:14px;font-weight:700;margin-bottom:16px">🗂 Nueva Familia</div>
-        <div class="form-group">
-          <label>Nombre familia</label>
-          <input type="text" id="cmp-fam-nombre" placeholder="Ej: Bebidas alcohólicas">
-        </div>
-        <div class="form-group">
-          <label>Emoji / icono</label>
-          <input type="text" id="cmp-fam-emoji" placeholder="🍺" maxlength="4" style="width:80px">
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
-          <button class="btn btn-primary btn-sm" onclick="cmpGuardarFamilia()">💾 Guardar</button>
-        </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Precio venta carta (€)</label>
+        <input type="number" id="cmp-art-pvp" placeholder="0.00" step="0.01" min="0" oninput="cmpCalcMargenModal()">
+      </div>
+      <div class="form-group">
+        <label>Unidades vendidas/semana (est.)</label>
+        <input type="number" id="cmp-art-ventas" placeholder="0" step="1" min="0">
       </div>
     </div>
-
-    <!-- MODAL IMPORTAR -->
-    <div id="cmp-modal-import" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(600px,95vw);max-height:90vh;overflow-y:auto">
-        <div style="font-size:14px;font-weight:700;margin-bottom:4px" id="cmp-import-titulo">📥 Importar</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:14px" id="cmp-import-sub"></div>
-
-        <!-- Plantilla descargable -->
-        <div style="background:var(--darker);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px">
-          <div style="font-weight:700;margin-bottom:6px;color:var(--accent)">📋 Columnas requeridas:</div>
-          <div id="cmp-import-cols" style="font-family:monospace;color:var(--text);letter-spacing:.3px"></div>
-          <button class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:10px" onclick="cmpDescargarPlantilla()">⬇️ Descargar plantilla CSV</button>
-        </div>
-
-        <!-- Drop zone / file input -->
-        <div id="cmp-import-drop" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.2s"
-          onclick="document.getElementById('cmp-import-file').click()"
-          ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
-          ondragleave="this.style.borderColor='var(--border)'"
-          ondrop="cmpDropImport(event)">
-          <div style="font-size:28px;margin-bottom:6px">📂</div>
-          <div style="font-size:12px;color:var(--muted)">Arrastra un archivo <strong>.csv</strong> o <strong>.xlsx</strong> aquí</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:4px">o haz clic para seleccionar</div>
-          <input type="file" id="cmp-import-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="cmpLeerImport(this)">
-        </div>
-
-        <!-- Preview tabla -->
-        <div id="cmp-import-preview" style="display:none;margin-top:14px">
-          <div style="font-size:11px;font-weight:700;margin-bottom:6px" id="cmp-import-preview-titulo"></div>
-          <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
-            <table class="cmp-table" id="cmp-import-preview-table"></table>
-          </div>
-          <div id="cmp-import-errores" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:10px;color:#ff8080;margin-top:8px"></div>
-        </div>
-
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-          <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
-          <button class="btn btn-primary btn-sm" id="cmp-import-btn-ok" style="display:none" onclick="cmpEjecutarImport()">⬆️ Importar <span id="cmp-import-count"></span> registros</button>
-        </div>
+    <!-- Preview margen -->
+    <div id="cmp-art-margen-preview" style="display:none;background:var(--darker);border-radius:8px;padding:10px;margin:4px 0 8px 0;font-size:11px">
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--muted)">PVP:</span><span id="cmp-am-pvp">—</span>
       </div>
+      <div style="display:flex;justify-content:space-between;margin-top:3px">
+        <span style="color:var(--muted)">Coste:</span><span id="cmp-am-coste" style="color:var(--red)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:3px;border-top:1px solid var(--border);padding-top:3px">
+        <span style="font-weight:700">Margen:</span><span id="cmp-am-margen" style="font-weight:700">—</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Descripción / notas</label>
+      <input type="text" id="cmp-art-desc" placeholder="Opcional">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="cmpGuardarArticulo()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROVEEDOR -->
+<div id="cmp-modal-proveedor" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(480px,95vw);max-height:90vh;overflow-y:auto">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="cmp-modal-prov-titulo">🏭 Nuevo Proveedor</div>
+    <input type="hidden" id="cmp-prov-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nombre comercial *</label>
+        <input type="text" id="cmp-prov-nombre" placeholder="Ej: Makro Barcelona">
+      </div>
+      <div class="form-group">
+        <label>Razón social</label>
+        <input type="text" id="cmp-prov-razon" placeholder="Ej: Metro Cash&Carry S.A.">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>CIF / NIF</label>
+        <input type="text" id="cmp-prov-cif" placeholder="A12345678">
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="tel" id="cmp-prov-tel" placeholder="93 XXX XX XX">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="cmp-prov-email" placeholder="pedidos@proveedor.com">
+      </div>
+      <div class="form-group">
+        <label>Persona de contacto</label>
+        <input type="text" id="cmp-prov-contacto" placeholder="Nombre contacto">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Dirección</label>
+      <input type="text" id="cmp-prov-direccion" placeholder="Calle, número, ciudad">
+    </div>
+    <div class="form-group">
+      <label>Notas</label>
+      <input type="text" id="cmp-prov-notas" placeholder="Días de reparto, condiciones...">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="cmpGuardarProveedor()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRECIO -->
+<div id="cmp-modal-precio" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(420px,95vw)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px">💶 Registrar Precio de Compra</div>
+    <input type="hidden" id="cmp-precio-id">
+    <div class="form-group">
+      <label>Artículo</label>
+      <select id="cmp-precio-art-sel"></select>
+    </div>
+    <div class="form-group">
+      <label>Proveedor</label>
+      <select id="cmp-precio-prov-sel"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Precio compra (€)</label>
+        <input type="number" id="cmp-precio-compra" placeholder="0.00" step="0.01" min="0" oninput="cmpCalcMargen()">
+      </div>
+      <div class="form-group">
+        <label>Fecha precio</label>
+        <input type="date" id="cmp-precio-fecha">
+      </div>
+    </div>
+    <div id="cmp-precio-margen-preview" style="display:none;background:var(--darker);border-radius:8px;padding:10px;margin:8px 0;font-size:11px">
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--muted)">PVP carta:</span><span id="cmp-pm-pvp" style="color:var(--text)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="color:var(--muted)">Precio compra:</span><span id="cmp-pm-coste" style="color:var(--red)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">
+        <span style="font-weight:700">Margen bruto:</span><span id="cmp-pm-margen" style="font-weight:700">—</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notas (opcional)</label>
+      <input type="text" id="cmp-precio-notas" placeholder="Oferta puntual, tarifa especial...">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="cmpGuardarPrecio()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FAMILIA -->
+<div id="cmp-modal-familia" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(360px,95vw)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px">🗂 Nueva Familia</div>
+    <div class="form-group">
+      <label>Nombre familia *</label>
+      <input type="text" id="cmp-fam-nombre" placeholder="Ej: Bebidas alcohólicas">
+    </div>
+    <div class="form-group">
+      <label>Emoji / icono</label>
+      <input type="text" id="cmp-fam-emoji" placeholder="🍺" maxlength="4" style="width:80px">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="cmpGuardarFamilia()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR -->
+<div id="cmp-modal-import" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(600px,95vw);max-height:90vh;overflow-y:auto">
+    <div style="font-size:14px;font-weight:700;margin-bottom:4px" id="cmp-import-titulo">📥 Importar</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px" id="cmp-import-sub"></div>
+    <div style="background:var(--darker);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px">
+      <div style="font-weight:700;margin-bottom:6px;color:var(--accent)">📋 Columnas requeridas:</div>
+      <div id="cmp-import-cols" style="font-family:monospace;color:var(--text);letter-spacing:.3px"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:10px" onclick="cmpDescargarPlantilla()">⬇️ Descargar plantilla CSV</button>
+    </div>
+    <div id="cmp-import-drop" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.2s"
+      onclick="document.getElementById('cmp-import-file').click()"
+      ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+      ondragleave="this.style.borderColor='var(--border)'"
+      ondrop="cmpDropImport(event)">
+      <div style="font-size:28px;margin-bottom:6px">📂</div>
+      <div style="font-size:12px;color:var(--muted)">Arrastra un archivo <strong>.csv</strong> o <strong>.xlsx</strong> aquí</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">o haz clic para seleccionar</div>
+      <input type="file" id="cmp-import-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="cmpLeerImport(this)">
+    </div>
+    <div id="cmp-import-preview" style="display:none;margin-top:14px">
+      <div style="font-size:11px;font-weight:700;margin-bottom:6px" id="cmp-import-preview-titulo"></div>
+      <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+        <table class="cmp-table" id="cmp-import-preview-table"></table>
+      </div>
+      <div id="cmp-import-errores" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:10px;color:#ff8080;margin-top:8px"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="cmp-import-btn-ok" style="display:none" onclick="cmpEjecutarImport()">⬆️ Importar <span id="cmp-import-count"></span> registros</button>
     </div>
   </div>
 </div>
@@ -2364,7 +2405,7 @@ function syncDiasFlojos(){
 }
 function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
 
-// ========== LÓGICA FIESTAS v6.3 ==========
+// ========== LÓGICA FIESTAS v6.4 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
 var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
@@ -2748,15 +2789,18 @@ function getTInfo(v){
 }
 
 function toggleHoras(){
-  mostrarHoras=!mostrarHoras;
-  var btn=document.getElementById('btn-toggle-horas');
+  mostrarHoras = !mostrarHoras;
+  var btn = document.getElementById('btn-toggle-horas');
   if(btn){
     var key = mostrarHoras ? 'p6_ocultar_horas' : 'p6_mostrar_horas';
     btn.textContent = t(key);
     btn.setAttribute('data-i18n', key);
   }
-  document.querySelectorAll('.col-horas').forEach(function(el){
-    el.style.display=mostrarHoras?'table-cell':'none';
+  // Aplicar directamente sobre el DOM generado
+  var cont = document.getElementById('cuadrante-output');
+  if(!cont) return;
+  cont.querySelectorAll('.col-horas').forEach(function(el){
+    el.style.setProperty('display', mostrarHoras ? '' : 'none', 'important');
   });
 }
 
@@ -3705,7 +3749,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v6.3 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v6.4 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5033,9 +5077,13 @@ function aplicarTraducciones(){
     el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
   });
 
-  // Corregir botón ocultar/mostrar horas según estado actual
+  // Corregir botón ocultar/mostrar horas según estado actual (no sobreescribir con valor estático)
   var btnH = document.getElementById('btn-toggle-horas');
-  if(btnH) btnH.textContent = mostrarHoras ? t('p6_ocultar_horas') : t('p6_mostrar_horas');
+  if(btnH){
+    var keyH = mostrarHoras ? 'p6_ocultar_horas' : 'p6_mostrar_horas';
+    btnH.textContent = t(keyH);
+    btnH.setAttribute('data-i18n', keyH);
+  }
 }
 
 function aplicarIdioma(lang){
@@ -5098,8 +5146,11 @@ function cargarIdiomaGuardado(){
     var hdr = document.querySelector('header'); if(hdr) hdr.style.display='none';
     var cnt = document.querySelector('.container'); if(cnt) cnt.style.display='none';
     var pe  = document.getElementById('portal-empleado'); if(pe) pe.style.display='none';
-    document.body.style.background='var(--bg)';
+    document.body.style.background='#0f1117';
     document.body.style.margin='0';
+    document.body.style.minHeight='100vh';
+    var vp = document.getElementById('vista-publica');
+    if(vp){ vp.style.background='#0f1117'; vp.style.color='#e0e0e0'; }
     cargarPersonalizacionGuardada();
     cargarVistaPublica(parseInt(cuadParam));
     return;
@@ -5509,7 +5560,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.3</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.4</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
@@ -5559,6 +5610,23 @@ async function abrirEditarUsuario(id){
     document.getElementById('eu-local').value = u.local_id||'1';
     document.getElementById('eu-activo').value = u.activo?'1':'0';
     document.getElementById('eu-pass').value = '';
+    document.getElementById('eu-ss').value = u.numero_ss||'';
+    document.getElementById('eu-telefono').value = u.telefono||'';
+    document.getElementById('eu-email').value = u.email||'';
+    document.getElementById('eu-direccion').value = u.direccion||'';
+    // Si no tiene esos campos en la tabla usuarios, buscar en empleados
+    if(!u.telefono && u.local_id){
+      try{
+        var emps = await sbGet('empleados','local_id=eq.'+u.local_id+'&nombre=eq.'+encodeURIComponent(u.nombre||''));
+        if(emps&&emps.length){
+          var emp = emps[0];
+          document.getElementById('eu-telefono').value = emp.telefono||'';
+          document.getElementById('eu-email').value = emp.email||'';
+          document.getElementById('eu-direccion').value = emp.direccion||'';
+          document.getElementById('eu-ss').value = emp.numero_ss||'';
+        }
+      }catch(e2){}
+    }
     document.getElementById('eu-error').style.display='none';
     document.getElementById('eu-ok').style.display='none';
     euRolChange();
@@ -5585,6 +5653,10 @@ async function guardarEditarUsuario(){
   var activo  = document.getElementById('eu-activo').value==='1';
   var passNueva = document.getElementById('eu-pass').value.trim();
   var localId = (rol==='directora_general'||rol==='admin') ? null : parseInt(document.getElementById('eu-local').value);
+  var ss        = document.getElementById('eu-ss').value.trim();
+  var telefono  = document.getElementById('eu-telefono').value.trim();
+  var email     = document.getElementById('eu-email').value.trim();
+  var direccion = document.getElementById('eu-direccion').value.trim();
   var errEl = document.getElementById('eu-error');
   var okEl  = document.getElementById('eu-ok');
   errEl.style.display='none'; okEl.style.display='none';
@@ -5593,6 +5665,22 @@ async function guardarEditarUsuario(){
     var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo };
     if(passNueva){ datos.password_hash = await hashPass(passNueva); }
     await sbPatch('usuarios', id, datos);
+    // Actualizar tabla empleados si tiene local
+    if(localId){
+      try{
+        var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(nombre));
+        var empDatos = {};
+        if(telefono) empDatos.telefono = telefono;
+        if(email)    empDatos.email    = email;
+        if(direccion)empDatos.direccion= direccion;
+        if(ss)       empDatos.numero_ss= ss;
+        if(Object.keys(empDatos).length){
+          if(empEx&&empEx.length){
+            await sbPatch('empleados', empEx[0].id, empDatos);
+          }
+        }
+      }catch(e2){ console.warn('empleados update:',e2); }
+    }
     logAccion('EDITAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
     okEl.textContent = '✓ Usuario actualizado correctamente';
     okEl.style.display = 'block';
@@ -5606,7 +5694,7 @@ document.addEventListener('click',function(e){
   if(m&&m.style.display==='flex'&&e.target===m) cerrarEditarUsuario();
 });
 
-// ========== MÓDULO COMPRAS v6.3 ==========
+// ========== MÓDULO COMPRAS v6.4 ==========
 
 async function initCompras(){
   await cmpCargarDatos();
@@ -6018,6 +6106,16 @@ function cmpHtmlTopVentas(){
 // ---- MODALES ----
 function cmpAbrirModalArticulo(id){
   cmpPopularFiltros();
+  // Poblar selector de proveedores
+  var provSel = document.getElementById('cmp-art-proveedor');
+  if(provSel){
+    provSel.innerHTML = '<option value="">— Seleccionar proveedor —</option>'
+      + cmpProveedores.map(function(p){ return '<option value="'+p.id+'">'+p.nombre+'</option>'; }).join('');
+  }
+  // Mostrar/ocultar campos proveedor+precio según si es nuevo o edición
+  var esNuevo = !id;
+  var rowProv = document.getElementById('cmp-art-row-proveedor');
+  if(rowProv) rowProv.style.display = esNuevo ? '' : 'none';
   var m=document.getElementById('cmp-modal-articulo');
   m.style.display='flex';
   if(id){
@@ -6032,13 +6130,18 @@ function cmpAbrirModalArticulo(id){
     document.getElementById('cmp-art-pvp').value=a.precio_venta||'';
     document.getElementById('cmp-art-ventas').value=a.unidades_semana||'';
     document.getElementById('cmp-art-desc').value=a.descripcion||'';
+    document.getElementById('cmp-art-precio-compra').value='';
+    document.getElementById('cmp-art-proveedor').value='';
+    document.getElementById('cmp-art-margen-preview').style.display='none';
   } else {
     document.getElementById('cmp-modal-art-titulo').textContent='📦 Nuevo Artículo';
     document.getElementById('cmp-art-id').value='';
-    ['cmp-art-nombre','cmp-art-desc','cmp-art-pvp','cmp-art-ventas'].forEach(function(id){ document.getElementById(id).value=''; });
+    ['cmp-art-nombre','cmp-art-desc','cmp-art-pvp','cmp-art-ventas','cmp-art-precio-compra'].forEach(function(fid){ document.getElementById(fid).value=''; });
     document.getElementById('cmp-art-familia').value='';
     document.getElementById('cmp-art-unidad').value='ud';
     document.getElementById('cmp-art-local').value='1';
+    document.getElementById('cmp-art-proveedor').value='';
+    document.getElementById('cmp-art-margen-preview').style.display='none';
   }
 }
 
@@ -6109,9 +6212,25 @@ function cmpCalcMargen(){
   mEl.style.color=pct>=60?'#2ecc71':pct>=30?'#ffa040':'#e74c3c';
 }
 
+function cmpCalcMargenModal(){
+  var pvp=parseFloat(document.getElementById('cmp-art-pvp').value)||0;
+  var coste=parseFloat(document.getElementById('cmp-art-precio-compra').value)||0;
+  var prev=document.getElementById('cmp-art-margen-preview');
+  if(!pvp||!coste){ if(prev) prev.style.display='none'; return; }
+  var m=pvp-coste, pct=(m/pvp*100);
+  if(prev) prev.style.display='block';
+  document.getElementById('cmp-am-pvp').textContent=pvp.toFixed(2)+'€';
+  document.getElementById('cmp-am-coste').textContent=coste.toFixed(2)+'€';
+  var mEl=document.getElementById('cmp-am-margen');
+  mEl.textContent=m.toFixed(2)+'€ ('+pct.toFixed(1)+'%)';
+  mEl.style.color=pct>=60?'#2ecc71':pct>=30?'#ffa040':'#e74c3c';
+}
+
 // ---- GUARDAR EN BD ----
 async function cmpGuardarArticulo(){
   var id=document.getElementById('cmp-art-id').value;
+  var provId=parseInt(document.getElementById('cmp-art-proveedor').value)||null;
+  var precioCompra=parseFloat(document.getElementById('cmp-art-precio-compra').value)||null;
   var datos={
     nombre:document.getElementById('cmp-art-nombre').value.trim(),
     familia_id:parseInt(document.getElementById('cmp-art-familia').value)||null,
@@ -6122,13 +6241,29 @@ async function cmpGuardarArticulo(){
     descripcion:document.getElementById('cmp-art-desc').value.trim()||null
   };
   if(!datos.nombre){ showToast('Introduce el nombre del artículo','orange'); return; }
+  if(!id && !provId){ showToast('Selecciona un proveedor habitual','orange'); return; }
+  if(!id && !precioCompra){ showToast('Introduce el precio de compra','orange'); return; }
   try{
+    var artId;
     if(id){
       await sbPatch('cmp_articulos',id,datos);
+      artId = parseInt(id);
       logAccion('EDITAR_ARTICULO','Artículo: '+datos.nombre,datos.local_id);
     } else {
-      await sbPost('cmp_articulos',datos);
+      var nuevo = await sbPost('cmp_articulos',datos);
+      artId = nuevo && nuevo[0] ? nuevo[0].id : null;
       logAccion('NUEVO_ARTICULO','Artículo: '+datos.nombre,datos.local_id);
+      // Guardar precio inicial en cmp_precios
+      if(artId && provId && precioCompra){
+        var hoy = new Date().toISOString().split('T')[0];
+        await sbPost('cmp_precios',{
+          articulo_id:artId,
+          proveedor_id:provId,
+          precio_compra:precioCompra,
+          fecha:hoy,
+          notas:'Precio inicial al dar de alta el artículo'
+        });
+      }
     }
     showToast('✓ Artículo guardado','green');
     cmpCerrarModales();
