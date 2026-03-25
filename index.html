@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v6.4 – Grupo El Reloj</title>
+<title>RelojTurnos v6.6 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -22,6 +22,15 @@ header{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24
 .container{max-width:100%;margin:0;padding:24px 40px}
 body{overflow-x:hidden}
 .steps{display:flex;margin-bottom:28px;background:var(--dark);border-radius:12px;padding:5px;border:1px solid var(--border)}
+.nav-menu-wrap{position:relative;flex-shrink:0}
+.nav-menu-btn{padding:9px 10px;border-radius:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;font-weight:700;line-height:1;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.nav-menu-btn:hover,.nav-menu-btn.open{background:var(--accent)20;color:var(--accent)}
+.nav-menu-dropdown{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:6px;min-width:180px;z-index:999;box-shadow:0 8px 24px #00000060}
+.nav-menu-dropdown.open{display:block}
+.nav-menu-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text);font-weight:500;transition:background .15s}
+.nav-menu-item:hover{background:var(--accent)20;color:var(--accent)}
+.nav-menu-item.active{background:var(--accent)30;color:var(--accent);font-weight:700}
+.nav-menu-sep{height:1px;background:var(--border);margin:4px 6px}
 .step{flex:1;padding:9px 4px;border-radius:8px;text-align:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
 .step.active{background:var(--accent);color:var(--darker);font-weight:700}
 .step.done{color:var(--accent)}
@@ -222,7 +231,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.4</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.6</span></div>
   </div>
 </div>
 
@@ -298,12 +307,27 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     <div class="step" id="step4" onclick="goStep(4)"><span class="step-num">4</span><span class="step-text" data-i18n="nav_asignar">Asignar</span></div>
     <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text" data-i18n="nav_eventos">Eventos</span></div>
     <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text" data-i18n="nav_cuadrante">Cuadrante</span></div>
-    <div class="step" id="step7" onclick="goStep(7)"><span class="step-num">7</span><span class="step-text" data-i18n="nav_costes">Costes</span></div>
-    <div class="step" id="step8" onclick="goStep(8)"><span class="step-num">&#128196;</span><span class="step-text" data-i18n="nav_direccion">Direcc. Gral.</span></div>
-    <div class="step" id="step9" onclick="goStep(9)" style="display:none"><span class="step-num">&#128101;</span><span class="step-text" data-i18n="nav_usuarios">Usuarios</span></div>
-    <div class="step" id="step10" onclick="goStep(10)" style="display:none"><span class="step-num">&#127912;</span><span class="step-text" data-i18n="nav_ajustes">Ajustes</span></div>
-    <div class="step" id="step11" onclick="goStep(11)" style="display:none"><span class="step-num">&#128181;</span><span class="step-text" data-i18n="nav_arqueo">Arqueo</span></div>
-    <div class="step" id="step12" onclick="goStep(12)" style="display:none"><span class="step-num">&#128722;</span><span class="step-text" data-i18n="nav_compras">Compras</span></div>
+    <!-- Steps ocultos del flujo — se mantienen para goStep() pero no se ven -->
+    <div class="step" id="step7" style="display:none"></div>
+    <div class="step" id="step8" style="display:none"></div>
+    <div class="step" id="step9" style="display:none"></div>
+    <div class="step" id="step10" style="display:none"></div>
+    <div class="step" id="step11" style="display:none"></div>
+    <div class="step" id="step12" style="display:none"></div>
+    <!-- Botón menú desplegable -->
+    <div class="nav-menu-wrap">
+      <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleNavMenu(event)">☰ <span style="font-size:11px">Menú</span></button>
+      <div class="nav-menu-dropdown" id="nav-menu-dropdown">
+        <div class="nav-menu-item" id="nmenu-7" onclick="goStep(7);closeNavMenu()">💰 <span data-i18n="nav_costes">Costes</span></div>
+        <div class="nav-menu-item" id="nmenu-8" onclick="goStep(8);closeNavMenu()">📄 <span data-i18n="nav_direccion">Direcc. Gral.</span></div>
+        <div class="nav-menu-sep"></div>
+        <div class="nav-menu-item" id="nmenu-11" onclick="goStep(11);closeNavMenu()">💵 <span data-i18n="nav_arqueo">Arqueo</span></div>
+        <div class="nav-menu-item" id="nmenu-12" onclick="goStep(12);closeNavMenu()">🛒 <span data-i18n="nav_compras">Compras</span></div>
+        <div class="nav-menu-sep"></div>
+        <div class="nav-menu-item" id="nmenu-9" onclick="goStep(9);closeNavMenu()">👥 <span data-i18n="nav_usuarios">Usuarios</span></div>
+        <div class="nav-menu-item" id="nmenu-10" onclick="goStep(10);closeNavMenu()">🎨 <span data-i18n="nav_ajustes">Ajustes</span></div>
+      </div>
+    </div>
   </div>
 
   <!-- PASO 1 -->
@@ -1152,6 +1176,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
           <button class="btn btn-primary btn-sm" onclick="cmpAbrirModalArticulo()" data-i18n="p12_nuevo_art">+ Artículo</button>
           <button class="btn btn-ghost btn-sm" onclick="cmpAbrirModalFamilia()" style="border-color:var(--accent);color:var(--accent)">+ Familia</button>
           <button class="btn btn-ghost btn-sm" onclick="cmpAbrirImport('articulos')" style="border-color:var(--muted);color:var(--muted)">📥 Importar</button>
+          <button class="btn btn-ghost btn-sm" onclick="cmpExportar('articulos')" style="border-color:#2ecc71;color:#2ecc71">📤 Exportar</button>
         </div>
         <div id="cmp-articulos-list"></div>
       </div>
@@ -1162,6 +1187,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
           <input type="text" id="cmp-prov-search" placeholder="🔍 Buscar proveedor..." style="flex:1" oninput="cmpRenderProveedores()">
           <button class="btn btn-primary btn-sm" onclick="cmpAbrirModalProveedor()" data-i18n="p12_nuevo_prov">+ Proveedor</button>
           <button class="btn btn-ghost btn-sm" onclick="cmpAbrirImport('proveedores')" style="border-color:var(--muted);color:var(--muted)">📥 Importar</button>
+          <button class="btn btn-ghost btn-sm" onclick="cmpExportar('proveedores')" style="border-color:#2ecc71;color:#2ecc71">📤 Exportar</button>
         </div>
         <div id="cmp-proveedores-list"></div>
       </div>
@@ -2001,12 +2027,40 @@ function onLocalChange(){
   if(v!==lastLocal){empleados=[];empCounter=0;eventos=[];extrasDia=[];extraCounter=0;lastLocal=v;}
 }
 
+function toggleNavMenu(e){
+  e.stopPropagation();
+  var btn = document.getElementById('nav-menu-btn');
+  var dd  = document.getElementById('nav-menu-dropdown');
+  var open = dd.classList.contains('open');
+  dd.classList.toggle('open', !open);
+  btn.classList.toggle('open', !open);
+}
+function closeNavMenu(){
+  var dd = document.getElementById('nav-menu-dropdown');
+  var btn = document.getElementById('nav-menu-btn');
+  if(dd) dd.classList.remove('open');
+  if(btn) btn.classList.remove('open');
+}
+// Cerrar dropdown al clicar fuera
+document.addEventListener('click', function(e){
+  var wrap = document.getElementById('nav-menu-btn');
+  if(wrap && !wrap.closest('.nav-menu-wrap').contains(e.target)) closeNavMenu();
+});
+
 function goStep(n){
   for(var i=1;i<=12;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
   }
+  // Marcar item activo en dropdown
+  [7,8,9,10,11,12].forEach(function(i){
+    var el=document.getElementById('nmenu-'+i);
+    if(el) el.classList.toggle('active', i===n);
+  });
+  // Resaltar botón menú si estamos en una pantalla del dropdown
+  var btn=document.getElementById('nav-menu-btn');
+  if(btn) btn.classList.toggle('open', n>=7);
   if(n===7) renderCostes();
   if(n===9) cargarUsuarios();
   if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
@@ -2999,7 +3053,7 @@ function generarCuadrante(){
   document.getElementById('cuadrante-output').innerHTML=html+mobileHtml;
   // No resetear mostrarHoras aquí — respetar el estado actual
   if(!mostrarHoras){
-    document.querySelectorAll('.col-horas').forEach(function(el){ el.style.display='none'; });
+    document.querySelectorAll('.col-horas').forEach(function(el){ el.style.setProperty('display','none','important'); });
   }
   var btn=document.getElementById('btn-toggle-horas');
   if(btn){ btn.textContent=t(mostrarHoras?'p6_ocultar_horas':'p6_mostrar_horas'); btn.setAttribute('data-i18n',mostrarHoras?'p6_ocultar_horas':'p6_mostrar_horas'); }
@@ -3749,7 +3803,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v6.4 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v6.6 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3844,8 +3898,6 @@ function cargarPersonalizacionGuardada(){
 }
 
 function abrirPersonalizacion(){
-  var step10 = document.getElementById('step10');
-  if(step10) step10.style.display='';
   goStep(10);
 }
 
@@ -3863,10 +3915,9 @@ async function cargarUsuarios(){
     }
     var ROLES = {empleado:'Empleado', directora:'Directora', directora_general:'Dir. General', admin:'Admin'};
     var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
-    lista.innerHTML = rows.map(function(u){
+    var html = rows.map(function(u){
       var col = u.rol==='directora'?'var(--accent)':u.rol==='directora_general'?'#c0a020':'var(--green)';
       var init = (u.nombre||'?').substring(0,2).toUpperCase();
-      // Dir. General: solo mostrar el rol. Directora o empleado: mostrar local(es)
       var subInfo;
       if(u.rol==='directora_general' || u.rol==='admin'){
         subInfo = (ROLES[u.rol]||u.rol) + ' · DNI: '+(u.dni||'—');
@@ -3884,6 +3935,32 @@ async function cargarUsuarios(){
         +'<button onclick="abrirEditarUsuario('+u.id+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>'
         +'</div>';
     }).join('');
+
+    // Empleados sin usuario (creados directamente en Supabase)
+    try{
+      var nombresConUsuario = rows.map(function(u){ return (u.nombre||'').toLowerCase().trim(); });
+      var emps = await sbGet('empleados','order=nombre.asc');
+      var empsSinUser = (emps||[]).filter(function(e){
+        return nombresConUsuario.indexOf((e.nombre||'').toLowerCase().trim()) < 0;
+      });
+      if(empsSinUser.length){
+        html += '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px;padding-left:4px">📋 Empleados sin usuario (solo teléfono)</div>';
+        html += empsSinUser.map(function(e){
+          var localLabel = LOCALES[e.local_id]||'Local '+e.local_id;
+          var tel = e.telefono ? '📱 '+e.telefono : '<span style="color:var(--red);font-style:italic">sin teléfono</span>';
+          return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:8px 12px;margin-bottom:5px;opacity:0.85">'
+            +'<div style="width:32px;height:32px;border-radius:50%;background:#55555520;color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+((e.nombre||'?').substring(0,2).toUpperCase())+'</div>'
+            +'<div style="flex:1;min-width:0">'
+            +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+(e.nombre||'—')+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">'+localLabel+' · '+tel+'</div>'
+            +'</div>'
+            +'<button onclick="abrirEditarTelefonoEmpleado('+e.id+',\''+((e.nombre||'').replace(/'/g,"\\'"))+'\',\''+((e.telefono||'').replace(/'/g,"\\'"))+'\')" style="background:none;border:1px solid #25d36640;border-radius:7px;padding:4px 9px;color:#25d366;font-size:11px;cursor:pointer;flex-shrink:0">📱 Tel.</button>'
+            +'</div>';
+        }).join('');
+      }
+    }catch(e3){ console.warn('emps sin usuario:',e3); }
+
+    lista.innerHTML = html;
   }catch(e){
     lista.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:20px">⚠ Error cargando usuarios: '+e.message+'</div>';
     console.error('cargarUsuarios error:',e);
@@ -3940,16 +4017,15 @@ async function crearUsuario(){
 function checkMostrarBtnUsuarios(){
   var u = currentUser;
   if(!u) return;
-  var s9  = document.getElementById('step9');
-  var s10 = document.getElementById('step10');
-  var s11 = document.getElementById('step11');
-  var s12 = document.getElementById('step12');
-  if(u.rol==='directora'||u.rol==='directora_general'||u.rol==='admin'){
-    if(s9)  s9.style.display='';
-    if(s10) s10.style.display='';
-    if(s11) s11.style.display='';
-    if(s12) s12.style.display='';
-  }
+  var esDir = u.rol==='directora'||u.rol==='directora_general'||u.rol==='admin';
+  // Controlar visibilidad en el dropdown
+  ['nmenu-9','nmenu-10','nmenu-11','nmenu-12'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = esDir ? '' : 'none';
+  });
+  // nmenu-8 (Dirección Gral.) solo para directora_general y admin
+  var nm8 = document.getElementById('nmenu-8');
+  if(nm8) nm8.style.display = (u.rol==='directora_general'||u.rol==='admin') ? '' : 'none';
 }
 
 // showStep alias
@@ -5560,7 +5636,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.4</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.6</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
@@ -5668,16 +5744,15 @@ async function guardarEditarUsuario(){
     // Actualizar tabla empleados si tiene local
     if(localId){
       try{
-        var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(nombre));
-        var empDatos = {};
-        if(telefono) empDatos.telefono = telefono;
-        if(email)    empDatos.email    = email;
-        if(direccion)empDatos.direccion= direccion;
-        if(ss)       empDatos.numero_ss= ss;
-        if(Object.keys(empDatos).length){
-          if(empEx&&empEx.length){
-            await sbPatch('empleados', empEx[0].id, empDatos);
-          }
+        var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=ilike.'+encodeURIComponent(nombre.trim()));
+        var empDatos = {
+          telefono: telefono || null,
+          email:    email    || null,
+          direccion:direccion|| null,
+          numero_ss:ss       || null
+        };
+        if(empEx&&empEx.length){
+          await sbPatch('empleados', empEx[0].id, empDatos);
         }
       }catch(e2){ console.warn('empleados update:',e2); }
     }
@@ -6189,6 +6264,18 @@ function cmpAbrirModalFamilia(){
   document.getElementById('cmp-fam-emoji').value='';
 }
 
+function abrirEditarTelefonoEmpleado(empId, nombre, telActual){
+  var nuevo = prompt('📱 Teléfono WhatsApp de '+nombre+'\n(formato: 34612345678)', telActual||'');
+  if(nuevo===null) return; // cancelado
+  nuevo = nuevo.trim();
+  sbPatch('empleados', empId, {telefono: nuevo||null}).then(function(){
+    showToast('✓ Teléfono de '+nombre+' actualizado','green');
+    cargarUsuarios();
+  }).catch(function(e){
+    showToast('Error: '+e.message,'red');
+  });
+}
+
 function cmpCerrarModales(){
   ['cmp-modal-articulo','cmp-modal-proveedor','cmp-modal-precio','cmp-modal-familia','cmp-modal-import'].forEach(function(id){
     var m=document.getElementById(id); if(m) m.style.display='none';
@@ -6619,18 +6706,36 @@ function cmpDescargarPlantilla(){
   var cfg = CMP_IMPORT_CONFIG[cmpImportTipo];
   if(!cfg) return;
   var sep = ';';
-  var cabecera = cfg.cols.join(sep);
-  // Fila de ejemplo
-  var ejemplos = {
-    familias: 'Bebidas alcohólicas;🍺',
-    articulos: 'Aceite Oliva 5L;Aceites;l;1;12.50;20;Variedad arbequina',
-    proveedores: 'Makro Barcelona;Metro Cash&Carry S.A.;A12345678;93 123 45 67;pedidos@makro.es;Juan García;C/ Industria 10 Barcelona;Reparto lunes y jueves'
-  };
-  var csv = cabecera + '\n' + (ejemplos[cmpImportTipo]||'');
+  // Solo cabeceras — sin filas de datos
+  var csv = cfg.cols.join(sep) + '\n';
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'plantilla_'+cmpImportTipo+'.csv';
   a.click();
+}
+
+function cmpExportar(tipo){
+  var cfg = CMP_IMPORT_CONFIG[tipo];
+  if(!cfg) return;
+  var sep = ';';
+  var rows = [cfg.cols.join(sep)];
+  var datos = tipo==='articulos' ? cmpArticulos : tipo==='proveedores' ? cmpProveedores : tipo==='familias' ? cmpFamilias : [];
+  datos.forEach(function(d){
+    var fila = cfg.cols.map(function(col){
+      var v = d[col]===null||d[col]===undefined ? '' : String(d[col]);
+      // Escapar punto y coma dentro del valor
+      if(v.indexOf(sep)>=0) v='"'+v+'"';
+      return v;
+    });
+    rows.push(fila.join(sep));
+  });
+  var csv = rows.join('\n');
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'exportar_'+tipo+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  showToast('✓ Exportados '+datos.length+' registros', 'green');
 }
 </script>
