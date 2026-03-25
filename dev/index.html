@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v6.6 – Grupo El Reloj</title>
+<title>RelojTurnos v6.7 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -231,7 +231,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.6</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.7</span></div>
   </div>
 </div>
 
@@ -301,6 +301,21 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
 <div class="container" style="display:none">
   <div class="steps">
+    <!-- Botón menú desplegable — izquierda -->
+    <div class="nav-menu-wrap">
+      <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleNavMenu(event)">☰ <span style="font-size:11px">Menú</span></button>
+      <div class="nav-menu-dropdown" id="nav-menu-dropdown" style="left:0;right:auto">
+        <div class="nav-menu-item" id="nmenu-7" onclick="goStep(7);closeNavMenu()">💰 <span data-i18n="nav_costes">Costes</span></div>
+        <div class="nav-menu-item" id="nmenu-8" onclick="goStep(8);closeNavMenu()">📄 <span data-i18n="nav_direccion">Dirección General</span></div>
+        <div class="nav-menu-item" id="nmenu-13" onclick="goStep(13);closeNavMenu()">📅 <span data-i18n="nav_reservas">Reservas</span></div>
+        <div class="nav-menu-sep"></div>
+        <div class="nav-menu-item" id="nmenu-11" onclick="goStep(11);closeNavMenu()">💵 <span data-i18n="nav_arqueo">Arqueo</span></div>
+        <div class="nav-menu-item" id="nmenu-12" onclick="goStep(12);closeNavMenu()">🛒 <span data-i18n="nav_compras">Compras</span></div>
+        <div class="nav-menu-sep"></div>
+        <div class="nav-menu-item" id="nmenu-9" onclick="goStep(9);closeNavMenu()">👥 <span data-i18n="nav_usuarios">Usuarios</span></div>
+        <div class="nav-menu-item" id="nmenu-10" onclick="goStep(10);closeNavMenu()">🎨 <span data-i18n="nav_ajustes">Ajustes</span></div>
+      </div>
+    </div>
     <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text" data-i18n="nav_local">Local</span></div>
     <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text" data-i18n="nav_turnos">Turnos</span></div>
     <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text" data-i18n="nav_equipo">Equipo</span></div>
@@ -314,20 +329,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     <div class="step" id="step10" style="display:none"></div>
     <div class="step" id="step11" style="display:none"></div>
     <div class="step" id="step12" style="display:none"></div>
-    <!-- Botón menú desplegable -->
-    <div class="nav-menu-wrap">
-      <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleNavMenu(event)">☰ <span style="font-size:11px">Menú</span></button>
-      <div class="nav-menu-dropdown" id="nav-menu-dropdown">
-        <div class="nav-menu-item" id="nmenu-7" onclick="goStep(7);closeNavMenu()">💰 <span data-i18n="nav_costes">Costes</span></div>
-        <div class="nav-menu-item" id="nmenu-8" onclick="goStep(8);closeNavMenu()">📄 <span data-i18n="nav_direccion">Direcc. Gral.</span></div>
-        <div class="nav-menu-sep"></div>
-        <div class="nav-menu-item" id="nmenu-11" onclick="goStep(11);closeNavMenu()">💵 <span data-i18n="nav_arqueo">Arqueo</span></div>
-        <div class="nav-menu-item" id="nmenu-12" onclick="goStep(12);closeNavMenu()">🛒 <span data-i18n="nav_compras">Compras</span></div>
-        <div class="nav-menu-sep"></div>
-        <div class="nav-menu-item" id="nmenu-9" onclick="goStep(9);closeNavMenu()">👥 <span data-i18n="nav_usuarios">Usuarios</span></div>
-        <div class="nav-menu-item" id="nmenu-10" onclick="goStep(10);closeNavMenu()">🎨 <span data-i18n="nav_ajustes">Ajustes</span></div>
-      </div>
-    </div>
+    <div class="step" id="step13" style="display:none"></div>
   </div>
 
   <!-- PASO 1 -->
@@ -630,7 +632,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <!-- Comparativa -->
       <div id="director-comparativa" style="margin-bottom:14px"></div>
 
-      <!-- Registro de actividad — solo Dir. General -->
+      <!-- Registro de actividad — solo Dirección General -->
       <div id="director-audit-wrap" style="margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
           <div style="font-size:13px;font-weight:700;color:var(--text)" data-i18n="p8_audit_titulo">🗂 Registro de actividad</div>
@@ -698,7 +700,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
             <label data-i18n="p9_rol">Rol en la app</label>
             <select id="nu-rol" class="inp-sm" onchange="document.getElementById('nu-local-group').style.display=this.value==='directora_general'?'none':''">
               <option value="empleado">Empleado</option>
-              <option value="directora">Directora</option>
+              <option value="directora">Director/a</option>
               <option value="directora_general">Dirección General</option>
             </select>
           </div>
@@ -765,8 +767,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
             <label>Rol</label>
             <select id="eu-rol" onchange="euRolChange()">
               <option value="empleado">Empleado</option>
-              <option value="directora">Directora</option>
-              <option value="directora_general">Dir. General</option>
+              <option value="directora">Director/a</option>
+              <option value="directora_general">Dirección General</option>
             </select>
           </div>
           <div class="form-group" id="eu-local-group">
@@ -2565,7 +2567,7 @@ var lorenaHorario = [
   {dia:6, tipo:'apoyo',    ini:'12:00', fin:'17:00', label:'12:00–17:00'},  // Domingo
 ];
 
-var lorenaSalario = {brutoMes: 2300, hContrato: 40}; // Salario Lorena directora
+var lorenaSalario = {brutoMes: 2300, hContrato: 40}; // Salario Lorena director/a
 
 var FIESTAS_FIJAS = {
   'MARILYN': [
@@ -3455,7 +3457,7 @@ function renderCostes(){
     var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
     return '<div class="costes-emp-card">'
       +'<div style="font-size:13px;font-weight:700;color:'+lorColor+';margin-bottom:12px">LORENA'
-      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Directora</span></div>'
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Director/a</span></div>'
       +'<div class="form-row three">'
       +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
       +'<input type="number" min="0" step="50" value="'+lorenaSalario.brutoMes+'" oninput="lorenaSalario.brutoMes=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
@@ -3740,7 +3742,7 @@ function imprimirCostes(){
   var lorSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
   var lorMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
   var rowLorena = '<tr style="background:#fffbe6">'
-    +'<td><strong>LORENA</strong></td><td>Directora</td>'
+    +'<td><strong>LORENA</strong></td><td>Director/a</td>'
     +'<td>'+lorenaSalario.hContrato+'h</td><td>—</td>'
     +'<td>'+lorenaSalario.brutoMes+' €</td>'
     +'<td>'+lorSem.toFixed(2)+' €</td>'
@@ -3803,7 +3805,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v6.6 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v6.7 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3901,7 +3903,7 @@ function abrirPersonalizacion(){
   goStep(10);
 }
 
-// Muestra botón Ajustes para directoras
+// Muestra botón Ajustes para director/a
 // ========== GESTIÓN USUARIOS ==========
 async function cargarUsuarios(){
   var lista = document.getElementById('usuarios-lista');
@@ -3913,7 +3915,7 @@ async function cargarUsuarios(){
       lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No hay usuarios registrados aún</div>';
       return;
     }
-    var ROLES = {empleado:'Empleado', directora:'Directora', directora_general:'Dir. General', admin:'Admin'};
+    var ROLES = {empleado:'Empleado', directora:'Director/a', directora_general:'Dirección General', admin:'Admin'};
     var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
     var html = rows.map(function(u){
       var col = u.rol==='directora'?'var(--accent)':u.rol==='directora_general'?'#c0a020':'var(--green)';
@@ -4348,7 +4350,7 @@ var I18N = {
     // Nav pasos
     nav_local:'Local', nav_turnos:'Turnos', nav_equipo:'Equipo', nav_asignar:'Asignar',
     nav_eventos:'Eventos', nav_cuadrante:'Cuadrante', nav_costes:'Costes',
-    nav_direccion:'Direcc. Gral.', nav_usuarios:'Usuarios', nav_ajustes:'Ajustes', nav_arqueo:'Arqueo', nav_compras:'Compras',
+    nav_direccion:'Dirección General', nav_usuarios:'Usuarios', nav_ajustes:'Ajustes', nav_arqueo:'Arqueo', nav_compras:'Compras',
     // Paso 1
     p1_titulo:'¿Qué local y semana vamos a planificar?',
     p1_sub:'Selecciona el restaurante, la semana y la configuración básica',
@@ -4614,7 +4616,7 @@ var I18N = {
     arq_audit_line:'⚠ Registro creado por Dirección General:',
     info_apertura:'✓ Apertura', info_cierre:'Cierre', info_activa_turnos:'Activa solo los turnos que usa este local.',
     sin_datos:'Sin datos', locales_activos_lbl:'locales',
-    lbl_nombre_emp:'Nombre:', directora_lbl:'Directora',
+    lbl_nombre_emp:'Nombre:', directora_lbl:'Director/a',
     arq_modificado:'Modificado por Dirección General',
   },
 
@@ -4625,7 +4627,7 @@ var I18N = {
     turno_intermedio:'Intermedi', turno_partido:'Partit', turno_fiesta:'Festa', turno_mediafiesta:'½ Mitja festa',
     nav_local:'Local', nav_turnos:'Torns', nav_equipo:'Equip', nav_asignar:'Assignar',
     nav_eventos:'Esdeveniments', nav_cuadrante:'Quadrant', nav_costes:'Costos',
-    nav_direccion:'Dir. General', nav_usuarios:'Usuaris', nav_ajustes:'Ajustos', nav_arqueo:'Arqueig', nav_compras:'Compres',
+    nav_direccion:'Dirección General', nav_usuarios:'Usuaris', nav_ajustes:'Ajustos', nav_arqueo:'Arqueig', nav_compras:'Compres',
     p1_titulo:'Quin local i setmana planificarem?',
     p1_sub:'Selecciona el restaurant, la setmana i la configuració bàsica',
     p1_local:'Local', p1_semana:'Setmana que comença el',
@@ -4866,7 +4868,7 @@ var I18N = {
     arq_audit_line:'⚠ Registre creat per Direcció General:',
     info_apertura:'✓ Obertura', info_cierre:'Tancament', info_activa_turnos:'Activa només els torns que usa aquest local.',
     sin_datos:'Sense dades', locales_activos_lbl:'locals',
-    lbl_nombre_emp:'Nom:', directora_lbl:'Directora',
+    lbl_nombre_emp:'Nom:', directora_lbl:'Director/a',
     arq_modificado:'Modificat per Direcció General',
     fiestas_btn:'Festes', eventos_btn:'Esdeveniments',
   },
@@ -5380,7 +5382,7 @@ async function guardarArqueo(){
 
   if(!fecha){ errEl.textContent='Selecciona una fecha'; errEl.style.display='block'; return; }
 
-  // Auditoría obligatoria si modifica Dir. General
+  // Auditoría obligatoria si modifica Dirección General
   var auditSuffix = '';
   if(currentUser && currentUser.rol === 'directora_general'){
     auditSuffix = ' [MODIFICADO POR DIRECCIÓN GENERAL: '+(currentUser.nombre||currentUser.dni)+' · '+new Date().toLocaleString('es-ES')+']';
@@ -5597,7 +5599,7 @@ function imprimirArqueo(){
     ? arqProveedores.map(function(p){ return '<tr><td>'+p.nombre+'</td><td class="r">'+fmt(p.importe||0)+'</td></tr>'; }).join('')
     : '<tr><td colspan="2" style="color:#999;text-align:center">'+t('arq_print_sin_prov')+'</td></tr>';
 
-  // Auditoría si es Dir. General
+  // Auditoría si es Dirección General
   var auditLine = '';
   if(currentUser && currentUser.rol === 'directora_general'){
     auditLine = '<div class="audit">'+t('arq_audit_line')+' <strong>'+(currentUser.nombre||currentUser.dni)+'</strong> · '+new Date().toLocaleString('es-ES')+'</div>';
@@ -5636,7 +5638,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.6</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.7</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
