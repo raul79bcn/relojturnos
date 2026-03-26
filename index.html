@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v6.6 – Grupo El Reloj</title>
+<title>RelojTurnos v6.7 – Grupo El Reloj</title>
 <style>
 :root {
   --dark:#0f1923;--darker:#080e14;--card:#162030;--border:#1e3048;
@@ -231,7 +231,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.6</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V6.7</span></div>
   </div>
 </div>
 
@@ -301,6 +301,21 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
 <div class="container" style="display:none">
   <div class="steps">
+    <!-- Botón menú desplegable — izquierda -->
+    <div class="nav-menu-wrap">
+      <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleNavMenu(event)">☰ <span style="font-size:11px">Menú</span></button>
+      <div class="nav-menu-dropdown" id="nav-menu-dropdown" style="left:0;right:auto">
+        <div class="nav-menu-item" id="nmenu-7" onclick="goStep(7);closeNavMenu()">💰 <span data-i18n="nav_costes">Costes</span></div>
+        <div class="nav-menu-item" id="nmenu-8" onclick="goStep(8);closeNavMenu()">📄 <span data-i18n="nav_direccion">Dirección General</span></div>
+        <div class="nav-menu-item" id="nmenu-13" onclick="goStep(13);closeNavMenu()">📅 <span data-i18n="nav_reservas">Reservas</span></div>
+        <div class="nav-menu-sep"></div>
+        <div class="nav-menu-item" id="nmenu-11" onclick="goStep(11);closeNavMenu()">💵 <span data-i18n="nav_arqueo">Arqueo</span></div>
+        <div class="nav-menu-item" id="nmenu-12" onclick="goStep(12);closeNavMenu()">🛒 <span data-i18n="nav_compras">Compras</span></div>
+        <div class="nav-menu-sep"></div>
+        <div class="nav-menu-item" id="nmenu-9" onclick="goStep(9);closeNavMenu()">👥 <span data-i18n="nav_usuarios">Usuarios</span></div>
+        <div class="nav-menu-item" id="nmenu-10" onclick="goStep(10);closeNavMenu()">🎨 <span data-i18n="nav_ajustes">Ajustes</span></div>
+      </div>
+    </div>
     <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text" data-i18n="nav_local">Local</span></div>
     <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text" data-i18n="nav_turnos">Turnos</span></div>
     <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text" data-i18n="nav_equipo">Equipo</span></div>
@@ -314,20 +329,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     <div class="step" id="step10" style="display:none"></div>
     <div class="step" id="step11" style="display:none"></div>
     <div class="step" id="step12" style="display:none"></div>
-    <!-- Botón menú desplegable -->
-    <div class="nav-menu-wrap">
-      <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleNavMenu(event)">☰ <span style="font-size:11px">Menú</span></button>
-      <div class="nav-menu-dropdown" id="nav-menu-dropdown">
-        <div class="nav-menu-item" id="nmenu-7" onclick="goStep(7);closeNavMenu()">💰 <span data-i18n="nav_costes">Costes</span></div>
-        <div class="nav-menu-item" id="nmenu-8" onclick="goStep(8);closeNavMenu()">📄 <span data-i18n="nav_direccion">Direcc. Gral.</span></div>
-        <div class="nav-menu-sep"></div>
-        <div class="nav-menu-item" id="nmenu-11" onclick="goStep(11);closeNavMenu()">💵 <span data-i18n="nav_arqueo">Arqueo</span></div>
-        <div class="nav-menu-item" id="nmenu-12" onclick="goStep(12);closeNavMenu()">🛒 <span data-i18n="nav_compras">Compras</span></div>
-        <div class="nav-menu-sep"></div>
-        <div class="nav-menu-item" id="nmenu-9" onclick="goStep(9);closeNavMenu()">👥 <span data-i18n="nav_usuarios">Usuarios</span></div>
-        <div class="nav-menu-item" id="nmenu-10" onclick="goStep(10);closeNavMenu()">🎨 <span data-i18n="nav_ajustes">Ajustes</span></div>
-      </div>
-    </div>
+    <div class="step" id="step13" style="display:none"></div>
   </div>
 
   <!-- PASO 1 -->
@@ -630,7 +632,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
       <!-- Comparativa -->
       <div id="director-comparativa" style="margin-bottom:14px"></div>
 
-      <!-- Registro de actividad — solo Dir. General -->
+      <!-- Registro de actividad — solo Dirección General -->
       <div id="director-audit-wrap" style="margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
           <div style="font-size:13px;font-weight:700;color:var(--text)" data-i18n="p8_audit_titulo">🗂 Registro de actividad</div>
@@ -698,7 +700,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
             <label data-i18n="p9_rol">Rol en la app</label>
             <select id="nu-rol" class="inp-sm" onchange="document.getElementById('nu-local-group').style.display=this.value==='directora_general'?'none':''">
               <option value="empleado">Empleado</option>
-              <option value="directora">Directora</option>
+              <option value="directora">Director/a</option>
               <option value="directora_general">Dirección General</option>
             </select>
           </div>
@@ -765,8 +767,8 @@ select,input[type=text],.inp-sm{font-size:14px!important}
             <label>Rol</label>
             <select id="eu-rol" onchange="euRolChange()">
               <option value="empleado">Empleado</option>
-              <option value="directora">Directora</option>
-              <option value="directora_general">Dir. General</option>
+              <option value="directora">Director/a</option>
+              <option value="directora_general">Dirección General</option>
             </select>
           </div>
           <div class="form-group" id="eu-local-group">
@@ -1228,6 +1230,119 @@ select,input[type=text],.inp-sm{font-size:14px!important}
     </div>
   </div>
 
+  <!-- PASO 13: RESERVAS -->
+  <div class="screen" id="screen13">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">📅 Reservas</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:9px;background:#3498db20;color:#3498db;padding:3px 9px;border-radius:12px;font-weight:700">DIRECTOR/A · DIR. GENERAL</span>
+          <div style="display:flex;align-items:center;gap:6px;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:5px 10px">
+            <span style="font-size:10px;color:var(--muted)">Fuente:</span>
+            <span id="res-mode-label" style="font-size:11px;font-weight:700;color:var(--accent)">MOCK</span>
+            <div id="res-mode-toggle" onclick="toggleResMode()" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:2px 6px;border:1px solid var(--border);border-radius:6px;font-size:10px;color:var(--muted)">
+              <div id="res-tog-dot" style="width:26px;height:14px;border-radius:7px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0"><div id="res-tog-knob" style="position:absolute;width:8px;height:8px;border-radius:50%;background:white;top:3px;left:3px;transition:left .2s"></div></div>
+              CoverManager
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="res-api-banner" style="display:none;background:#1a1a2d;border:1px solid #3498db40;border-radius:8px;padding:10px 14px;font-size:11px;color:#6b8fff;margin:10px 0">
+        🔌 <strong>CoverManager API</strong> — Conecta tu cuenta para sincronizar reservas en tiempo real. Solicita la API key a Miriam.
+        <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="res-apikey-input" placeholder="Introduce tu API key de CoverManager..." style="flex:1;min-width:200px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none">
+          <button onclick="res_guardarApiKey()" class="btn btn-primary btn-sm" style="font-size:11px;padding:6px 12px">💾 Guardar key</button>
+        </div>
+      </div>
+
+      <!-- Selectores: local + fecha + turno -->
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--darker);border-radius:10px;border:1px solid var(--border)">
+        <div>
+          <label style="font-size:10px;margin-bottom:3px">LOCAL</label>
+          <select id="res-local-sel" onchange="res_cargar()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text);font-size:13px;min-width:160px;outline:none">
+            <option value="1">🍽 La Cala</option>
+            <option value="2">🍔 Roto's Burguer</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px;margin-bottom:3px">FECHA</label>
+          <input type="date" id="res-fecha-sel" onchange="res_cargar()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text);font-size:13px;outline:none">
+        </div>
+        <div style="display:flex;gap:6px">
+          <button id="res-pill-comida" onclick="resTurno('comida')" style="padding:8px 16px;border-radius:20px;border:2px solid #2ecc71;background:#1a2d1a;color:#2ecc71;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">☀️ Comida 13:00</button>
+          <button id="res-pill-cena" onclick="resTurno('cena')" style="padding:8px 16px;border-radius:20px;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">🌙 Cena 20:00</button>
+        </div>
+        <button onclick="res_cargar()" class="btn btn-ghost btn-sm" style="border-color:var(--green);color:var(--green)">🔄 Actualizar</button>
+        <button onclick="res_abrirModalNueva()" class="btn btn-primary btn-sm">+ Nueva reserva</button>
+      </div>
+
+      <!-- KPIs del turno -->
+      <div id="res-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px"></div>
+
+      <!-- Barra de ocupación -->
+      <div id="res-ocupacion-bar" style="margin-bottom:16px"></div>
+
+      <!-- Filtros rápidos por estado -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+        <span style="font-size:10px;color:var(--muted)">Filtrar:</span>
+        <button onclick="resFiltro('')" id="res-f-all" class="btn btn-primary btn-sm" style="font-size:10px;padding:4px 10px">Todas</button>
+        <button onclick="resFiltro('confirmada')" id="res-f-confirmada" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 10px;border-color:#2ecc71;color:#2ecc71">✅ Confirmadas</button>
+        <button onclick="resFiltro('pendiente')" id="res-f-pendiente" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 10px;border-color:#ffa040;color:#ffa040">⏳ Pendientes</button>
+        <button onclick="resFiltro('cancelada')" id="res-f-cancelada" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 10px;border-color:#e74c3c;color:#e74c3c">❌ Canceladas</button>
+        <button onclick="resFiltro('seated')" id="res-f-seated" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 10px;border-color:#6b8fff;color:#6b8fff">🪑 En mesa</button>
+      </div>
+
+      <!-- Tabla de reservas -->
+      <div style="overflow-x:auto;margin-bottom:18px">
+        <div style="display:grid;grid-template-columns:60px 1fr 50px 110px 80px 100px 110px 36px;gap:6px;padding:7px 10px;background:var(--darker);border-radius:7px;margin-bottom:4px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
+          <span>Hora</span><span>Nombre</span><span>Pax</span><span>Zona</span><span>Mesa</span><span>Origen</span><span>Estado</span><span></span>
+        </div>
+        <div id="res-tabla"></div>
+      </div>
+
+      <!-- Vista resumen por zonas -->
+      <div style="margin-top:4px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🗺 Vista por zonas</div>
+        <div id="res-zonas" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+      </div>
+
+      <div class="btn-row space" style="margin-top:20px">
+        <button class="btn btn-secondary" onclick="goStep(8)">← Dirección General</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="imprimirReservas()" style="border-color:var(--accent);color:var(--accent)">🖨 Imprimir turno</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL NUEVA / EDITAR RESERVA -->
+<div id="res-modal-nueva" style="display:none;position:fixed;inset:0;background:#00000090;z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(480px,95vw);max-height:90vh;overflow-y:auto">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="res-modal-titulo">&#128197; Nueva Reserva</div>
+    <input type="hidden" id="res-edit-id">
+    <div class="form-row">
+      <div class="form-group"><label>Nombre</label><input type="text" id="res-f-nombre" placeholder="Nombre del cliente" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);width:100%;outline:none;font-family:Arial,sans-serif;font-size:13px"></div>
+      <div class="form-group"><label>Pax</label><input type="number" id="res-f-pax" min="1" max="60" value="2" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);width:100%;outline:none;font-family:Arial,sans-serif;font-size:13px"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Hora</label><select id="res-f-hora" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);width:100%;outline:none"></select></div>
+      <div class="form-group"><label>Zona</label><select id="res-f-zona" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);width:100%;outline:none"><option value="Terraza Cubierta">&#127963; Terraza Cubierta</option><option value="Terraza">&#127807; Terraza</option><option value="Sala">&#127869; Sala</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Mesa</label><input type="text" id="res-f-mesa" placeholder="Ej: 12" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);width:100%;outline:none;font-family:Arial,sans-serif;font-size:13px"></div>
+      <div class="form-group"><label>Origen</label><select id="res-f-origen" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);width:100%;outline:none"><option value="Web">&#127760; Web</option><option value="On the Go">&#128241; On the Go</option><option value="Telefono">&#128222; Teléfono</option><option value="Presencial">&#128694; Presencial</option><option value="Agencia">&#127970; Agencia</option><option value="WhatsApp">&#128172; WhatsApp</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Estado</label><select id="res-f-estado" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);width:100%;outline:none"><option value="confirmada">&#9989; Confirmada</option><option value="pendiente">&#8987; Pendiente</option><option value="cancelada">&#10060; Cancelada</option><option value="seated">&#129681; Seated (en mesa)</option><option value="released">&#128275; Released</option></select></div>
+      <div class="form-group"><label>Notas</label><input type="text" id="res-f-notas" placeholder="Alergias, ocasión especial..." style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);width:100%;outline:none;font-family:Arial,sans-serif;font-size:13px"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="res_cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="res_guardar()">&#128190; Guardar reserva</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODALES COMPRAS (nivel body para evitar herencia display:none de screen) -->
@@ -2048,13 +2163,13 @@ document.addEventListener('click', function(e){
 });
 
 function goStep(n){
-  for(var i=1;i<=12;i++){
+  for(var i=1;i<=13;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
   }
   // Marcar item activo en dropdown
-  [7,8,9,10,11,12].forEach(function(i){
+  [7,8,9,10,11,12,13].forEach(function(i){
     var el=document.getElementById('nmenu-'+i);
     if(el) el.classList.toggle('active', i===n);
   });
@@ -2066,6 +2181,7 @@ function goStep(n){
   if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
   if(n===11){ initArqueo(); }
   if(n===12){ initCompras(); }
+  if(n===13){ initReservas(); }
   window.scrollTo(0,0);
 }
 
@@ -2565,7 +2681,7 @@ var lorenaHorario = [
   {dia:6, tipo:'apoyo',    ini:'12:00', fin:'17:00', label:'12:00–17:00'},  // Domingo
 ];
 
-var lorenaSalario = {brutoMes: 2300, hContrato: 40}; // Salario Lorena directora
+var lorenaSalario = {brutoMes: 2300, hContrato: 40}; // Salario Lorena director/a
 
 var FIESTAS_FIJAS = {
   'MARILYN': [
@@ -3455,7 +3571,7 @@ function renderCostes(){
     var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
     return '<div class="costes-emp-card">'
       +'<div style="font-size:13px;font-weight:700;color:'+lorColor+';margin-bottom:12px">LORENA'
-      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Directora</span></div>'
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Director/a</span></div>'
       +'<div class="form-row three">'
       +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
       +'<input type="number" min="0" step="50" value="'+lorenaSalario.brutoMes+'" oninput="lorenaSalario.brutoMes=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
@@ -3740,7 +3856,7 @@ function imprimirCostes(){
   var lorSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
   var lorMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
   var rowLorena = '<tr style="background:#fffbe6">'
-    +'<td><strong>LORENA</strong></td><td>Directora</td>'
+    +'<td><strong>LORENA</strong></td><td>Director/a</td>'
     +'<td>'+lorenaSalario.hContrato+'h</td><td>—</td>'
     +'<td>'+lorenaSalario.brutoMes+' €</td>'
     +'<td>'+lorSem.toFixed(2)+' €</td>'
@@ -3803,7 +3919,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v6.6 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v6.7 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3901,7 +4017,7 @@ function abrirPersonalizacion(){
   goStep(10);
 }
 
-// Muestra botón Ajustes para directoras
+// Muestra botón Ajustes para director/a
 // ========== GESTIÓN USUARIOS ==========
 async function cargarUsuarios(){
   var lista = document.getElementById('usuarios-lista');
@@ -3913,7 +4029,7 @@ async function cargarUsuarios(){
       lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No hay usuarios registrados aún</div>';
       return;
     }
-    var ROLES = {empleado:'Empleado', directora:'Directora', directora_general:'Dir. General', admin:'Admin'};
+    var ROLES = {empleado:'Empleado', directora:'Director/a', directora_general:'Dirección General', admin:'Admin'};
     var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
     var html = rows.map(function(u){
       var col = u.rol==='directora'?'var(--accent)':u.rol==='directora_general'?'#c0a020':'var(--green)';
@@ -4348,7 +4464,7 @@ var I18N = {
     // Nav pasos
     nav_local:'Local', nav_turnos:'Turnos', nav_equipo:'Equipo', nav_asignar:'Asignar',
     nav_eventos:'Eventos', nav_cuadrante:'Cuadrante', nav_costes:'Costes',
-    nav_direccion:'Direcc. Gral.', nav_usuarios:'Usuarios', nav_ajustes:'Ajustes', nav_arqueo:'Arqueo', nav_compras:'Compras',
+    nav_direccion:'Dirección General', nav_usuarios:'Usuarios', nav_ajustes:'Ajustes', nav_arqueo:'Arqueo', nav_compras:'Compras',
     // Paso 1
     p1_titulo:'¿Qué local y semana vamos a planificar?',
     p1_sub:'Selecciona el restaurante, la semana y la configuración básica',
@@ -4614,7 +4730,7 @@ var I18N = {
     arq_audit_line:'⚠ Registro creado por Dirección General:',
     info_apertura:'✓ Apertura', info_cierre:'Cierre', info_activa_turnos:'Activa solo los turnos que usa este local.',
     sin_datos:'Sin datos', locales_activos_lbl:'locales',
-    lbl_nombre_emp:'Nombre:', directora_lbl:'Directora',
+    lbl_nombre_emp:'Nombre:', directora_lbl:'Director/a',
     arq_modificado:'Modificado por Dirección General',
   },
 
@@ -4625,7 +4741,7 @@ var I18N = {
     turno_intermedio:'Intermedi', turno_partido:'Partit', turno_fiesta:'Festa', turno_mediafiesta:'½ Mitja festa',
     nav_local:'Local', nav_turnos:'Torns', nav_equipo:'Equip', nav_asignar:'Assignar',
     nav_eventos:'Esdeveniments', nav_cuadrante:'Quadrant', nav_costes:'Costos',
-    nav_direccion:'Dir. General', nav_usuarios:'Usuaris', nav_ajustes:'Ajustos', nav_arqueo:'Arqueig', nav_compras:'Compres',
+    nav_direccion:'Dirección General', nav_usuarios:'Usuaris', nav_ajustes:'Ajustos', nav_arqueo:'Arqueig', nav_compras:'Compres',
     p1_titulo:'Quin local i setmana planificarem?',
     p1_sub:'Selecciona el restaurant, la setmana i la configuració bàsica',
     p1_local:'Local', p1_semana:'Setmana que comença el',
@@ -4866,7 +4982,7 @@ var I18N = {
     arq_audit_line:'⚠ Registre creat per Direcció General:',
     info_apertura:'✓ Obertura', info_cierre:'Tancament', info_activa_turnos:'Activa només els torns que usa aquest local.',
     sin_datos:'Sense dades', locales_activos_lbl:'locals',
-    lbl_nombre_emp:'Nom:', directora_lbl:'Directora',
+    lbl_nombre_emp:'Nom:', directora_lbl:'Director/a',
     arq_modificado:'Modificat per Direcció General',
     fiestas_btn:'Festes', eventos_btn:'Esdeveniments',
   },
@@ -5380,7 +5496,7 @@ async function guardarArqueo(){
 
   if(!fecha){ errEl.textContent='Selecciona una fecha'; errEl.style.display='block'; return; }
 
-  // Auditoría obligatoria si modifica Dir. General
+  // Auditoría obligatoria si modifica Dirección General
   var auditSuffix = '';
   if(currentUser && currentUser.rol === 'directora_general'){
     auditSuffix = ' [MODIFICADO POR DIRECCIÓN GENERAL: '+(currentUser.nombre||currentUser.dni)+' · '+new Date().toLocaleString('es-ES')+']';
@@ -5597,7 +5713,7 @@ function imprimirArqueo(){
     ? arqProveedores.map(function(p){ return '<tr><td>'+p.nombre+'</td><td class="r">'+fmt(p.importe||0)+'</td></tr>'; }).join('')
     : '<tr><td colspan="2" style="color:#999;text-align:center">'+t('arq_print_sin_prov')+'</td></tr>';
 
-  // Auditoría si es Dir. General
+  // Auditoría si es Dirección General
   var auditLine = '';
   if(currentUser && currentUser.rol === 'directora_general'){
     auditLine = '<div class="audit">'+t('arq_audit_line')+' <strong>'+(currentUser.nombre||currentUser.dni)+'</strong> · '+new Date().toLocaleString('es-ES')+'</div>';
@@ -5636,7 +5752,7 @@ function imprimirArqueo(){
     +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
     +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
     +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
-    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.6</span></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.7</span></div>'
     +'</div>'
 
     +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
@@ -6738,4 +6854,342 @@ function cmpExportar(tipo){
   a.click();
   showToast('✓ Exportados '+datos.length+' registros', 'green');
 }
+// ========== MÓDULO RESERVAS v6.7 ==========
+var RES_MODO_API = false;
+var RES_TURNO_ACTUAL = 'comida';
+var RES_FILTRO_ESTADO = '';
+var resIdCounter = 1000;
+var resReservasLocales = []; // reservas añadidas en sesión
+
+// Config por local
+var RES_CONFIG = {
+  1: { capacidad:142, mesas:44, zonas:['Terraza Cubierta','Terraza','Sala'], turnos:{comida:'13:00',cena:'20:00'} },
+  2: { capacidad:80,  mesas:20, zonas:['Interior','Terraza'],                turnos:{comida:'13:00',cena:'20:00'} }
+};
+
+// Datos mock La Cala
+var RES_MOCK = [
+  {id:1,  fecha:'2026-03-25',turno:'comida',hora:'13:00',nombre:'García Martínez', pax:4, zona:'Sala',             mesa:'5',  estado:'seated',    origen:'Web',       notas:''},
+  {id:2,  fecha:'2026-03-25',turno:'comida',hora:'13:00',nombre:'López Ruiz',       pax:2, zona:'Terraza',         mesa:'18', estado:'confirmada', origen:'On the Go', notas:'Aniversario'},
+  {id:3,  fecha:'2026-03-25',turno:'comida',hora:'13:15',nombre:'Torres Jiménez',   pax:6, zona:'Terraza Cubierta',mesa:'32', estado:'confirmada', origen:'Web',       notas:'Cumpleaños - pedir tarta'},
+  {id:4,  fecha:'2026-03-25',turno:'comida',hora:'13:30',nombre:'Martín Sánchez',   pax:3, zona:'Sala',             mesa:'8',  estado:'pendiente',  origen:'Telefono',  notas:'Alergia gluten'},
+  {id:5,  fecha:'2026-03-25',turno:'comida',hora:'14:00',nombre:'Rodríguez Pérez',  pax:8, zona:'Terraza Cubierta',mesa:'35', estado:'confirmada', origen:'Agencia',   notas:'Grupo empresa'},
+  {id:6,  fecha:'2026-03-25',turno:'comida',hora:'14:00',nombre:'Fernández Gómez',  pax:2, zona:'Terraza',         mesa:'22', estado:'confirmada', origen:'Web',       notas:''},
+  {id:7,  fecha:'2026-03-25',turno:'comida',hora:'14:15',nombre:'Álvarez Castro',   pax:5, zona:'Sala',             mesa:'11', estado:'cancelada',  origen:'On the Go', notas:'Cancelado por enfermedad'},
+  {id:8,  fecha:'2026-03-25',turno:'comida',hora:'14:30',nombre:'Moreno Díaz',      pax:4, zona:'Terraza',         mesa:'25', estado:'confirmada', origen:'WhatsApp',  notas:'Menú ejecutivo'},
+  {id:9,  fecha:'2026-03-25',turno:'comida',hora:'15:00',nombre:'Muñoz Serrano',    pax:2, zona:'Sala',             mesa:'3',  estado:'released',   origen:'Web',       notas:'No show'},
+  {id:10, fecha:'2026-03-25',turno:'cena',  hora:'20:00',nombre:'Herrera Blanco',   pax:4, zona:'Terraza Cubierta',mesa:'33', estado:'confirmada', origen:'Web',       notas:''},
+  {id:11, fecha:'2026-03-25',turno:'cena',  hora:'20:00',nombre:'Jiménez Vega',     pax:2, zona:'Terraza',         mesa:'19', estado:'confirmada', origen:'On the Go', notas:''},
+  {id:12, fecha:'2026-03-25',turno:'cena',  hora:'20:15',nombre:'Navarro Ortega',   pax:6, zona:'Sala',             mesa:'7',  estado:'pendiente',  origen:'Telefono',  notas:'Mesa familiar'},
+  {id:13, fecha:'2026-03-25',turno:'cena',  hora:'20:30',nombre:'Ramos Fuentes',    pax:3, zona:'Terraza Cubierta',mesa:'38', estado:'confirmada', origen:'Web',       notas:''},
+  {id:14, fecha:'2026-03-25',turno:'cena',  hora:'21:00',nombre:'Iglesias Mora',    pax:10,zona:'Sala',             mesa:'14', estado:'confirmada', origen:'Agencia',   notas:'Evento corporativo - menú cerrado'},
+  {id:15, fecha:'2026-03-25',turno:'cena',  hora:'21:00',nombre:'Ruiz Campos',      pax:2, zona:'Terraza',         mesa:'20', estado:'cancelada',  origen:'Web',       notas:''},
+  {id:16, fecha:'2026-03-25',turno:'cena',  hora:'21:30',nombre:'Suárez Delgado',   pax:4, zona:'Terraza Cubierta',mesa:'40', estado:'confirmada', origen:'WhatsApp',  notas:'Veganos x2'},
+  {id:17, fecha:'2026-03-25',turno:'cena',  hora:'22:00',nombre:'Molina Peña',      pax:2, zona:'Sala',             mesa:'2',  estado:'confirmada', origen:'On the Go', notas:''}
+];
+
+var RES_ESTADO_STYLE = {
+  confirmada: {bg:'#153d15', color:'#2ecc71', label:'✅ Confirmada'},
+  pendiente:  {bg:'#3d3000', color:'#ffa040', label:'⏳ Pendiente'},
+  cancelada:  {bg:'#3d1515', color:'#e74c3c', label:'❌ Cancelada'},
+  seated:     {bg:'#15152d', color:'#6b8fff', label:'🪑 Seated'},
+  released:   {bg:'#2a1a2a', color:'#c080ff', label:'🔓 Released'}
+};
+
+function initReservas(){
+  // Fecha de hoy por defecto
+  var hoy = new Date().toISOString().split('T')[0];
+  var felEl = document.getElementById('res-fecha-sel');
+  if(felEl && !felEl.value) felEl.value = hoy;
+  // Cargar apikey guardada si existe
+  var savedKey = localStorage.getItem('rt_res_apikey');
+  if(savedKey){ var ki=document.getElementById('res-apikey-input'); if(ki) ki.value=savedKey; }
+  // Renderizar modo actual
+  res_renderModeUI();
+  res_cargar();
+}
+
+function toggleResMode(){
+  RES_MODO_API = !RES_MODO_API;
+  res_renderModeUI();
+  res_cargar();
+}
+
+function res_renderModeUI(){
+  var lbl = document.getElementById('res-mode-label');
+  var knob = document.getElementById('res-tog-knob');
+  var dot = document.getElementById('res-tog-dot');
+  var banner = document.getElementById('res-api-banner');
+  if(lbl) lbl.textContent = RES_MODO_API ? 'API' : 'MOCK';
+  if(lbl) lbl.style.color = RES_MODO_API ? '#3498db' : 'var(--accent)';
+  if(knob) knob.style.left = RES_MODO_API ? '15px' : '3px';
+  if(dot)  dot.style.background = RES_MODO_API ? '#3498db' : 'var(--border)';
+  if(banner) banner.style.display = RES_MODO_API ? 'block' : 'none';
+}
+
+function res_guardarApiKey(){
+  var v = (document.getElementById('res-apikey-input')||{}).value||'';
+  if(!v.trim()){ showToast('Introduce una API key válida','orange'); return; }
+  localStorage.setItem('rt_res_apikey', v.trim());
+  showToast('✓ API key guardada. En desarrollo la conexión con CoverManager.','green');
+}
+
+function resTurno(turno){
+  RES_TURNO_ACTUAL = turno;
+  // Actualizar pills
+  var cp = document.getElementById('res-pill-comida');
+  var np = document.getElementById('res-pill-cena');
+  if(cp){ cp.style.background = turno==='comida'?'#2ecc71':'none'; cp.style.color = turno==='comida'?'#0f1923':'var(--muted)'; cp.style.borderColor = turno==='comida'?'#2ecc71':'var(--border)'; }
+  if(np){ np.style.background = turno==='cena'?'#6b8fff':'none'; np.style.color = turno==='cena'?'#0f1923':'var(--muted)'; np.style.borderColor = turno==='cena'?'#6b8fff':'var(--border)'; }
+  res_cargar();
+}
+
+function resFiltro(estado){
+  RES_FILTRO_ESTADO = estado;
+  // Actualizar botones filtro
+  ['all','confirmada','pendiente','cancelada','seated'].forEach(function(k){
+    var el = document.getElementById('res-f-'+k);
+    if(!el) return;
+    var activo = (k==='' || k==='all') ? estado==='' : estado===k;
+    el.className = activo ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    if(!activo){
+      var colores = {confirmada:'#2ecc71',pendiente:'#ffa040',cancelada:'#e74c3c',seated:'#6b8fff'};
+      el.style.borderColor = colores[k]||'var(--border)';
+      el.style.color = colores[k]||'var(--muted)';
+    } else { el.style.borderColor=''; el.style.color=''; }
+  });
+  res_renderTabla();
+}
+
+function res_cargar(){
+  if(RES_MODO_API){
+    res_renderKpis([]);
+    res_renderTabla();
+    res_renderZonas([]);
+    showToast('🔌 Modo CoverManager API — integración en desarrollo','orange');
+    return;
+  }
+  // Modo MOCK
+  var fecha = (document.getElementById('res-fecha-sel')||{}).value||'2026-03-25';
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  // Combinar mock + reservas locales de sesión filtradas por fecha/local
+  var todas = RES_MOCK.filter(function(r){ return r.fecha===fecha; })
+    .concat(resReservasLocales.filter(function(r){ return r.fecha===fecha && r.local_id===(localId); }));
+  res_renderKpis(todas);
+  res_renderTabla(todas);
+  res_renderZonas(todas);
+}
+
+function res_getReservasFiltradas(todas){
+  var turno = RES_TURNO_ACTUAL;
+  var estado = RES_FILTRO_ESTADO;
+  return (todas||[]).filter(function(r){
+    if(r.turno !== turno) return false;
+    if(estado && r.estado !== estado) return false;
+    return true;
+  }).sort(function(a,b){ return a.hora > b.hora ? 1 : -1; });
+}
+
+function res_renderKpis(todas){
+  var cont = document.getElementById('res-kpis');
+  var bar  = document.getElementById('res-ocupacion-bar');
+  if(!cont) return;
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var delTurno = (todas||[]).filter(function(r){ return r.turno===RES_TURNO_ACTUAL; });
+  var activas = delTurno.filter(function(r){ return r.estado!=='cancelada'&&r.estado!=='released'; });
+  var totalPax = activas.reduce(function(s,r){ return s+(parseInt(r.pax)||0); },0);
+  var confirmadas = delTurno.filter(function(r){ return r.estado==='confirmada'; }).length;
+  var pendientes  = delTurno.filter(function(r){ return r.estado==='pendiente'; }).length;
+  var ocupPct = cfg.capacidad > 0 ? Math.round(totalPax/cfg.capacidad*100) : 0;
+  var ocColour = ocupPct>=90?'var(--red)':ocupPct>=70?'var(--orange)':'var(--green)';
+  cont.innerHTML =
+    '<div class="stat-card"><div class="stat-val" style="color:'+ocColour+'">'+ocupPct+'%</div><div class="stat-label">Ocupación</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+activas.length+'</div><div class="stat-label">Reservas activas</div></div>'
+   +'<div class="stat-card"><div class="stat-val" style="color:var(--accent)">'+totalPax+'</div><div class="stat-label">Pax / '+cfg.capacidad+' cap.</div></div>'
+   +'<div class="stat-card"><div class="stat-val" style="color:#ffa040">'+pendientes+'</div><div class="stat-label">Pendientes confirmar</div></div>';
+  // Barra de ocupación
+  if(bar){
+    bar.innerHTML = '<div style="display:flex;align-items:center;gap:10px">'
+      +'<div style="flex:1;background:var(--darker);border-radius:6px;height:12px;overflow:hidden;border:1px solid var(--border)">'
+      +'<div style="background:'+ocColour+';height:100%;width:'+Math.min(100,ocupPct)+'%;border-radius:6px;transition:width .5s"></div></div>'
+      +'<span style="font-size:12px;font-weight:700;color:'+ocColour+';min-width:80px">'+totalPax+' / '+cfg.capacidad+' pax</span>'
+      +'</div>';
+  }
+}
+
+function res_renderTabla(todas){
+  var cont = document.getElementById('res-tabla');
+  if(!cont) return;
+  // Si no se pasa todas, volver a buscar
+  if(!todas){
+    var fecha = (document.getElementById('res-fecha-sel')||{}).value||'2026-03-25';
+    var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+    todas = RES_MOCK.filter(function(r){ return r.fecha===fecha; })
+      .concat(resReservasLocales.filter(function(r){ return r.fecha===fecha && r.local_id===localId; }));
+  }
+  var filas = res_getReservasFiltradas(todas);
+  if(!filas.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin reservas para este turno'+(RES_FILTRO_ESTADO?' con estado "'+RES_FILTRO_ESTADO+'"':'')+'</div>';
+    return;
+  }
+  cont.innerHTML = filas.map(function(r){
+    var est = RES_ESTADO_STYLE[r.estado]||{bg:'var(--darker)',color:'var(--muted)',label:r.estado};
+    return '<div style="display:grid;grid-template-columns:60px 1fr 50px 110px 80px 100px 110px 36px;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border)20;align-items:center;font-size:13px;transition:background .15s" onmouseover="this.style.background=\'var(--darker)\'" onmouseout="this.style.background=\'\'">'
+      +'<span style="font-weight:700;color:var(--accent)">'+r.hora+'</span>'
+      +'<span style="font-weight:600">'+r.nombre+(r.notas?'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+r.notas+'</div>':'')+'</span>'
+      +'<span style="text-align:center;font-weight:700;color:var(--text)">'+r.pax+'</span>'
+      +'<span style="font-size:11px;color:var(--muted)">'+r.zona+'</span>'
+      +'<span style="font-size:11px;color:var(--muted)">Mesa '+r.mesa+'</span>'
+      +'<span style="font-size:11px;color:var(--muted)">'+r.origen+'</span>'
+      +'<span style="display:inline-block;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:700;background:'+est.bg+';color:'+est.color+'">'+est.label+'</span>'
+      +'<button onclick="res_abrirModalEditar('+r.id+')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 7px;color:var(--muted);cursor:pointer;font-size:11px">✏️</button>'
+      +'</div>';
+  }).join('');
+}
+
+function res_renderZonas(todas){
+  var cont = document.getElementById('res-zonas');
+  if(!cont) return;
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var delTurno = (todas||[]).filter(function(r){ return r.turno===RES_TURNO_ACTUAL && r.estado!=='cancelada'&&r.estado!=='released'; });
+  cont.innerHTML = cfg.zonas.map(function(zona){
+    var resZona = delTurno.filter(function(r){ return r.zona===zona; });
+    var paxZona = resZona.reduce(function(s,r){ return s+(parseInt(r.pax)||0); },0);
+    var pctZona = cfg.capacidad>0?Math.round(paxZona/cfg.capacidad*100*cfg.zonas.length):0;
+    var col = pctZona>=90?'var(--red)':pctZona>=60?'var(--orange)':'var(--green)';
+    return '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:12px">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">'+zona+'</div>'
+      +'<div style="font-size:22px;font-weight:700;color:'+col+'">'+resZona.length+' <span style="font-size:12px;color:var(--muted)">reservas</span></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+paxZona+' pax</div>'
+      +'<div style="margin-top:8px;background:var(--border);border-radius:4px;height:6px;overflow:hidden">'
+      +'<div style="background:'+col+';height:100%;width:'+Math.min(100,pctZona)+'%;border-radius:4px"></div></div>'
+      +'</div>';
+  }).join('');
+}
+
+function res_abrirModalNueva(){
+  document.getElementById('res-modal-titulo').textContent='📅 Nueva Reserva';
+  document.getElementById('res-edit-id').value='';
+  document.getElementById('res-f-nombre').value='';
+  document.getElementById('res-f-pax').value='2';
+  document.getElementById('res-f-mesa').value='';
+  document.getElementById('res-f-notas').value='';
+  document.getElementById('res-f-estado').value='confirmada';
+  document.getElementById('res-f-origen').value='Web';
+  // Zonas según local
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var zonaEl = document.getElementById('res-f-zona');
+  if(zonaEl){ zonaEl.innerHTML = cfg.zonas.map(function(z){return'<option value="'+z+'">'+z+'</option>';}).join(''); }
+  // Horas del turno
+  _res_poblarHoras(RES_TURNO_ACTUAL, localId);
+  document.getElementById('res-modal-nueva').style.display='flex';
+}
+
+function res_abrirModalEditar(id){
+  var r = RES_MOCK.find(function(x){return x.id===id;}) || resReservasLocales.find(function(x){return x.id===id;});
+  if(!r) return;
+  document.getElementById('res-modal-titulo').textContent='✏️ Editar Reserva';
+  document.getElementById('res-edit-id').value=id;
+  document.getElementById('res-f-nombre').value=r.nombre||'';
+  document.getElementById('res-f-pax').value=r.pax||2;
+  document.getElementById('res-f-mesa').value=r.mesa||'';
+  document.getElementById('res-f-notas').value=r.notas||'';
+  document.getElementById('res-f-estado').value=r.estado||'confirmada';
+  document.getElementById('res-f-origen').value=r.origen||'Web';
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var zonaEl = document.getElementById('res-f-zona');
+  if(zonaEl){ zonaEl.innerHTML = cfg.zonas.map(function(z){return'<option value="'+z+'"'+(z===r.zona?' selected':'')+'>'+z+'</option>';}).join(''); }
+  _res_poblarHoras(r.turno||RES_TURNO_ACTUAL, localId, r.hora);
+  document.getElementById('res-modal-nueva').style.display='flex';
+}
+
+function _res_poblarHoras(turno, localId, selected){
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var base = cfg.turnos[turno]||'13:00';
+  var baseMin = parseInt(base.split(':')[0])*60+parseInt(base.split(':')[1]);
+  var hEl = document.getElementById('res-f-hora');
+  if(!hEl) return;
+  hEl.innerHTML='';
+  for(var m=0; m<=120; m+=15){
+    var tot=baseMin+m, hh=String(Math.floor(tot/60)).padStart(2,'0'), mm=String(tot%60).padStart(2,'0');
+    var str=hh+':'+mm;
+    hEl.innerHTML+='<option value="'+str+'"'+(str===selected?' selected':'')+'>'+str+'</option>';
+  }
+}
+
+function res_cerrarModal(){
+  document.getElementById('res-modal-nueva').style.display='none';
+}
+
+function res_guardar(){
+  var editId = document.getElementById('res-edit-id').value;
+  var nombre = document.getElementById('res-f-nombre').value.trim();
+  var pax    = parseInt(document.getElementById('res-f-pax').value)||1;
+  var hora   = document.getElementById('res-f-hora').value;
+  var zona   = document.getElementById('res-f-zona').value;
+  var mesa   = document.getElementById('res-f-mesa').value.trim();
+  var origen = document.getElementById('res-f-origen').value;
+  var estado = document.getElementById('res-f-estado').value;
+  var notas  = document.getElementById('res-f-notas').value.trim();
+  var fecha  = (document.getElementById('res-fecha-sel')||{}).value||new Date().toISOString().split('T')[0];
+  var localId= parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  if(!nombre){ showToast('Introduce el nombre del cliente','orange'); return; }
+  if(editId){
+    // Editar — buscar en locales primero, luego mock
+    var idx = resReservasLocales.findIndex(function(r){ return r.id===parseInt(editId); });
+    if(idx>=0){
+      Object.assign(resReservasLocales[idx],{nombre:nombre,pax:pax,hora:hora,zona:zona,mesa:mesa,origen:origen,estado:estado,notas:notas});
+    } else {
+      // Mock — edición en memoria
+      var mr = RES_MOCK.find(function(r){ return r.id===parseInt(editId); });
+      if(mr) Object.assign(mr,{nombre:nombre,pax:pax,hora:hora,zona:zona,mesa:mesa,origen:origen,estado:estado,notas:notas});
+    }
+    showToast('✓ Reserva actualizada','green');
+  } else {
+    resIdCounter++;
+    resReservasLocales.push({id:resIdCounter,fecha:fecha,local_id:localId,turno:RES_TURNO_ACTUAL,hora:hora,nombre:nombre,pax:pax,zona:zona,mesa:mesa,estado:estado,origen:origen,notas:notas});
+    showToast('✓ Reserva añadida','green');
+  }
+  res_cerrarModal();
+  res_cargar();
+}
+
+function imprimirReservas(){
+  var fecha  = (document.getElementById('res-fecha-sel')||{}).value||'—';
+  var localId= parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var localNom = localId===1?'La Cala':"Roto's Burguer";
+  var turnoLabel = RES_TURNO_ACTUAL==='comida'?'Comida 13:00':'Cena 20:00';
+  var todas = RES_MOCK.filter(function(r){ return r.fecha===fecha; })
+    .concat(resReservasLocales.filter(function(r){ return r.fecha===fecha&&r.local_id===localId; }));
+  var filas = res_getReservasFiltradas(todas);
+  var totalPax = filas.filter(function(r){return r.estado!=='cancelada'&&r.estado!=='released';}).reduce(function(s,r){return s+(parseInt(r.pax)||0);},0);
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var w = window.open('','_blank','width=900,height=700');
+  if(!w){alert('Permite ventanas emergentes');return;}
+  w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reservas '+localNom+' '+fecha+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px;color:#111}'
+    +'h1{font-size:16px;margin-bottom:4px}p{color:#666;margin-bottom:14px}'
+    +'table{width:100%;border-collapse:collapse}th{background:#f0f0f0;padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;border:1px solid #ddd}'
+    +'td{padding:6px 8px;border:1px solid #eee;font-size:11px}'
+    +'.conf{color:#050}.pend{color:#840}.canc{color:#c00}.seated{color:#003}.rel{color:#404}'
+    +'</style></head><body>'
+    +'<h1>📅 Reservas '+localNom+' · '+turnoLabel+'</h1>'
+    +'<p>Fecha: <strong>'+fecha+'</strong> · '+filas.length+' reservas · '+totalPax+' pax / '+cfg.capacidad+' capacidad</p>'
+    +'<table><thead><tr><th>Hora</th><th>Nombre</th><th>Pax</th><th>Zona</th><th>Mesa</th><th>Estado</th><th>Origen</th><th>Notas</th></tr></thead><tbody>'
+    +filas.map(function(r){var cl={confirmada:'conf',pendiente:'pend',cancelada:'canc',seated:'seated',released:'rel'}[r.estado]||'';return'<tr><td><strong>'+r.hora+'</strong></td><td>'+r.nombre+'</td><td>'+r.pax+'</td><td>'+r.zona+'</td><td>'+r.mesa+'</td><td class="'+cl+'">'+r.estado+'</td><td>'+r.origen+'</td><td>'+r.notas+'</td></tr>';}).join('')
+    +'</tbody></table>'
+    +'<p style="margin-top:14px;font-size:9px;color:#aaa">RelojTurnos v6.7 · '+new Date().toLocaleString('es-ES')+'</p>'
+    +'<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
+    +'</body></html>');
+  w.document.close();
+}
+// Cerrar modal reserva al clicar fuera
+document.addEventListener('click',function(e){
+  var m=document.getElementById('res-modal-nueva');
+  if(m&&m.style.display==='flex'&&e.target===m) res_cerrarModal();
+});
 </script>
