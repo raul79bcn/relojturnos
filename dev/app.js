@@ -1,0 +1,5611 @@
+var DIAS=['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
+var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
+var COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800'];
+var ROLES=['Resp. Ma\u00f1ana','Resp. Noche','Cam. Ma\u00f1ana','Cam. Noche','Cam. Tarde','Cam. Intermedio','Cocinero','Ayud. Cocina','Encargado','Barman'];
+
+// ========== COMPRAS DATA ==========
+var cmpFamilias=[], cmpArticulos=[], cmpProveedores=[], cmpPrecios=[];
+var cmpTabActual='articulos', cmpAnTabActual='margen';
+
+// ========== SUPABASE CONFIG ==========
+const SUPA_URL = 'https://ttewezdnroiqtetmgyrh.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0ZXdlemRucm9pcXRldG1neXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTExMDIsImV4cCI6MjA4ODM2NzEwMn0.mA5tWItknmHmBe7-8AZpN9579RRwEaM3ZybYpQBc2Pw';
+
+async function sbGet(table, filters){
+  var url = SUPA_URL+'/rest/v1/'+table+'?'+( filters||'order=id.asc');
+  var r = await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'}});
+  if(!r.ok) throw new Error('GET '+table+' error '+r.status);
+  return r.json();
+}
+
+async function sbPost(table, data){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table,{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(data)
+  });
+  if(!r.ok){var e=await r.text();throw new Error('POST '+table+' error '+r.status+': '+e);}
+  return r.json();
+}
+
+async function sbPatch(table, id, data){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table+'?id=eq.'+id,{
+    method:'PATCH',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(data)
+  });
+  if(!r.ok) throw new Error('PATCH '+table+' error '+r.status);
+  return r.json();
+}
+
+async function sbDelete(table, filters){
+  var r = await fetch(SUPA_URL+'/rest/v1/'+table+'?'+filters,{
+    method:'DELETE',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  if(!r.ok) throw new Error('DELETE '+table+' error '+r.status);
+}
+
+// ========== AUDIT LOG RENDER ==========
+
+var AUDIT_ICONOS = {
+  LOGIN:'🔑', GUARDAR_CUADRANTE:'📅', ACTUALIZAR_CUADRANTE:'🔄',
+  GUARDAR_ARQUEO:'💰', EDITAR_ARQUEO:'✏️', CREAR_USUARIO:'👤',
+  CAMBIAR_PASSWORD:'🔒'
+};
+var AUDIT_COLORES = {
+  LOGIN:'var(--blue)', GUARDAR_CUADRANTE:'var(--green)', ACTUALIZAR_CUADRANTE:'var(--orange)',
+  GUARDAR_ARQUEO:'var(--accent)', EDITAR_ARQUEO:'#ffc107', CREAR_USUARIO:'var(--purple)',
+  CAMBIAR_PASSWORD:'var(--muted)'
+};
+var LOCALES_NOMBRE = {1:'La Cala', 2:"Roto's Burguer"};
+
+function renderAuditRows(rows){
+  if(!rows||!rows.length) return '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">'+t('audit_sin_registros')+'</div>';
+  return rows.map(function(r){
+    var icono = AUDIT_ICONOS[r.accion] || '📋';
+    var col   = AUDIT_COLORES[r.accion] || 'var(--muted)';
+    var fecha = r.created_at ? new Date(r.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    var localTxt = r.local_id ? (LOCALES_NOMBRE[r.local_id]||'Local '+r.local_id) : '—';
+    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 6px;border-bottom:1px solid var(--border)20">'
+      +'<div style="font-size:16px;flex-shrink:0;margin-top:1px">'+icono+'</div>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+      +'<span style="font-size:11px;font-weight:700;color:'+col+'">'+r.accion+'</span>'
+      +'<span style="font-size:10px;color:var(--muted)">·</span>'
+      +'<span style="font-size:10px;font-weight:600;color:var(--text)">'+r.usuario_nombre+'</span>'
+      +'<span style="font-size:9px;color:var(--muted);background:var(--card);padding:1px 5px;border-radius:4px">'+r.rol+'</span>'
+      +'<span style="font-size:9px;color:var(--muted)">'+localTxt+'</span>'
+      +'</div>'
+      +(r.detalle?'<div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.detalle+'</div>':'')
+      +'</div>'
+      +'<div style="font-size:9px;color:var(--muted);flex-shrink:0;white-space:nowrap">'+fecha+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+async function cargarAuditLog(){
+  var el = document.getElementById('director-audit');
+  if(!el) return;
+  el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">'+t('audit_cargando')+'</div>';
+  try{
+    var filtros = 'order=created_at.desc&limit=50';
+    var fLocal  = (document.getElementById('audit-filtro-local')||{}).value;
+    var fAccion = (document.getElementById('audit-filtro-accion')||{}).value;
+    if(fLocal)  filtros = 'local_id=eq.'+fLocal+'&'+filtros;
+    if(fAccion) filtros = 'accion=eq.'+fAccion+'&'+filtros;
+    var rows = await sbGet('audit_log', filtros);
+    el.innerHTML = renderAuditRows(rows);
+  }catch(e){
+    el.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:14px">⚠ Error: '+e.message+'</div>';
+  }
+}
+
+async function cargarMiActividad(){
+  var el = document.getElementById('portal-actividad');
+  if(!el||!currentUser) return;
+  el.innerHTML = '<div style="padding:16px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">'+t('portal_mi_actividad')+'</div>'
+    +'<div id="mi-actividad-list"><div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">'+t('audit_cargando')+'</div></div></div>';
+  try{
+    var rows = await sbGet('audit_log','usuario_dni=eq.'+encodeURIComponent(currentUser.dni)+'&order=created_at.desc&limit=30');
+    document.getElementById('mi-actividad-list').innerHTML = renderAuditRows(rows);
+  }catch(e){
+    document.getElementById('mi-actividad-list').innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:14px">⚠ '+t('err_datos_contrato')+'</div>';
+  }
+}
+
+
+async function logAccion(accion, detalle, localId){
+  if(!currentUser) return;
+  // Fire-and-forget — no bloquea la UI si falla
+  try{
+    await sbPost('audit_log',{
+      usuario_nombre: currentUser.nombre || currentUser.dni,
+      usuario_dni:    currentUser.dni,
+      rol:            currentUser.rol,
+      accion:         accion,
+      detalle:        detalle || null,
+      local_id:       localId || currentUser.local_id || null
+    });
+  }catch(e){ console.warn('audit_log error (no crítico):', e.message); }
+}
+
+
+var localIdMap = {};   // {'La Cala': 1, "Roto's Burguer": 2}
+var empIdMap   = {};   // {empCounter_local_id: supabase_id}
+var currentCuadranteId = null;
+
+// ===================== AUTH / LOGIN =====================
+var currentUser = null; // {id, dni, nombre, rol, local_id, empleado_id}
+
+// Hash simple SHA-256 para contraseñas
+async function hashPass(str){
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+
+async function doLogin(){
+  var dni = (document.getElementById('login-dni').value||'').trim().toUpperCase();
+  var pass = (document.getElementById('login-pass').value||'').trim();
+  var errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if(!dni || !pass){
+    errEl.textContent = 'Introduce tu DNI/NIE y contraseña';
+    errEl.style.display = 'block'; return;
+  }
+
+  try{
+    var passHash = await hashPass(pass);
+    // Comprobar usuarios demo primero
+    var DEMO_USERS = [
+      {id:0, dni:'DEMO0001', password_hash:'', rol:'directora', nombre:'LORENA (DEMO)', local_id:1, empleado_id:null},
+      {id:0, dni:'DEMO0002', password_hash:'', rol:'directora_general', nombre:'MIRYAM (DEMO)', local_id:null, empleado_id:null},
+    ];
+    var demoUser = DEMO_USERS.find(function(u){ return u.dni===dni; });
+    if(demoUser && pass==='1234'){
+      currentUser = demoUser;
+      document.getElementById('login-screen').style.display='none';
+      checkMostrarBtnUsuarios();
+      if(demoUser.rol==='directora_general'){
+        document.querySelector('header').style.display='';
+        document.querySelector('.container').style.display='';
+        abrirVistaDirector();
+      } else {
+        document.querySelector('header').style.display='';
+        document.querySelector('.container').style.display='';
+        showStep(1);
+        showToast(t('toast_bienvenida')+demoUser.nombre,'green');
+      }
+      return;
+    }
+    var rows = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni)+'&activo=eq.true');
+    if(!rows.length){ errEl.textContent=t('login_error'); errEl.style.display='block'; return; }
+    var user = rows[0];
+    if(user.password_hash !== passHash){
+      errEl.textContent=t('login_error'); errEl.style.display='block'; return;
+    }
+    currentUser = user;
+    document.getElementById('login-screen').style.display = 'none';
+    checkMostrarBtnUsuarios();
+    aplicarTraducciones();
+    logAccion('LOGIN', 'Acceso correcto', user.local_id);
+    if(user.rol === 'empleado'){
+      abrirPortalEmpleado(user);
+    } else if(user.rol === 'directora_general'){
+      document.getElementById('portal-empleado').style.display = 'none';
+      document.querySelector('header').style.display = '';
+      document.querySelector('.container').style.display = '';
+      abrirVistaDirector();
+    } else {
+      // directora / admin — acceso completo
+      document.querySelector('header').style.display = '';
+      document.querySelector('.container').style.display = '';
+      showStep(1);
+      showToast(t('toast_bienvenida')+user.nombre,'green');
+    }
+  }catch(e){
+    var OFFLINE_USERS = [
+      {dni:'23842646H', password_hash:'fcd3ea094503446af61291a741292e480275f1f5c9f4660ebcf885880a2109fe', rol:'directora', nombre:'LORENA', local_id:1},
+      {dni:'DEMO0002',  password_hash:'03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', rol:'directora_general', nombre:'MIRYAM', local_id:null},
+      {dni:'DEMO0001',  password_hash:'03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', rol:'directora', nombre:'LORENA (DEMO)', local_id:1},
+    ];
+    var offlineUser = OFFLINE_USERS.find(function(u){ return u.dni===dni; });
+    if(offlineUser && offlineUser.password_hash === passHash){
+      currentUser = offlineUser;
+      document.getElementById('login-screen').style.display='none';
+      document.querySelector('header').style.display='';
+      document.querySelector('.container').style.display='';
+      if(offlineUser.rol==='directora_general'){ abrirVistaDirector(); } else { showStep(1); }
+      showToast(t('toast_bienvenida')+offlineUser.nombre,'green');
+    } else {
+      errEl.textContent=t('login_error');
+      errEl.style.display='block';
+    }
+  }
+}
+
+function doLogout(){
+  currentUser = null;
+  document.getElementById('portal-empleado').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-dni').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-error').style.display='none';
+}
+
+async function abrirPortalEmpleado(user){
+  var portal = document.getElementById('portal-empleado');
+  portal.style.display = 'block';
+  document.querySelector('header').style.display = 'none';
+  document.querySelector('.container').style.display = 'none';
+
+  // Cabecera
+  var nombre = user.nombre || user.dni;
+  document.getElementById('portal-avatar').textContent = nombre.substring(0,2).toUpperCase();
+  document.getElementById('portal-nombre').textContent = nombre;
+
+  // Cargar local
+  try{
+    var locs = await sbGet('locales','id=eq.'+user.local_id);
+    document.getElementById('portal-local').textContent = locs.length ? locs[0].nombre : '—';
+  }catch(e){ document.getElementById('portal-local').textContent = '—'; }
+
+  portalTab('cuadrante');
+  await cargarPortalCuadrante(user);
+  await cargarPortalContrato(user);
+}
+
+function portalTab(tab){
+  ['cuadrante','contrato','actividad','password'].forEach(function(t){
+    var el = document.getElementById('portal-'+t);
+    if(el) el.style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('.portal-tab').forEach(function(btn, i){
+    btn.classList.toggle('active', ['cuadrante','contrato','actividad','password'][i]===tab);
+  });
+  if(tab==='actividad') cargarMiActividad();
+}
+
+async function cargarPortalCuadrante(user){
+  var el = document.getElementById('portal-cuadrante');
+  el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">'+t('portal_cargando_cuad')+'</div>';
+  try{
+    // Cargar cuadrante más reciente del local
+    var cuads = await sbGet('cuadrantes','local_id=eq.'+user.local_id+'&order=id.desc&limit=1');
+    if(!cuads.length){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">'+t('portal_no_cuad')+'</div>'; return; }
+    var cuad = cuads[0];
+    var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id);
+    var emps = await sbGet('empleados','local_id=eq.'+user.local_id+'&activo=eq.true');
+    renderPortalCuadrante(el, cuad, emps, turnos, user.empleado_id);
+  }catch(e){
+    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">'+t('portal_error_cuad')+'</div>';
+  }
+}
+
+function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
+  var DIAS_S = ['L','M','X','J','V','S','D'];
+  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',intermedio:'I',fiesta:'🏖',mediafiesta:'½'};
+  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',intermedio:'#c080ff',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
+
+  var html = '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-align:center">'+cuad.semana_label+'</div>';
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">';
+  html += '<thead><tr><th style="padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);color:var(--muted)">'+t('col_empleado')+'</th>';
+  DIAS_S.forEach(function(d){ html += '<th style="padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);color:var(--muted)">'+d+'</th>'; });
+  html += '</tr></thead><tbody>';
+
+  emps.forEach(function(emp){
+    var esMio = emp.id === miEmpId;
+    var bg = esMio ? 'background:var(--accent)15;' : '';
+    var nameCol = esMio ? 'color:var(--accent);font-weight:700' : 'color:var(--text)';
+    html += '<tr style="'+bg+'">';
+    html += '<td style="padding:6px 4px;border-bottom:1px solid var(--border)20;'+nameCol+'">'+(esMio?'👤 ':'')+emp.nombre+'</td>';
+    for(var d=0; d<7; d++){
+      var t = (turnos.find(function(x){ return x.empleado_id===emp.id && x.dia===d; })||{}).turno || emp.turno_habitual || '—';
+      var col = TURNO_COLOR[t] || 'var(--muted)';
+      var lbl = TURNO_LABEL[t] || t.substring(0,1).toUpperCase();
+      html += '<td style="padding:5px 2px;text-align:center;border-bottom:1px solid var(--border)20"><span style="font-weight:700;color:'+col+'">'+lbl+'</span></td>';
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">';
+  [{l:'M',c:'var(--green)',tk:'turno_m_label'},{l:'N',c:'#6b8fff',tk:'turno_n_label'},{l:'T',c:'#ffa040',tk:'turno_t_label'},{l:'I',c:'#c080ff',tk:'turno_i_label'},{l:'🏖',c:'#ff6b6b',tk:'turno_fiesta'},{l:'½',c:'#ffaa40',tk:'turno_mediafiesta'}]
+    .forEach(function(x){ html += '<span><strong style="color:'+x.c+'">'+x.l+'</strong> '+t(x.tk)+'</span>'; });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function cargarPortalContrato(user){
+  var el = document.getElementById('portal-contrato');
+  try{
+    var sals = await sbGet('salarios','empleado_id=eq.'+user.empleado_id);
+    var sal = sals.length ? sals[0] : null;
+    var emps = await sbGet('empleados','id=eq.'+user.empleado_id);
+    var emp = emps.length ? emps[0] : null;
+    if(!sal && !emp){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">'+t('portal_no_contrato')+'</div>'; return; }
+    el.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">'+t('portal_mis_datos')+'</div>'
+      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_nombre')+'</span> <strong>'+emp.nombre+'</strong></div>':'')
+      +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_rol_lbl')+'</span> <strong>'+emp.rol+'</strong></div>':'')
+      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_sal_bruto')+'</span> <strong style="color:var(--green)">'+sal.bruto_mes+' €</strong></div>':'')
+      +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_h_contrato')+'</span> <strong>'+sal.horas_contrato+'h</strong></div>':'')
+      +'<div style="margin-top:14px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px">'+t('nominas_proximamente')+'</div>'
+      +'</div>';
+  }catch(e){
+    el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">'+t('portal_error_contrato')+'</div>';
+  }
+}
+
+async function cambiarPassword(){
+  var actual = document.getElementById('pass-actual').value;
+  var nueva = document.getElementById('pass-nueva').value;
+  var repite = document.getElementById('pass-repite').value;
+  var errEl = document.getElementById('pass-error');
+  var okEl = document.getElementById('pass-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  if(!actual||!nueva||!repite){ errEl.textContent=t('err_rellena'); errEl.style.display='block'; return; }
+  if(nueva.length<4){ errEl.textContent=t('err_pass_min'); errEl.style.display='block'; return; }
+  if(nueva!==repite){ errEl.textContent=t('err_pass_no_coincide'); errEl.style.display='block'; return; }
+
+  try{
+    var actualHash = await hashPass(actual);
+    var rows = await sbGet('usuarios','id=eq.'+currentUser.id);
+    if(!rows.length||rows[0].password_hash!==actualHash){ errEl.textContent=t('toast_password_incorrecta'); errEl.style.display='block'; return; }
+    var nuevaHash = await hashPass(nueva);
+    await sbPatch('usuarios', currentUser.id, {password_hash: nuevaHash});
+    logAccion('CAMBIAR_PASSWORD', 'Contraseña actualizada', currentUser.local_id);
+    okEl.style.display='block';
+    document.getElementById('pass-actual').value='';
+    document.getElementById('pass-nueva').value='';
+    document.getElementById('pass-repite').value='';
+  }catch(e){
+    errEl.textContent=t('err_cambiar_pass');
+    errEl.style.display='block';
+  }
+}
+
+async function initSupabase(){
+  try{
+    var locs = await sbGet('locales');
+    if(locs && locs.length){
+      locs.forEach(function(l){ localIdMap[l.nombre]=l.id; });
+      showToast(t('toast_conectado'),'green');
+    } else {
+      // Tabla locales vacía — usar fallback hardcoded
+      localIdMap['La Cala'] = 1;
+      localIdMap["Roto's Burguer"] = 2;
+      showToast(t('toast_conectado_default'),'green');
+    }
+  }catch(e){
+    // Sin tabla locales — usar fallback
+    localIdMap['La Cala'] = 1;
+    localIdMap["Roto's Burguer"] = 2;
+    showToast(t('toast_sin_tabla'),'orange');
+  }
+}
+
+function showToast(msg, color){
+  var t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:12px;font-weight:700;z-index:9999;transition:opacity .5s';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.background=color==='green'?'#1a4a2a':color==='orange'?'#3d2a00':'#3d1a1a';
+  t.style.border='1px solid '+(color==='green'?'#2ecc71':color==='orange'?'var(--orange)':'var(--red)');
+  t.style.color=color==='green'?'#2ecc71':color==='orange'?'var(--orange)':'var(--red)';
+  t.style.opacity='1';
+  setTimeout(function(){t.style.opacity='0';},3000);
+}
+
+// ========== GUARDAR CUADRANTE EN BD ==========
+async function guardarCuadranteEnBD(){
+  var local = getLocal();
+  var localId = localIdMap[local];
+  // Fallback: si el mapa no tiene el local, intentar hardcoded
+  if(!localId){
+    if(local === 'La Cala') localId = 1;
+    else if(local === "Roto's Burguer") localId = 2;
+  }
+  if(!localId){ showToast(t('toast_local_no_encontrado'),'red'); return; }
+
+  var semana = getSemanaLabel();
+  var btn = document.getElementById('btn-guardar-bd');
+  if(btn){ btn.textContent='⏳ Guardando...'; btn.disabled=true; }
+
+  try{
+    // 1. Upsert cuadrante: si ya existe para este local+semana, reutilizar
+    var existing = await sbGet('cuadrantes','local_id=eq.'+localId+'&semana_label=eq.'+encodeURIComponent(semana)+'&order=id.desc&limit=1');
+    var cuadranteId;
+    if(existing && existing.length){
+      cuadranteId = existing[0].id;
+      // Borrar turnos anteriores para regenerar
+      await sbDelete('turnos_cuadrante','cuadrante_id=eq.'+cuadranteId);
+      showToast(t('toast_actualizando_cuad'),'orange');
+      logAccion('ACTUALIZAR_CUADRANTE', semana, localId);
+    } else {
+      var cArr = await sbPost('cuadrantes',{local_id:localId, semana_label:semana});
+      cuadranteId = cArr[0].id;
+      logAccion('GUARDAR_CUADRANTE', semana, localId);
+    }
+    currentCuadranteId = cuadranteId;
+
+    // 2. Guardar/actualizar empleados en BD
+    for(var i=0;i<empleados.length;i++){
+      var emp = empleados[i];
+      // Buscar si ya existe por nombre+local
+      var existing = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(emp.nombre));
+      var empBdId;
+      if(existing.length){
+        empBdId = existing[0].id;
+        await sbPatch('empleados', empBdId, {rol:emp.rol, turno_habitual:emp.turno, telefono:emp.telefono||null, email:emp.email||null});
+      } else {
+        var newEmp = await sbPost('empleados',{local_id:localId, nombre:emp.nombre, rol:emp.rol, turno_habitual:emp.turno, telefono:emp.telefono||null, email:emp.email||null});
+        empBdId = newEmp[0].id;
+      }
+      empIdMap[emp.id] = empBdId;
+
+      // 3. Turnos del cuadrante
+      for(var d=0;d<7;d++){
+        await sbPost('turnos_cuadrante',{
+          cuadrante_id:currentCuadranteId,
+          empleado_id:empBdId,
+          dia:d,
+          turno:emp.turnos[d]||'fiesta'
+        });
+      }
+
+      // 4. Salarios (upsert)
+      var sal = getSalario(emp.id);
+      if(sal.brutoMes!==''){
+        var salExist = await sbGet('salarios','empleado_id=eq.'+empBdId);
+        if(salExist.length){
+          await sbPatch('salarios', salExist[0].id, {bruto_mes:parseFloat(sal.brutoMes), horas_contrato:sal.hContrato});
+        } else {
+          await sbPost('salarios',{empleado_id:empBdId, bruto_mes:parseFloat(sal.brutoMes), horas_contrato:sal.hContrato});
+        }
+      }
+    }
+
+    // 5. Extras del día
+    for(var j=0;j<extrasDia.length;j++){
+      var ex = extrasDia[j];
+      var empBdIdEx = empIdMap[ex.empId];
+      if(empBdIdEx){
+        await sbPost('extras_dia',{
+          cuadrante_id:currentCuadranteId,
+          empleado_id:empBdIdEx,
+          dia:ex.dia,
+          horas:parseFloat(ex.horas)||0,
+          precio_hora:parseFloat(ex.precioHora)||0,
+          motivo:ex.motivo
+        });
+      }
+    }
+
+    if(btn){ btn.textContent='✓ Guardado'; btn.style.background='var(--green)'; btn.style.color='var(--darker)'; btn.disabled=false; }
+    showToast(t('toast_cuad_guardado'),'green');
+  }catch(e){
+    console.error(e);
+    if(btn){ btn.textContent='💾 Guardar en BD'; btn.disabled=false; btn.style.background=''; btn.style.color='var(--green)'; }
+    showToast(t('toast_cuad_error')+e.message,'red');
+  }
+}
+
+var empleados=[], eventos=[], empCounter=0, turnosConfig=[];
+var refuerzoPersonas=[], refuerzoCounter=0;
+var mostrarHoras=true, lastLocal='';
+
+function toMin(t){var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
+function toStr(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+function diffH(s,e){var sm=toMin(s),em=toMin(e);if(em<=sm)em+=1440;return(em-sm)/60;}
+
+function horaOpts(selId,defVal){
+  var el=document.getElementById(selId);if(!el)return;
+  el.innerHTML='';
+  for(var h=0;h<24;h++){for(var m=0;m<60;m+=30){
+    var str=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    var o=document.createElement('option');o.value=str;o.textContent=str;
+    if(str===defVal)o.selected=true;el.appendChild(o);
+  }}
+}
+
+function buildFechas(){
+  var sel=document.getElementById('fecha-inicio');if(!sel)return;sel.innerHTML='';
+  var today=new Date(),d=new Date(today);
+  d.setDate(d.getDate()+((1+7-d.getDay())%7||7));
+  for(var i=-2;i<10;i++){
+    var dd=new Date(d);dd.setDate(dd.getDate()+i*7);
+    var val=dd.toISOString().split('T')[0];
+    var label=dd.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+    var o=document.createElement('option');o.value=val;o.textContent='Lunes '+label;
+    if(i===0)o.selected=true;sel.appendChild(o);
+  }
+}
+
+function getLocal(){
+  var sel=document.getElementById('local-select');if(!sel)return'';
+  var v=sel.value;
+  if(v==='Otro'){var inp=document.getElementById('otro-local-input');return inp?(inp.value||'Nuevo local'):'Nuevo local';}
+  return v;
+}
+
+function getSemanaLabel(){
+  var fi=document.getElementById('fecha-inicio');if(!fi||!fi.value)return'';
+  var d=new Date(fi.value+'T12:00:00');
+  var fin=new Date(d);fin.setDate(fin.getDate()+6);
+  var fmt=function(dt){return dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});};
+  return fmt(d)+' \u2013 '+fmt(fin);
+}
+
+function updateHeader(){
+  var hl=document.getElementById('header-local'),hs=document.getElementById('header-semana');
+  if(hl)hl.textContent=getLocal()||'\u2014';
+  if(hs)hs.textContent=getSemanaLabel()||'\u2014';
+}
+
+function onLocalChange(){
+  var sel=document.getElementById('local-select');if(!sel)return;
+  var v=sel.value;
+  var wrap=document.getElementById('otro-local-wrap');
+  if(wrap)wrap.style.display=(v==='Otro')?'block':'none';
+  var ap=document.getElementById('hora-apertura');
+  var ci=document.getElementById('hora-cierre');
+  if(v==='La Cala'){if(ap)ap.value='07:30';if(ci)ci.value='03:00';}
+  else if(v==="Roto's Burguer"){if(ap)ap.value='11:00';if(ci)ci.value='00:00';}
+  if(v!==lastLocal){empleados=[];empCounter=0;eventos=[];extrasDia=[];extraCounter=0;lastLocal=v;}
+}
+
+function toggleNavMenu(e){
+  e.stopPropagation();
+  var btn = document.getElementById('nav-menu-btn');
+  var dd  = document.getElementById('nav-menu-dropdown');
+  var open = dd.classList.contains('open');
+  dd.classList.toggle('open', !open);
+  btn.classList.toggle('open', !open);
+}
+function closeNavMenu(){
+  var dd = document.getElementById('nav-menu-dropdown');
+  var btn = document.getElementById('nav-menu-btn');
+  if(dd) dd.classList.remove('open');
+  if(btn) btn.classList.remove('open');
+}
+// Cerrar dropdown al clicar fuera
+document.addEventListener('click', function(e){
+  var wrap = document.getElementById('nav-menu-btn');
+  if(wrap && !wrap.closest('.nav-menu-wrap').contains(e.target)) closeNavMenu();
+});
+
+function goStep(n){
+  for(var i=1;i<=13;i++){
+    var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
+    if(sc)sc.className='screen'+(i===n?' active':'');
+    if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
+  }
+  // Marcar item activo en dropdown
+  [7,8,9,10,11,12,13].forEach(function(i){
+    var el=document.getElementById('nmenu-'+i);
+    if(el) el.classList.toggle('active', i===n);
+  });
+  // Resaltar botón menú si estamos en una pantalla del dropdown
+  var btn=document.getElementById('nav-menu-btn');
+  if(btn) btn.classList.toggle('open', n>=7);
+  if(n===7) renderCostes();
+  if(n===9) cargarUsuarios();
+  if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
+  if(n===11){ initArqueo(); }
+  if(n===12){ initCompras(); }
+  if(n===13){ initReservas(); }
+  window.scrollTo(0,0);
+}
+
+function nextStep(from){
+  if(from===1){if(!getLocal()){alert(t('alert_selecciona_local'));return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
+  else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
+  else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();sugerirYRenderizar();goStep(4);}
+  else if(from===4){initPaso5();goStep(5);}
+}
+
+async function cargarEmpleadosBD(){
+  var local = getLocal();
+  var localId = localIdMap[local];
+  if(!localId && local === 'La Cala') localId = 1;
+  if(!localId && local === "Roto's Burguer") localId = 2;
+  if(!localId){ 
+    // Sin conexión BD — usar empleados por defecto
+    if(empleados.length===0) initDef(local);
+    renderEmpleados();
+    return;
+  }
+  try{
+    showToast(t('toast_cargando_equipo'),'orange');
+    var emps = await sbGet('empleados','local_id=eq.'+localId+'&activo=eq.true&order=id.asc');
+    if(emps.length){
+      empleados=[];
+      empCounter=0;
+      // Cargar salarios de una vez
+      var sals = await sbGet('salarios','order=id.asc');
+      var salMap={};
+      sals.forEach(function(s){ salMap[s.empleado_id]=s; });
+
+      var EXCLUIR_DIRS = ['LORENA','MIRIAM','MIRYAM'];
+      window._empleadosBDNombres = emps
+        .filter(function(e){ return EXCLUIR_DIRS.indexOf((e.nombre||'').toUpperCase())<0; })
+        .map(function(e){ return e.nombre; });
+      // Mapa nombre → datos BD para auto-rellenar turno/rol al seleccionar
+      window._empleadosBDDatos = {};
+      emps.forEach(function(e){
+        window._empleadosBDDatos[e.nombre] = {
+          turno: e.turno_habitual||'manana',
+          rol: e.rol||'Cam. Mañana',
+          telefono: e.telefono||''
+        };
+      });
+      emps.forEach(function(e){
+        empCounter++;
+        var sal = salMap[e.id]||null;
+        empleados.push({
+          id:empCounter,
+          bdId:e.id,
+          nombre:e.nombre,
+          rol:e.rol||'Cam. Ma\u00f1ana',
+          turno:e.turno_habitual||'manana',
+          turnos:Array(7).fill(e.turno_habitual||'manana'),
+          telefono:e.telefono||'',
+          email:e.email||''
+        });
+        // Cargar salario si existe
+        if(sal){
+          salariosBrutos[empCounter]={
+            brutoMes:sal.bruto_mes||'',
+            hContrato:sal.horas_contrato||40
+          };
+        }
+        // Mapear id local → id BD
+        empIdMap[empCounter]=e.id;
+      });
+      showToast(t('toast_equipo_cargado')+'('+emps.length+')','green');
+    } else {
+      // No hay empleados en BD — usar por defecto
+      if(empleados.length===0) initDef(local);
+      showToast(t('toast_sin_empleados'),'orange');
+    }
+  } catch(err){
+    console.error(err);
+    if(empleados.length===0) initDef(local);
+    showToast(t('toast_error_bd'),'orange');
+  }
+  renderEmpleados();
+}
+
+function buildTurnosConfig(){
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  var local=getLocal();
+  // Horarios predeterminados por local
+  if(local==='La Cala'){
+    turnosConfig=[
+      {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:'07:30',fin:'16:30',badge:'badge-manana',    color:'#2ecc71',active:true},
+      {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:'15:00',fin:'00:00',badge:'badge-tarde',     color:'#e67e22',active:true},
+      {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'18:00',fin:'03:00',badge:'badge-noche',     color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
+      {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'23:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
+    ];
+  } else if(local==="Roto's Burguer"){
+    turnosConfig=[
+      {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:'11:00',fin:'19:00',badge:'badge-manana',    color:'#2ecc71',active:true},
+      {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:'14:00',fin:'23:00',badge:'badge-tarde',     color:'#e67e22',active:true},
+      {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'16:00',fin:'00:00',badge:'badge-noche',     color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:'12:00',fin:'20:00',badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'00:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
+    ];
+  } else {
+    var s=toMin(ap),e=toMin(ci);if(e<=s)e+=1440;
+    var third=Math.round((e-s)/3/30)*30;
+    var mid1=toStr(s+third),mid2=toStr(s+third*2);
+    var iS=toStr(s+Math.round(third*0.7/30)*30),iE=toStr(s+Math.round(third*1.7/30)*30);
+    turnosConfig=[
+      {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:ap,   fin:mid1,badge:'badge-manana',    color:'#2ecc71',active:true},
+      {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:mid1, fin:mid2,badge:'badge-tarde',     color:'#e67e22',active:false},
+      {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:mid2, fin:ci,  badge:'badge-noche',     color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:iS,   fin:iE,  badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:ap,   fin:mid1,ini2:mid2,fin2:ci,badge:'badge-partido',color:'#ffa040',active:false,esPartido:true},
+    ];
+  }
+}
+
+function toggleTurno(id){
+  var t=turnosConfig.find(function(x){return x.id===id;});
+  if(t){t.active=!t.active;renderTurnosConfigGrid();}
+}
+
+function renderTurnosConfigGrid(){
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  document.getElementById('info-box-turnos').innerHTML='&#10003; '+t('info_apertura')+' <strong>'+ap+'</strong> &middot; '+t('info_cierre')+' <strong>'+ci+'</strong> &middot; '+t('info_activa_turnos');
+  var grid=document.getElementById('turnos-config-grid');grid.innerHTML='';
+  turnosConfig.forEach(function(tc){
+    var opts=function(def){return Array.from({length:48},function(_,i){
+      var h=Math.floor(i/2),m=i%2===0?'00':'30';
+      var str=String(h).padStart(2,'0')+':'+m;
+      return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
+    }).join('');};
+    var dis=tc.active?'':'opacity:0.45';
+    var timeRow = tc.esPartido
+      ? '<div class="turno-config-row" style="'+(tc.active?'':'pointer-events:none;opacity:0.5')+'">'
+        +'<div><label>'+t('tc_tramo1_desde')+'</label><select onchange="updTC(\''+tc.id+'\',\'ini\',this.value)">'+opts(tc.ini)+'</select></div>'
+        +'<div><label>'+t('tc_tramo1_hasta')+'</label><select onchange="updTC(\''+tc.id+'\',\'fin\',this.value)">'+opts(tc.fin)+'</select></div>'
+        +'<div><label>'+t('tc_tramo2_desde')+'</label><select onchange="updTC(\''+tc.id+'\',\'ini2\',this.value)">'+opts(tc.ini2||'20:00')+'</select></div>'
+        +'<div><label>'+t('tc_tramo2_hasta')+'</label><select onchange="updTC(\''+tc.id+'\',\'fin2\',this.value)">'+opts(tc.fin2||'23:00')+'</select></div>'
+        +'</div>'
+      : '<div class="turno-config-row" style="'+(tc.active?'':'pointer-events:none;opacity:0.5')+'">'
+        +'<div><label>'+t('tc_desde')+'</label><select onchange="updTC(\''+tc.id+'\',\'ini\',this.value)">'+opts(tc.ini)+'</select></div>'
+        +'<div><label>'+t('tc_hasta')+'</label><select onchange="updTC(\''+tc.id+'\',\'fin\',this.value)">'+opts(tc.fin)+'</select></div>'
+        +'</div>';
+    grid.innerHTML+='<div class="turno-config-item" style="'+dis+'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">'
+      +'<div class="turno-config-label" style="color:'+tc.color+';margin-bottom:0">'+tc.emoji+' '+t('tc_turno')+' '+tc.nome+' <small style="color:var(--muted);font-weight:400">'+tc.ini+'\u2013'+tc.fin+(tc.esPartido&&tc.ini2?' / '+tc.ini2+'\u2013'+(tc.fin2||''):'')+'</small></div>'
+      +'<button onclick="toggleTurno(\''+tc.id+'\')" class="toggle-btn '+(tc.active?'on':'')+'">'
+      +'<div class="tog-dot"></div><span>'+(tc.active?t('tc_activo'):t('tc_inactivo'))+'</span></button></div>'
+      +timeRow
+      +'</div>';
+  });
+}
+
+function updTC(id,f,v){var t=turnosConfig.find(function(x){return x.id===id;});if(t)t[f]=v;}
+
+function initDef(local){
+  empleados=[];
+  var d=local==='La Cala'?[
+    {nombre:'MARILYN',  rol:'Resp. Ma\u00f1ana', turno:'manana'},
+    {nombre:'SONNY',    rol:'Cam. Ma\u00f1ana',  turno:'manana'},
+    {nombre:'ALEX',     rol:'Cam. Ma\u00f1ana',  turno:'manana'},
+    {nombre:'ZEUS',     rol:'Cam. Ma\u00f1ana',  turno:'partido', diasFiesta:1.5},
+    {nombre:'CONNY',    rol:'Cam. Intermedio',   turno:'intermedio'},
+    {nombre:'IRENE',    rol:'Resp. Noche',        turno:'noche'},
+    {nombre:'SANTIAGO', rol:'Cam. Noche',         turno:'noche'},
+    {nombre:'LENY',     rol:'Cam. Noche',         turno:'noche'},
+  ]:local==="Roto's Burguer"?[
+    {nombre:'ARTUR',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+    {nombre:'ALLAN (CAM.)',rol:'Cam. Tarde',turno:'tarde'},
+    {nombre:'ALLAN (COC.)',rol:'Cocinero',turno:'manana'},
+    {nombre:'ARLENE',rol:'Cam. Ma\u00f1ana',turno:'manana'},
+  ]:[];
+  d.forEach(function(x){empCounter++;empleados.push({id:empCounter,nombre:x.nombre,rol:x.rol,turno:x.turno,turnos:Array(7).fill(x.turno)});});
+}
+
+function addEmpleado(){empCounter++;empleados.push({id:empCounter,nombre:'',rol:'Cam. Ma\u00f1ana',turno:'manana',turnos:Array(7).fill('manana')});renderEmpleados();}
+function removeEmpleado(id){empleados=empleados.filter(function(e){return e.id!==id;});renderEmpleados();}
+
+function renderLorenaHorario(){
+  var cont = document.getElementById('lorena-horario-list');
+  if(!cont) return;
+  var DIAS_S = DIAS_SHORT;
+  var DIAS_L = DIAS;
+  var TIPO_COLOR = {fiesta:'#ff6b6b', seguido:'var(--green)', partido:'#ffa040', apoyo:'#6b8fff'};
+  var TIPO_ICON  = {fiesta:'\ud83c\udfd6', seguido:'\u23f0', partido:'\u2702\ufe0f', apoyo:'\ud83e\udd1d'};
+  var TIPOS = ['fiesta','seguido','partido','apoyo'];
+
+  var timeOpts = function(def){
+    return Array.from({length:48}, function(_,i){
+      var h=Math.floor(i/2), m=i%2===0?'00':'30';
+      var str=String(h).padStart(2,'0')+':'+m;
+      return '<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';
+    }).join('');
+  };
+
+  var sel = function(id, def){
+    return '<select id="'+id+'" onchange="updLorena('+id.replace(/\D/g,'')+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 4px;color:var(--text);font-size:10px;width:58px">'+timeOpts(def)+'</select>';
+  };
+
+  // Diseño adaptativo: cards en móvil, tabla en escritorio
+  var html = '';
+
+  // === ESCRITORIO: tabla compacta ===
+  html += '<div class="lorena-desktop">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<thead><tr style="border-bottom:1px solid var(--border)">'
+    +'<th style="padding:4px 6px;text-align:left;color:var(--muted);font-size:9px;font-weight:600">DÍA</th>'
+    +'<th style="padding:4px 6px;text-align:left;color:var(--muted);font-size:9px;font-weight:600">TIPO</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">ENTRADA</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">SALIDA</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">ENT.2</th>'
+    +'<th style="padding:4px 6px;text-align:center;color:var(--muted);font-size:9px;font-weight:600">SAL.2</th>'
+    +'</tr></thead><tbody>';
+
+  lorenaHorario.forEach(function(d, idx){
+    var esFiesta  = d.tipo==='fiesta';
+    var esPartido = d.tipo==='partido';
+    var col = TIPO_COLOR[d.tipo] || 'var(--muted)';
+    var tipoOpts = TIPOS.map(function(t){
+      return '<option value="'+t+'"'+(d.tipo===t?' selected':'')+'>'+TIPO_ICON[t]+' '+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';
+    }).join('');
+    var bg = idx%2===0 ? 'background:#ffffff06' : '';
+    html += '<tr style="border-bottom:1px solid var(--border)10;'+bg+'">';
+    html += '<td style="padding:5px 6px"><span style="font-weight:700;font-size:13px;color:'+col+'">'+DIAS_S[idx]+'</span><span style="font-size:13px;color:var(--muted);margin-left:5px">'+DIAS_L[idx]+'</span></td>';
+    html += '<td style="padding:3px 6px"><select id="ltipo'+idx+'" onchange="updLorena('+idx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 4px;color:'+col+';font-size:10px;font-weight:600">'+tipoOpts+'</select></td>';
+    if(esFiesta){
+      html += '<td colspan="4" style="padding:3px 6px;text-align:center;color:#ff6b6b;font-size:10px">🏖 '+t('turno_fiesta')+'</td>';
+    } else {
+      html += '<td style="padding:3px 4px;text-align:center">'+sel('lini'+idx, d.ini||'12:00')+'</td>';
+      html += '<td style="padding:3px 4px;text-align:center">'+sel('lfin'+idx, d.fin||'21:00')+'</td>';
+      if(esPartido){
+        html += '<td style="padding:3px 4px;text-align:center">'+sel('lini2'+idx, d.ini2||'20:00')+'</td>';
+        html += '<td style="padding:3px 4px;text-align:center">'+sel('lfin2'+idx, d.fin2||'23:00')+'</td>';
+      } else {
+        html += '<td colspan="2" style="padding:3px 4px;text-align:center;color:var(--muted);font-size:10px">—</td>';
+      }
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  // === MÓVIL: cards compactas ===
+  html += '<div class="lorena-mobile">';
+  lorenaHorario.forEach(function(d, idx){
+    var esFiesta  = d.tipo==='fiesta';
+    var esPartido = d.tipo==='partido';
+    var col = TIPO_COLOR[d.tipo] || 'var(--muted)';
+    var tipoOpts = TIPOS.map(function(t){
+      return '<option value="'+t+'"'+(d.tipo===t?' selected':'')+'>'+TIPO_ICON[t]+' '+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';
+    }).join('');
+    var bg = esFiesta ? '#2d1515' : '#ffffff06';
+    html += '<div style="background:'+bg+';border-radius:7px;border:1px solid var(--border)40;padding:7px 8px;margin-bottom:5px">';
+    // Fila 1: día + tipo
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:'+(esFiesta?'0':'6px')+'">';
+    html += '<span style="font-weight:700;font-size:13px;color:'+col+';min-width:20px">'+DIAS_S[idx]+'</span>';
+    html += '<span style="font-size:13px;color:var(--muted);flex:1">'+DIAS_L[idx]+'</span>';
+    html += '<select id="mltipo'+idx+'" onchange="updLorenaMobile('+idx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:3px 6px;color:'+col+';font-size:10px;font-weight:600">'+tipoOpts+'</select>';
+    html += '</div>';
+    if(!esFiesta){
+      // Fila 2: horas en grid 2 col
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">';
+      html += '<div><div style="font-size:8px;color:var(--muted);margin-bottom:2px">Entrada'+(esPartido?' 1':'')+'</div>'
+            + '<select id="mlini'+idx+'" onchange="updLorenaMobile('+idx+')" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:4px;color:var(--text);font-size:11px">'+timeOpts(d.ini||'12:00')+'</select></div>';
+      html += '<div><div style="font-size:8px;color:var(--muted);margin-bottom:2px">Salida'+(esPartido?' 1':'')+'</div>'
+            + '<select id="mlfin'+idx+'" onchange="updLorenaMobile('+idx+')" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:4px;color:var(--text);font-size:11px">'+timeOpts(d.fin||'21:00')+'</select></div>';
+      if(esPartido){
+        html += '<div><div style="font-size:8px;color:var(--muted);margin-bottom:2px">Entrada 2</div>'
+              + '<select id="mlini2'+idx+'" onchange="updLorenaMobile('+idx+')" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:4px;color:var(--text);font-size:11px">'+timeOpts(d.ini2||'20:00')+'</select></div>';
+        html += '<div><div style="font-size:8px;color:var(--muted);margin-bottom:2px">Salida 2</div>'
+              + '<select id="mlfin2'+idx+'" onchange="updLorenaMobile('+idx+')" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:5px;padding:4px;color:var(--text);font-size:11px">'+timeOpts(d.fin2||'23:00')+'</select></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+
+  cont.innerHTML = html;
+}
+function updLorenaMobile(idx){
+  var tipoEl = document.getElementById('mltipo'+idx);
+  var iniEl  = document.getElementById('mlini'+idx);
+  var finEl  = document.getElementById('mlfin'+idx);
+  var ini2El = document.getElementById('mlini2'+idx);
+  var fin2El = document.getElementById('mlfin2'+idx);
+  if(tipoEl) lorenaHorario[idx].tipo = tipoEl.value;
+  if(iniEl)  lorenaHorario[idx].ini  = iniEl.value;
+  if(finEl)  lorenaHorario[idx].fin  = finEl.value;
+  if(ini2El) lorenaHorario[idx].ini2 = ini2El.value;
+  if(fin2El) lorenaHorario[idx].fin2 = fin2El.value;
+  renderLorenaHorario();
+}
+function getLorenaLabel(d){
+  if(d.tipo==='fiesta') return '🏖️ FIESTA';
+  if(d.tipo==='partido') return (d.ini||'')+'–'+(d.fin||'')+' / '+(d.ini2||'')+'–'+(d.fin2||'');
+  return (d.ini||'')+'–'+(d.fin||'');
+}
+
+function updLorena(idx){
+  var tipoEl = document.getElementById('ltipo'+idx);
+  var iniEl  = document.getElementById('lini'+idx);
+  var finEl  = document.getElementById('lfin'+idx);
+  var ini2El = document.getElementById('lini2'+idx);
+  var fin2El = document.getElementById('lfin2'+idx);
+  if(tipoEl) lorenaHorario[idx].tipo = tipoEl.value;
+  if(iniEl)  lorenaHorario[idx].ini  = iniEl.value;
+  if(finEl)  lorenaHorario[idx].fin  = finEl.value;
+  if(ini2El) lorenaHorario[idx].ini2 = ini2El.value;
+  if(fin2El) lorenaHorario[idx].fin2 = fin2El.value;
+  renderLorenaHorario();
+}
+
+function renderEmpleados(){
+  renderLorenaHorario();
+  var cont=document.getElementById('empleados-list');cont.innerHTML='';
+  // Lista de nombres disponibles del local (excluye directoras)
+  var EXCLUIR = ['LORENA','MIRIAM','MIRYAM'];
+  var nombresDisp = empleados.map(function(e){ return e.nombre; });
+  // Añadir opciones de BD si existen
+  var bdNombres = (window._empleadosBDNombres||[]).filter(function(n){
+    return EXCLUIR.indexOf(n.toUpperCase())<0;
+  });
+
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=emp.nombre?emp.nombre.substring(0,2).toUpperCase():'??';
+    var rOpts=ROLES.map(function(r){return'<option value="'+r+'"'+(emp.rol===r?' selected':'')+'>'+r+'</option>';}).join('');
+    var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+    var tOpts=activeTurnos.map(function(t){return'<option value="'+t.id+'"'+(emp.turno===t.id?' selected':'')+'>'+t.emoji+' '+t.nome+'</option>';}).join('');
+
+    // Selector de nombre con todos los empleados del local
+    var allNames = bdNombres.length ? bdNombres : nombresDisp;
+    // Asegurar que el nombre actual esté en la lista
+    if(emp.nombre && allNames.indexOf(emp.nombre)<0) allNames = [emp.nombre].concat(allNames);
+    var nameOpts = '<option value="">'+t('sel_empleado')+'</option>'
+      + allNames.map(function(n){
+          return '<option value="'+n+'"'+(emp.nombre===n?' selected':'')+'>'+n+'</option>';
+        }).join('');
+
+    cont.innerHTML+='<div class="empleado-card" id="ec-'+emp.id+'">'
+      +'<div class="empleado-header">'
+      +'<div class="emp-avatar" style="background:'+color+'20;color:'+color+'" id="ea-'+emp.id+'">'+init+'</div>'
+      +'<select class="emp-name-input" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:13px;font-weight:600" onchange="updNom('+emp.id+',this.value)">'+nameOpts+'</select>'
+      +'<button class="remove-btn" onclick="removeEmpleado('+emp.id+')">&#10005;</button></div>'
+      +'<div class="form-row">'
+      +'<div class="form-group"><label>'+t('lbl_rol')+'</label><select onchange="updEmp('+emp.id+',\'rol\',this.value)">'+rOpts+'</select></div>'
+      +'<div class="form-group"><label>'+t('lbl_turno_hab')+'</label><select onchange="updEmp('+emp.id+',\'turno\',this.value)">'+tOpts+'</select></div>'
+      +'<div class="form-group"><label>'+t('lbl_dias_fiesta')+'</label>'
+      +'<select class="inp-sm" onchange="updEmp('+emp.id+',\'diasFiesta\',this.value)">'
+      +'<option value="1"'+(emp.diasFiesta==1?' selected':'')+'>'+t('opt_1dia')+'</option>'
+      +'<option value="1.5"'+(!emp.diasFiesta||emp.diasFiesta==1.5?' selected':'')+'>'+t('opt_15dias')+'</option>'
+      +'<option value="2"'+(emp.diasFiesta==2?' selected':'')+'>'+t('opt_2dias')+'</option>'
+      +'<option value="3"'+(emp.diasFiesta==3?' selected':'')+'>'+t('opt_3dias')+'</option>'
+      +'</select></div>'
+      +'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; '+t('p3_horas_auto')+'</div>'
+      +'</div>';
+  });
+}
+
+function updNom(id,v){
+  var e=empleados.find(function(x){return x.id===id;});
+  if(e){
+    e.nombre=v;
+    // Auto-rellenar turno y rol desde datos BD si están disponibles
+    var bdDatos = window._empleadosBDDatos && window._empleadosBDDatos[v];
+    if(bdDatos){
+      e.turno = bdDatos.turno;
+      e.telefono = bdDatos.telefono;
+      // Re-render para reflejar el turno actualizado en el select
+      renderEmpleados();
+      return;
+    }
+  }
+  var av=document.getElementById('ea-'+id);
+  if(av) av.textContent=v?v.substring(0,2).toUpperCase():'??';
+}
+function updEmp(id,f,v){var e=empleados.find(function(x){return x.id===id;});if(e)e[f]=v;}
+
+
+function syncDiasFlojos(){
+  var checks = document.querySelectorAll('[onchange="syncDiasFlojos()"]');
+  var sel = document.getElementById('dias-flojos');
+  Array.from(sel.options).forEach(function(opt){
+    var cb = Array.from(checks).find(function(c){return c.value===opt.value;});
+    opt.selected = cb ? cb.checked : false;
+  });
+}
+function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos').selectedOptions).map(function(o){return+o.value;});}
+
+// ========== LÓGICA FIESTAS v6.4 ==========
+var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
+var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
+var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
+
+function toMinTurno(str){
+  if(!str) return 0;
+  var p=str.split(':');
+  return parseInt(p[0])*60+(parseInt(p[1])||0);
+}
+
+function getTurnoFin(turnoId){
+  var t=turnosConfig.find(function(x){return x.id===turnoId;});
+  if(!t) return 0;
+  var fin=toMinTurno(t.fin);
+  var ini=toMinTurno(t.ini);
+  if(fin<ini) fin+=1440; // cruza medianoche
+  return fin;
+}
+
+function getTurnoIni(turnoId){
+  var t=turnosConfig.find(function(x){return x.id===turnoId;});
+  if(!t) return 0;
+  return toMinTurno(t.ini);
+}
+
+// Cuenta cuántos empleados del mismo turno trabajan ese día
+function contarTurnoEnDia(dia, turnoId, excluirEmpId){
+  return empleados.filter(function(e){
+    return e.id!==excluirEmpId && e.turno===turnoId && e.turnos && e.turnos[dia]!=='fiesta' && e.turnos[dia]!=='mediafiesta';
+  }).length;
+}
+
+// Verifica si se puede dar fiesta a emp en ese día sin romper mínimos
+function puedeTomarFiesta(emp, dia){
+  var turno = emp.turno;
+  var min = MINIMOS_TURNO[turno]||1;
+  // Contar cuántos del mismo turno hay en total (incluyendo al propio empleado)
+  var totalMismoTurno = empleados.filter(function(e){ return e.turno===turno; }).length;
+  // Si es el único de su turno, el mínimo no aplica — siempre puede tomar fiesta
+  if(totalMismoTurno <= 1) return true;
+  var trabajando = contarTurnoEnDia(dia, turno, emp.id);
+  return trabajando >= min;
+}
+
+// Verifica descanso 12h entre fin del turno anterior y inicio del siguiente
+function respeta12h(emp, diaFiesta, tipoDiaFiesta){
+  // diaFiesta = índice 0-6
+  // tipoDiaFiesta = 'fiesta' o 'mediafiesta'
+  var turno = emp.turno;
+  var hJornada = +document.getElementById('horas-jornada').value||9;
+  var hMF = +document.getElementById('horas-media-fiesta').value||5;
+
+  // Día anterior: ¿a qué hora termina?
+  var diaAnterior = diaFiesta - 1;
+  var finAnterior = 0;
+  if(diaAnterior >= 0){
+    var tAnt = emp.turnos[diaAnterior];
+    if(tAnt === 'fiesta') finAnterior = 0;
+    else if(tAnt === 'mediafiesta'){
+      // media fiesta: trabaja las últimas hMF horas
+      finAnterior = getTurnoFin(turno);
+    } else {
+      finAnterior = getTurnoFin(turno);
+    }
+  }
+
+  // Día siguiente: ¿a qué hora empieza?
+  var diaSiguiente = diaFiesta + 1;
+  var iniSiguiente = 9999;
+  if(diaSiguiente <= 6){
+    var tSig = emp.turnos[diaSiguiente];
+    if(tSig === 'fiesta') iniSiguiente = 9999;
+    else if(tSig === 'mediafiesta'){
+      // media fiesta: trabaja las últimas hMF h → empieza al final del turno - hMF
+      var finTurno = getTurnoFin(turno);
+      iniSiguiente = finTurno - hMF*60 + 1440; // en minutos del día siguiente
+    } else {
+      iniSiguiente = getTurnoIni(turno) + 1440;
+    }
+  }
+
+  // Si es media fiesta el día de "fiesta", trabaja la primera parte del turno
+  // entonces finAnterior sería el fin del trabajo ese mismo día
+  if(tipoDiaFiesta === 'mediafiesta'){
+    finAnterior = getTurnoFin(turno) - hMF*60; // trabaja las hMF últimas → termina en finTurno
+  }
+
+  var descanso = iniSiguiente - finAnterior;
+  return descanso >= 12*60;
+}
+
+// Fiestas fijas inamovibles por empleado
+// formato: {nombre: [[dia, tipo, horaIni, horaFin], ...]}
+// tipo: 'fiesta' = día completo, 'mediafiesta' = media jornada con horario especial
+// Horario semanal de Lorena (directora) — editable desde paso 3
+var lorenaHorario = [
+  {dia:0, tipo:'fiesta',   ini:'',      fin:'',      label:'FIESTA'},       // Lunes - fijo
+  {dia:1, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Martes
+  {dia:2, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Miércoles
+  {dia:3, tipo:'seguido',  ini:'12:00', fin:'21:00', label:'12:00–21:00'},  // Jueves
+  {dia:4, tipo:'partido',  ini:'11:00', fin:'17:00', ini2:'20:00', fin2:'23:00', label:'11:00–17:00 / 20:00–23:00'}, // Viernes
+  {dia:5, tipo:'partido',  ini:'11:00', fin:'17:00', ini2:'20:00', fin2:'23:00', label:'11:00–17:00 / 20:00–23:00'}, // Sábado
+  {dia:6, tipo:'apoyo',    ini:'12:00', fin:'17:00', label:'12:00–17:00'},  // Domingo
+];
+
+var lorenaSalario = {brutoMes: 2300, hContrato: 40}; // Salario Lorena director/a
+
+var FIESTAS_FIJAS = {
+  'MARILYN': [
+    [3, 'fiesta', null, null],           // Jueves - fiesta completa
+    [4, 'mediafiesta', '07:30', '12:30'] // Viernes - solo mañana hasta 12:30
+  ]
+};
+
+function getFiestasFijas(emp){
+  // Busca por nombre (case insensitive)
+  var nombre = (emp.nombre||'').toUpperCase().trim();
+  for(var key in FIESTAS_FIJAS){
+    if(key.toUpperCase() === nombre) return FIESTAS_FIJAS[key];
+  }
+  return null;
+}
+
+function sugerirTurnos(){
+  if(!turnosConfig.length) buildTurnosConfig();
+  var df = getDiasFlojos();
+
+  // Inicializar todos con turno habitual
+  empleados.forEach(function(emp){
+    emp.turnos = Array(7).fill(emp.turno);
+    if(!emp.diasFiesta) emp.diasFiesta = 1.5;
+  });
+
+  // Aplicar primero las fiestas fijas inamovibles
+  empleados.forEach(function(emp){
+    var fijas = getFiestasFijas(emp);
+    if(!fijas) return;
+    fijas.forEach(function(f){
+      var dia=f[0], tipo=f[1], ini=f[2], fin=f[3];
+      emp.turnos[dia] = tipo;
+      // Si tiene horario especial en media fiesta, guardarlo
+      if(tipo==='mediafiesta' && ini && fin){
+        if(!emp.horarioEspecial) emp.horarioEspecial = {};
+        emp.horarioEspecial[dia] = {ini:ini, fin:fin};
+      }
+    });
+  });
+
+  // Ordenar días: primero los flojos, luego los demás evitando V/S/D al final
+  var diasOrdenados = [];
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+  [0,1,2,3,4,5,6].forEach(function(d){
+    if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d);
+  });
+  [0,1,2,3,4,5,6].forEach(function(d){
+    if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d);
+  });
+
+  // Asignar fiestas automáticas al resto (saltando empleados con fiestas fijas)
+  empleados.forEach(function(emp, empIdx){
+    // Si tiene fiestas fijas, no tocar — ya están asignadas
+    if(getFiestasFijas(emp)) return;
+
+    var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
+    var tieneMedia = (diasFiesta % 1) !== 0;
+    var diasEnteros = Math.floor(diasFiesta);
+
+    var offset = (empIdx + (emp._rotOffset||0)) % diasOrdenados.length;
+    var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
+
+    var asignados = [];
+    var intentos = 0;
+
+    for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
+      var dia = diasCandidatos[i];
+      if(asignados.indexOf(dia)>=0) continue;
+      if(puedeTomarFiesta(emp, dia)){
+        asignados.push(dia);
+      }
+      intentos++;
+      if(intentos>14) break;
+    }
+
+    asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
+
+    if(tieneMedia && asignados.length>0){
+      var diaFiesta = asignados[asignados.length-1];
+      var candidatoMedia = -1;
+      var diaAntes = diaFiesta - 1;
+      if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)){
+        candidatoMedia = diaAntes;
+      }
+      if(candidatoMedia<0){
+        var diaDespues = diaFiesta + 1;
+        if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)){
+          candidatoMedia = diaDespues;
+        }
+      }
+      if(candidatoMedia>=0) emp.turnos[candidatoMedia]='mediafiesta';
+    }
+  });
+}
+
+function sugerirYRenderizar(){
+  sugerirTurnos();
+  renderTurnosAsig();
+}
+
+function rotarFiestas(){
+  // Rotar el offset de cada empleado +1 para cambiar qué día descansa
+  empleados.forEach(function(emp, idx){
+    emp._rotOffset = ((emp._rotOffset||0) + 1);
+  });
+  sugerirTurnosConOffset();
+  renderTurnosAsig();
+  showToast(t('toast_fiestas_rotadas'),'orange');
+}
+
+function sugerirTurnosConOffset(){
+  if(!turnosConfig.length) buildTurnosConfig();
+  var df = getDiasFlojos();
+  var diasOrdenados = [];
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+  [0,1,2,3,4,5,6].forEach(function(d){ if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
+  [0,1,2,3,4,5,6].forEach(function(d){ if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
+
+  empleados.forEach(function(emp, empIdx){
+    emp.turnos = Array(7).fill(emp.turno);
+    if(!emp.diasFiesta) emp.diasFiesta = 1.5;
+    var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
+    var tieneMedia = (diasFiesta % 1) !== 0;
+    var diasEnteros = Math.floor(diasFiesta);
+    var offset = (empIdx + (emp._rotOffset||0)) % Math.max(diasOrdenados.length,1);
+    var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
+    var asignados = [];
+    for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
+      var dia = diasCandidatos[i];
+      if(asignados.indexOf(dia)>=0) continue;
+      if(puedeTomarFiesta(emp, dia)) asignados.push(dia);
+    }
+    asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
+    if(tieneMedia && asignados.length>0){
+      var diaFiesta = asignados[asignados.length-1];
+      var candidatoMedia = -1;
+      var diaAntes = diaFiesta - 1;
+      if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)) candidatoMedia = diaAntes;
+      if(candidatoMedia<0){
+        var diaDespues = diaFiesta + 1;
+        if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)) candidatoMedia = diaDespues;
+      }
+      if(candidatoMedia>=0) emp.turnos[candidatoMedia]='mediafiesta';
+    }
+  });
+}
+
+function renderTurnosAsig(){
+  var df=getDiasFlojos();
+  var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+  var leg=document.getElementById('turno-legend');
+  leg.innerHTML=activeTurnos.map(function(tc){return'<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span class="turno-badge '+tc.badge+'">'+tc.emoji+' '+tc.nome+'</span> '+tc.ini+'\u2013'+tc.fin+'</span>';}).join('')
+    +'<span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd '+t('turno_mediafiesta')+'</span></span>'
+    +'<span style="font-size:10px"><span class="turno-badge badge-fiesta">\ud83c\udfd6 '+t('turno_fiesta')+'</span></span>';
+
+  var html='<div class="dias-grid-header"><div></div>';
+  DIAS_SHORT.forEach(function(d,i){html+='<div class="dia-label-top" style="'+(df.includes(i)?'color:var(--red)':'')+'">'+d+'</div>';});
+  html+='</div>';
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    html+='<div class="dias-grid-row"><div style="font-size:11px;font-weight:700;color:'+color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( emp.nombre||'Emp '+emp.id)+'</div>';
+    DIAS.forEach(function(_,di){
+      var tv=emp.turnos?emp.turnos[di]:emp.turno;
+      var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+'</option>';}).join('')
+        +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>\u00bd '+t('turno_mediafiesta')+'</option>'
+        +'<option value="fiesta"'+(tv==='fiesta'?' selected':'')+'>🏖 '+t('turno_fiesta')+'</option>';
+      html+='<div><select class="dia-select '+tv+'" onchange="updTurno('+emp.id+','+di+',this.value,this)">'+opts+'</select></div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('turnos-asignacion').innerHTML=html;
+}
+
+function updTurno(empId,di,v,el){var e=empleados.find(function(x){return x.id===empId;});if(e){if(!e.turnos)e.turnos=Array(7).fill(e.turno);e.turnos[di]=v;}el.className='dia-select '+v;}
+
+function calcHorasRefuerzo(p){
+  if(!p.desde||!p.hasta) return 0;
+  var ini=toMinTurno(p.desde), fin=toMinTurno(p.hasta);
+  if(fin<=ini) fin+=1440;
+  return (fin-ini)/60;
+}
+
+function getCosteRefuerzos(){
+  // Suma coste de todos los refuerzos de todos los eventos
+  var total=0;
+  eventos.forEach(function(ev){
+    (ev.personas||[]).forEach(function(p){
+      var h=calcHorasRefuerzo(p);
+      total+=h*(parseFloat(p.precioHora)||10);
+    });
+  });
+  return total;
+}
+
+function initPaso5(){refuerzoPersonas=[];refuerzoCounter=0;renderRefuerzoPersonas();}
+
+function addRefuerzoPersona(){
+  refuerzoCounter++;
+  refuerzoPersonas.push({id:refuerzoCounter,nombre:'',desde:'18:00',hasta:'23:00',precioHora:10});
+  renderRefuerzoPersonas();
+}
+
+function removeRefuerzoPersona(id){
+  refuerzoPersonas=refuerzoPersonas.filter(function(p){return p.id!==id;});
+  renderRefuerzoPersonas();
+}
+
+function updRefuerzoPersona(id,field,val){var p=refuerzoPersonas.find(function(x){return x.id===id;});if(p)p[field]=val;}
+
+function renderRefuerzoPersonas(){
+  var cont=document.getElementById('refuerzo-personas-list');if(!cont)return;
+  if(refuerzoPersonas.length===0){
+    cont.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:7px;background:var(--darker);border-radius:5px;border:1px dashed var(--border)">'+t('alert_añade_refuerzo')+'</div>';
+    return;
+  }
+  var allOpts=function(def){return Array.from({length:48},function(_,i){var h=Math.floor(i/2),m=i%2===0?'00':'30';var str=String(h).padStart(2,'0')+':'+m;return'<option value="'+str+'"'+(str===def?' selected':'')+'>'+str+'</option>';}).join('');};
+  cont.innerHTML=refuerzoPersonas.map(function(p){
+    var horas=calcHorasRefuerzo(p);
+    var coste=horas*(parseFloat(p.precioHora)||10);
+    return'<div style="display:grid;grid-template-columns:1fr 80px 80px 70px 30px;gap:7px;align-items:end;margin-bottom:7px;background:var(--darker);padding:9px;border-radius:7px;border:1px solid #3d3000">'
+      +'<div><label>Nombre</label><input type="text" placeholder="Ej: JUAN" value="'+p.nombre+'" oninput="updRefuerzoPersona('+p.id+',\'nombre\',this.value)" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;font-weight:600;outline:none"></div>'
+      +'<div><label>Desde</label><select onchange="updRefuerzoPersona('+p.id+',\'desde\',this.value)">'+allOpts(p.desde)+'</select></div>'
+      +'<div><label>Hasta</label><select onchange="updRefuerzoPersona('+p.id+',\'hasta\',this.value)">'+allOpts(p.hasta)+'</select></div>'
+      +'<div><label>€/hora</label><input type="number" min="0" step="0.5" value="'+(p.precioHora||10)+'" oninput="updRefuerzoPersona('+p.id+',\'precioHora\',this.value)" class="inp-sm" style="padding:8px 6px"></div>'
+      +'<div><button class="remove-btn" onclick="removeRefuerzoPersona('+p.id+')" style="margin-top:17px">&#10005;</button></div>'
+      +'</div>'
+      +(horas>0?'<div style="font-size:10px;color:var(--orange);margin:-4px 0 6px 0;padding:4px 9px;background:#2d1a00;border-radius:5px">'+p.nombre+': '+horas.toFixed(1)+'h × '+(p.precioHora||10)+'€ = <strong>'+coste.toFixed(2)+'€</strong></div>':'');
+  }).join('');
+}
+
+function addEvento(){
+  var tipo=document.getElementById('evento-tipo').value;
+  var dia=+document.getElementById('evento-dia').value;
+  var desc=document.getElementById('evento-desc-sel').value;
+  if(!desc){alert(t('alert_selecciona_desc'));return;}
+  if(refuerzoPersonas.length===0){alert('A\u00f1ade al menos una persona de refuerzo');return;}
+  var inv=refuerzoPersonas.filter(function(p){return!p.nombre.trim();});
+  if(inv.length>0){alert(t('alert_pon_nombre_refuerzo'));return;}
+  eventos.push({tipo:tipo,dia:dia,desc:desc,personas:refuerzoPersonas.map(function(p){return{id:p.id,nombre:p.nombre,desde:p.desde,hasta:p.hasta};})});
+  refuerzoPersonas=[];refuerzoCounter=0;
+  document.getElementById('evento-desc-sel').value='';
+  renderRefuerzoPersonas();renderEventos();
+}
+
+function removeEvento(i){eventos.splice(i,1);renderEventos();}
+
+function renderEventos(){
+  var cont=document.getElementById('eventos-list');
+  cont.innerHTML=eventos.map(function(ev,i){
+    return'<div class="evento-item">'
+      +'<div style="font-size:18px">'+ev.tipo+'</div>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:600">'+ev.desc+' \u00b7 '+DIAS[ev.dia]+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+ev.personas.map(function(p){return p.nombre+' ('+p.desde+'\u2013'+p.hasta+')';}).join(' \u00b7 ')+'</div></div>'
+      +'<button class="remove-btn" onclick="removeEvento('+i+')">&#10005;</button></div>';
+  }).join('')+'<div id="no-eventos" style="display:'+(eventos.length?'none':'block')+';color:var(--muted);font-size:12px;padding:18px 0;text-align:center">No hay eventos a\u00f1adidos</div>';
+}
+
+function getTInfo(v){
+  if(v==='fiesta')return{label:'\ud83c\udfd6 FIESTA',badge:'badge-fiesta',horas:0};
+  var hMF=+document.getElementById('horas-media-fiesta').value;
+  if(v==='mediafiesta')return{label:'\u00bd Media fiesta',badge:'badge-mediafiesta',horas:hMF};
+  var t=turnosConfig.find(function(x){return x.id===v;});
+  if(t){
+    if(t.esPartido && t.ini2){
+      var h1=diffH(t.ini,t.fin), h2=diffH(t.ini2,t.fin2||t.fin);
+      return{label:t.emoji+' '+t.ini+'\u2013'+t.fin+' / '+t.ini2+'\u2013'+(t.fin2||t.fin),badge:t.badge,horas:h1+h2};
+    }
+    return{label:t.emoji+' '+t.ini+'\u2013'+t.fin,badge:t.badge,horas:diffH(t.ini,t.fin)};
+  }
+  return{label:v,badge:'badge-manana',horas:0};
+}
+
+function toggleHoras(){
+  mostrarHoras = !mostrarHoras;
+  var btn = document.getElementById('btn-toggle-horas');
+  if(btn){
+    var key = mostrarHoras ? 'p6_ocultar_horas' : 'p6_mostrar_horas';
+    btn.textContent = t(key);
+    btn.setAttribute('data-i18n', key);
+  }
+  // Aplicar directamente sobre el DOM generado
+  var cont = document.getElementById('cuadrante-output');
+  if(!cont) return;
+  cont.querySelectorAll('.col-horas').forEach(function(el){
+    el.style.setProperty('display', mostrarHoras ? '' : 'none', 'important');
+  });
+}
+
+async function cargarCuadrantePrevio(){
+  var local=getLocal();
+  var localId=localIdMap[local];
+  if(!localId) return null;
+  var semana=getSemanaLabel();
+  try{
+    var cuads=await sbGet('cuadrantes','local_id=eq.'+localId+'&semana_label=eq.'+encodeURIComponent(semana)+'&order=id.desc&limit=1');
+    if(!cuads.length) return null;
+    var cuadId=cuads[0].id;
+    currentCuadranteId=cuadId;
+    // Cargar turnos
+    var turnos=await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuadId+'&order=empleado_id.asc,dia.asc');
+    // Mapear por empleado bdId
+    var turnoMap={};
+    turnos.forEach(function(t){
+      if(!turnoMap[t.empleado_id]) turnoMap[t.empleado_id]=Array(7).fill('fiesta');
+      turnoMap[t.empleado_id][t.dia]=(t.turno||'fiesta').toLowerCase();
+    });
+    // Aplicar a empleados
+    empleados.forEach(function(emp){
+      var bdId=empIdMap[emp.id];
+      if(bdId && turnoMap[bdId]) emp.turnos=turnoMap[bdId];
+    });
+    // Cargar extras
+    var extras=await sbGet('extras_dia','cuadrante_id=eq.'+cuadId);
+    extrasDia=[];extraCounter=0;
+    extras.forEach(function(ex){
+      extraCounter++;
+      // Buscar empId local desde bdId
+      var localEmpId=null;
+      Object.keys(empIdMap).forEach(function(k){if(empIdMap[k]===ex.empleado_id)localEmpId=parseInt(k);});
+      extrasDia.push({id:extraCounter,empId:localEmpId||ex.empleado_id,dia:ex.dia,
+                      horas:ex.horas||'',precioHora:ex.precio_hora||'',motivo:ex.motivo||''});
+    });
+    return cuadId;
+  }catch(e){
+    console.error('cargarCuadrantePrevio:',e);
+    return null;
+  }
+}
+
+function generarCuadrante(){
+  updateHeader();
+  var local=getLocal(),semana=getSemanaLabel();
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  var minP = 2; // Mínimo por turno — gestionado por MINIMOS_TURNO en lógica fiestas
+  var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+  var epd=Array(7).fill(null).map(function(_,i){return eventos.filter(function(ev){return ev.dia===i;});});
+  var horasE=empleados.map(function(emp){return(emp.turnos||[]).reduce(function(s,t){return s+getTInfo(t).horas;},0);});
+  var cob=Array(7).fill(0).map(function(_,di){return empleados.filter(function(e){return e.turnos&&e.turnos[di]!=='fiesta';}).length;});
+  var totalH=horasE.reduce(function(a,b){return a+b;},0);
+  var numEventos=eventos.length;
+
+  var tbodyRows=empleados.map(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+    var cells=(emp.turnos||[]).map(function(t,di){
+      var info=getTInfo(t);
+      return'<td><span class="turno-badge '+info.badge+'">'+info.label+'</span></td>';
+    }).join('');
+    return'<tr>'
+      +'<td class="emp-name"><div style="display:flex;align-items:center;gap:6px">'
+      +'<div style="width:24px;height:24px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">'+init+'</div>'
+      +(emp.nombre||t('kpi_empleados')+' '+emp.id)
+      +'<span onclick="enviarTurnoWA('+emp.id+')" title="Enviar turno por WhatsApp" style="cursor:pointer;font-size:13px;opacity:0.75;flex-shrink:0" class="wa-btn no-print">📲</span>'
+      +'</div></td>'
+      +'<td style="font-size:13px;color:var(--muted)">'+emp.rol+'</td>'
+      +cells
+      +'<td class="col-horas" style="font-weight:700;color:var(--accent);font-size:15px">'+horasE[idx].toFixed(1)+'h</td></tr>';
+  }).join('');
+
+  var refRows='';
+  eventos.forEach(function(ev){
+    (ev.personas||[]).forEach(function(p){
+      var horas=diffH(p.desde,p.hasta);
+      var cells=DIAS.map(function(_,di){
+        if(di===ev.dia)return'<td><span class="turno-badge" style="background:#3d2d00;color:#ffd040;border:1px solid #6b5000">'+p.desde+'\u2013'+p.hasta+'</span><br><span style="font-size:8px;color:#aaa">'+ev.desc+'</span></td>';
+        return'<td style="color:var(--muted);font-size:10px;text-align:center">\u2014</td>';
+      }).join('');
+      refRows+='<tr style="background:#1a1500">'
+        +'<td class="emp-name"><div style="display:flex;align-items:center;gap:7px">'
+        +'<div style="width:24px;height:24px;border-radius:50%;background:#ffd04020;color:#ffd040;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">\u26a1</div>'
+        +(p.nombre||'REFUERZO')+'</div></td>'
+        +'<td style="font-size:10px;color:#ffd040">'+ev.tipo+' Evento</td>'        +cells
+        +'<td class="col-horas" style="font-weight:700;color:#ffd040;font-size:12px">'+horas.toFixed(1)+'h</td></tr>';
+    });
+  });
+
+  var cobRow=cob.map(function(c){
+    var cl=c>=minP?'cob-ok':c===minP-1?'cob-warn':'cob-low';
+    return'<td style="border:1px solid var(--border);padding:5px;text-align:center"><span class="'+cl+'">'+c+'</span><br><span style="font-size:9px;color:var(--muted)">'+t('personas')+'</span></td>';
+  }).join('');
+
+  var eventosHtml='';
+  if(numEventos>0){
+    eventosHtml='<hr class="divider"><div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--accent)">'+t('cuad_eventos')+'</div>'
+      +eventos.map(function(ev){
+        return'<div class="evento-item"><div style="font-size:18px">'+ev.tipo+'</div>'
+          +'<div><div style="font-size:12px;font-weight:600">'+ev.desc+' \u00b7 '+DIAS[ev.dia]+'</div>'
+          +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+(ev.personas||[]).map(function(p){return p.nombre+' \u00b7 '+p.desde+'\u2013'+p.hasta+' ('+diffH(p.desde,p.hasta).toFixed(1)+'h)';}).join(' &nbsp;\u00b7&nbsp; ')+'</div></div></div>';
+      }).join('');
+  }
+
+  var legendaHtml=activeTurnos.map(function(t){return'<span style="font-size:10px"><span class="turno-badge '+t.badge+'">'+t.emoji+' '+t.nome+'</span> '+t.ini+'\u2013'+t.fin+'</span>';}).join(' ')
+    +' <span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd Media fiesta</span></span>';
+
+  var html='<div class="card">'
+    +'<div style="margin-bottom:16px"><div class="card-title">'+t('cuad_generado')+'</div>'
+    +'<div class="card-sub">'+local+' \u00b7 '+semana+' \u00b7 '+ap+' \u2013 '+ci+'</div></div>'
+    +'<div class="stats-grid">'
+    +'<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">'+t('kpi_empleados')+'</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+totalH.toFixed(0)+'h</div><div class="stat-label">'+t('kpi_horas_tot')+'</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+Math.min.apply(null,cob)+'\u2013'+Math.max.apply(null,cob)+'</div><div class="stat-label">'+t('kpi_cob_dia')+'</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+numEventos+'</div><div class="stat-label">'+t('kpi_eventos')+'</div></div>'
+    +'</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-bottom:6px;display:none" class="mobile-scroll-hint">← Desliza para ver toda la tabla →</div>'
+    +'<div class="cuadrante-scroll-wrap" style="overflow-x:auto"><table class="schedule-table">'
+    +'<thead><tr><th class="emp-col">'+t('col_empleado')+'</th><th>'+t('col_rol')+'</th>'
+    +DIAS_SHORT.map(function(d,i){return'<th>'+d+(epd[i].length?' '+epd[i].map(function(e){return e.tipo;}).join(''):'')+'</th>';}).join('')
+    +'<th class="col-horas">'+t('col_horas')+'</th></tr></thead>'
+    +'<tbody>'+tbodyRows+refRows+'</tbody>'
+    +'<tfoot><tr style="background:var(--darker)">'
+    +'<td colspan="2" style="padding:7px;font-weight:700;font-size:10px;color:var(--muted);border:1px solid var(--border)">'+t('cuad_cobertura')+'</td>'
+    +cobRow
+    +'<td class="col-horas" style="border:1px solid var(--border)"></td>'
+    +'</tr></tfoot>'
+    +'</table></div>'
+    // Sección Lorena - Directora (fuera del cuadrante, apoyo operativo)
+    +(function(){
+      var lorenaHtml='';
+      var LORENA_SEMANA = lorenaHorario;
+      var TIPO_COLOR = {fiesta:'#e74c3c', seguido:'var(--green)', partido:'#ffa040', apoyo:'#6b8fff'};
+      var TIPO_BG    = {fiesta:'#3d1515', seguido:'#153d15', partido:'#3d2a00', apoyo:'#151530'};
+      lorenaHtml+='<div style="margin:10px 0;background:var(--darker);border:1px solid #c0a02040;border-radius:8px;padding:10px">';
+      lorenaHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+      lorenaHtml+='<div style="width:26px;height:26px;border-radius:50%;background:#c0a02020;color:#c0a020;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">LO</div>';
+      lorenaHtml+='<div>';
+      lorenaHtml+='<div style="font-weight:700;font-size:12px;color:#c0a020">LORENA <span style="font-size:9px;background:#2a2200;color:#c0a020;padding:1px 6px;border-radius:4px;margin-left:4px;border:1px solid #c0a02060">DIRECTORA</span></div>';
+      lorenaHtml+='<div style="font-size:9px;color:#888">'+t('cuad_lorena_sub')+'</div>';
+      lorenaHtml+='</div></div>';
+      lorenaHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">';
+      LORENA_SEMANA.forEach(function(d){
+        var col = TIPO_COLOR[d.tipo] || 'var(--muted)';
+        var bg  = TIPO_BG[d.tipo]   || 'transparent';
+        var lbl, sub='';
+        if(d.tipo==='fiesta'){ lbl='🏖'; sub='Fiesta'; }
+        else if(d.tipo==='partido'){ lbl=(d.ini||'')+'–'+(d.fin||''); sub=(d.ini2||'')+'–'+(d.fin2||''); }
+        else { lbl=(d.ini||'')+'–'+(d.fin||''); sub=d.tipo.charAt(0).toUpperCase()+d.tipo.slice(1); }
+        lorenaHtml+='<div style="text-align:center;padding:4px 1px;border-radius:4px;background:'+bg+';border:1px solid '+col+'30">';
+        lorenaHtml+='<div style="font-size:9px;font-weight:700;color:var(--muted);margin-bottom:1px">'+DIAS_SHORT[d.dia]+'</div>';
+        lorenaHtml+='<div style="font-size:8.5px;font-weight:700;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+lbl+'</div>';
+        if(sub) lorenaHtml+='<div style="font-size:7.5px;color:'+col+'80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>';
+        lorenaHtml+='</div>';
+      });
+      lorenaHtml+='</div></div>';
+      return lorenaHtml;
+    })()
+    +'<hr class="divider">'
+    +'<div style="display:flex;gap:7px;flex-wrap:wrap">'+legendaHtml+'</div>'
+    +eventosHtml
+    +'<hr class="divider">'
+    +'<div class="footer-credits">'+t('cuad_generado_por')+' <strong>RelojTurnos</strong> \u00b7 Grupo El Reloj \u00b7 '+new Date().toLocaleDateString('es-ES')+'<br>'
+    +'Desarrollado por <strong>Raul H.B.</strong> \u00b7 <a href="mailto:raul.gestionlocal@gmail.com">raul.gestionlocal@gmail.com</a> \u00b7 '+t('cuad_derechos')+'</div>'
+    +'</div>';
+
+  // Vista móvil — tarjetas por empleado
+  var mobileHtml='<div class="cuadrante-mobile">';
+  mobileHtml+='<div style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:8px;background:var(--darker);border-radius:7px;text-align:center">'+semana+'</div>';
+  empleados.forEach(function(emp,idx){
+    var color=COLORS[idx%COLORS.length];
+    var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+    mobileHtml+='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">';
+    mobileHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    mobileHtml+='<div style="width:32px;height:32px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">'+init+'</div>';
+    mobileHtml+='<div><div style="font-weight:700;font-size:13px;color:'+color+'">'+( emp.nombre||t('kpi_empleados')+' '+emp.id)+'</div><div style="font-size:10px;color:var(--muted)">'+emp.rol+'</div></div>';
+    mobileHtml+='</div>';
+    mobileHtml+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+    DIAS_SHORT.forEach(function(dLabel,di){
+      var t=emp.turnos?emp.turnos[di]:emp.turno;
+      var info=getTInfo(t);
+      var bg=t==='fiesta'?'#2d1515':t==='mediafiesta'?'#2d2015':'#0f2030';
+      var col=t==='fiesta'?'#ff6b6b':t==='mediafiesta'?'#ffaa40':color;
+      mobileHtml+='<div style="text-align:center;padding:5px 2px;border-radius:5px;background:'+bg+';border:1px solid '+col+'30">';
+      mobileHtml+='<div style="font-size:8px;color:var(--muted);margin-bottom:2px">'+dLabel+'</div>';
+      mobileHtml+='<div style="font-size:9px;font-weight:700;color:'+col+'">'+info.label.replace('🌅','M').replace('🌃','N').replace('🌆','T').replace('🔄','I').replace('🏖️ FIESTA','FES').replace('½ Media fiesta','½')+'</div>';
+      mobileHtml+='</div>';
+    });
+    mobileHtml+='</div></div>';
+  });
+  mobileHtml+='</div>';
+
+  document.getElementById('cuadrante-output').innerHTML=html+mobileHtml;
+  // No resetear mostrarHoras aquí — respetar el estado actual
+  if(!mostrarHoras){
+    document.querySelectorAll('.col-horas').forEach(function(el){ el.style.setProperty('display','none','important'); });
+  }
+  var btn=document.getElementById('btn-toggle-horas');
+  if(btn){ btn.textContent=t(mostrarHoras?'p6_ocultar_horas':'p6_mostrar_horas'); btn.setAttribute('data-i18n',mostrarHoras?'p6_ocultar_horas':'p6_mostrar_horas'); }
+  goStep(6);
+}
+
+function guardarImagen(){
+  var el=document.getElementById('cuadrante-output');
+  var local=(getLocal()||'cuadrante').replace(/\s+/g,'_');
+  var semana=getSemanaLabel().replace(/\s/g,'').replace(/\u2013/g,'-');
+  var ventana=window.open('','_blank','width=1000,height=750');
+  if(!ventana){alert(t('alert_permite_popups'));return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1.0">'
+    +'<title>RelojTurnos_'+local+'_'+semana+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;background:#0f1923;color:#e8edf2;padding:14px}'
+    +'.card{background:#162030;border:1px solid #1e3048;border-radius:10px;padding:18px}'
+    +'.card-title{font-size:15px;font-weight:700;margin-bottom:3px}'
+    +'.card-sub{font-size:11px;color:#6b8299;margin-bottom:14px}'
+    +'.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}'
+    +'.stat-card{background:#080e14;border:1px solid #1e3048;border-radius:7px;padding:9px;text-align:center}'
+    +'.stat-val{font-size:20px;font-weight:700;color:#e8a020}'
+    +'.stat-label{font-size:9px;color:#6b8299;text-transform:uppercase;letter-spacing:1px;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;font-size:10px}'
+    +'th{background:#080e14;padding:7px 4px;text-align:center;font-size:8px;font-weight:700;color:#6b8299;text-transform:uppercase;letter-spacing:1px;border:1px solid #1e3048}'
+    +'th.emp-col{text-align:left}'
+    +'td{padding:5px 4px;border:1px solid #1e3048;text-align:center;vertical-align:middle}'
+    +'td.emp-name{text-align:left;font-weight:600;padding-left:7px}'
+    +'.turno-badge{display:inline-block;padding:2px 5px;border-radius:4px;font-size:8px;font-weight:700;line-height:1.4}'
+    +'.badge-fiesta{background:#3d1515;color:#ff6b6b}'
+    +'.badge-mediafiesta{background:#3d2d10;color:#ffaa40}'
+    +'.badge-manana{background:#152d15;color:#5ddb5d}'
+    +'.badge-noche{background:#15152d;color:#6b8fff}'
+    +'.badge-intermedio{background:#25152d;color:#c080ff}'
+    +'.badge-tarde{background:#2d2515;color:#ffa040}'
+    +'.cob-ok{color:#2ecc71;font-weight:700;font-size:12px}'
+    +'.cob-warn{color:#e67e22;font-weight:700;font-size:12px}'
+    +'.cob-low{color:#e74c3c;font-weight:700;font-size:12px}'
+    +'.col-horas{}'
+    +'.evento-item{display:flex;align-items:center;gap:7px;background:#1a1500;border:1px solid #3d3000;border-radius:6px;padding:7px 10px;margin-bottom:5px}'
+    +'.footer-credits{font-size:9px;color:#6b8299;text-align:center;line-height:2;margin-top:8px}'
+    +'.footer-credits strong,.footer-credits a{color:#e8a020;text-decoration:none}'
+    +'hr{border:none;border-top:1px solid #1e3048;margin:10px 0}'
+    +'.divider{border:none;border-top:1px solid #1e3048;margin:10px 0}'
+    +'.hint{background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px;margin-bottom:14px;font-size:11px;color:#8ddb8d;text-align:center}'
+    +'@media print{.hint{display:none}.cuadrante-mobile{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+    +'</style></head><body>'
+    +'<div class="hint">&#128247; <strong>iOS Safari:</strong> Pulsa compartir &#10132; "A\u00f1adir a Fotos" o haz captura &nbsp;&nbsp; <strong>Android/PC:</strong> Men\u00fa &#10132; Guardar como PDF o captura</div>'
+    +el.innerHTML
+    +'</body></html>');
+  ventana.document.close();
+}
+
+function imprimirCuadrante(){
+  var original=document.getElementById('cuadrante-output');
+  var clon=original.cloneNode(true);
+  if(!mostrarHoras)clon.querySelectorAll('.col-horas').forEach(function(el){el.remove();});
+  clon.querySelectorAll('.cuadrante-mobile').forEach(function(el){el.remove();});
+  clon.querySelectorAll('[class*="mobile"]').forEach(function(el){el.remove();});
+  var contenido=clon.innerHTML;
+  var ventana=window.open('','_blank','width=1200,height=800');
+  if(!ventana){alert(t('alert_permite_popups2'));return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>RelojTurnos \u2013 Cuadrante</title>'
+    +'<style>'
+    +'@page{size:A4 landscape;margin:8mm 10mm}'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;background:white;color:#111;font-size:10px}'
+    +'.card{border:1px solid #ccc;border-radius:5px;padding:10px}'
+    +'.card-title{font-size:14px;font-weight:700;margin-bottom:3px;color:#111}'
+    +'.card-sub{font-size:10px;color:#666;margin-bottom:10px}'
+    +'.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}'
+    +'.stat-card{background:#f5f5f5;border:1px solid #ddd;border-radius:5px;padding:7px;text-align:center}'
+    +'.stat-val{font-size:18px;font-weight:700;color:#c07010}'
+    +'.stat-label{font-size:8px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;font-size:9px}'
+    +'th{background:#eee;padding:5px 3px;text-align:center;font-size:8px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:1px;border:1px solid #ccc}'
+    +'th.emp-col{text-align:left}'
+    +'td{padding:4px 3px;border:1px solid #ddd;text-align:center;vertical-align:middle}'
+    +'td.emp-name{text-align:left;font-weight:600;padding-left:6px}'
+    +'.turno-badge{display:inline-block;padding:2px 4px;border-radius:3px;font-size:8px;font-weight:700;line-height:1.4}'
+    +'.badge-fiesta{background:#ffe0e0;color:#c00}'
+    +'.badge-mediafiesta{background:#fff0d0;color:#a06000}'
+    +'.badge-manana{background:#e0ffe0;color:#050}'
+    +'.badge-noche{background:#e0e8ff;color:#003}'
+    +'.badge-intermedio{background:#f0e0ff;color:#404}'
+    +'.badge-tarde{background:#fff0e0;color:#840}'
+    +'.cob-ok{color:#050;font-weight:700;font-size:11px}'
+    +'.cob-warn{color:#840;font-weight:700;font-size:11px}'
+    +'.cob-low{color:#c00;font-weight:700;font-size:11px}'
+    +'.evento-item{display:flex;align-items:center;gap:6px;background:#fffbe0;border:1px solid #ddc000;border-radius:4px;padding:5px 8px;margin-bottom:4px}'
+    +'.footer-credits{font-size:8px;color:#888;text-align:center;line-height:2;margin-top:7px}'
+    +'.footer-credits strong,.footer-credits a{color:#c07010;text-decoration:none}'
+    +'hr,.divider{border:none;border-top:1px solid #ddd;margin:8px 0}'
+    +'[style*="background:#1a1500"]{background:#fffbe0!important}'
+    +'[style*="color:#ffd040"]{color:#c07010!important}'
+    +'[style*="background:#3d2d00"]{background:#fff0d0!important}'
+    +'body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'</style></head><body>'+contenido
+    +'<script>window.onload=function(){setTimeout(function(){window.print();window.close();},350);};<\/script>'
+    +'</body></html>');
+  ventana.document.close();
+}
+
+// ========== PASO 7: COSTES v1.8 ==========
+var salariosBrutos = {};
+var extrasDia = [];
+var extraCounter = 0;
+var SS_EMPRESA = 0.39; // Hostelería: contingencias comunes 23.6% + desempleo 5.5% + FOGASA 0.2% + formación 0.6% + AT/EP ~9% ≈ 39%
+var BRUTO_DEFAULT = 1800;      // Camarero/cocinero por defecto
+var BRUTO_RESP = 1950;         // Responsable/encargado por defecto
+var ROLES_RESP = ['Resp. Mañana','Resp. Noche','Encargado']; // roles que cobran más
+
+var MOTIVOS_EXTRA = [
+  '⚡ Evento especial',
+  '🔄 Sustitución compañero',
+  '🙋 Refuerzo ocasional',
+  '⚽ Partido fútbol',
+  '📅 Festivo / día especial',
+  '🌧️ Mal tiempo / baja afluencia',
+  '🎵 Concierto cercano',
+  '🏃 Maratón / carrera popular',
+  '📦 Recepción mercancía',
+  '🔧 Otro motivo'
+];
+
+function getSalario(empId){
+  if(salariosBrutos[empId]) return salariosBrutos[empId];
+  // Precargar según rol del empleado
+  var emp=empleados.find(function(e){return e.id===empId;});
+  var esResp=emp&&ROLES_RESP.indexOf(emp.rol)>=0;
+  return {brutoMes: esResp?BRUTO_RESP:BRUTO_DEFAULT, hContrato:40};
+}
+
+function updSalario(empId,campo,valor){
+  if(!salariosBrutos[empId]) salariosBrutos[empId]={brutoMes:'',hContrato:40};
+  if(campo==='hContrato') salariosBrutos[empId][campo]=parseInt(valor)||40;
+  else salariosBrutos[empId][campo]=valor===''?'':parseFloat(valor);
+  renderCostes();
+}
+
+function getHorasPactadas(emp){
+  var hJornada=+document.getElementById('horas-jornada').value||9;
+  var hMF=+document.getElementById('horas-media-fiesta').value||5;
+  var hPact=0;
+  (emp.turnos||[]).forEach(function(t){
+    if(t==='fiesta') return;
+    if(t==='mediafiesta'){hPact+=hMF;return;}
+    hPact+=hJornada;
+  });
+  return hPact;
+}
+
+function getTotalExtrasEmp(empId){
+  return extrasDia.filter(function(e){return e.empId===empId;})
+    .reduce(function(s,e){return s+(parseFloat(e.horas)||0)*(parseFloat(e.precioHora)||0);},0);
+}
+
+function calcEmp(emp){
+  var s=getSalario(emp.id);
+  var hCuad=(emp.turnos||[]).reduce(function(sum,t){return sum+getTInfo(t).horas;},0);
+  var hPact=getHorasPactadas(emp);
+  var bruto=s.brutoMes!==''?parseFloat(s.brutoMes):null;
+  var costeFijoSem=bruto!==null?(bruto*(1+SS_EMPRESA))/(DIVISOR_CUSTOM||4.33):null;
+  var costeFijoMes=bruto!==null?bruto*(1+SS_EMPRESA):null;
+  var costeExtras=getTotalExtrasEmp(emp.id);
+  var totalSem=costeFijoSem!==null?costeFijoSem+costeExtras:null;
+  return{hCuad:hCuad,hPact:hPact,bruto:bruto,
+         costeFijoSem:costeFijoSem,costeFijoMes:costeFijoMes,
+         costeExtras:costeExtras,totalSem:totalSem};
+}
+
+function switchTab(tab){
+  ['planif','extras','salarios'].forEach(function(t){
+    document.getElementById('tab-'+t).className='tab-btn'+(t===tab?' active':'');
+    document.getElementById('panel-'+t).className='tab-panel'+(t===tab?' active':'');
+  });
+  renderCostes();
+}
+
+// ---- EXTRAS DEL DÍA ----
+function addExtraDia(){
+  extraCounter++;
+  extrasDia.push({id:extraCounter,empId:empleados.length?empleados[0].id:0,
+                  dia:0,horas:'',precioHora:'',motivo:MOTIVOS_EXTRA[1]});
+  renderExtras();
+}
+
+function removeExtra(id){
+  extrasDia=extrasDia.filter(function(e){return e.id!==id;});
+  renderExtras(); renderCostes();
+}
+
+function updExtra(id,campo,valor){
+  var e=extrasDia.find(function(x){return x.id===id;});
+  if(e){if(campo==='empId')e[campo]=parseInt(valor);else e[campo]=valor;}
+  renderCostes();
+}
+
+function renderExtras(){
+  var cont=document.getElementById('extras-lista');
+  if(!cont) return;
+  if(!extrasDia.length){
+    cont.innerHTML='<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;background:var(--darker);border-radius:8px;border:1px dashed var(--border)">'+t('sin_extras')+'</div>';
+    renderResumenExtras(); return;
+  }
+  var empOpts=empleados.map(function(e){
+    return'<option value="'+e.id+'">'+(e.nombre||t('lbl_empleado')+' '+e.id)+'</option>';
+  }).join('');
+  var diaOpts=DIAS.map(function(d,i){return'<option value="'+i+'">'+d+'</option>';}).join('');
+
+  cont.innerHTML=extrasDia.map(function(ex){
+    var motivoOpts=MOTIVOS_EXTRA.map(function(m){
+      return'<option value="'+m+'"'+(m===ex.motivo?' selected':'')+'>'+m+'</option>';
+    }).join('');
+    var empOptsEx=empleados.map(function(e){
+      return'<option value="'+e.id+'"'+(e.id===ex.empId?' selected':'')+'>'+( e.nombre||'Emp '+e.id)+'</option>';
+    }).join('');
+    var diaOptsEx=DIAS.map(function(d,i){
+      return'<option value="'+i+'"'+(i===ex.dia?' selected':'')+'>'+d+'</option>';
+    }).join('');
+    var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+    return'<div style="background:var(--darker);border:1px solid #4a2800;border-radius:9px;padding:13px;margin-bottom:9px">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+      +'<div><label>'+t('lbl_empleado')+'</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'empId\',this.value)">'+empOptsEx+'</select></div>'
+      +'<div><label>'+t('lbl_dia')+'</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'dia\',this.value)">'+diaOptsEx+'</select></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+      +'<div><label>'+t('lbl_h_extra')+'</label><input type="number" min="0.5" step="0.5" placeholder="ej: 2" value="'+ex.horas+'" oninput="updExtra('+ex.id+',\'horas\',this.value)" class="inp-sm"></div>'
+      +'<div><label>'+t('lbl_eur_h')+'</label><input type="number" min="0" step="0.5" placeholder="ej: 10" value="'+ex.precioHora+'" oninput="updExtra('+ex.id+',\'precioHora\',this.value)" class="inp-sm"></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:end">'
+      +'<div><label>'+t('lbl_motivo')+'</label><select class="inp-sm" onchange="updExtra('+ex.id+',\'motivo\',this.value)">'+motivoOpts+'</select></div>'
+      +'<button class="remove-btn" onclick="removeExtra('+ex.id+')" style="margin-bottom:2px;font-size:18px">&#10005;</button>'
+      +'</div>'
+      +(coste>0?'<div style="margin-top:10px;padding:8px 12px;background:#2d1a00;border-radius:6px;font-size:13px;font-weight:700;color:var(--orange)">'+t('coste_extra_lbl')+' '+coste.toFixed(2)+' €</div>':'')
+      +'</div>';
+  }).join('');
+  renderResumenExtras();
+}
+
+function renderResumenExtras(){
+  var cont=document.getElementById('extras-resumen'); if(!cont) return;
+  if(!extrasDia.length){cont.innerHTML='';return;}
+  var totH=extrasDia.reduce(function(s,e){return s+(parseFloat(e.horas)||0);},0);
+  var totE=extrasDia.reduce(function(s,e){return s+(parseFloat(e.horas)||0)*(parseFloat(e.precioHora)||0);},0);
+  cont.innerHTML='<div style="background:#2d1a00;border:1px solid var(--orange);border-radius:8px;padding:12px 16px;display:flex;gap:24px;flex-wrap:wrap">'
+    +'<div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+totH.toFixed(1)+'h</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">'+t('h_extra_tot')+'</div></div>'
+    +'<div><div style="font-size:20px;font-weight:700;color:var(--accent)">'+totE.toFixed(2)+' €</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">'+t('coste_extras_sem')+'</div></div>'
+    +'</div>';
+}
+
+// ---- RENDER COSTES PRINCIPAL ----
+function renderCostes(){
+  renderExtras();
+  var calcs=empleados.map(function(emp){return calcEmp(emp);});
+  var faltanDatos=calcs.some(function(c){return c.bruto===null;});
+  document.getElementById('costes-aviso').style.display=faltanDatos?'block':'none';
+
+  var totHCuad=calcs.reduce(function(s,c){return s+c.hCuad;},0);
+  var totHPact=calcs.reduce(function(s,c){return s+c.hPact;},0);
+  var tieneDatos=calcs.some(function(c){return c.bruto!==null;});
+  var totFijoSem=tieneDatos?calcs.reduce(function(s,c){return s+(c.costeFijoSem||0);},0):null;
+  var totExtras=calcs.reduce(function(s,c){return s+c.costeExtras;},0);
+  var totSem=totFijoSem!==null?totFijoSem+totExtras:null;
+  var totMes=totSem!==null?totSem*4.33:null;
+
+  // KPIs
+  document.getElementById('costes-kpis').innerHTML=
+    '<div class="stat-card"><div class="stat-val">'+empleados.length+'</div><div class="stat-label">'+t('kpi_empleados')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+totHPact.toFixed(0)+'h</div><div class="stat-label">'+t('kpi_h_pactadas')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totFijoSem!==null?totFijoSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">'+t('kpi_coste_fijo')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totExtras>0?'+'+totExtras.toFixed(0)+' €':'0 €')+'</div><div class="stat-label">'+t('kpi_extras_sem')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null?totSem.toFixed(0)+' €':'—')+'</div><div class="stat-label">'+t('kpi_total_sem')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totMes!==null?totMes.toFixed(0)+' €':'—')+'</div><div class="stat-label">'+t('kpi_total_mes')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+(totSem!==null&&totHCuad?(totSem/totHCuad).toFixed(2)+' €':'—')+'</div><div class="stat-label">'+t('kpi_eur_hora')+'</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+extrasDia.length+'</div><div class="stat-label">'+t('kpi_extras_anotadas')+'</div></div>';
+
+  // TARJETAS por empleado (sin tabla, sin desbordamiento)
+  var cards=document.getElementById('costes-cards');
+  if(cards){
+    // Tarjeta Lorena — mismo formato que Salarios
+    var lorColor = COLORS[0];
+    var lorCard = (function(){
+      var cSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
+      var cMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+      return '<div class="costes-emp-card">'
+        +'<div style="font-size:13px;font-weight:700;color:'+lorColor+';margin-bottom:12px">LORENA'
+        +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+t('directora_lbl')+'</span></div>'
+        +'<div class="form-row three">'
+        +'<div class="form-group"><label>'+t('lbl_h_pactadas')+'</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:13px;font-weight:700;color:var(--muted)">'+lorenaSalario.hContrato+'h</div></div>'
+        +'<div class="form-group"><label>'+t('lbl_coste_sem')+'</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+        +'<span style="color:var(--green);font-weight:700">'+cSem.toFixed(2)+' € / sem</span>'
+        +'</div></div>'
+        +'<div class="form-group"><label>'+t('lbl_coste_mes_ss')+'</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+        +'<span style="color:var(--muted);font-size:11px">'+cMes.toFixed(0)+' €</span>'
+        +'</div></div>'
+        +'</div></div>';
+    })();
+
+    cards.innerHTML=lorCard+empleados.map(function(emp,idx){
+      var c=calcs[idx], color=COLORS[idx%COLORS.length];
+      var extrasEmp=extrasDia.filter(function(e){return e.empId===emp.id;});
+      var costeSemVal = c.costeFijoSem!==null ? c.costeFijoSem.toFixed(2)+' € / sem' : t('sin_datos');
+      var costeMesVal = c.costeFijoMes!==null ? c.costeFijoMes.toFixed(0)+' € / mes (con SS)' : '—';
+      return'<div class="costes-emp-card">'
+        +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||t('kpi_empleados')+' '+emp.id)
+        +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+emp.rol+'</span></div>'
+        +'<div class="form-row three">'
+        +'<div class="form-group"><label>'+t('lbl_h_pactadas')+'</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:13px;font-weight:700;color:var(--muted)">'+c.hPact.toFixed(0)+'h</div></div>'
+        +'<div class="form-group"><label>'+t('lbl_coste_sem')+'</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+        +(c.costeFijoSem!==null
+          ?'<span style="color:var(--green);font-weight:700">'+c.costeFijoSem.toFixed(2)+' € / sem</span>'
+          :'<span style="color:var(--muted)">'+t('sin_datos_sal')+'</span>')
+        +'</div></div>'
+        +'<div class="form-group"><label>'+t('lbl_coste_mes_ss')+'</label>'
+        +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+        +(c.costeFijoMes!==null
+          ?'<span style="color:var(--muted);font-size:11px">'+c.costeFijoMes.toFixed(0)+' €</span>'
+          :'<span style="color:var(--muted)">—</span>')
+        +'</div></div>'
+        +'</div>'
+        // Extras de este empleado si las hay
+        +(extrasEmp.length?
+          '<div style="margin-top:9px;padding:8px 10px;background:#2d1a00;border:1px solid #6b3a00;border-radius:7px">'
+          +'<div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:5px">'+t('extras_registradas')+'</div>'
+          +extrasEmp.map(function(ex){
+            var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+            return'<div style="font-size:11px;color:var(--text);display:flex;justify-content:space-between;margin-bottom:2px">'
+              +'<span>'+DIAS[ex.dia]+' · '+ex.horas+'h · '+ex.motivo+'</span>'
+              +'<span style="color:var(--orange);font-weight:700">'+coste.toFixed(2)+' €</span></div>';
+          }).join('')
+          +(c.costeExtras>0?'<div style="font-size:11px;font-weight:700;color:var(--orange);margin-top:4px;text-align:right">Total extras: '+c.costeExtras.toFixed(2)+' €</div>':'')
+          +'</div>'
+        :'')
+        +(c.bruto===null?'<div style="margin-top:8px;font-size:11px;color:var(--red);padding:6px 10px;background:#2d1515;border-radius:6px">⚠ '+t('sin_datos_sal')+' — '+t('lbl_salario_bruto')+'</div>':'')
+        +'</div>';
+    }).join('');
+  }
+
+  // Refuerzos de evento
+  var totRefuerzos = getCosteRefuerzos();
+  var costeLorena = (lorenaSalario.brutoMes * (1+SS_EMPRESA)) / 4.33;
+  var totSemConRef = totSem!==null ? totSem+totRefuerzos+costeLorena : totRefuerzos>0?totRefuerzos+costeLorena:costeLorena;
+  var refCont = document.getElementById('costes-refuerzos');
+  if(refCont){
+    var refPersonas=[];
+    eventos.forEach(function(ev){
+      (ev.personas||[]).forEach(function(p){
+        var h=calcHorasRefuerzo(p);
+        var coste=h*(parseFloat(p.precioHora)||10);
+        if(h>0) refPersonas.push({nombre:p.nombre,dia:DIAS[ev.dia]||'',horas:h,precioHora:p.precioHora||10,coste:coste,evento:ev.desc});
+      });
+    });
+    if(refPersonas.length){
+      refCont.innerHTML='<div style="background:var(--darker);border:1px solid #4a1a6a;border-radius:10px;padding:14px">'
+        +'<div style="font-size:11px;font-weight:700;color:#c060ff;margin-bottom:10px">🎪 PERSONAL EXTERNO / REFUERZOS EVENTO</div>'
+        +refPersonas.map(function(p){
+          return'<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#1a0a2a;border-radius:6px;margin-bottom:5px;font-size:12px">'
+            +'<div><span style="font-weight:700;color:#c060ff">'+p.nombre+'</span>'
+            +' <span style="color:var(--muted);font-size:10px">'+p.dia+' · '+p.evento+'</span></div>'
+            +'<div style="color:var(--muted);font-size:11px">'+p.horas.toFixed(1)+'h × '+p.precioHora+'€/h</div>'
+            +'<div style="font-weight:700;color:#c060ff">'+p.coste.toFixed(2)+' €</div>'
+            +'</div>';
+        }).join('')
+        +'<div style="margin-top:8px;padding:8px 10px;background:#2a0a3a;border-radius:6px;display:flex;justify-content:space-between">'
+        +'<span style="font-size:11px;font-weight:700;color:#c060ff">TOTAL REFUERZOS</span>'
+        +'<span style="font-size:16px;font-weight:700;color:#c060ff">'+totRefuerzos.toFixed(2)+' €</span>'
+        +'</div></div>';
+    } else {
+      refCont.innerHTML='';
+    }
+  }
+
+  // Totales
+
+  var tot=document.getElementById('costes-totales');
+  if(tot && tieneDatos){
+    tot.innerHTML='<div style="background:var(--card);border:1px solid var(--accent);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">COSTE FIJO SEM.</div><div style="font-size:20px;font-weight:700;color:var(--green)">'+(totFijoSem!==null?totFijoSem.toFixed(2)+' €':'—')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">EXTRAS DIARIAS</div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+(totExtras>0?'+'+totExtras.toFixed(2)+' €':'0 €')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">REFUERZOS</div><div style="font-size:20px;font-weight:700;color:#c060ff">'+(totRefuerzos>0?'+'+totRefuerzos.toFixed(2)+' €':'0 €')+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">TOTAL REAL SEM.</div><div style="font-size:24px;font-weight:700;color:var(--accent2)">'+(totSemConRef!==null?totSemConRef.toFixed(2)+' €':'—')+'</div></div>'
+      +'</div>';
+  }
+
+  // Editor salarios — solo bruto/mes y horas contrato, sin más
+  // Tarjeta Lorena directora en editor salarios
+  var lorenaCardEditor = (function(){
+    var lorColor = COLORS[0];
+    var costeSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA)/4.33);
+    var costeMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+    return '<div class="costes-emp-card">'
+      +'<div style="font-size:13px;font-weight:700;color:'+lorColor+';margin-bottom:12px">LORENA'
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">Director/a</span></div>'
+      +'<div class="form-row three">'
+      +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
+      +'<input type="number" min="0" step="50" value="'+lorenaSalario.brutoMes+'" oninput="lorenaSalario.brutoMes=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Horas contrato / semana</label>'
+      +'<input type="number" min="1" max="48" step="1" value="'+lorenaSalario.hContrato+'" oninput="lorenaSalario.hContrato=+this.value;renderCostes()" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Resultado calculado</label>'
+      +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+      +'<span style="color:var(--green);font-weight:700">'+costeSem.toFixed(2)+' € / sem</span><br>'
+      +'<span style="color:var(--muted);font-size:11px">'+costeMes.toFixed(0)+' € / mes (con SS)</span>'
+      +'</div></div>'
+      +'</div></div>';
+  })();
+
+  document.getElementById('costes-editor').innerHTML=lorenaCardEditor+empleados.map(function(emp,idx){
+    var color=COLORS[idx%COLORS.length], s=getSalario(emp.id), c=calcs[idx];
+    return'<div class="costes-emp-card">'
+      +'<div style="font-size:13px;font-weight:700;color:'+color+';margin-bottom:12px">'+(emp.nombre||t('kpi_empleados')+' '+emp.id)
+      +' <span style="font-size:10px;font-weight:400;color:var(--muted)">'+emp.rol+'</span></div>'
+      +'<div class="form-row three">'
+      +'<div class="form-group"><label>Salario bruto / mes (€)</label>'
+      +'<input type="number" min="0" step="50" placeholder="ej: 1800" value="'+(s.brutoMes||'')+'" oninput="updSalario('+emp.id+',\'brutoMes\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Horas contrato / semana</label>'
+      +'<input type="number" min="1" max="48" step="1" value="'+s.hContrato+'" oninput="updSalario('+emp.id+',\'hContrato\',this.value)" class="inp-sm" style="padding:9px 10px;font-size:13px"></div>'
+      +'<div class="form-group"><label>Resultado calculado</label>'
+      +'<div style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:9px 10px;font-size:12px;line-height:1.7">'
+      +(c.costeFijoSem!==null
+        ?'<span style="color:var(--green);font-weight:700">'+c.costeFijoSem.toFixed(2)+' € / sem</span><br>'
+        +'<span style="color:var(--muted);font-size:11px">'+c.costeFijoMes.toFixed(0)+' € / mes (con SS)</span>'
+        :'<span style="color:var(--muted)">Introduce el bruto</span>')
+      +'</div></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ===================== VISTA DIRECTOR GENERAL =====================
+
+async function abrirVistaDirector(){
+  // Navegar al paso 8 solo si no estamos ya en él
+  var sc8 = document.getElementById('screen8');
+  if(!sc8 || !sc8.classList.contains('active')) goStep(8);
+  // Mostrar/ocultar audit log según rol
+  var auditWrap = document.getElementById('director-audit-wrap');
+  if(auditWrap) auditWrap.style.display = (currentUser && currentUser.rol==='directora_general') ? '' : 'none';
+  await poblarSelectorSemanas();
+  await cargarVistaDirector();
+}
+
+async function poblarSelectorSemanas(){
+  var sel = document.getElementById('director-semana-sel');
+  if(!sel) return;
+  try{
+    var cuads = await sbGet('cuadrantes','order=id.desc&limit=20');
+    // Semanas únicas
+    var vistas = {}, opts = '<option value="">Semana actual</option>';
+    cuads.forEach(function(c){
+      if(!vistas[c.semana_label]){
+        vistas[c.semana_label] = true;
+        opts += '<option value="'+c.semana_label+'">'+c.semana_label+'</option>';
+      }
+    });
+    sel.innerHTML = opts;
+  }catch(e){ console.log('Error semanas:', e); }
+}
+
+async function cargarVistaDirector(){
+  var sel = document.getElementById('director-semana-sel');
+  var semanaFiltro = sel ? sel.value : '';
+  var kpisEl = document.getElementById('director-kpis');
+  var localesEl = document.getElementById('director-locales');
+  var compEl = document.getElementById('director-comparativa');
+  var subtEl = document.getElementById('director-subtitulo');
+
+  if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px">'+t('director_cargando')+'</div>';
+
+  try{
+    // Cargar todos los locales
+    var locales = await sbGet('locales','order=id.asc');
+
+    // Si la tabla locales está vacía, usar fallback hardcoded
+    if(!locales || !locales.length){
+      locales = [{id:1, nombre:'La Cala'}, {id:2, nombre:"Roto's Burguer"}];
+    }
+
+    // Cargar cuadrantes — SIN doble order
+    var filtroQ = semanaFiltro
+      ? 'semana_label=eq.'+encodeURIComponent(semanaFiltro)+'&order=id.desc'
+      : 'order=id.desc&limit=20';
+    var cuads = await sbGet('cuadrantes', filtroQ);
+
+    // Para cada local coger el cuadrante más reciente
+    var datosLocales = [];
+    for(var i=0; i<locales.length; i++){
+      var loc = locales[i];
+      var cuad = (cuads||[]).find(function(c){ return c.local_id === loc.id; });
+      if(!cuad){
+        datosLocales.push({local:loc, cuad:null, empleados:[], turnos:[], salarios:[]});
+        continue;
+      }
+
+      // Cargar empleados del local
+      var emps = [];
+      var turnos = [];
+      var sals = [];
+      try{ emps  = await sbGet('empleados','local_id=eq.'+loc.id+'&activo=eq.true'); }catch(e2){ console.warn('empleados local '+loc.id, e2); }
+      try{ turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuad.id); }catch(e2){ console.warn('turnos cuad '+cuad.id, e2); }
+      try{ sals   = await sbGet('salarios','order=id.asc'); }catch(e2){ console.warn('salarios', e2); }
+
+      datosLocales.push({local:loc, cuad:cuad, empleados:emps, turnos:turnos, salarios:sals});
+    }
+
+    renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl);
+    // Cargar audit log
+    cargarAuditLog();
+    console.log('[Director] Locales cargados:', locales.map(function(l){return l.id+':'+l.nombre;}));
+    console.log('[Director] Cuadrantes encontrados:', (cuads||[]).map(function(c){return 'local'+c.local_id+' sem:'+c.semana_label;}));
+    console.log('[Director] datosLocales:', datosLocales.map(function(d){return d.local.nombre+' cuad:'+(d.cuad?d.cuad.id:'null')+' emps:'+d.empleados.length;}));
+
+  }catch(e){
+    if(kpisEl) kpisEl.innerHTML = '<div style="grid-column:1/-1;background:#2d1515;border:1px solid #6b2020;border-radius:8px;padding:14px;color:#ff8080;font-size:12px">⚠️ Error cargando datos: '+e.message+'</div>';
+    console.error('Error vista director:', e);
+  }
+}
+
+function calcResumenLocal(datos){
+  var emps = datos.empleados || [];
+  var turnos = datos.turnos || [];
+  var sals = datos.salarios || [];
+  var totalHoras = 0, totalCoste = 0, coberturaMin = 99, coberturaMax = 0;
+  var fiestas = 0;
+
+  // Calcular horas y cobertura por día
+  for(var d=0; d<7; d++){
+    var trabajando = turnos.filter(function(t){ return t.dia===d && t.turno!=='fiesta' && t.turno!=='mediafiesta'; }).length;
+    var mediaF = turnos.filter(function(t){ return t.dia===d && t.turno==='mediafiesta'; }).length;
+    trabajando += mediaF * 0.5;
+    if(trabajando < coberturaMin) coberturaMin = trabajando;
+    if(trabajando > coberturaMax) coberturaMax = trabajando;
+    fiestas += turnos.filter(function(t){ return t.dia===d && (t.turno==='fiesta'||t.turno==='mediafiesta'); }).length;
+  }
+
+  // Coste total
+  emps.forEach(function(emp){
+    var sal = sals.find(function(s){ return s.empleado_id===emp.id; });
+    var bruto = sal ? sal.bruto_mes : 1800;
+    totalCoste += (bruto * (1+SS_EMPRESA)) / 4.33;
+  });
+  // Añadir Lorena si es La Cala
+  if(datos.local.nombre === 'La Cala'){
+    totalCoste += (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
+  }
+
+  return {
+    numEmpleados: emps.length,
+    cobMin: coberturaMin===99?0:coberturaMin,
+    cobMax: coberturaMax,
+    coste: totalCoste,
+    fiestas: fiestas,
+    semana: datos.cuad ? datos.cuad.semana_label : t('sin_datos')
+  };
+}
+
+function renderVistaDirector(datosLocales, semanaFiltro, subtEl, kpisEl, localesEl, compEl){
+  var semLabel = semanaFiltro || (datosLocales[0]&&datosLocales[0].cuad ? datosLocales[0].cuad.semana_label : t('sin_datos'));
+  if(subtEl) subtEl.textContent = t('director_semana')+' '+semLabel+' · '+datosLocales.length+' '+t('locales_activos_lbl');
+
+  var resúmenes = datosLocales.map(calcResumenLocal);
+  var totEmps = resúmenes.reduce(function(s,r){ return s+r.numEmpleados; },0);
+  var totCoste = resúmenes.reduce(function(s,r){ return s+r.coste; },0);
+  var cobGlobal = resúmenes.reduce(function(s,r){ return s+r.cobMin; },0);
+
+  // KPIs globales
+  if(kpisEl){
+    kpisEl.innerHTML = [
+      {v: datosLocales.length, l: t('director_locales_activos'), c: '#c0a020'},
+      {v: totEmps+' '+t('personas'), l: t('director_total_emps'), c: 'var(--green)'},
+      {v: totCoste.toFixed(0)+' €', l: t('director_coste_total'), c: 'var(--accent2)'},
+      {v: cobGlobal+' mín.', l: t('director_cob_min'), c: 'var(--orange)'},
+    ].map(function(k){
+      return '<div class="stat-card"><div class="stat-val" style="color:'+k.c+'">'+k.v+'</div><div class="stat-label">'+k.l+'</div></div>';
+    }).join('');
+  }
+
+  // Cards por local
+  if(localesEl){
+    var COLORES_LOCAL = ['#e8a020','#3498db','#2ecc71','#e74c3c','#9b59b6'];
+    localesEl.innerHTML = datosLocales.map(function(datos, idx){
+      var r = resúmenes[idx];
+      var col = COLORES_LOCAL[idx % COLORES_LOCAL.length];
+      var tieneDatos = !!datos.cuad;
+      return '<div style="background:var(--card);border:1px solid '+col+'40;border-radius:12px;padding:14px;margin-bottom:10px">'
+        // Header local
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+        +'<div style="font-size:15px;font-weight:700;color:'+col+'">'+datos.local.nombre+'</div>'
+        +(tieneDatos
+          ?'<span style="font-size:9px;background:'+col+'20;color:'+col+';padding:2px 8px;border-radius:10px">'+r.semana+'</span>'
+          :'<span style="font-size:9px;background:#3d1515;color:#ff6b6b;padding:2px 8px;border-radius:10px">'+t('director_sin_cuad')+'</span>')
+        +'</div>'
+        // KPIs del local
+        +(tieneDatos
+          ?'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">'
+          +[
+            {v:r.numEmpleados, l:t('kpi_empleados')},
+            {v:r.cobMin+'-'+r.cobMax, l:t('director_cob_dia')},
+            {v:r.coste.toFixed(0)+' €', l:t('director_coste_sem')},
+            {v:r.fiestas, l:t('director_fiestas_sem')},
+          ].map(function(k){
+            return '<div style="background:var(--darker);border-radius:6px;padding:7px;text-align:center">'
+              +'<div style="font-size:14px;font-weight:700;color:'+col+'">'+k.v+'</div>'
+              +'<div style="font-size:8px;color:var(--muted);margin-top:2px">'+k.l+'</div>'
+              +'</div>';
+          }).join('')+'</div>'
+          :'<div style="font-size:11px;color:var(--muted);padding:10px;text-align:center">'+t('director_genera_cuad')+'</div>')
+        // Mini cuadrante visual (cobertura por día)
+        +(tieneDatos ? renderMiniCuadrante(datos, col) : '')
+        +'</div>';
+    }).join('');
+  }
+
+  // Comparativa entre locales
+  if(compEl && datosLocales.length > 1){
+    var maxCoste = Math.max.apply(null, resúmenes.map(function(r){ return r.coste; }));
+    compEl.innerHTML = '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">'+t('director_comp')+'</div>'
+      +datosLocales.map(function(datos, idx){
+        var r = resúmenes[idx];
+        var col = ['#e8a020','#3498db'][idx] || '#2ecc71';
+        var pct = maxCoste > 0 ? (r.coste/maxCoste*100) : 0;
+        return '<div style="margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+          +'<span style="font-size:11px;font-weight:700;color:'+col+'">'+datos.local.nombre+'</span>'
+          +'<span style="font-size:11px;color:var(--text)">'+r.coste.toFixed(0)+' €</span>'
+          +'</div>'
+          +'<div style="background:#1a1a1a;border-radius:4px;height:8px;overflow:hidden">'
+          +'<div style="background:'+col+';height:100%;width:'+pct+'%;border-radius:4px;transition:width 0.5s"></div>'
+          +'</div></div>';
+      }).join('')
+      +'</div>';
+  }
+}
+
+function renderMiniCuadrante(datos, col){
+  var DIAS_M = ['L','M','X','J','V','S','D'];
+  var bars = DIAS_M.map(function(d, di){
+    var trabajando = (datos.turnos||[]).filter(function(t){ return t.dia===di && t.turno!=='fiesta' && t.turno!=='mediafiesta'; }).length;
+    var total = datos.empleados.length || 1;
+    var pct = Math.round(trabajando/total*100);
+    var barCol = pct>=80?'var(--green)':pct>=50?'var(--orange)':'#e74c3c';
+    return '<div style="text-align:center;flex:1">'
+      +'<div style="font-size:8px;color:var(--muted);margin-bottom:3px">'+d+'</div>'
+      +'<div style="background:#1a1a1a;border-radius:3px;height:30px;position:relative;overflow:hidden">'
+      +'<div style="background:'+barCol+';position:absolute;bottom:0;width:100%;height:'+pct+'%;border-radius:3px;opacity:0.8"></div>'
+      +'</div>'
+      +'<div style="font-size:8px;color:var(--muted);margin-top:2px">'+trabajando+'p</div>'
+      +'</div>';
+  }).join('');
+  return '<div style="display:flex;gap:3px;margin-top:4px">'+bars+'</div>';
+}
+
+function imprimirDirector(){
+  var el = document.getElementById('screen8');
+  if(!el){ alert(t('alert_no_datos_imprimir')); return; }
+  var ventana = window.open('','_blank','width=900,height=700');
+  if(!ventana){ alert(t('alert_permite_popups3')); return; }
+  ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Vista Director - Grupo El Reloj</title>'
+    +'<style>body{font-family:Arial,sans-serif;background:#0f1923;color:#e8edf2;padding:20px}'
+    +'*{box-sizing:border-box}</style></head><body>'
+    +el.innerHTML+'</body></html>');
+  ventana.document.close();
+  ventana.print();
+}
+
+function imprimirCostes(){
+  var local=getLocal()||'Local', semana=getSemanaLabel();
+  var calcs=empleados.map(function(emp){return calcEmp(emp);});
+  var totFijo=calcs.reduce(function(s,c){return s+(c.costeFijoSem||0);},0);
+  var totExtras=calcs.reduce(function(s,c){return s+c.costeExtras;},0);
+  var totSem=totFijo+totExtras, totMes=totSem*4.33;
+  var totHCuad=calcs.reduce(function(s,c){return s+c.hCuad;},0);
+
+  // Fila Lorena
+  var lorSem = (lorenaSalario.brutoMes*(1+SS_EMPRESA))/4.33;
+  var lorMes = lorenaSalario.brutoMes*(1+SS_EMPRESA);
+  var rowLorena = '<tr style="background:#fffbe6">'
+    +'<td><strong>LORENA</strong></td><td>Director/a</td>'
+    +'<td>'+lorenaSalario.hContrato+'h</td><td>—</td>'
+    +'<td>'+lorenaSalario.brutoMes+' €</td>'
+    +'<td>'+lorSem.toFixed(2)+' €</td>'
+    +'<td>'+lorMes.toFixed(0)+' €</td>'
+    +'<td>—</td>'
+    +'<td style="font-weight:700">'+lorSem.toFixed(2)+' €</td>'
+    +'</tr>';
+
+  var rows=empleados.map(function(emp,i){
+    var c=calcs[i];
+    return'<tr><td>'+(emp.nombre||t('lbl_empleado')+' '+emp.id)+'</td><td>'+emp.rol+'</td>'
+      +'<td>'+c.hPact.toFixed(0)+'h</td><td>'+c.hCuad.toFixed(1)+'h</td>'
+      +'<td>'+(c.bruto!==null?c.bruto.toFixed(0)+' €':'sin dato')+'</td>'
+      +'<td>'+(c.costeFijoSem!==null?c.costeFijoSem.toFixed(2)+' €':'—')+'</td>'
+      +'<td>'+(c.costeFijoMes!==null?c.costeFijoMes.toFixed(0)+' €':'—')+'</td>'
+      +'<td>'+(c.costeExtras>0?c.costeExtras.toFixed(2)+' €':'—')+'</td>'
+      +'<td style="font-weight:700">'+(c.totalSem!==null?c.totalSem.toFixed(2)+' €':'sin dato')+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var extrasRows=extrasDia.length?extrasDia.map(function(ex){
+    var emp=empleados.find(function(e){return e.id===ex.empId;})||{};
+    var coste=(parseFloat(ex.horas)||0)*(parseFloat(ex.precioHora)||0);
+    return'<tr><td>'+(emp.nombre||'?')+'</td><td>'+(DIAS[ex.dia]||'')+'</td>'
+      +'<td>'+ex.horas+'h</td><td>'+(ex.precioHora?ex.precioHora+' €/h':'—')+'</td>'
+      +'<td>'+coste.toFixed(2)+' €</td><td>'+ex.motivo+'</td></tr>';
+  }).join(''):'';
+
+  var ventana=window.open('','_blank','width=1100,height=750');
+  if(!ventana){alert(t('alert_permite_popups3'));return;}
+  ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>Costes – '+local+' – '+semana+'</title>'
+    +'<style>@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;font-size:10px;color:#111;padding:14px}'
+    +'h1{font-size:15px;margin-bottom:2px}h2{font-size:11px;color:#444;margin:14px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}'
+    +'p.sub{color:#666;font-size:10px;margin-bottom:12px}'
+    +'.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}'
+    +'.stat{background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:7px;text-align:center}'
+    +'.sv{font-size:16px;font-weight:700;color:#c07010}.sl{font-size:8px;color:#666;text-transform:uppercase;margin-top:2px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:12px}'
+    +'th{background:#eee;padding:5px;text-align:center;border:1px solid #ccc;font-size:8px;text-transform:uppercase}'
+    +'th:first-child,th:nth-child(2){text-align:left}'
+    +'td{padding:4px 5px;border:1px solid #ddd;font-size:9px;text-align:center}'
+    +'td:first-child,td:nth-child(2){text-align:left}tfoot td{background:#f0f0f0;font-weight:700}'
+    +'.footer{font-size:8px;color:#999;text-align:center;margin-top:10px}'
+    +'body{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'</style></head><body>'
+    +'<h1>&#128182; Informe de Costes · '+local+'</h1><p class="sub">'+semana+'</p>'
+    +'<div class="stats">'
+    +'<div class="stat"><div class="sv">'+empleados.length+'</div><div class="sl">Empleados</div></div>'
+    +'<div class="stat"><div class="sv">'+totHCuad.toFixed(0)+'h</div><div class="sl">Horas cuadrante</div></div>'
+    +'<div class="stat"><div class="sv">'+totSem.toFixed(0)+' €</div><div class="sl">Total semana</div></div>'
+    +'<div class="stat"><div class="sv">'+totMes.toFixed(0)+' €</div><div class="sl">Estimado mes</div></div>'
+    +'</div>'
+    +'<h2>Personal</h2>'
+    +'<table><thead><tr><th>Empleado</th><th>Rol</th><th>H.Pact</th><th>H.Cuad</th><th>Bruto/mes</th><th>Coste/sem</th><th>Coste/mes</th><th>Extras €</th><th>Total sem</th></tr></thead>'
+    +'<tbody>'+rowLorena+rows+'</tbody>'
+    +'<tfoot><tr><td colspan="2">TOTALES</td><td></td><td>'+totHCuad.toFixed(1)+'h</td><td></td>'
+    +'<td>'+(totFijo+lorSem).toFixed(2)+' €</td><td></td>'
+    +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
+    +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
+    +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
+    +'<p class="footer">RelojTurnos v6.7 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
+    +'</body></html>');
+  ventana.document.close();
+}
+
+
+// ========== PERSONALIZACIÓN ==========
+var TEMAS = {
+  dark:  {dark:'#0f1923', darker:'#080e14', card:'#162030', border:'#1e3048', text:'#e8edf2', muted:'#6b8299'},
+  light: {dark:'#f0f4f8', darker:'#e8edf2', card:'#ffffff', border:'#c5d0db', text:'#1a2530', muted:'#5a7080'},
+  navy:  {dark:'#0a0f1e', darker:'#050810', card:'#0f1730', border:'#1a2848', text:'#d8e4f0', muted:'#5a7299'}
+};
+
+function aplicarColor(hex){
+  document.documentElement.style.setProperty('--accent', hex);
+  // calcular accent2 ligeramente más claro
+  document.documentElement.style.setProperty('--accent2', hex);
+  // actualizar input color
+  var inp = document.getElementById('color-custom');
+  if(inp) inp.value = hex;
+  // guardar
+  localStorage.setItem('rt_accent', hex);
+  // preview
+  renderPersonalizacion();
+  showToast(t('toast_color'),'green');
+}
+
+function aplicarTema(tema){
+  var t = TEMAS[tema];
+  if(!t) return;
+  Object.keys(t).forEach(function(k){ document.documentElement.style.setProperty('--'+k, t[k]); });
+  localStorage.setItem('rt_tema', tema);
+  ['dark','light','navy'].forEach(function(n){
+    var btn = document.getElementById('btn-tema-'+n);
+    if(btn) btn.className = 'btn btn-sm '+(n===tema?'btn-primary':'btn-ghost');
+  });
+  renderPersonalizacion();
+  showToast(t('toast_tema'),'green');
+}
+
+function aplicarNombreEmpresa(nombre){
+  if(!nombre.trim()) return;
+  localStorage.setItem('rt_empresa', nombre);
+  // actualizar todos los elementos con nombre empresa
+  document.querySelectorAll('.logo-sub, #header-groupname').forEach(function(el){
+    el.textContent = nombre.toUpperCase();
+  });
+  renderPersonalizacion();
+  showToast(t('toast_nombre'),'green');
+}
+
+function renderPersonalizacion(){
+  var prevNombre = document.getElementById('prev-nombre');
+  var prevEmpresa = document.getElementById('prev-empresa');
+  var empresa = localStorage.getItem('rt_empresa') || 'GRUPO EL RELOJ';
+  if(prevNombre) prevNombre.textContent = 'RelojTurnos';
+  if(prevEmpresa) prevEmpresa.textContent = empresa.toUpperCase();
+}
+
+function resetPersonalizacion(){
+  localStorage.removeItem('rt_accent');
+  localStorage.removeItem('rt_tema');
+  localStorage.removeItem('rt_empresa');
+  localStorage.removeItem('rt_logo');
+  aplicarLogoGuardado(null);
+  // Restaurar valores por defecto
+  document.documentElement.style.setProperty('--accent','#e8a020');
+  document.documentElement.style.setProperty('--accent2','#f0c060');
+  aplicarTema('dark');
+  document.querySelectorAll('.logo-sub, #header-groupname').forEach(function(el){
+    el.textContent = 'GRUPO EL RELOJ';
+  });
+  var inp = document.getElementById('custom-empresa');
+  if(inp) inp.value = '';
+  renderPersonalizacion();
+  showToast(t('toast_restablecido'),'green');
+}
+
+function cargarPersonalizacionGuardada(){
+  var accent = localStorage.getItem('rt_accent');
+  var tema = localStorage.getItem('rt_tema');
+  var empresa = localStorage.getItem('rt_empresa');
+  if(accent) aplicarColor(accent);
+  if(tema) aplicarTema(tema);
+  if(empresa){
+    document.querySelectorAll('.logo-sub, #header-groupname').forEach(function(el){
+      el.textContent = empresa.toUpperCase();
+    });
+    var inp = document.getElementById('custom-empresa');
+    if(inp) inp.value = empresa;
+  }
+}
+
+function abrirPersonalizacion(){
+  goStep(10);
+}
+
+// Muestra botón Ajustes para director/a
+// ========== GESTIÓN USUARIOS ==========
+async function cargarUsuarios(){
+  var lista = document.getElementById('usuarios-lista');
+  if(!lista) return;
+  lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">⏳ Cargando...</div>';
+  try{
+    var rows = await sbGet('usuarios','order=id.asc');
+    if(!rows || !rows.length){
+      lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No hay usuarios registrados aún</div>';
+      return;
+    }
+    var ROLES = {empleado:'Empleado', directora:'Director/a', directora_general:'Dirección General', admin:'Admin'};
+    var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
+    var html = rows.map(function(u){
+      var col = u.rol==='directora'?'var(--accent)':u.rol==='directora_general'?'#c0a020':'var(--green)';
+      var init = (u.nombre||'?').substring(0,2).toUpperCase();
+      var subInfo;
+      if(u.rol==='directora_general' || u.rol==='admin'){
+        subInfo = (ROLES[u.rol]||u.rol) + ' · DNI: '+(u.dni||'—');
+      } else {
+        var localLabel = !u.local_id ? "La Cala · Roto's Burguer" : (LOCALES[u.local_id]||'Local '+u.local_id);
+        subInfo = (ROLES[u.rol]||u.rol)+' · DNI: '+(u.dni||'—')+' · '+localLabel;
+      }
+      return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px">'
+        +'<div style="width:32px;height:32px;border-radius:50%;background:'+col+'20;color:'+col+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-size:13px;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(u.nombre||t('p3_nombre_empleado'))+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+subInfo+'</div>'
+        +'</div>'
+        +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(u.activo?'#15351520':'#35151520')+';color:'+(u.activo?'var(--green)':'var(--red)')+';border:1px solid '+(u.activo?'var(--green)':'var(--red)')+'40;flex-shrink:0">'+(u.activo?'ACTIVO':'INACTIVO')+'</span>'
+        +'<button onclick="abrirEditarUsuario('+u.id+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>'
+        +'</div>';
+    }).join('');
+
+    // Empleados sin usuario (creados directamente en Supabase)
+    try{
+      var nombresConUsuario = rows.map(function(u){ return (u.nombre||'').toLowerCase().trim(); });
+      var emps = await sbGet('empleados','order=nombre.asc');
+      var empsSinUser = (emps||[]).filter(function(e){
+        return nombresConUsuario.indexOf((e.nombre||'').toLowerCase().trim()) < 0;
+      });
+      if(empsSinUser.length){
+        html += '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px;padding-left:4px">📋 Empleados sin usuario (solo teléfono)</div>';
+        html += empsSinUser.map(function(e){
+          var localLabel = LOCALES[e.local_id]||'Local '+e.local_id;
+          var tel = e.telefono ? '📱 '+e.telefono : '<span style="color:var(--red);font-style:italic">sin teléfono</span>';
+          return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:8px 12px;margin-bottom:5px;opacity:0.85">'
+            +'<div style="width:32px;height:32px;border-radius:50%;background:#55555520;color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+((e.nombre||'?').substring(0,2).toUpperCase())+'</div>'
+            +'<div style="flex:1;min-width:0">'
+            +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+(e.nombre||'—')+'</div>'
+            +'<div style="font-size:10px;color:var(--muted)">'+localLabel+' · '+tel+'</div>'
+            +'</div>'
+            +'<button onclick="abrirEditarTelefonoEmpleado('+e.id+',\''+((e.nombre||'').replace(/'/g,"\\'"))+'\',\''+((e.telefono||'').replace(/'/g,"\\'"))+'\')" style="background:none;border:1px solid #25d36640;border-radius:7px;padding:4px 9px;color:#25d366;font-size:11px;cursor:pointer;flex-shrink:0">📱 Tel.</button>'
+            +'</div>';
+        }).join('');
+      }
+    }catch(e3){ console.warn('emps sin usuario:',e3); }
+
+    lista.innerHTML = html;
+  }catch(e){
+    lista.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:20px">⚠ Error cargando usuarios: '+e.message+'</div>';
+    console.error('cargarUsuarios error:',e);
+  }
+}
+
+async function crearUsuario(){
+  var nombre = (document.getElementById('nu-nombre').value||'').trim();
+  var dni    = (document.getElementById('nu-dni').value||'').trim().toUpperCase();
+  var ss     = (document.getElementById('nu-ss').value||'').trim();
+  var rol    = document.getElementById('nu-rol').value;
+  var errEl  = document.getElementById('nu-error');
+  var okEl   = document.getElementById('nu-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  if(!nombre||!dni||!ss){ errEl.textContent='Rellena todos los campos'; errEl.style.display='block'; return; }
+  if(ss.length < 4){ errEl.textContent=t('err_ss_min'); errEl.style.display='block'; return; }
+
+  var pass = ss.slice(-4);
+  var passHash = await hashPass(pass);
+  try{
+    // Comprobar si ya existe
+    var existing = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni));
+    if(existing && existing.length){ errEl.textContent=t('err_dni_existe'); errEl.style.display='block'; return; }
+
+  var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
+  var telefono  = (document.getElementById('nu-telefono')||{}).value||'';
+  var email     = (document.getElementById('nu-email')||{}).value||'';
+  var direccion = (document.getElementById('nu-direccion')||{}).value||'';
+  var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
+  await sbPost('usuarios', nuevo);
+  logAccion('CREAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
+  // Si hay datos de contacto y tiene local, guardar/actualizar en empleados
+  if(localId && (telefono||email||direccion)){
+    try{
+      var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(nombre));
+      if(empEx && empEx.length){
+        await sbPatch('empleados', empEx[0].id, {telefono:telefono||null, email:email||null, direccion:direccion||null});
+      }
+    }catch(e2){ console.warn('empleados contacto update:', e2); }
+  }
+    okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
+    okEl.style.display = 'block';
+    // Limpiar form
+    ['nu-nombre','nu-dni','nu-ss','nu-telefono','nu-email','nu-direccion'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    cargarUsuarios();
+  }catch(e){
+    errEl.textContent = t('err_crear_usuario')+e.message;
+    errEl.style.display='block';
+    console.error('crearUsuario error:',e);
+  }
+}
+
+function checkMostrarBtnUsuarios(){
+  var u = currentUser;
+  if(!u) return;
+  var esDir = u.rol==='directora'||u.rol==='directora_general'||u.rol==='admin';
+  // Controlar visibilidad en el dropdown
+  ['nmenu-9','nmenu-10','nmenu-11','nmenu-12'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = esDir ? '' : 'none';
+  });
+  // nmenu-8 (Dirección Gral.) solo para directora_general y admin
+  var nm8 = document.getElementById('nmenu-8');
+  if(nm8) nm8.style.display = (u.rol==='directora_general'||u.rol==='admin') ? '' : 'none';
+}
+
+// showStep alias
+function showStep(n){ goStep(n); }
+
+// ========== LOGO EMPRESA ==========
+function subirLogo(input){
+  var file = input.files[0];
+  if(!file) return;
+  if(file.size > 500000){ showToast(t('toast_logo_grande'),'orange'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var dataUrl = e.target.result;
+    localStorage.setItem('rt_logo', dataUrl);
+    aplicarLogoGuardado(dataUrl);
+    showToast(t('toast_logo_ok'),'green');
+  };
+  reader.readAsDataURL(file);
+}
+
+function quitarLogo(){
+  localStorage.removeItem('rt_logo');
+  aplicarLogoGuardado(null);
+  showToast(t('toast_logo_quitado'),'green');
+}
+
+function aplicarLogoGuardado(dataUrl){
+  // Preview en Ajustes
+  var img = document.getElementById('logo-preview-img');
+  var ph  = document.getElementById('logo-preview-placeholder');
+  if(img && ph){
+    if(dataUrl){ img.src=dataUrl; img.style.display=''; ph.style.display='none'; }
+    else { img.src=''; img.style.display='none'; ph.style.display=''; }
+  }
+  // Header — sustituir el icono ⏱ por la imagen si hay logo
+  var headerIcon = document.getElementById('header-logo-icon');
+  if(headerIcon){
+    if(dataUrl){ headerIcon.innerHTML='<img src="'+dataUrl+'" style="width:32px;height:32px;object-fit:contain;border-radius:6px">'; }
+    else { headerIcon.innerHTML='⏱'; }
+  }
+  // Login — igual
+  var loginIcon = document.getElementById('login-logo-icon');
+  if(loginIcon){
+    if(dataUrl){ loginIcon.innerHTML='<img src="'+dataUrl+'" style="width:48px;height:48px;object-fit:contain;border-radius:10px">'; }
+    else { loginIcon.innerHTML='⏱'; }
+  }
+}
+
+// ========== WHATSAPP ==========
+function getNumGrupoLocal(){
+  var local = getLocal();
+  if(local === 'La Cala') return localStorage.getItem('rt_wa_lacala') || '';
+  if(local === "Roto's Burguer") return localStorage.getItem('rt_wa_rotos') || '';
+  return '';
+}
+
+function formatMsgTurno(emp){
+  var semana = getSemanaLabel();
+  var DIAS_WA = ['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
+  var lineas = (emp.turnos||[]).map(function(t, di){
+    var info = getTInfo(t);
+    return DIAS_WA[di]+': '+(t==='fiesta'?'\ud83c\udfd6 FIESTA':info.label);
+  }).join('\n');
+  return '\ud83d\udcc5 *Tu horario - '+semana+'*\n\ud83d\udccd '+( getLocal()||'el restaurante')+'\n\n'+lineas+'\n\n_Enviado desde RelojTurnos_';
+}
+
+// ========== VISTA PÚBLICA CUADRANTE ==========
+async function cargarVistaPublica(cuadId){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('vista-publica').style.display='block';
+  var loading = document.getElementById('vp-loading');
+  var content = document.getElementById('vp-content');
+  var errEl   = document.getElementById('vp-error');
+  try{
+    var cuads = await sbGet('cuadrantes','id=eq.'+cuadId);
+    if(!cuads||!cuads.length){ loading.style.display='none'; errEl.style.display='block'; return; }
+    var cuad = cuads[0];
+    var localNombre = cuad.local_id===1?'La Cala':"Roto's Burguer";
+
+    var turnos = await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuadId+'&order=empleado_id.asc,dia.asc');
+    var emps   = await sbGet('empleados','local_id=eq.'+cuad.local_id+'&activo=eq.true&order=id.asc');
+
+    // Horarios por local y turno
+    var HORARIOS = cuad.local_id===1 ? {
+      manana:'07:30–16:30', noche:'18:00–03:00', tarde:'15:00–00:00',
+      intermedio:'12:00–21:00', partido:'11:00–16:00 / 20:00–23:00',
+      fiesta:'FIESTA', mediafiesta:'½ FIESTA'
+    } : {
+      manana:'11:00–19:00', noche:'16:00–00:00', tarde:'14:00–23:00',
+      intermedio:'12:00–20:00', partido:'11:00–16:00 / 20:00–00:00',
+      fiesta:'FIESTA', mediafiesta:'½ FIESTA'
+    };
+
+    var TURNO_STYLE = {
+      manana:   {bg:'#0d2e12', color:'#2ecc71', border:'#1a5a22'},
+      tarde:    {bg:'#2e1e00', color:'#f39c12', border:'#5a3a00'},
+      noche:    {bg:'#0d0d2e', color:'#5b9bd5', border:'#1a2a5a'},
+      intermedio:{bg:'#1e0d2e',color:'#9b59b6', border:'#3a1a5a'},
+      partido:  {bg:'#2e1e00', color:'#ffa040', border:'#5a3a00'},
+      fiesta:   {bg:'#2e0d0d', color:'#e74c3c', border:'#5a1a1a'},
+      mediafiesta:{bg:'#2e0d0d',color:'#e74c3c',border:'#5a1a1a'}
+    };
+
+    var turnoMap = {};
+    turnos.forEach(function(t){
+      if(!turnoMap[t.empleado_id]) turnoMap[t.empleado_id]={};
+      turnoMap[t.empleado_id][t.dia]=t.turno;
+    });
+
+    var DIAS_C = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+    var COLORS_VP = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63','#00bcd4'];
+
+    var html = '';
+
+    // Header del cuadrante
+    html += '<div style="background:var(--darker);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px">';
+    html += '<div style="font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px">📅 '+cuad.semana_label+'</div>';
+    html += '<div style="font-size:13px;color:var(--muted)">📍 '+localNombre+' · '+emps.length+' empleados</div>';
+    html += '</div>';
+
+    // Tarjeta por empleado — formato móvil
+    emps.forEach(function(emp, idx){
+      var color = COLORS_VP[idx%COLORS_VP.length];
+      var tMap  = turnoMap[emp.id]||{};
+      var init  = (emp.nombre||'?').substring(0,2).toUpperCase();
+      var totalDias = 0;
+
+      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px">';
+      // Nombre empleado
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+      html += '<div style="width:30px;height:30px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>';
+      html += '<div style="font-weight:700;font-size:14px;color:var(--text)">'+emp.nombre+'</div>';
+      html += '<div style="font-size:10px;color:var(--muted);margin-left:auto">'+emp.rol+'</div>';
+      html += '</div>';
+
+      // Grid días
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+      for(var d=0;d<7;d++){
+        var t  = tMap[d]||'fiesta';
+        var st = TURNO_STYLE[t]||TURNO_STYLE['fiesta'];
+        var hr = HORARIOS[t]||t;
+        var isF= t==='fiesta'||t==='mediafiesta';
+        if(!isF) totalDias++;
+
+        // Para turno partido, mostrar en dos líneas
+        var lines = hr.split(' / ');
+        html += '<div style="text-align:center;padding:4px 2px;border-radius:6px;background:'+st.bg+';border:1px solid '+st.border+'">';
+        html += '<div style="font-size:8px;font-weight:700;color:var(--muted);margin-bottom:2px">'+DIAS_C[d]+'</div>';
+        if(isF){
+          html += '<div style="font-size:11px">🏖</div>';
+        } else {
+          lines.forEach(function(l){
+            html += '<div style="font-size:7.5px;font-weight:700;color:'+st.color+';white-space:nowrap">'+l+'</div>';
+          });
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+
+      // Total días trabajados
+      html += '<div style="margin-top:8px;font-size:10px;color:var(--muted);text-align:right">'+totalDias+' días trabajados</div>';
+      html += '</div>';
+    });
+
+    // Leyenda
+    html += '<div style="margin-top:6px;padding:12px;background:var(--darker);border-radius:10px;border:1px solid var(--border)">';
+    html += '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Leyenda</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    var leg=[
+      {t:'Mañana',c:'#2ecc71',b:'#0d2e12'},
+      {t:'Tarde',c:'#f39c12',b:'#2e1e00'},
+      {t:'Noche',c:'#5b9bd5',b:'#0d0d2e'},
+      {t:'Intermedio',c:'#9b59b6',b:'#1e0d2e'},
+      {t:'Partido',c:'#ffa040',b:'#2e1e00'},
+      {t:'🏖 Fiesta',c:'#e74c3c',b:'#2e0d0d'}
+    ];
+    leg.forEach(function(x){
+      html+='<span style="font-size:10px;padding:3px 9px;border-radius:12px;background:'+x.b+';color:'+x.c+'">'+x.t+'</span>';
+    });
+    html += '</div></div>';
+
+    loading.style.display='none';
+    content.innerHTML = html;
+    content.style.display='block';
+
+  }catch(e){
+    console.error(e);
+    loading.style.display='none';
+    errEl.style.display='block';
+    errEl.textContent='⚠ Error cargando cuadrante: '+e.message;
+  }
+}
+
+// Enviar cuadrante completo al grupo del local
+function enviarCuadranteGrupoWA(){
+  var numGrupo = getNumGrupoLocal();
+  if(!numGrupo){
+    showToast(t('toast_wa_configura'),'orange');
+    return;
+  }
+  if(!currentCuadranteId){
+    showToast(t('toast_wa_guarda_bd'),'orange');
+    return;
+  }
+  var semana = getSemanaLabel();
+  var local = getLocal() || 'el restaurante';
+  var link = 'https://raul79bcn.github.io/relojturnos/dev/?cuadrante='+currentCuadranteId;
+  var msg = '📅 *Cuadrante semanal*\n'
+    +'*'+semana+'*\n'
+    +'📍 '+local+'\n\n'
+    +'👇 Pulsa para ver tu horario:\n'
+    +link;
+  window.open('https://wa.me/'+numGrupo+'?text='+encodeURIComponent(msg), '_blank');
+}
+
+// Enviar turno individual — al empleado + al grupo
+function enviarTurnoWA(empId){
+  var emp = empleados.find(function(e){ return e.id===empId; });
+  if(!emp){ showToast(t('toast_empleado_no_encontrado'),'orange'); return; }
+  var msg = formatMsgTurno(emp);
+  var numEmp = (emp.telefono||'').replace(/\s+/g,'');
+  var numGrupo = getNumGrupoLocal();
+  var abierto = false;
+  if(numEmp){
+    window.open('https://wa.me/'+numEmp+'?text='+encodeURIComponent(msg), '_blank');
+    abierto = true;
+  }
+  if(numGrupo){
+    setTimeout(function(){
+      window.open('https://wa.me/'+numGrupo+'?text='+encodeURIComponent(msg), '_blank');
+    }, abierto ? 600 : 0);
+    abierto = true;
+  }
+  if(!abierto){
+    showToast(t('toast_wa_sin_telefono'),'orange');
+  }
+}
+
+// Enviar WA a TODOS los empleados — secuencial con delays
+function enviarWATodos(){
+  var conTelefono = empleados.filter(function(e){ return (e.telefono||'').replace(/\s+/g,'').length >= 9; });
+  var sinTelefono = empleados.filter(function(e){ return !(e.telefono||'').replace(/\s+/g,'').length >= 9; });
+
+  if(!conTelefono.length){
+    showToast(t('toast_wa_sin_telefonos'),'orange');
+    return;
+  }
+
+  var msg = t('wa_confirm_prefix')+conTelefono.length+t('wa_confirm_pax')
+    + (sinTelefono.length ? t('wa_confirm_sin_tel')+sinTelefono.map(function(e){return e.nombre;}).join(', ') : '')
+    + t('wa_confirm_nota');
+
+  if(!confirm(msg)) return;
+
+  conTelefono.forEach(function(emp, i){
+    setTimeout(function(){
+      var mensaje = formatMsgTurno(emp);
+      var num = (emp.telefono||'').replace(/\s+/g,'');
+      window.open('https://wa.me/'+num+'?text='+encodeURIComponent(mensaje), '_blank');
+    }, i * 800); // 800ms entre cada uno para no saturar
+  });
+
+  showToast(t('toast_wa_enviando')+conTelefono.length+t('toast_wa_empleados'),'green');
+}
+
+function guardarConfigWA(){
+  var lacala = (document.getElementById('cfg-wa-lacala')||{}).value || '';
+  var rotos  = (document.getElementById('cfg-wa-rotos')||{}).value  || '';
+  localStorage.setItem('rt_wa_lacala', lacala.replace(/\s+/g,''));
+  localStorage.setItem('rt_wa_rotos',  rotos.replace(/\s+/g,''));
+  showToast(t('toast_wa_numeros'),'green');
+}
+
+// ========== PARÁMETROS COSTE ==========
+var SS_EMPRESA_CUSTOM = null;
+var DIVISOR_CUSTOM = null;
+
+function aplicarParamsCoste(){
+  var ssVal = parseFloat((document.getElementById('cfg-ss')||{}).value);
+  var divVal = parseFloat((document.getElementById('cfg-divisor')||{}).value);
+  if(!isNaN(ssVal) && ssVal>0){ SS_EMPRESA = ssVal/100; SS_EMPRESA_CUSTOM = ssVal; localStorage.setItem('rt_ss', ssVal); }
+  if(!isNaN(divVal) && divVal>0){ DIVISOR_CUSTOM = divVal; localStorage.setItem('rt_div', divVal); }
+  // Preview
+  var div = (!isNaN(divVal)&&divVal>0)?divVal:4.33;
+  var ss = (!isNaN(ssVal)&&ssVal>0)?ssVal/100:0.39;
+  var ej = (1800*(1+ss)/div).toFixed(2);
+  var ejEl = document.getElementById('cfg-coste-ej');
+  if(ejEl) ejEl.textContent = ej+' €';
+  if(typeof renderCostes==='function' && document.getElementById('screen7') && document.getElementById('screen7').classList.contains('active')) renderCostes();
+  showToast(t('toast_params'),'green');
+}
+
+function cargarParamsCosteGuardados(){
+  var ss = localStorage.getItem('rt_ss');
+  var div = localStorage.getItem('rt_div');
+  var waLacala = localStorage.getItem('rt_wa_lacala');
+  var waRotos  = localStorage.getItem('rt_wa_rotos');
+  if(ss){ SS_EMPRESA = parseFloat(ss)/100; }
+  if(div){ DIVISOR_CUSTOM = parseFloat(div); }
+  var elSS=document.getElementById('cfg-ss'); if(elSS&&ss) elSS.value=ss;
+  var elDiv=document.getElementById('cfg-divisor'); if(elDiv&&div) elDiv.value=div;
+  var elWaL=document.getElementById('cfg-wa-lacala'); if(elWaL&&waLacala) elWaL.value=waLacala;
+  var elWaR=document.getElementById('cfg-wa-rotos'); if(elWaR&&waRotos) elWaR.value=waRotos;
+  var ejEl = document.getElementById('cfg-coste-ej');
+  if(ejEl){ var div2=div?parseFloat(div):4.33; var ss2=ss?parseFloat(ss)/100:0.39; ejEl.textContent=(1800*(1+ss2)/div2).toFixed(2)+' €'; }
+}
+
+// ========== IDIOMA ==========
+// ========== SISTEMA i18n COMPLETO ==========
+var LANG_ACTUAL = 'es';
+
+var I18N = {
+  es: {
+    // Días
+    dias: ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],
+    diasShort: ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'],
+    // Turnos
+    turno_manana:'Mañana', turno_noche:'Noche', turno_tarde:'Tarde',
+    turno_intermedio:'Intermedio', turno_partido:'Partido', turno_fiesta:'Fiesta', turno_mediafiesta:'½ Media fiesta',
+    // Nav pasos
+    nav_local:'Local', nav_turnos:'Turnos', nav_equipo:'Equipo', nav_asignar:'Asignar',
+    nav_eventos:'Eventos', nav_cuadrante:'Cuadrante', nav_costes:'Costes',
+    nav_direccion:'Dirección General', nav_usuarios:'Usuarios', nav_ajustes:'Ajustes', nav_arqueo:'Arqueo', nav_compras:'Compras',
+    // Paso 1
+    p1_titulo:'¿Qué local y semana vamos a planificar?',
+    p1_sub:'Selecciona el restaurante, la semana y la configuración básica',
+    p1_local:'Local', p1_semana:'Semana que empieza el',
+    p1_apertura:'Hora apertura', p1_cierre:'Hora cierre',
+    p1_diasflojos:'Días de menor afluencia (fiesta sugerida)',
+    p1_siguiente:'Siguiente → Configurar turnos',
+    opt_selecciona_local:'Selecciona local...',
+    // Paso 2
+    p2_titulo:'Configura los turnos del local',
+    p2_sub:'Turnos calculados automáticamente. Activa solo los que usa este local.',
+    p2_media_fiesta:'Duración media fiesta (horas trabajadas)',
+    p2_jornada:'Horas jornada completa',
+    p2_atras:'← Atrás', p2_siguiente:'Siguiente → Equipo',
+    // Paso 3
+    p3_titulo:'¿Quién trabaja en este local?',
+    p3_sub:'Empleados y su turno habitual. Las horas se calculan solas según los turnos asignados.',
+    p3_añadir:'+ Añadir empleado',
+    p3_lorena_sub:'Horario orientativo · No computa en cobertura de sala · Sí computa en costes',
+    p3_siguiente:'Siguiente → Asignar turnos',
+    p3_horas_auto:'Las horas semanales se calculan automáticamente según los turnos asignados',
+    p3_nombre_empleado:'Nombre empleado',
+    p3_turno_habitual:'Turno habitual',
+    // Paso 4
+    p4_titulo:'Asigna los turnos de la semana',
+    p4_sub:'Fiestas asignadas automáticamente según días flojos y mínimos de personal. Ajusta lo que necesites.',
+    p4_recalcular:'⚡ Recalcular fiestas', p4_rotar:'🔀 Rotar días (+1)',
+    p4_hint_recalcular:'<strong style="color:var(--green)">Recalcular</strong> — borra las fiestas actuales y las vuelve a asignar desde cero según días flojos y mínimos de personal.',
+    p4_hint_rotar:'<strong style="color:var(--purple)">Rotar días</strong> — desplaza los días de descanso de cada empleado +1 día, útil para que no descansen siempre el mismo día.',
+    p4_siguiente:'Siguiente → Eventos',
+    // Paso 5
+    p5_titulo:'¿Hay eventos especiales esta semana?',
+    p5_sub:'Partidos, eventos, festivos que necesiten refuerzo de personal',
+    p5_no_eventos:'No hay eventos añadidos',
+    p5_tipo:'Tipo', p5_dia:'Día', p5_descripcion:'Descripción',
+    p5_refuerzo:'Personas de refuerzo',
+    p5_añadir_refuerzo:'+ Añadir persona de refuerzo',
+    p5_confirmar:'✓ Confirmar y añadir evento',
+    p5_generar:'⚡ Generar cuadrante',
+    // Paso 6 (botones)
+    p6_ocultar_horas:'👁 Ocultar horas', p6_mostrar_horas:'👁 Mostrar horas',
+    p6_enviar_grupo:'📲 Enviar grupo WA', p6_wa_todos:'📲 WA a todos',
+    p6_imprimir:'🖨 Imprimir', p6_guardar_bd:'💾 Guardar en BD',
+    p6_ver_costes:'💰 Ver costes', p6_nueva_semana:'+ Nueva semana',
+    p6_editar:'← Editar',
+    // Paso 7
+    p7_titulo:'💰 Costes de personal',
+    p7_sub:'Cuadrante · Bruto nómina + SS empresa + Extras reales',
+    p7_atras:'← Cuadrante', p7_dir_gral:'📋 Dirección General',
+    // Paso 8
+    p8_titulo:'📋 Dirección General',
+    p8_sub:'Resumen semanal de todos los locales',
+    p8_actualizar:'🔄 Actualizar',
+    p8_imprimir:'🖨 Imprimir resumen', p8_arqueo:'💰 Arqueo de caja',
+    p8_audit_titulo:'🗂 Registro de actividad',
+    // Paso 9
+    p9_titulo:'👥 Gestión de Usuarios',
+    p9_sub:'Crea y gestiona los accesos del personal',
+    p9_nuevo_usuario:'+ Nuevo usuario',
+    p9_nombre:'Nombre completo', p9_dni:'DNI / NIE',
+    p9_ss:'Nº Afiliación Seg. Social', p9_ss_hint:'Los últimos 4 dígitos serán la contraseña inicial',
+    p9_rol:'Rol en la app', p9_local:'Local',
+    p9_contacto:'Datos de contacto (opcionales)',
+    p9_telefono:'📱 Teléfono / WhatsApp', p9_email:'✉️ Email', p9_direccion:'🏠 Dirección',
+    p9_crear:'🔒 Crear usuario',
+    p9_lista:'Usuarios registrados', p9_actualizar:'🔄 Actualizar lista',
+    // Paso 10
+    p10_titulo:'🎨 Personalización',
+    p10_sub:'Adapta la apariencia de RelojTurnos a tu empresa',
+    p10_color:'✨ Color principal', p10_color_custom:'Personalizado:',
+    p10_tema:'🌙 Tema', p10_tema_dark:'🌑 Oscuro', p10_tema_light:'☀️ Claro', p10_tema_navy:'⚓ Marino',
+    p10_logo:'🖼️ Logo empresa', p10_logo_sub:'Header, login y documentos impresos',
+    p10_logo_subir:'📁 Subir imagen', p10_logo_quitar:'🗑',
+    p10_empresa:'🏢 Nombre empresa',
+    p10_preview:'👁 Vista previa',
+    p10_costes_titulo:'💰 Parámetros de coste', p10_costes_sub:'Afectan a todos los cálculos de nómina y SS',
+    p10_ss_pct:'% SS empresa', p10_divisor:'Divisor mensual',
+    p10_ss_hint2:'Estándar hostelería: 39%', p10_divisor_hint:'Estándar: 4,33',
+    p10_wa_titulo:'📲 WhatsApp grupos', p10_wa_sub:'Número del grupo de WhatsApp de cada local',
+    p10_wa_hint:'💡 Teléfonos individuales de empleados se configuran en Gestión Usuarios',
+    p10_idioma:'🌍 Idioma',
+    p10_nota:'ⓘ Los cambios se guardan en tu navegador al instante.',
+    p10_aviso_parcial:'⚠ Cambio parcial en esta versión',
+    p10_btn_usuarios:'← Usuarios', p10_btn_reset:'↺ Restablecer por defecto',
+    p10_ejemplo:'Ejemplo: 1.800€ →', p10_sem:'/ sem',
+    prev_activo:'Activo', prev_normal:'Normal',
+    arq_edit_banner:'✏️ Modo edición — Estás modificando un arqueo guardado. Pulsa Guardar para confirmar o Limpiar para cancelar.',
+    arq_lbl_local:'Local', arq_lbl_turno:'Turno', arq_lbl_fecha:'Fecha', arq_lbl_resp:'Responsable',
+    arq_sec_efectivo:'💰 Efectivo inicial', arq_lbl_fondo:'Fondo de caja (€)', arq_hint_fondo:'Importe fijo siempre en caja',
+    arq_lbl_cambio:'Cambio extra añadido (€)', arq_hint_cambio:'Sacado de caja fuerte si faltaba',
+    arq_sec_ingresos:'↑ Ingresos del turno', arq_lbl_venta:'Venta total del turno (€)',
+    arq_lbl_visa:'Cobrado por VISA/TPV (€)', arq_hint_visa:'Se descuenta del efectivo',
+    arq_sec_pagos:'↓ Pagos a proveedores', arq_btn_anadir:'＋ Añadir',
+    arq_sin_pagos:'Sin pagos a proveedores este turno', arq_total_pagos_lbl:'Total pagos:',
+    arq_sec_resultado:'📊 Resultado del turno', arq_total_caja:'Total entradas (venta + extracambio)', arq_total_salidas:'Total salidas (VISA + proveedores)',
+    arq_ef_recaud:'💵 EFECTIVO RECAUDACIÓN → CAJA FUERTE', arq_hint_ingresar:'A ingresar en caja fuerte (descontando fondo',
+    arq_hint_fuerte:'El fondo queda en el cajón para el siguiente turno',
+    arq_lbl_notas:'Notas / Incidencias',
+    arq_btn_volver:'← Volver', arq_btn_limpiar:'↺ Limpiar', arq_btn_imprimir:'🖨 Imprimir', arq_btn_guardar:'💾 Guardar arqueo',
+    arq_historico_titulo:'📅 Últimos arqueos guardados',
+    // Paso 11 - Arqueo
+    p11_titulo:'💰 Arqueo de Caja',
+    p11_sub:'Registro de cierre de turno',
+    p11_fecha:'📅 Fecha', p11_turno:'Turno',
+    p11_turno_m:'Mañana', p11_turno_n:'Noche', p11_turno_t:'Tarde',
+    p11_responsable:'Responsable',
+    p11_fondo:'💵 Fondo inicial caja', p11_venta:'🧾 Venta total declarada',
+    p11_visa:'💳 VISA / TPV', p11_efectivo:'💵 Efectivo (Venta - VISA)',
+    p11_entregado:'💰 Efectivo entregado', p11_diferencia:'⚖️ Diferencia',
+    p11_proveedores:'📦 Pagos a proveedores',
+    p11_añadir_prov:'+ Añadir proveedor',
+    p11_notas:'📝 Notas / incidencias',
+    p11_guardar:'💾 Guardar arqueo', p11_limpiar:'🗑 Limpiar', p11_imprimir:'🖨 Imprimir',
+    p11_historico:'📋 Histórico de arqueos',
+    p11_editar_banner:'✏️ Editando arqueo ID ',
+    p11_cancelar:'Cancelar edición',
+    // Paso 12 - Compras
+    p12_titulo:'🛒 Gestión de Compras', p12_sub:'Artículos, proveedores, precios y análisis de rentabilidad',
+    p12_tab_articulos:'📦 Artículos', p12_tab_proveedores:'🏭 Proveedores',
+    p12_tab_precios:'💶 Precios', p12_tab_analisis:'📊 Análisis',
+    p12_nuevo_art:'+ Artículo', p12_nuevo_prov:'+ Proveedor', p12_nuevo_precio:'+ Precio',
+    // Login
+    login_dni:'DNI / NIE', login_password:'Contraseña', login_btn:'Entrar',
+    login_demo:'DEMO', login_error:'Usuario o contraseña incorrectos',
+    login_footer:'Gestión de turnos para hostelería',
+    // Portal empleado
+    portal_cuadrante:'📅 Cuadrante', portal_contrato:'📄 Mi contrato',
+    portal_actividad:'🗂 Mi actividad', portal_password:'🔒 Contraseña',
+    portal_cambiar_pass:'Cambiar contraseña',
+    portal_pass_actual:'Contraseña actual', portal_pass_nueva:'Nueva contraseña',
+    portal_pass_repite:'Repetir nueva contraseña',
+    portal_pass_btn:'🔒 Cambiar contraseña',
+    portal_cerrar:'← Cerrar sesión',
+    // Toasts
+    toast_bienvenida:'✓ Bienvenida/o ',
+    toast_conectado:'✓ Conectado a base de datos',
+    toast_conectado_default:'✓ Conectado (locales por defecto)',
+    toast_sin_tabla:'⚠ Sin tabla locales — modo local',
+    toast_local_no_encontrado:'Local no encontrado en BD',
+    toast_actualizando_cuad:'⏳ Actualizando cuadrante existente...',
+    toast_cuad_guardado:'✓ Cuadrante guardado en base de datos',
+    toast_cuad_error:'Error al guardar: ',
+    toast_cargando_equipo:'⏳ Cargando equipo...',
+    toast_equipo_cargado:'✓ Equipo cargado desde BD ',
+    toast_sin_empleados:'ℹ Sin empleados en BD — usando equipo por defecto',
+    toast_error_bd:'⚠ Error cargando BD — usando equipo por defecto',
+    toast_fiestas_rotadas:'🔀 Fiestas rotadas — revisa el cuadrante',
+    toast_color:'✓ Color aplicado', toast_tema:'✓ Tema aplicado',
+    toast_nombre:'✓ Nombre actualizado', toast_restablecido:'✓ Ajustes restablecidos',
+    toast_logo_grande:'⚠ Imagen muy grande (máx 500KB)',
+    toast_logo_ok:'✓ Logo actualizado', toast_logo_quitado:'✓ Logo eliminado',
+    toast_wa_configura:'⚠ Configura el número del grupo en Ajustes → WhatsApp',
+    toast_wa_guarda_bd:'⚠ Primero guarda el cuadrante en BD (botón 💾)',
+    toast_empleado_no_encontrado:'Empleado no encontrado',
+    toast_wa_sin_telefono:'⚠ Añade el teléfono del empleado en Usuarios',
+    toast_wa_sin_telefonos:'⚠ Ningún empleado tiene teléfono configurado en Usuarios',
+    toast_wa_enviando:'📲 Enviando a ',
+    toast_wa_empleados:' empleados...',
+    toast_wa_numeros:'✓ Números guardados',
+    toast_params:'✓ Parámetros actualizados',
+    toast_idioma:'✓ Idioma aplicado',
+    toast_arq_invalido:'ID de arqueo inválido',
+    toast_arq_no_encontrado:'Arqueo no encontrado',
+    toast_arq_cargado:'✏️ Arqueo cargado para edición',
+    toast_arq_error_carga:'Error cargando arqueo: ',
+    toast_edicion_cancelada:'Edición cancelada — formulario limpio',
+    toast_pass_cambiada:'✓ Contraseña cambiada correctamente',
+    toast_usuario_creado:'✓ Usuario creado',
+    toast_password_incorrecta:'La contraseña actual es incorrecta',
+    // Misc
+    cobertura:'COBERTURA', personas:'pers.',
+    turno_m_label:'Mañana', turno_n_label:'Noche', turno_t_label:'Tarde',
+    turno_i_label:'Intermedio', turno_p_label:'Partido', turno_mf_label:'½ Media fiesta',
+    apoyo_operativo:'Apoyo operativo · No computa en cobertura',
+    generado_por:'Generado por', todos_derechos:'Todos los derechos reservados',
+    wa_confirm_prefix:'¿Enviar turno individual por WhatsApp a ',
+    wa_confirm_pax:' empleado(s)?',
+    wa_confirm_sin_tel:'\n\nSin teléfono (no se enviarán): ',
+    wa_confirm_nota:'\n\nEl navegador abrirá una ventana por cada empleado.',
+    horas_short:'h', fiestas_btn:'Fiestas', eventos_btn:'Eventos',
+    opt_selecciona:'Selecciona...',
+    err_rellena:'Rellena todos los campos',
+    err_pass_min:'La contraseña debe tener al menos 4 caracteres',
+    err_pass_no_coincide:'Las contraseñas no coinciden',
+    err_ss_min:'El nº de afiliación debe tener al menos 4 dígitos',
+    err_dni_existe:'Ya existe un usuario con ese DNI',
+    err_crear_usuario:'Error al crear usuario: ',
+    err_cambiar_pass:'Error al cambiar la contraseña. Inténtalo de nuevo.',
+    lbl_salario_bruto:'Salario bruto/mes', lbl_horas_contrato:'Horas contrato/semana',
+    nominas_proximamente:'Las nóminas digitales estarán disponibles próximamente',
+    sin_datos_contrato:'No hay datos de contrato disponibles',
+    err_datos_contrato:'No se pudieron cargar los datos',
+    audit_sin_registros:'Sin registros',
+    audit_cargando:'⏳ Cargando...',
+    vacaciones:'VACACIONES',
+    // Alerts
+    alert_selecciona_local:'Selecciona un local',
+    alert_selecciona_desc:'Selecciona una descripción del evento',
+    alert_pon_nombre_refuerzo:'Pon el nombre de cada persona de refuerzo',
+    alert_añade_empleado:'Añade al menos un empleado',
+    alert_añade_refuerzo:'Añade al menos una persona de refuerzo',
+    alert_no_datos_imprimir:'No hay datos que imprimir',
+    alert_permite_popups:'Permite las ventanas emergentes para esta página y vuelve a intentarlo.',
+    alert_permite_popups2:'Permite las ventanas emergentes y vuelve a intentarlo.',
+    alert_permite_popups3:'Permite ventanas emergentes',
+    // Cuadrante generado
+    cuad_generado:'📋 Cuadrante generado',
+    cuad_cobertura:'COBERTURA',
+    cuad_lorena_sub:'Apoyo operativo · No computa en cobertura',
+    cuad_eventos:'⚡ Eventos especiales de la semana',
+    cuad_generado_por:'Generado por',
+    cuad_desarrollado:'Desarrollado por',
+    cuad_derechos:'Todos los derechos reservados',
+    // Dynamic render strings
+    tc_activo:'Activo', tc_inactivo:'Inactivo',
+    tc_turno:'Turno', tc_tramo1_desde:'Tramo 1 desde', tc_tramo1_hasta:'Tramo 1 hasta',
+    tc_tramo2_desde:'Tramo 2 desde', tc_tramo2_hasta:'Tramo 2 hasta',
+    tc_desde:'Desde', tc_hasta:'Hasta',
+    lbl_rol:'Rol', lbl_turno_hab:'Turno habitual',
+    lbl_dias_fiesta:'Días fiesta / semana',
+    opt_1dia:'1 día', opt_15dias:'1,5 días (recomendado)', opt_2dias:'2 días', opt_3dias:'3 días',
+    sel_empleado:'— Seleccionar empleado —',
+    col_empleado:'EMPLEADO', col_rol:'ROL', col_horas:'HORAS',
+    kpi_empleados:'Empleados', kpi_horas_tot:'Horas totales', kpi_cob_dia:'Cobertura/día', kpi_eventos:'Eventos',
+    kpi_h_pactadas:'H. pactadas', kpi_coste_fijo:'Coste fijo sem.', kpi_extras_sem:'Extras sem.',
+    kpi_total_sem:'Total semana', kpi_total_mes:'Total mes est.', kpi_eur_hora:'€/hora real', kpi_extras_anotadas:'Extras anotadas',
+    lbl_h_pactadas:'H. Pactadas / semana', lbl_coste_sem:'Coste / semana', lbl_coste_mes_ss:'Coste / mes (con SS)',
+    sin_datos_sal:'Sin datos salariales', extras_registradas:'⚡ EXTRAS REGISTRADAS',
+    coste_extra_lbl:'⚡ Coste extra:',
+    sin_extras:'Sin extras registradas esta semana',
+    h_extra_tot:'Total h. extra', coste_extras_sem:'Coste extras semana',
+    lbl_empleado:'Empleado', lbl_dia:'Día', lbl_h_extra:'Horas extra', lbl_eur_h:'€ / hora extra', lbl_motivo:'Motivo',
+    director_locales_activos:'LOCALES ACTIVOS', director_total_emps:'TOTAL EMPLEADOS',
+    director_coste_total:'COSTE TOTAL SEMANA', director_cob_min:'COBERTURA MÍNIMA',
+    director_semana:'Semana:', director_sin_cuad:'Sin cuadrante esta semana',
+    director_genera_cuad:'Genera el cuadrante para ver datos',
+    director_cob_dia:'COBERTURA/DÍA', director_coste_sem:'COSTE/SEM', director_fiestas_sem:'FIESTAS SEM',
+    director_comp:'Comparativa de coste semanal',
+    director_cargando:'⏳ Cargando datos...',
+    portal_cargando_cuad:'⏳ Cargando cuadrante...',
+    portal_no_cuad:'No hay cuadrante disponible esta semana',
+    portal_error_cuad:'No se pudo cargar el cuadrante',
+    portal_mis_datos:'📄 Mis datos de contrato',
+    portal_nombre:'Nombre:', portal_rol_lbl:'Rol:',
+    portal_sal_bruto:'Salario bruto/mes:', portal_h_contrato:'Horas contrato/semana:',
+    portal_no_contrato:'No hay datos de contrato disponibles',
+    portal_error_contrato:'No se pudieron cargar los datos',
+    portal_mi_actividad:'🗂 Mi actividad reciente',
+    arq_sin_arqueos:'Sin arqueos guardados aún',
+    arq_venta:'Venta:', arq_a_ingresar:'A ingresar',
+    arq_editar:'✏️ Editar',
+    arq_print_titulo:'💰 Arqueo de Caja',
+    arq_print_turno:'Turno', arq_print_cierre:'Cierre', arq_print_resp:'Responsable:',
+    arq_print_ef_inicial:'Efectivo inicial', arq_print_fondo:'Fondo de caja',
+    arq_print_cambio:'Cambio extra añadido', arq_print_total_disp:'Total disponible',
+    arq_print_ingresos:'Ingresos del turno', arq_print_venta:'Venta total',
+    arq_print_visa:'Cobrado por VISA/TPV', arq_print_pagos_prov:'Pagos a proveedores',
+    arq_print_total_pagos:'Total pagos', arq_print_total_caja:'Total en caja:',
+    arq_print_total_sal:'Total salidas:', arq_print_ef_recaud:'Efectivo recaudación',
+    arq_print_fondo_queda:'Fondo que queda en caja:',
+    arq_print_a_ingresar:'▶ A ingresar en caja fuerte:',
+    arq_print_notas:'Notas:', arq_print_sin_prov:'Sin pagos a proveedores',
+    arq_audit_line:'⚠ Registro creado por Dirección General:',
+    info_apertura:'✓ Apertura', info_cierre:'Cierre', info_activa_turnos:'Activa solo los turnos que usa este local.',
+    sin_datos:'Sin datos', locales_activos_lbl:'locales',
+    lbl_nombre_emp:'Nombre:', directora_lbl:'Director/a',
+    arq_modificado:'Modificado por Dirección General',
+  },
+
+  ca: {
+    dias: ['Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte','Diumenge'],
+    diasShort: ['DLL','DIM','DMC','DIJ','DIV','DIS','DIU'],
+    turno_manana:'Matí', turno_noche:'Nit', turno_tarde:'Tarda',
+    turno_intermedio:'Intermedi', turno_partido:'Partit', turno_fiesta:'Festa', turno_mediafiesta:'½ Mitja festa',
+    nav_local:'Local', nav_turnos:'Torns', nav_equipo:'Equip', nav_asignar:'Assignar',
+    nav_eventos:'Esdeveniments', nav_cuadrante:'Quadrant', nav_costes:'Costos',
+    nav_direccion:'Dirección General', nav_usuarios:'Usuaris', nav_ajustes:'Ajustos', nav_arqueo:'Arqueig', nav_compras:'Compres',
+    p1_titulo:'Quin local i setmana planificarem?',
+    p1_sub:'Selecciona el restaurant, la setmana i la configuració bàsica',
+    p1_local:'Local', p1_semana:'Setmana que comença el',
+    p1_apertura:'Hora obertura', p1_cierre:'Hora tancament',
+    p1_diasflojos:'Dies de menor afluència (festa suggerida)',
+    p1_siguiente:'Següent → Configurar torns',
+    opt_selecciona_local:'Selecciona local...',
+    p2_titulo:'Configura els torns del local',
+    p2_sub:'Torns calculats automàticament. Activa només els que usa aquest local.',
+    p2_media_fiesta:'Durada mitja festa (hores treballades)',
+    p2_jornada:'Hores jornada completa',
+    p2_atras:'← Enrere', p2_siguiente:'Següent → Equip',
+    p3_titulo:'Qui treballa en aquest local?',
+    p3_sub:'Empleats i el seu torn habitual. Les hores es calculen soles.',
+    p3_añadir:'+ Afegir empleat',
+    p3_lorena_sub:'Horari orientatiu · No computa en cobertura de sala · Sí computa en costos',
+    p3_siguiente:'Següent → Assignar torns',
+    p3_horas_auto:'Les hores setmanals es calculen automàticament segons els torns assignats',
+    p3_nombre_empleado:'Nom empleat',
+    p3_turno_habitual:'Torn habitual',
+    p4_titulo:'Assigna els torns de la setmana',
+    p4_sub:'Festes assignades automàticament. Ajusta el que necessitis.',
+    p4_recalcular:'⚡ Recalcular festes', p4_rotar:'🔀 Rotar dies (+1)',
+    p4_hint_recalcular:'<strong style="color:var(--green)">Recalcular</strong> — esborra les festes actuals i les torna a assignar des de zero.',
+    p4_hint_rotar:'<strong style="color:var(--purple)">Rotar dies</strong> — desplaça els dies de descans de cada empleat +1 dia.',
+    p4_siguiente:'Següent → Esdeveniments',
+    p5_titulo:'Hi ha esdeveniments especials aquesta setmana?',
+    p5_sub:'Partits, events, festius que necessitin reforç de personal',
+    p5_no_eventos:'No hi ha esdeveniments afegits',
+    p5_tipo:'Tipus', p5_dia:'Dia', p5_descripcion:'Descripció',
+    p5_refuerzo:'Persones de reforç',
+    p5_añadir_refuerzo:'+ Afegir persona de reforç',
+    p5_confirmar:'✓ Confirmar i afegir esdeveniment',
+    p5_generar:'⚡ Generar quadrant',
+    p6_ocultar_horas:'👁 Ocultar hores', p6_mostrar_horas:'👁 Mostrar hores',
+    p6_enviar_grupo:'📲 Enviar grup WA', p6_wa_todos:'📲 WA a tots',
+    p6_imprimir:'🖨 Imprimir', p6_guardar_bd:'💾 Guardar a BD',
+    p6_ver_costes:'💰 Veure costos', p6_nueva_semana:'+ Nova setmana',
+    p6_editar:'← Editar',
+    p7_titulo:'💰 Costos de personal',
+    p7_sub:'Quadrant · Brut nòmina + SS empresa + Extres reals',
+    p7_atras:'← Quadrant', p7_dir_gral:'📋 Direcció General',
+    p8_titulo:'📋 Direcció General',
+    p8_sub:'Resum setmanal de tots els locals',
+    p8_actualizar:'🔄 Actualitzar',
+    p8_imprimir:'🖨 Imprimir resum', p8_arqueo:'💰 Arqueig de caixa',
+    p8_audit_titulo:'🗂 Registre d\'activitat',
+    p9_titulo:'👥 Gestió d\'Usuaris',
+    p9_sub:'Crea i gestiona els accessos del personal',
+    p9_nuevo_usuario:'+ Nou usuari',
+    p9_nombre:'Nom complet', p9_dni:'DNI / NIE',
+    p9_ss:'Nº Afiliació Seg. Social', p9_ss_hint:'Els últims 4 dígits seran la contrasenya inicial',
+    p9_rol:'Rol a l\'app', p9_local:'Local',
+    p9_contacto:'Dades de contacte (opcionals)',
+    p9_telefono:'📱 Telèfon / WhatsApp', p9_email:'✉️ Email', p9_direccion:'🏠 Adreça',
+    p9_crear:'🔒 Crear usuari',
+    p9_lista:'Usuaris registrats', p9_actualizar:'🔄 Actualitzar llista',
+    p10_titulo:'🎨 Personalització',
+    p10_sub:'Adapta l\'aparença de RelojTurnos a la teva empresa',
+    p10_color:'✨ Color principal', p10_color_custom:'Personalitzat:',
+    p10_tema:'🌙 Tema', p10_tema_dark:'🌑 Fosc', p10_tema_light:'☀️ Clar', p10_tema_navy:'⚓ Marí',
+    p10_logo:'🖼️ Logo empresa', p10_logo_sub:'Capçalera, login i documents impresos',
+    p10_logo_subir:'📁 Pujar imatge', p10_logo_quitar:'🗑',
+    p10_empresa:'🏢 Nom empresa',
+    p10_preview:'👁 Previsualització',
+    p10_costes_titulo:'💰 Paràmetres de cost', p10_costes_sub:'Afecten tots els càlculs de nòmina i SS',
+    p10_ss_pct:'% SS empresa', p10_divisor:'Divisor mensual',
+    p10_ss_hint2:'Estàndard hostaleria: 39%', p10_divisor_hint:'Estàndard: 4,33',
+    p10_wa_titulo:'📲 WhatsApp grups', p10_wa_sub:'Número del grup de WhatsApp de cada local',
+    p10_wa_hint:'💡 Telèfons individuals d\'empleats es configuren a Gestió d\'Usuaris',
+    p10_idioma:'🌍 Idioma',
+    p10_nota:'ⓘ Els canvis es guarden al navegador al instant.',
+    p10_aviso_parcial:'⚠ Canvi parcial en aquesta versió',
+    p10_btn_usuarios:'← Usuaris', p10_btn_reset:'↺ Restablir per defecte',
+    p10_ejemplo:'Exemple: 1.800€ →', p10_sem:'/ set.',
+    prev_activo:'Actiu', prev_normal:'Normal',
+    arq_edit_banner:'✏️ Mode edició — Estàs modificant un arqueig guardat. Prem Guardar per confirmar o Netejar per cancel·lar.',
+    arq_lbl_local:'Local', arq_lbl_turno:'Torn', arq_lbl_fecha:'Data', arq_lbl_resp:'Responsable',
+    arq_sec_efectivo:'💰 Efectiu inicial', arq_lbl_fondo:'Fons de caixa (€)', arq_hint_fondo:'Import fix sempre a caixa',
+    arq_lbl_cambio:'Canvi extra afegit (€)', arq_hint_cambio:'Tret de la caixa forta si faltava',
+    arq_sec_ingresos:'↑ Ingressos del torn', arq_lbl_venta:'Venda total del torn (€)',
+    arq_lbl_visa:'Cobrat per VISA/TPV (€)', arq_hint_visa:'Es descompta de l\'efectiu',
+    arq_sec_pagos:'↓ Pagaments a proveïdors', arq_btn_anadir:'＋ Afegir',
+    arq_sin_pagos:'Sense pagaments a proveïdors aquest torn', arq_total_pagos_lbl:'Total pagaments:',
+    arq_sec_resultado:'📊 Resultat del torn', arq_total_caja:'Total entrades (venda + extracambi)', arq_total_salidas:'Total sortides (VISA + proveïdors)',
+    arq_ef_recaud:'💵 EFECTIU RECAPTACIÓ → CAIXA FORTA', arq_hint_ingresar:'A ingressar a la caixa forta (descomptant fons',
+    arq_hint_fuerte:'El fons queda al calaix per al torn següent',
+    arq_lbl_notas:'Notes / Incidències',
+    arq_btn_volver:'← Tornar', arq_btn_limpiar:'↺ Netejar', arq_btn_imprimir:'🖨 Imprimir', arq_btn_guardar:'💾 Guardar arqueig',
+    arq_historico_titulo:'📅 Últims arqueigs guardats',
+    p11_titulo:'💰 Arqueig de Caixa',
+    p11_sub:'Registre de tancament de torn',
+    p11_fecha:'📅 Data', p11_turno:'Torn',
+    p11_turno_m:'Matí', p11_turno_n:'Nit', p11_turno_t:'Tarda',
+    p11_responsable:'Responsable',
+    p11_fondo:'💵 Fons inicial caixa', p11_venta:'🧾 Venda total declarada',
+    p11_visa:'💳 VISA / TPV', p11_efectivo:'💵 Efectiu (Venda - VISA)',
+    p11_entregado:'💰 Efectiu lliurat', p11_diferencia:'⚖️ Diferència',
+    p11_proveedores:'📦 Pagaments a proveïdors',
+    p11_añadir_prov:'+ Afegir proveïdor',
+    p11_notas:'📝 Notes / incidències',
+    p11_guardar:'💾 Guardar arqueig', p11_limpiar:'🗑 Netejar', p11_imprimir:'🖨 Imprimir',
+    p11_historico:'📋 Historial d\'arqueigs',
+    p11_editar_banner:'✏️ Editant arqueig ID ',
+    p11_cancelar:'Cancel·lar edició',
+    login_dni:'DNI / NIE', login_password:'Contrasenya', login_btn:'Entrar',
+    login_demo:'DEMO', login_error:'Usuari o contrasenya incorrectes',
+    login_footer:'Gestió de torns per a hostaleria',
+    portal_cuadrante:'📅 Quadrant', portal_contrato:'📄 El meu contracte',
+    portal_actividad:'🗂 La meva activitat', portal_password:'🔒 Contrasenya',
+    portal_cambiar_pass:'Canviar contrasenya',
+    portal_pass_actual:'Contrasenya actual', portal_pass_nueva:'Nova contrasenya',
+    portal_pass_repite:'Repetir nova contrasenya',
+    portal_pass_btn:'🔒 Canviar contrasenya',
+    portal_cerrar:'← Tancar sessió',
+    toast_bienvenida:'✓ Benvinguda/ut ',
+    toast_conectado:'✓ Connectat a base de dades',
+    toast_conectado_default:'✓ Connectat (locals per defecte)',
+    toast_sin_tabla:'⚠ Sense taula locals — mode local',
+    toast_local_no_encontrado:'Local no trobat a BD',
+    toast_actualizando_cuad:'⏳ Actualitzant quadrant existent...',
+    toast_cuad_guardado:'✓ Quadrant guardat a la base de dades',
+    toast_cuad_error:'Error en guardar: ',
+    toast_cargando_equipo:'⏳ Carregant equip...',
+    toast_equipo_cargado:'✓ Equip carregat des de BD ',
+    toast_sin_empleados:'ℹ Sense empleats a BD — usant equip per defecte',
+    toast_error_bd:'⚠ Error carregant BD — usant equip per defecte',
+    toast_fiestas_rotadas:'🔀 Festes rotades — revisa el quadrant',
+    toast_color:'✓ Color aplicat', toast_tema:'✓ Tema aplicat',
+    toast_nombre:'✓ Nom actualitzat', toast_restablecido:'✓ Ajustos restablerts',
+    toast_logo_grande:'⚠ Imatge massa gran (màx 500KB)',
+    toast_logo_ok:'✓ Logo actualitzat', toast_logo_quitado:'✓ Logo eliminat',
+    toast_wa_configura:'⚠ Configura el número del grup a Ajustos → WhatsApp',
+    toast_wa_guarda_bd:'⚠ Primer guarda el quadrant a BD (botó 💾)',
+    toast_empleado_no_encontrado:'Empleat no trobat',
+    toast_wa_sin_telefono:'⚠ Afegeix el telèfon de l\'empleat a Usuaris',
+    toast_wa_sin_telefonos:'⚠ Cap empleat té telèfon configurat a Usuaris',
+    toast_wa_enviando:'📲 Enviant a ',
+    toast_wa_empleados:' empleats...',
+    toast_wa_numeros:'✓ Números guardats',
+    toast_params:'✓ Paràmetres actualitzats',
+    toast_idioma:'✓ Idioma aplicat',
+    toast_arq_invalido:'ID d\'arqueig invàlid',
+    toast_arq_no_encontrado:'Arqueig no trobat',
+    toast_arq_cargado:'✏️ Arqueig carregat per editar',
+    toast_arq_error_carga:'Error carregant arqueig: ',
+    toast_edicion_cancelada:'Edició cancel·lada — formulari net',
+    toast_pass_cambiada:'✓ Contrasenya canviada correctament',
+    toast_usuario_creado:'✓ Usuari creat',
+    toast_password_incorrecta:'La contrasenya actual és incorrecta',
+    err_rellena:'Omple tots els camps',
+    err_pass_min:'La contrasenya ha de tenir almenys 4 caràcters',
+    err_pass_no_coincide:'Les contrasenyes no coincideixen',
+    err_ss_min:'El nº d\'afiliació ha de tenir almenys 4 dígits',
+    err_dni_existe:'Ja existeix un usuari amb aquest DNI',
+    err_crear_usuario:'Error en crear usuari: ',
+    err_cambiar_pass:'Error en canviar la contrasenya. Torna-ho a intentar.',
+    cobertura:'COBERTURA', personas:'pers.',
+    turno_m_label:'Matí', turno_n_label:'Nit', turno_t_label:'Tarda',
+    turno_i_label:'Intermedi', turno_p_label:'Partit', turno_mf_label:'½ Mitja festa',
+    apoyo_operativo:'Horari orientatiu · No computa en cobertura',
+    generado_por:'Generat per', todos_derechos:'Tots els drets reservats',
+    wa_confirm_prefix:'Enviar torn individual per WhatsApp a ',
+    wa_confirm_pax:' empleat(s)?',
+    wa_confirm_sin_tel:'\n\nSense telèfon (no s\'enviaran): ',
+    wa_confirm_nota:'\n\nEl navegador obrirà una finestra per a cada empleat.',
+    horas_short:'h', opt_selecciona:'Selecciona...',
+    lbl_salario_bruto:'Salari brut/mes', lbl_horas_contrato:'Hores contracte/setmana',
+    nominas_proximamente:'Les nòmines digitals estaran disponibles aviat',
+    sin_datos_contrato:'No hi ha dades de contracte disponibles',
+    err_datos_contrato:'No s\'han pogut carregar les dades',
+    audit_sin_registros:'Sense registres',
+    audit_cargando:'⏳ Carregant...',
+    vacaciones:'VACANCES',
+    alert_selecciona_local:'Selecciona un local',
+    alert_selecciona_desc:'Selecciona una descripció de l\'esdeveniment',
+    alert_pon_nombre_refuerzo:'Posa el nom de cada persona de reforç',
+    alert_añade_empleado:'Afegeix almenys un empleat',
+    alert_añade_refuerzo:'Afegeix almenys una persona de reforç',
+    alert_no_datos_imprimir:'No hi ha dades per imprimir',
+    alert_permite_popups:'Permet les finestres emergents per a aquesta pàgina i torna-ho a intentar.',
+    alert_permite_popups2:'Permet les finestres emergents i torna-ho a intentar.',
+    alert_permite_popups3:'Permet les finestres emergents',
+    cuad_generado:'📋 Quadrant generat',
+    cuad_cobertura:'COBERTURA',
+    cuad_lorena_sub:'Horari orientatiu · No computa en cobertura',
+    cuad_eventos:'⚡ Esdeveniments especials de la setmana',
+    cuad_generado_por:'Generat per', cuad_desenvolupado:'Desenvolupat per',
+    cuad_derechos:'Tots els drets reservats',
+    tc_activo:'Actiu', tc_inactivo:'Inactiu',
+    tc_turno:'Torn', tc_tramo1_desde:'Tram 1 des de', tc_tramo1_hasta:'Tram 1 fins a',
+    tc_tramo2_desde:'Tram 2 des de', tc_tramo2_hasta:'Tram 2 fins a',
+    tc_desde:'Des de', tc_hasta:'Fins a',
+    lbl_rol:'Rol', lbl_turno_hab:'Torn habitual',
+    lbl_dias_fiesta:'Dies festa / setmana',
+    opt_1dia:'1 dia', opt_15dias:'1,5 dies (recomanat)', opt_2dias:'2 dies', opt_3dias:'3 dies',
+    sel_empleado:'— Seleccionar empleat —',
+    col_empleado:'EMPLEAT', col_rol:'ROL', col_horas:'HORES',
+    kpi_empleados:'Empleats', kpi_horas_tot:'Hores totals', kpi_cob_dia:'Cobertura/dia', kpi_eventos:'Esdeveniments',
+    kpi_h_pactadas:'H. pactades', kpi_coste_fijo:'Cost fix set.', kpi_extras_sem:'Extres set.',
+    kpi_total_sem:'Total setmana', kpi_total_mes:'Total mes est.', kpi_eur_hora:'€/hora real', kpi_extras_anotadas:'Extres anotades',
+    lbl_h_pactadas:'H. Pactades / setmana', lbl_coste_sem:'Cost / setmana', lbl_coste_mes_ss:'Cost / mes (amb SS)',
+    sin_datos_sal:'Sense dades salarials', extras_registradas:'⚡ EXTRES REGISTRADES',
+    coste_extra_lbl:'⚡ Cost extra:',
+    sin_extras:'Sense extres registrades aquesta setmana',
+    h_extra_tot:'Total h. extra', coste_extras_sem:'Cost extres setmana',
+    lbl_empleado:'Empleat', lbl_dia:'Dia', lbl_h_extra:'Hores extra', lbl_eur_h:'€ / hora extra', lbl_motivo:'Motiu',
+    director_locales_activos:'LOCALS ACTIUS', director_total_emps:'TOTAL EMPLEATS',
+    director_coste_total:'COST TOTAL SETMANA', director_cob_min:'COBERTURA MÍNIMA',
+    director_semana:'Setmana:', director_sin_cuad:'Sense quadrant aquesta setmana',
+    director_genera_cuad:'Genera el quadrant per veure dades',
+    director_cob_dia:'COBERTURA/DIA', director_coste_sem:'COST/SET', director_fiestas_sem:'FESTES SET',
+    director_comp:'Comparativa de cost setmanal',
+    director_cargando:'⏳ Carregant dades...',
+    portal_cargando_cuad:'⏳ Carregant quadrant...',
+    portal_no_cuad:'No hi ha quadrant disponible aquesta setmana',
+    portal_error_cuad:'No s\'ha pogut carregar el quadrant',
+    portal_mis_datos:'📄 Les meves dades de contracte',
+    portal_nombre:'Nom:', portal_rol_lbl:'Rol:',
+    portal_sal_bruto:'Salari brut/mes:', portal_h_contrato:'Hores contracte/setmana:',
+    portal_no_contrato:'No hi ha dades de contracte disponibles',
+    portal_error_contrato:'No s\'han pogut carregar les dades',
+    portal_mi_actividad:'🗂 La meva activitat recent',
+    arq_sin_arqueos:'Sense arqueigs guardats encara',
+    arq_venta:'Venda:', arq_a_ingresar:'A ingressar',
+    arq_editar:'✏️ Editar',
+    arq_print_titulo:'💰 Arqueig de Caixa',
+    arq_print_turno:'Torn', arq_print_cierre:'Tancament', arq_print_resp:'Responsable:',
+    arq_print_ef_inicial:'Efectiu inicial', arq_print_fondo:'Fons de caixa',
+    arq_print_cambio:'Canvi extra afegit', arq_print_total_disp:'Total disponible',
+    arq_print_ingresos:'Ingressos del torn', arq_print_venta:'Venda total',
+    arq_print_visa:'Cobrat per VISA/TPV', arq_print_pagos_prov:'Pagaments a proveïdors',
+    arq_print_total_pagos:'Total pagaments', arq_print_total_caja:'Total a caixa:',
+    arq_print_total_sal:'Total sortides:', arq_print_ef_recaud:'Efectiu recaptació',
+    arq_print_fondo_queda:'Fons que queda a caixa:',
+    arq_print_a_ingresar:'▶ A ingressar a caixa forta:',
+    arq_print_notas:'Notes:', arq_print_sin_prov:'Sense pagaments a proveïdors',
+    arq_audit_line:'⚠ Registre creat per Direcció General:',
+    info_apertura:'✓ Obertura', info_cierre:'Tancament', info_activa_turnos:'Activa només els torns que usa aquest local.',
+    sin_datos:'Sense dades', locales_activos_lbl:'locals',
+    lbl_nombre_emp:'Nom:', directora_lbl:'Director/a',
+    arq_modificado:'Modificat per Direcció General',
+    fiestas_btn:'Festes', eventos_btn:'Esdeveniments',
+  },
+
+  en: {
+    dias: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
+    diasShort: ['MON','TUE','WED','THU','FRI','SAT','SUN'],
+    turno_manana:'Morning', turno_noche:'Night', turno_tarde:'Afternoon',
+    turno_intermedio:'Split', turno_partido:'Split shift', turno_fiesta:'Day off', turno_mediafiesta:'½ Half day off',
+    nav_local:'Venue', nav_turnos:'Shifts', nav_equipo:'Team', nav_asignar:'Assign',
+    nav_eventos:'Events', nav_cuadrante:'Schedule', nav_costes:'Costs',
+    nav_direccion:'Head Office', nav_usuarios:'Users', nav_ajustes:'Settings', nav_arqueo:'Cash', nav_compras:'Purchasing',
+    p1_titulo:'Which venue and week are we planning?',
+    p1_sub:'Select the restaurant, week and basic configuration',
+    p1_local:'Venue', p1_semana:'Week starting on',
+    p1_apertura:'Opening time', p1_cierre:'Closing time',
+    p1_diasflojos:'Slow days (suggested day off)',
+    p1_siguiente:'Next → Configure shifts',
+    opt_selecciona_local:'Select venue...',
+    p2_titulo:'Configure venue shifts',
+    p2_sub:'Shifts calculated automatically. Only enable the ones this venue uses.',
+    p2_media_fiesta:'Half day off duration (hours worked)',
+    p2_jornada:'Full shift hours',
+    p2_atras:'← Back', p2_siguiente:'Next → Team',
+    p3_titulo:'Who works at this venue?',
+    p3_sub:'Employees and their usual shift. Hours are calculated automatically.',
+    p3_añadir:'+ Add employee',
+    p3_lorena_sub:'Guide schedule · Not counted in floor coverage · Counted in costs',
+    p3_siguiente:'Next → Assign shifts',
+    p3_horas_auto:'Weekly hours are calculated automatically based on assigned shifts',
+    p3_nombre_empleado:'Employee name',
+    p3_turno_habitual:'Usual shift',
+    p4_titulo:'Assign this week\'s shifts',
+    p4_sub:'Days off assigned automatically based on slow days and minimum staffing. Adjust as needed.',
+    p4_recalcular:'⚡ Recalculate days off', p4_rotar:'🔀 Rotate days (+1)',
+    p4_hint_recalcular:'<strong style="color:var(--green)">Recalculate</strong> — clears current days off and reassigns from scratch based on slow days and minimum staff.',
+    p4_hint_rotar:'<strong style="color:var(--purple)">Rotate days</strong> — shifts each employee\'s day off by +1 day, so they don\'t always rest on the same day.',
+    p4_siguiente:'Next → Events',
+    p5_titulo:'Any special events this week?',
+    p5_sub:'Matches, events, public holidays that need extra staff',
+    p5_no_eventos:'No events added',
+    p5_tipo:'Type', p5_dia:'Day', p5_descripcion:'Description',
+    p5_refuerzo:'Reinforcement staff',
+    p5_añadir_refuerzo:'+ Add reinforcement person',
+    p5_confirmar:'✓ Confirm and add event',
+    p5_generar:'⚡ Generate schedule',
+    p6_ocultar_horas:'👁 Hide hours', p6_mostrar_horas:'👁 Show hours',
+    p6_enviar_grupo:'📲 Send to WA group', p6_wa_todos:'📲 WA to all',
+    p6_imprimir:'🖨 Print', p6_guardar_bd:'💾 Save to DB',
+    p6_ver_costes:'💰 View costs', p6_nueva_semana:'+ New week',
+    p6_editar:'← Edit',
+    p7_titulo:'💰 Staff costs',
+    p7_sub:'Schedule · Gross salary + Social Security + Real extras',
+    p7_atras:'← Schedule', p7_dir_gral:'📋 Head Office',
+    p8_titulo:'📋 Head Office',
+    p8_sub:'Weekly summary of all venues',
+    p8_actualizar:'🔄 Refresh',
+    p8_imprimir:'🖨 Print summary', p8_arqueo:'💰 Cash register',
+    p8_audit_titulo:'🗂 Activity log',
+    p9_titulo:'👥 User Management',
+    p9_sub:'Create and manage staff access',
+    p9_nuevo_usuario:'+ New user',
+    p9_nombre:'Full name', p9_dni:'ID number',
+    p9_ss:'Social Security affiliation number', p9_ss_hint:'Last 4 digits will be the initial password',
+    p9_rol:'App role', p9_local:'Venue',
+    p9_contacto:'Contact details (optional)',
+    p9_telefono:'📱 Phone / WhatsApp', p9_email:'✉️ Email', p9_direccion:'🏠 Address',
+    p9_crear:'🔒 Create user',
+    p9_lista:'Registered users', p9_actualizar:'🔄 Refresh list',
+    p10_titulo:'🎨 Customisation',
+    p10_sub:'Adapt the look of RelojTurnos to your business',
+    p10_color:'✨ Main colour', p10_color_custom:'Custom:',
+    p10_tema:'🌙 Theme', p10_tema_dark:'🌑 Dark', p10_tema_light:'☀️ Light', p10_tema_navy:'⚓ Navy',
+    p10_logo:'🖼️ Company logo', p10_logo_sub:'Header, login and printed documents',
+    p10_logo_subir:'📁 Upload image', p10_logo_quitar:'🗑',
+    p10_empresa:'🏢 Company name',
+    p10_preview:'👁 Preview',
+    p10_costes_titulo:'💰 Cost parameters', p10_costes_sub:'Affect all payroll and SS calculations',
+    p10_ss_pct:'% Employer SS', p10_divisor:'Monthly divisor',
+    p10_ss_hint2:'Standard hospitality: 39%', p10_divisor_hint:'Standard: 4.33',
+    p10_wa_titulo:'📲 WhatsApp groups', p10_wa_sub:'WhatsApp group number for each venue',
+    p10_wa_hint:'💡 Individual employee phones are set in User Management',
+    p10_idioma:'🌍 Language',
+    p10_nota:'ⓘ Changes are saved to your browser instantly.',
+    p10_aviso_parcial:'⚠ Partial change in this version',
+    p10_btn_usuarios:'← Users', p10_btn_reset:'↺ Reset to defaults',
+    p10_ejemplo:'Example: 1,800€ →', p10_sem:'/ wk',
+    prev_activo:'Active', prev_normal:'Normal',
+    arq_edit_banner:'✏️ Edit mode — You are modifying a saved cash register. Press Save to confirm or Clear to cancel.',
+    arq_lbl_local:'Venue', arq_lbl_turno:'Shift', arq_lbl_fecha:'Date', arq_lbl_resp:'Responsible',
+    arq_sec_efectivo:'💰 Opening cash', arq_lbl_fondo:'Cash float (€)', arq_hint_fondo:'Fixed amount always in register',
+    arq_lbl_cambio:'Extra change added (€)', arq_hint_cambio:'Taken from safe if short',
+    arq_sec_ingresos:'↑ Shift income', arq_lbl_venta:'Total shift sales (€)',
+    arq_lbl_visa:'Paid by VISA/POS (€)', arq_hint_visa:'Deducted from cash',
+    arq_sec_pagos:'↓ Supplier payments', arq_btn_anadir:'＋ Add',
+    arq_sin_pagos:'No supplier payments this shift', arq_total_pagos_lbl:'Total payments:',
+    arq_sec_resultado:'📊 Shift result', arq_total_caja:'Total inputs (sales + extra change)', arq_total_salidas:'Total outgoings (VISA + suppliers)',
+    arq_ef_recaud:'💵 CASH COLLECTED → SAFE', arq_hint_ingresar:'To deposit in safe (deducting float',
+    arq_hint_fuerte:'Float stays in the till for the next shift',
+    arq_lbl_notas:'Notes / Incidents',
+    arq_btn_volver:'← Back', arq_btn_limpiar:'↺ Clear', arq_btn_imprimir:'🖨 Print', arq_btn_guardar:'💾 Save register',
+    arq_historico_titulo:'📅 Latest saved registers',
+    p11_titulo:'💰 Cash Register',
+    p11_sub:'End of shift report',
+    p11_fecha:'📅 Date', p11_turno:'Shift',
+    p11_turno_m:'Morning', p11_turno_n:'Night', p11_turno_t:'Afternoon',
+    p11_responsable:'Responsible',
+    p11_fondo:'💵 Opening float', p11_venta:'🧾 Total declared sales',
+    p11_visa:'💳 Card / POS', p11_efectivo:'💵 Cash (Sales - Card)',
+    p11_entregado:'💰 Cash handed over', p11_diferencia:'⚖️ Difference',
+    p11_proveedores:'📦 Supplier payments',
+    p11_añadir_prov:'+ Add supplier',
+    p11_notas:'📝 Notes / incidents',
+    p11_guardar:'💾 Save', p11_limpiar:'🗑 Clear', p11_imprimir:'🖨 Print',
+    p11_historico:'📋 Cash register history',
+    p11_editar_banner:'✏️ Editing cash register ID ',
+    p11_cancelar:'Cancel edit',
+    login_dni:'ID number', login_password:'Password', login_btn:'Log in',
+    login_demo:'DEMO', login_error:'Incorrect username or password',
+    login_footer:'Shift management for hospitality',
+    portal_cuadrante:'📅 Schedule', portal_contrato:'📄 My contract',
+    portal_actividad:'🗂 My activity', portal_password:'🔒 Password',
+    portal_cambiar_pass:'Change password',
+    portal_pass_actual:'Current password', portal_pass_nueva:'New password',
+    portal_pass_repite:'Repeat new password',
+    portal_pass_btn:'🔒 Change password',
+    portal_cerrar:'← Log out',
+    toast_bienvenida:'✓ Welcome ',
+    toast_conectado:'✓ Connected to database',
+    toast_conectado_default:'✓ Connected (default venues)',
+    toast_sin_tabla:'⚠ No venues table — local mode',
+    toast_local_no_encontrado:'Venue not found in DB',
+    toast_actualizando_cuad:'⏳ Updating existing schedule...',
+    toast_cuad_guardado:'✓ Schedule saved to database',
+    toast_cuad_error:'Error saving: ',
+    toast_cargando_equipo:'⏳ Loading team...',
+    toast_equipo_cargado:'✓ Team loaded from DB ',
+    toast_sin_empleados:'ℹ No employees in DB — using default team',
+    toast_error_bd:'⚠ Error loading DB — using default team',
+    toast_fiestas_rotadas:'🔀 Days off rotated — review the schedule',
+    toast_color:'✓ Colour applied', toast_tema:'✓ Theme applied',
+    toast_nombre:'✓ Name updated', toast_restablecido:'✓ Settings reset',
+    toast_logo_grande:'⚠ Image too large (max 500KB)',
+    toast_logo_ok:'✓ Logo updated', toast_logo_quitado:'✓ Logo removed',
+    toast_wa_configura:'⚠ Set the group number in Settings → WhatsApp',
+    toast_wa_guarda_bd:'⚠ First save the schedule to DB (💾 button)',
+    toast_empleado_no_encontrado:'Employee not found',
+    toast_wa_sin_telefono:'⚠ Add employee phone in User Management',
+    toast_wa_sin_telefonos:'⚠ No employees have a phone configured',
+    toast_wa_enviando:'📲 Sending to ',
+    toast_wa_empleados:' employees...',
+    toast_wa_numeros:'✓ Numbers saved',
+    toast_params:'✓ Parameters updated',
+    toast_idioma:'✓ Language applied',
+    toast_arq_invalido:'Invalid cash register ID',
+    toast_arq_no_encontrado:'Cash register not found',
+    toast_arq_cargado:'✏️ Cash register loaded for editing',
+    toast_arq_error_carga:'Error loading cash register: ',
+    toast_edicion_cancelada:'Edit cancelled — form cleared',
+    toast_pass_cambiada:'✓ Password changed successfully',
+    toast_usuario_creado:'✓ User created',
+    toast_password_incorrecta:'Current password is incorrect',
+    err_rellena:'Please fill in all fields',
+    err_pass_min:'Password must be at least 4 characters',
+    err_pass_no_coincide:'Passwords do not match',
+    err_ss_min:'Affiliation number must be at least 4 digits',
+    err_dni_existe:'A user with that ID already exists',
+    err_crear_usuario:'Error creating user: ',
+    err_cambiar_pass:'Error changing password. Please try again.',
+    cobertura:'COVERAGE', personas:'staff',
+    turno_m_label:'Morning', turno_n_label:'Night', turno_t_label:'Afternoon',
+    turno_i_label:'Split', turno_p_label:'Split shift', turno_mf_label:'½ Half day off',
+    apoyo_operativo:'Guide schedule · Not counted in floor coverage',
+    generado_por:'Generated by', todos_derechos:'All rights reserved',
+    wa_confirm_prefix:'Send individual WhatsApp to ',
+    wa_confirm_pax:' employee(s)?',
+    wa_confirm_sin_tel:'\n\nNo phone (will not be sent): ',
+    wa_confirm_nota:'\n\nThe browser will open one window per employee.',
+    horas_short:'h', opt_selecciona:'Select...',
+    lbl_salario_bruto:'Gross salary/month', lbl_horas_contrato:'Contract hours/week',
+    nominas_proximamente:'Digital payslips coming soon',
+    sin_datos_contrato:'No contract data available',
+    err_datos_contrato:'Could not load data',
+    audit_sin_registros:'No records',
+    audit_cargando:'⏳ Loading...',
+    vacaciones:'ON LEAVE',
+    alert_selecciona_local:'Select a venue',
+    alert_selecciona_desc:'Select an event description',
+    alert_pon_nombre_refuerzo:'Enter the name of each reinforcement person',
+    alert_añade_empleado:'Add at least one employee',
+    alert_añade_refuerzo:'Add at least one reinforcement person',
+    alert_no_datos_imprimir:'No data to print',
+    alert_permite_popups:'Allow pop-ups for this page and try again.',
+    alert_permite_popups2:'Allow pop-ups and try again.',
+    alert_permite_popups3:'Allow pop-ups',
+    cuad_generado:'📋 Generated schedule',
+    cuad_cobertura:'COVERAGE',
+    cuad_lorena_sub:'Guide schedule · Not counted in floor coverage',
+    cuad_eventos:'⚡ Special events this week',
+    cuad_generado_por:'Generated by', cuad_desarrollado:'Developed by',
+    cuad_derechos:'All rights reserved',
+    tc_activo:'Active', tc_inactivo:'Inactive',
+    tc_turno:'Shift', tc_tramo1_desde:'Leg 1 from', tc_tramo1_hasta:'Leg 1 until',
+    tc_tramo2_desde:'Leg 2 from', tc_tramo2_hasta:'Leg 2 until',
+    tc_desde:'From', tc_hasta:'Until',
+    lbl_rol:'Role', lbl_turno_hab:'Usual shift',
+    lbl_dias_fiesta:'Days off / week',
+    opt_1dia:'1 day', opt_15dias:'1.5 days (recommended)', opt_2dias:'2 days', opt_3dias:'3 days',
+    sel_empleado:'— Select employee —',
+    col_empleado:'EMPLOYEE', col_rol:'ROLE', col_horas:'HOURS',
+    kpi_empleados:'Employees', kpi_horas_tot:'Total hours', kpi_cob_dia:'Coverage/day', kpi_eventos:'Events',
+    kpi_h_pactadas:'Contracted h.', kpi_coste_fijo:'Fixed cost wk.', kpi_extras_sem:'Extras wk.',
+    kpi_total_sem:'Total week', kpi_total_mes:'Total month est.', kpi_eur_hora:'€/real hour', kpi_extras_anotadas:'Extras logged',
+    lbl_h_pactadas:'Contracted hrs / week', lbl_coste_sem:'Cost / week', lbl_coste_mes_ss:'Cost / month (incl. SS)',
+    sin_datos_sal:'No salary data', extras_registradas:'⚡ LOGGED EXTRAS',
+    coste_extra_lbl:'⚡ Extra cost:',
+    sin_extras:'No extras logged this week',
+    h_extra_tot:'Total extra h.', coste_extras_sem:'Extra cost this week',
+    lbl_empleado:'Employee', lbl_dia:'Day', lbl_h_extra:'Extra hours', lbl_eur_h:'€ / extra hour', lbl_motivo:'Reason',
+    director_locales_activos:'ACTIVE VENUES', director_total_emps:'TOTAL EMPLOYEES',
+    director_coste_total:'TOTAL WEEKLY COST', director_cob_min:'MINIMUM COVERAGE',
+    director_semana:'Week:', director_sin_cuad:'No schedule this week',
+    director_genera_cuad:'Generate schedule to see data',
+    director_cob_dia:'COVERAGE/DAY', director_coste_sem:'COST/WK', director_fiestas_sem:'DAYS OFF WK',
+    director_comp:'Weekly cost comparison',
+    director_cargando:'⏳ Loading data...',
+    portal_cargando_cuad:'⏳ Loading schedule...',
+    portal_no_cuad:'No schedule available this week',
+    portal_error_cuad:'Could not load schedule',
+    portal_mis_datos:'📄 My contract details',
+    portal_nombre:'Name:', portal_rol_lbl:'Role:',
+    portal_sal_bruto:'Gross salary/month:', portal_h_contrato:'Contract hours/week:',
+    portal_no_contrato:'No contract data available',
+    portal_error_contrato:'Could not load data',
+    portal_mi_actividad:'🗂 My recent activity',
+    arq_sin_arqueos:'No cash records saved yet',
+    arq_venta:'Sales:', arq_a_ingresar:'To deposit',
+    arq_editar:'✏️ Edit',
+    arq_print_titulo:'💰 Cash Register',
+    arq_print_turno:'Shift', arq_print_cierre:'Close', arq_print_resp:'Responsible:',
+    arq_print_ef_inicial:'Opening cash', arq_print_fondo:'Opening float',
+    arq_print_cambio:'Extra change added', arq_print_total_disp:'Total available',
+    arq_print_ingresos:'Shift takings', arq_print_venta:'Total sales',
+    arq_print_visa:'Paid by card/POS', arq_print_pagos_prov:'Supplier payments',
+    arq_print_total_pagos:'Total payments', arq_print_total_caja:'Total in till:',
+    arq_print_total_sal:'Total outgoings:', arq_print_ef_recaud:'Cash takings',
+    arq_print_fondo_queda:'Float remaining in till:',
+    arq_print_a_ingresar:'▶ To deposit in safe:',
+    arq_print_notas:'Notes:', arq_print_sin_prov:'No supplier payments',
+    arq_audit_line:'⚠ Record created by Head Office:',
+    info_apertura:'✓ Opening', info_cierre:'Closing', info_activa_turnos:'Only enable shifts this venue uses.',
+    sin_datos:'No data', locales_activos_lbl:'venues',
+    lbl_nombre_emp:'Name:', directora_lbl:'Manager',
+    arq_modificado:'Modified by Head Office',
+    fiestas_btn:'Days off', eventos_btn:'Events',
+  }
+};
+
+// Función de traducción — t('clave')
+function t(key){ return (I18N[LANG_ACTUAL]||I18N.es)[key] || (I18N.es[key] || key); }
+
+// Aplica todas las traducciones al DOM via data-i18n
+function aplicarTraducciones(){
+  var l = I18N[LANG_ACTUAL] || I18N.es;
+  // Actualizar arrays globales
+  DIAS = l.dias;
+  DIAS_SHORT = l.diasShort;
+
+  // Todos los elementos con data-i18n="clave"
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key = el.getAttribute('data-i18n');
+    var val = t(key);
+    if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'){
+      el.placeholder = val;
+    } else if(el.tagName === 'OPTION'){
+      el.textContent = val;
+    } else {
+      el.innerHTML = val;
+    }
+  });
+
+  // data-i18n-placeholder
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+
+  // Corregir botón ocultar/mostrar horas según estado actual (no sobreescribir con valor estático)
+  var btnH = document.getElementById('btn-toggle-horas');
+  if(btnH){
+    var keyH = mostrarHoras ? 'p6_ocultar_horas' : 'p6_mostrar_horas';
+    btnH.textContent = t(keyH);
+    btnH.setAttribute('data-i18n', keyH);
+  }
+}
+
+function aplicarIdioma(lang){
+  if(!I18N[lang]) return;
+  LANG_ACTUAL = lang;
+  localStorage.setItem('rt_lang', lang);
+  aplicarTraducciones();
+  // Actualizar botones activos
+  ['es','ca','en'].forEach(function(n){
+    var btn = document.getElementById('btn-lang-'+n);
+    if(btn) btn.className = 'btn btn-sm '+(n===lang?'btn-primary':'btn-ghost');
+  });
+  showToast(t('toast_idioma'),'green');
+  // Re-render secciones dinámicas
+  if(empleados.length){
+    renderEmpleados();
+    renderTurnosConfigGrid();
+    renderCostes();
+  }
+  renderLorenaHorario();
+  renderEventos();
+  // Re-render cuadrante si está activo
+  var sc6 = document.getElementById('screen6');
+  if(sc6 && sc6.classList.contains('active') && empleados.length){
+    generarCuadrante();
+  }
+  // Re-render director si está activo
+  var sc8 = document.getElementById('screen8');
+  if(sc8 && sc8.classList.contains('active')){
+    cargarVistaDirector();
+  }
+  // Re-render histórico arqueo si visible
+  var arqHist = document.getElementById('arq-historico');
+  if(arqHist && arqHist.innerHTML && arqHist.innerHTML.length > 50){
+    cargarHistoricoArqueos();
+  }
+}
+
+function cargarIdiomaGuardado(){
+  var lang = localStorage.getItem('rt_lang') || 'es';
+  LANG_ACTUAL = lang;
+  var l = I18N[lang] || I18N.es;
+  DIAS = l.dias;
+  DIAS_SHORT = l.diasShort;
+  aplicarTraducciones();
+  ['es','ca','en'].forEach(function(n){
+    var btn = document.getElementById('btn-lang-'+n);
+    if(btn) btn.className = 'btn btn-sm '+(n===lang?'btn-primary':'btn-ghost');
+  });
+}
+
+// ========== INIT ==========
+(function(){
+  // Detectar vista pública por parámetro URL
+  var urlParams = new URLSearchParams(window.location.search);
+  var cuadParam = urlParams.get('cuadrante');
+  if(cuadParam){
+    // Modo vista pública — ocultar TODO excepto vista-publica
+    document.getElementById('login-screen').style.display='none';
+    var hdr = document.querySelector('header'); if(hdr) hdr.style.display='none';
+    var cnt = document.querySelector('.container'); if(cnt) cnt.style.display='none';
+    var pe  = document.getElementById('portal-empleado'); if(pe) pe.style.display='none';
+    document.body.style.background='#0f1117';
+    document.body.style.margin='0';
+    document.body.style.minHeight='100vh';
+    var vp = document.getElementById('vista-publica');
+    if(vp){ vp.style.background='#0f1117'; vp.style.color='#e0e0e0'; }
+    cargarPersonalizacionGuardada();
+    cargarVistaPublica(parseInt(cuadParam));
+    return;
+  }
+  buildFechas();
+  horaOpts('hora-apertura','07:30');
+  horaOpts('hora-cierre','02:30');
+  cargarPersonalizacionGuardada();
+  cargarParamsCosteGuardados();
+  cargarIdiomaGuardado();
+  var savedLogo = localStorage.getItem('rt_logo');
+  if(savedLogo) setTimeout(function(){ aplicarLogoGuardado(savedLogo); }, 100);
+  initSupabase();
+})();
+
+// ========== ARQUEO DE CAJA ==========
+var arqProveedores = [];
+var arqProvCounter = 0;
+
+var CIERRES_LOCAL = {
+  1: { manana: '17:00', noche: '03:00' },
+  2: { manana: '17:00', noche: '00:00' }
+};
+
+function initArqueo(){
+  // Reset estado — evita datos residuales de visita anterior
+  if(!arqEditId){
+    arqProveedores = [];
+    arqProvCounter = 0;
+  }
+
+  // Fecha de hoy por defecto
+  var hoy = new Date();
+  var yyyy = hoy.getFullYear();
+  var mm   = String(hoy.getMonth()+1).padStart(2,'0');
+  var dd   = String(hoy.getDate()).padStart(2,'0');
+  var fechaEl = document.getElementById('arq-fecha');
+  if(fechaEl && !fechaEl.value) fechaEl.value = yyyy+'-'+mm+'-'+dd;
+
+  // Responsable fijo = usuario logueado
+  var respNombre = currentUser ? (currentUser.nombre || currentUser.dni) : '—';
+  var respEl = document.getElementById('arq-responsable');
+  var respDisp = document.getElementById('arq-responsable-display');
+  if(respEl) respEl.value = respNombre;
+  if(respDisp) respDisp.textContent = '👤 ' + respNombre;
+
+  // Local por defecto según el local activo en la app
+  var localId = localIdMap[getLocal()] || 1;
+  var arqLocalEl = document.getElementById('arq-local');
+  if(arqLocalEl) arqLocalEl.value = String(localId);
+
+  arqueoLocalChange();
+  renderProveedores();
+  calcArqueo();
+  cargarHistoricoArqueos();
+}
+
+function arqueoLocalChange(){
+  var localId = parseInt(document.getElementById('arq-local').value);
+  var NOMBRES = {1:'La Cala', 2:"Roto's Burguer"};
+  var lbl = document.getElementById('arqueo-local-label');
+  if(lbl) lbl.textContent = NOMBRES[localId] || '';
+}
+
+function addProveedor(){
+  arqProvCounter++;
+  arqProveedores.push({id:arqProvCounter, nombre:'', importe:0});
+  renderProveedores();
+}
+
+function removeProveedor(id){
+  arqProveedores = arqProveedores.filter(function(p){ return p.id !== id; });
+  renderProveedores();
+  calcArqueo();
+}
+
+function updProveedor(id, field, val){
+  var p = arqProveedores.find(function(x){ return x.id===id; });
+  if(p){ p[field] = field==='importe' ? (parseFloat(val)||0) : val; }
+  calcArqueo();
+}
+
+function renderProveedores(){
+  var cont = document.getElementById('arq-proveedores-list');
+  var empty = document.getElementById('arq-proveedores-empty');
+  if(!cont) return;
+  if(!arqProveedores.length){
+    cont.innerHTML = '';
+    if(empty) empty.style.display = '';
+    return;
+  }
+  if(empty) empty.style.display = 'none';
+  cont.innerHTML = arqProveedores.map(function(p){
+    return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:7px">'
+      +'<input class="inp-sm" type="text" placeholder="Proveedor / concepto" value="'+p.nombre+'" '
+      +'oninput="updProveedor('+p.id+',\'nombre\',this.value)" style="flex:2">'
+      +'<input class="inp-sm" type="number" placeholder="0.00" value="'+(p.importe||'')+'" min="0" step="0.01" '
+      +'oninput="updProveedor('+p.id+',\'importe\',this.value)" style="flex:1;max-width:110px">'
+      +'<span style="font-size:11px;color:var(--muted)">€</span>'
+      +'<button onclick="removeProveedor('+p.id+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px">&#10005;</button>'
+      +'</div>';
+  }).join('');
+}
+
+function calcArqueo(){
+  var fondo       = parseFloat(document.getElementById('arq-fondo').value)       || 0;
+  var cambioExtra = parseFloat(document.getElementById('arq-cambio-extra').value) || 0;
+  var venta       = parseFloat(document.getElementById('arq-venta').value)        || 0;
+  var visa        = parseFloat(document.getElementById('arq-visa').value)         || 0;
+  var totalPagos  = arqProveedores.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); }, 0);
+
+  // ENTRADAS: venta total + extracambio
+  var totalEntradas = venta + cambioExtra;
+  // SALIDAS: VISA + pagos proveedores
+  var totalSalidas  = visa + totalPagos;
+  // EFECTIVO RECAUDACIÓN = entradas - salidas
+  // (el fondo de 600€ ya está en el cajón desde el inicio, no entra en el cálculo)
+  var efectivo = totalEntradas - totalSalidas;
+
+  var fmt = function(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
+
+  document.getElementById('arq-total-pagos').textContent   = fmt(totalPagos);
+  document.getElementById('arq-res-total').textContent     = fmt(totalEntradas);
+  document.getElementById('arq-res-salidas').textContent   = fmt(totalSalidas);
+  document.getElementById('arq-res-efectivo').textContent  = fmt(efectivo);
+  document.getElementById('arq-res-ingresar').textContent  = fmt(Math.max(0, efectivo));
+  document.getElementById('arq-res-fondo-label').textContent = fondo.toLocaleString('es-ES');
+
+  var elEf = document.getElementById('arq-res-efectivo');
+  var elIn = document.getElementById('arq-res-ingresar');
+  if(elEf) elEf.style.color = efectivo >= 0 ? 'var(--accent)' : 'var(--red)';
+  if(elIn) elIn.style.color = efectivo >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+async function guardarArqueo(){
+  var errEl = document.getElementById('arq-error');
+  var okEl  = document.getElementById('arq-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  var fecha      = document.getElementById('arq-fecha').value;
+  var turno      = document.getElementById('arq-turno').value;
+  var localId    = parseInt(document.getElementById('arq-local').value);
+  var responsable= document.getElementById('arq-responsable').value.trim();
+  var fondo      = parseFloat(document.getElementById('arq-fondo').value)       || 0;
+  var cambioExtra= parseFloat(document.getElementById('arq-cambio-extra').value)|| 0;
+  var venta      = parseFloat(document.getElementById('arq-venta').value)       || 0;
+  var visa       = parseFloat(document.getElementById('arq-visa').value)        || 0;
+  var notas      = document.getElementById('arq-notas').value.trim();
+  var totalPagos = arqProveedores.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); }, 0);
+  var efectivo   = (fondo + cambioExtra + venta) - (visa + totalPagos);
+
+  if(!fecha){ errEl.textContent='Selecciona una fecha'; errEl.style.display='block'; return; }
+
+  // Auditoría obligatoria si modifica Dirección General
+  var auditSuffix = '';
+  if(currentUser && currentUser.rol === 'directora_general'){
+    auditSuffix = ' [MODIFICADO POR DIRECCIÓN GENERAL: '+(currentUser.nombre||currentUser.dni)+' · '+new Date().toLocaleString('es-ES')+']';
+  }
+
+  var datos = {
+    local_id: localId,
+    fecha: fecha,
+    turno: turno,
+    fondo: fondo,
+    cambio_extra: cambioExtra,
+    venta: venta,
+    visa: visa,
+    proveedores: JSON.stringify(arqProveedores),
+    efectivo_resultado: efectivo,
+    responsable: responsable || null,
+    notas: (notas + auditSuffix).trim() || null
+  };
+
+  try{
+    if(arqEditId){
+      // EDICIÓN: PATCH sobre el registro existente
+      await sbPatch('arqueos', arqEditId, datos);
+      okEl.textContent = '✓ Arqueo actualizado correctamente (ID '+arqEditId+')';
+      okEl.style.display = 'block';
+      logAccion('EDITAR_ARQUEO', 'ID '+arqEditId+' · '+fecha+' · turno '+turno, localId);
+      arqEditId = null;
+      var banner = document.getElementById('arq-edit-banner');
+      if(banner) banner.style.display='none';
+    } else {
+      // NUEVO: POST
+      await sbPost('arqueos', datos);
+      okEl.textContent = '✓ Arqueo guardado correctamente';
+      okEl.style.display = 'block';
+      logAccion('GUARDAR_ARQUEO', fecha+' · turno '+turno, localId);
+    }
+    cargarHistoricoArqueos();
+  }catch(e){
+    errEl.textContent = 'Error al guardar: '+e.message;
+    errEl.style.display = 'block';
+    console.error('guardarArqueo error:',e);
+  }
+}
+
+async function cargarHistoricoArqueos(){
+  var preview = document.getElementById('arq-historico-preview');
+  var fullInner = document.getElementById('arq-historico-full-inner');
+  var expandBtn = document.getElementById('arq-hist-expand-btn');
+  if(!preview) return;
+
+  preview.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">'+t('audit_cargando')+'</div>';
+
+  try{
+    var localId = parseInt((document.getElementById('arq-local')||{}).value || '1');
+    var rows = await sbGet('arqueos','local_id=eq.'+localId+'&order=fecha.desc,turno.desc&limit=50');
+    if(!rows || !rows.length){
+      preview.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:10px">'+t('arq_sin_arqueos')+'</div>';
+      if(expandBtn) expandBtn.style.display='none';
+      return;
+    }
+
+    var TURNOS = {manana:'☀️ '+t('p11_turno_m'), noche:'🌙 '+t('p11_turno_n')};
+    var fmt = function(n){ return (parseFloat(n)||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
+
+    var renderRow = function(r){
+      var aIngresar = r.efectivo_resultado || 0;
+      var col = aIngresar >= 0 ? 'var(--green)' : 'var(--red)';
+      var tieneAudit = r.notas && r.notas.indexOf('MODIFICADO POR DIRECCIÓN GENERAL')>=0;
+      var auditMatch = tieneAudit ? r.notas.match(/\[MODIFICADO.*?\]/) : null;
+      var notasLimpias = r.notas ? r.notas.replace(/\s*\[MODIFICADO.*?\]/,'').trim() : '';
+      var provs = []; try{ provs = JSON.parse(r.proveedores||'[]'); }catch(e){}
+      var totalPagosProv = provs.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); },0);
+      return '<div style="background:var(--darker);border:1.5px solid '+(tieneAudit?'#ffc107':'var(--border)')+';border-radius:9px;padding:10px 12px;margin-bottom:8px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">'
+        +'<div style="flex:1">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--text)">'+(TURNOS[r.turno]||r.turno)+' &nbsp;·&nbsp; '+r.fecha+'</div>'
+        +'<div style="font-size:10px;color:var(--muted);margin-top:3px">👤 '+(r.responsable||'—')+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+t('arq_venta')+' <strong>'+fmt(r.venta)+'</strong> · VISA: '+fmt(r.visa)+' · Prov: '+fmt(totalPagosProv)+'</div>'
+        +'</div>'
+        +'<div style="text-align:right;flex-shrink:0">'
+        +'<div style="font-size:9px;color:var(--muted)">'+t('arq_a_ingresar')+'</div>'
+        +'<div style="font-size:18px;font-weight:700;color:'+col+'">'+fmt(Math.max(0,aIngresar))+'</div>'
+        +'</div>'
+        +'</div>'
+        +(tieneAudit?'<div style="background:#ffc10715;border:1px solid #ffc10750;border-radius:5px;padding:5px 8px;font-size:9px;color:#ffc107;margin-top:7px">⚠ '+(auditMatch?auditMatch[0].replace(/[\[\]]/g,''):t('arq_modificado'))+'</div>':'')
+        +(notasLimpias?'<div style="font-size:10px;color:var(--muted);margin-top:5px;padding-top:5px;border-top:1px solid var(--border)20">📝 '+notasLimpias+'</div>':'')
+        +'<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">'
+        +'<button onclick="editarArqueo('+r.id+')" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 10px;border-color:var(--accent);color:var(--accent)">'+t('arq_editar')+'</button>'
+        +'</div>'
+        +'</div>';
+    };
+
+    // Preview: solo los 3 primeros
+    preview.innerHTML = rows.slice(0,3).map(renderRow).join('');
+
+    // Full: todos
+    if(fullInner) fullInner.innerHTML = rows.map(renderRow).join('');
+
+    // Botón expandir solo si hay más de 3
+    if(expandBtn) expandBtn.style.display = rows.length > 3 ? '' : 'none';
+    if(expandBtn && rows.length > 3) expandBtn.textContent = 'Ver todos ('+rows.length+') ▼';
+
+  }catch(e){
+    preview.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:10px">⚠ Error: '+e.message+'</div>';
+  }
+}
+
+function arqExpandirHistorico(){
+  document.getElementById('arq-historico-preview').style.display = 'none';
+  document.getElementById('arq-historico-full').style.display = '';
+  document.getElementById('arq-hist-expand-btn').style.display = 'none';
+}
+
+function arqColapsarHistorico(){
+  document.getElementById('arq-historico-preview').style.display = '';
+  document.getElementById('arq-historico-full').style.display = 'none';
+  document.getElementById('arq-hist-expand-btn').style.display = '';
+}
+
+var arqEditId = null; // ID del arqueo que se está editando
+
+async function editarArqueo(id){
+  // Cargar datos del arqueo desde BD — forzar id a entero
+  id = parseInt(id);
+  if(!id){ showToast(t('toast_arq_invalido'),'orange'); return; }
+  try{
+    var rows = await sbGet('arqueos','id=eq.'+id);
+    if(!rows||!rows.length){ showToast(t('toast_arq_no_encontrado'),'orange'); return; }
+    var r = rows[0];
+    arqEditId = r.id;
+
+    // Rellenar formulario
+    var fEl = document.getElementById('arq-fecha');
+    var tEl = document.getElementById('arq-turno');
+    var lEl = document.getElementById('arq-local');
+    if(fEl) fEl.value = r.fecha || '';
+    if(tEl) tEl.value = r.turno || 'manana';
+    if(lEl){ lEl.value = String(r.local_id||1); arqueoLocalChange(); }
+    document.getElementById('arq-fondo').value        = r.fondo        || 600;
+    document.getElementById('arq-cambio-extra').value = r.cambio_extra || 0;
+    document.getElementById('arq-venta').value        = r.venta        || 0;
+    document.getElementById('arq-visa').value         = r.visa         || 0;
+
+    // Notas sin la parte de auditoría
+    var notasLimpias = (r.notas||'').replace(/\s*\[MODIFICADO.*?\]/,'').trim();
+    document.getElementById('arq-notas').value = notasLimpias;
+
+    // Proveedores
+    arqProveedores = [];
+    arqProvCounter = 0;
+    try{
+      var provs = JSON.parse(r.proveedores||'[]');
+      provs.forEach(function(p){ arqProvCounter++; arqProveedores.push({id:arqProvCounter,nombre:p.nombre||'',importe:p.importe||0}); });
+    }catch(e){}
+    renderProveedores();
+    calcArqueo();
+
+    // Indicador de edición
+    var okEl = document.getElementById('arq-ok');
+    if(okEl){ okEl.textContent='✏️ Editando arqueo ID '+r.id+' · '+r.fecha+' ('+r.turno+') — Guarda para actualizar'; okEl.style.display='block'; }
+    var banner = document.getElementById('arq-edit-banner');
+    if(banner) banner.style.display='flex';
+
+    // Scroll al top del formulario
+    window.scrollTo(0,0);
+    showToast(t('toast_arq_cargado'),'orange');
+  }catch(e){
+    showToast(t('toast_arq_error_carga')+e.message,'orange');
+  }
+}
+
+function limpiarArqueo(){
+  var eraEdicion = !!arqEditId;
+  arqEditId = null; // cancelar cualquier edición activa
+  document.getElementById('arq-venta').value = '0';
+  document.getElementById('arq-visa').value  = '0';
+  document.getElementById('arq-cambio-extra').value = '0';
+  document.getElementById('arq-notas').value = '';
+  arqProveedores = [];
+  arqProvCounter = 0;
+  renderProveedores();
+  calcArqueo();
+  var errEl = document.getElementById('arq-error');
+  var okEl  = document.getElementById('arq-ok');
+  if(errEl) errEl.style.display='none';
+  if(okEl)  okEl.style.display='none';
+  var banner = document.getElementById('arq-edit-banner');
+  if(banner) banner.style.display='none';
+  if(eraEdicion) showToast(t('toast_edicion_cancelada'),'orange');
+}
+
+function imprimirArqueo(){
+  var fecha       = document.getElementById('arq-fecha').value || '—';
+  var turno       = document.getElementById('arq-turno').value;
+  var localId     = parseInt(document.getElementById('arq-local').value);
+  var responsable = document.getElementById('arq-responsable').value || '—';
+  var fondo       = parseFloat(document.getElementById('arq-fondo').value)||0;
+  var cambioExtra = parseFloat(document.getElementById('arq-cambio-extra').value)||0;
+  var venta       = parseFloat(document.getElementById('arq-venta').value)||0;
+  var visa        = parseFloat(document.getElementById('arq-visa').value)||0;
+  var notas       = document.getElementById('arq-notas').value || '';
+  var LOCALES     = {1:'La Cala', 2:"Roto's Burguer"};
+  var TURNOS      = {manana:t('p11_turno_m'), noche:t('p11_turno_n')};
+  var CIERRES_H   = {1:{manana:'17:00',noche:'03:00'}, 2:{manana:'17:00',noche:'00:00'}};
+  var totalPagos  = arqProveedores.reduce(function(s,p){ return s+(parseFloat(p.importe)||0); }, 0);
+  var totalCaja   = fondo + cambioExtra + venta;
+  var totalSalidas= visa + totalPagos;
+  var efectivo    = totalCaja - totalSalidas;
+  var aIngresar   = Math.max(0, efectivo - fondo);
+  var fmt = function(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
+  var cierre      = (CIERRES_H[localId]||{})[turno] || '—';
+
+  var provHtml = arqProveedores.length
+    ? arqProveedores.map(function(p){ return '<tr><td>'+p.nombre+'</td><td class="r">'+fmt(p.importe||0)+'</td></tr>'; }).join('')
+    : '<tr><td colspan="2" style="color:#999;text-align:center">'+t('arq_print_sin_prov')+'</td></tr>';
+
+  // Auditoría si es Dirección General
+  var auditLine = '';
+  if(currentUser && currentUser.rol === 'directora_general'){
+    auditLine = '<div class="audit">'+t('arq_audit_line')+' <strong>'+(currentUser.nombre||currentUser.dni)+'</strong> · '+new Date().toLocaleString('es-ES')+'</div>';
+  }
+
+  var w = window.open('','_blank','width=800,height=900');
+  if(!w){ alert(t('alert_permite_popups3')); return; }
+  w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    +'<title>Arqueo '+LOCALES[localId]+' '+TURNOS[turno]+' '+fecha+'</title>'
+    +'<style>'
+    +'@page{size:A4 portrait;margin:15mm}'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:20px;max-width:600px;margin:0 auto}'
+    +'.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #c07010;padding-bottom:10px;margin-bottom:16px}'
+    +'.titulo{font-size:18px;font-weight:700;color:#c07010}'
+    +'.subtitulo{font-size:11px;color:#666;margin-top:3px}'
+    +'.grupo{font-size:10px;color:#999;text-align:right}'
+    +'.seccion{margin-bottom:14px}'
+    +'.sec-title{font-size:10px;font-weight:700;text-transform:uppercase;color:#555;letter-spacing:1px;border-bottom:1px solid #eee;padding-bottom:4px;margin-bottom:8px}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'tr.alt{background:#f9f9f9}'
+    +'td{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px}'
+    +'td.r{text-align:right;font-weight:600}'
+    +'td.l{color:#666}'
+    +'.total-row td{font-weight:700;font-size:12px;border-top:2px solid #ccc;background:#f5f5f5}'
+    +'.resultado{background:#fff8ee;border:2px solid #c07010;border-radius:6px;padding:14px;text-align:center;margin-top:14px}'
+    +'.res-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px}'
+    +'.res-val{font-size:24px;font-weight:700;color:#c07010;margin:4px 0}'
+    +'.res-sub{font-size:10px;color:#666}'
+    +'.res-ingresar{font-size:20px;font-weight:700;color:#2a7a2a;margin-top:10px;padding-top:10px;border-top:1px solid #ddd}'
+    +'.notas{background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:8px;font-size:10px;color:#555;margin-top:14px}'
+    +'.footer{text-align:center;font-size:9px;color:#aaa;margin-top:20px;border-top:1px solid #eee;padding-top:8px}'
+    +'.audit{background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:8px;font-size:10px;color:#856404;margin-top:10px}'
+    +'</style></head><body>'
+    +'<div class="header">'
+    +'<div><div class="titulo">'+t('arq_print_titulo')+'</div>'
+    +'<div class="subtitulo">'+LOCALES[localId]+' · '+t('arq_print_turno')+' '+TURNOS[turno]+' · '+t('arq_print_cierre')+' '+cierre+'</div>'
+    +'<div class="subtitulo">'+fecha+' · '+t('arq_print_resp')+' <strong>'+responsable+'</strong></div></div>'
+    +'<div class="grupo">GRUPO EL RELOJ<br><span style="font-size:9px">RelojTurnos v6.7</span></div>'
+    +'</div>'
+
+    +'<div class="seccion"><div class="sec-title">'+t('arq_print_ef_inicial')+'</div>'
+    +'<table><tr class="alt"><td class="l">'+t('arq_print_fondo')+'</td><td class="r">'+fmt(fondo)+'</td></tr>'
+    +'<tr><td class="l">'+t('arq_print_cambio')+'</td><td class="r">'+fmt(cambioExtra)+'</td></tr>'
+    +'<tr class="total-row"><td>'+t('arq_print_total_disp')+'</td><td class="r">'+fmt(fondo+cambioExtra)+'</td></tr></table></div>'
+
+    +'<div class="seccion"><div class="sec-title">'+t('arq_print_ingresos')+'</div>'
+    +'<table><tr class="alt"><td class="l">'+t('arq_print_venta')+'</td><td class="r">'+fmt(venta)+'</td></tr>'
+    +'<tr><td class="l">'+t('arq_print_visa')+'</td><td class="r" style="color:#c00">− '+fmt(visa)+'</td></tr></table></div>'
+
+    +'<div class="seccion"><div class="sec-title">'+t('arq_print_pagos_prov')+'</div>'
+    +'<table>'+provHtml
+    +'<tr class="total-row"><td>'+t('arq_print_total_pagos')+'</td><td class="r" style="color:#c00">− '+fmt(totalPagos)+'</td></tr></table></div>'
+
+    +'<div class="resultado">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:11px">'
+    +'<span>'+t('arq_print_total_caja')+' <strong>'+fmt(totalCaja)+'</strong></span>'
+    +'<span>'+t('arq_print_total_sal')+' <strong style="color:#c00">'+fmt(totalSalidas)+'</strong></span></div>'
+    +'<div class="res-label">'+t('arq_print_ef_recaud')+'</div>'
+    +'<div class="res-val">'+fmt(efectivo)+'</div>'
+    +'<div class="res-sub">'+t('arq_print_fondo_queda')+' '+fmt(fondo)+'</div>'
+    +'<div class="res-ingresar">'+t('arq_print_a_ingresar')+' '+fmt(aIngresar)+'</div>'
+    +'</div>'
+
+    +(notas?'<div class="notas">📝 <strong>'+t('arq_print_notas')+'</strong> '+notas+'</div>':'')
+    +auditLine
+    +'<div class="footer">RelojTurnos © 2026 · Grupo El Reloj · Impreso el '+new Date().toLocaleString('es-ES')+'</div>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 400);
+}
+
+// ========== EDITAR USUARIO ==========
+var euUsuarioActual = null;
+
+async function abrirEditarUsuario(id){
+  try{
+    var rows = await sbGet('usuarios','id=eq.'+id);
+    if(!rows||!rows.length){ showToast('Usuario no encontrado','orange'); return; }
+    var u = rows[0];
+    euUsuarioActual = u;
+    document.getElementById('eu-id').value = u.id;
+    document.getElementById('eu-nombre').value = u.nombre||'';
+    document.getElementById('eu-dni').value = u.dni||'';
+    document.getElementById('eu-rol').value = u.rol||'empleado';
+    document.getElementById('eu-local').value = u.local_id||'1';
+    document.getElementById('eu-activo').value = u.activo?'1':'0';
+    document.getElementById('eu-pass').value = '';
+    document.getElementById('eu-ss').value = u.numero_ss||'';
+    document.getElementById('eu-telefono').value = u.telefono||'';
+    document.getElementById('eu-email').value = u.email||'';
+    document.getElementById('eu-direccion').value = u.direccion||'';
+    // Si no tiene esos campos en la tabla usuarios, buscar en empleados
+    if(!u.telefono && u.local_id){
+      try{
+        var emps = await sbGet('empleados','local_id=eq.'+u.local_id+'&nombre=eq.'+encodeURIComponent(u.nombre||''));
+        if(emps&&emps.length){
+          var emp = emps[0];
+          document.getElementById('eu-telefono').value = emp.telefono||'';
+          document.getElementById('eu-email').value = emp.email||'';
+          document.getElementById('eu-direccion').value = emp.direccion||'';
+          document.getElementById('eu-ss').value = emp.numero_ss||'';
+        }
+      }catch(e2){}
+    }
+    document.getElementById('eu-error').style.display='none';
+    document.getElementById('eu-ok').style.display='none';
+    euRolChange();
+    document.getElementById('modal-editar-usuario').style.display='flex';
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+function euRolChange(){
+  var rol = document.getElementById('eu-rol').value;
+  var localGrp = document.getElementById('eu-local-group');
+  if(localGrp) localGrp.style.display = (rol==='directora_general'||rol==='admin') ? 'none' : '';
+}
+
+function cerrarEditarUsuario(){
+  document.getElementById('modal-editar-usuario').style.display='none';
+  euUsuarioActual = null;
+}
+
+async function guardarEditarUsuario(){
+  var id      = document.getElementById('eu-id').value;
+  var nombre  = document.getElementById('eu-nombre').value.trim();
+  var dni     = document.getElementById('eu-dni').value.trim().toUpperCase();
+  var rol     = document.getElementById('eu-rol').value;
+  var activo  = document.getElementById('eu-activo').value==='1';
+  var passNueva = document.getElementById('eu-pass').value.trim();
+  var localId = (rol==='directora_general'||rol==='admin') ? null : parseInt(document.getElementById('eu-local').value);
+  var ss        = document.getElementById('eu-ss').value.trim();
+  var telefono  = document.getElementById('eu-telefono').value.trim();
+  var email     = document.getElementById('eu-email').value.trim();
+  var direccion = document.getElementById('eu-direccion').value.trim();
+  var errEl = document.getElementById('eu-error');
+  var okEl  = document.getElementById('eu-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  if(!nombre||!dni){ errEl.textContent='Nombre y DNI son obligatorios'; errEl.style.display='block'; return; }
+  try{
+    var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo };
+    if(passNueva){ datos.password_hash = await hashPass(passNueva); }
+    await sbPatch('usuarios', id, datos);
+    // Actualizar tabla empleados si tiene local
+    if(localId){
+      try{
+        var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=ilike.'+encodeURIComponent(nombre.trim()));
+        var empDatos = {
+          telefono: telefono || null,
+          email:    email    || null,
+          direccion:direccion|| null,
+          numero_ss:ss       || null
+        };
+        if(empEx&&empEx.length){
+          await sbPatch('empleados', empEx[0].id, empDatos);
+        }
+      }catch(e2){ console.warn('empleados update:',e2); }
+    }
+    logAccion('EDITAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
+    okEl.textContent = '✓ Usuario actualizado correctamente';
+    okEl.style.display = 'block';
+    setTimeout(function(){ cerrarEditarUsuario(); cargarUsuarios(); }, 1200);
+  }catch(e){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
+}
+
+// Cerrar modal editar usuario clicando fuera
+document.addEventListener('click',function(e){
+  var m=document.getElementById('modal-editar-usuario');
+  if(m&&m.style.display==='flex'&&e.target===m) cerrarEditarUsuario();
+});
+
+// ========== MÓDULO COMPRAS v6.4 ==========
+
+async function initCompras(){
+  await cmpCargarDatos();
+  cmpTab(cmpTabActual);
+}
+
+async function cmpCargarDatos(){
+  try{
+    var fams = await sbGet('cmp_familias','order=nombre.asc');
+    cmpFamilias = fams||[];
+  }catch(e){ cmpFamilias=[]; }
+  try{
+    var arts = await sbGet('cmp_articulos','order=nombre.asc');
+    cmpArticulos = arts||[];
+  }catch(e){ cmpArticulos=[]; }
+  try{
+    var provs = await sbGet('cmp_proveedores','order=nombre.asc');
+    cmpProveedores = provs||[];
+  }catch(e){ cmpProveedores=[]; }
+  try{
+    var precs = await sbGet('cmp_precios','order=fecha.desc');
+    cmpPrecios = precs||[];
+  }catch(e){ cmpPrecios=[]; }
+  cmpPopularFiltros();
+}
+
+function cmpPopularFiltros(){
+  // Familias en filtro y modal
+  var famSels = ['cmp-art-familia-filter','cmp-art-familia'];
+  famSels.forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var first = el.options[0] ? el.options[0].text : '';
+    el.innerHTML = (id==='cmp-art-familia-filter'?'<option value="">Todas las familias</option>':'<option value="">— Seleccionar —</option>');
+    cmpFamilias.forEach(function(f){
+      el.innerHTML += '<option value="'+f.id+'">'+(f.emoji||'')+ ' '+f.nombre+'</option>';
+    });
+  });
+  // Artículos en selector precios
+  ['cmp-precio-art','cmp-precio-art-sel'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = '<option value="">— Seleccionar artículo —</option>';
+    cmpArticulos.forEach(function(a){
+      el.innerHTML += '<option value="'+a.id+'">'+a.nombre+'</option>';
+    });
+  });
+  // Proveedores en selector precios
+  var psel = document.getElementById('cmp-precio-prov-sel');
+  if(psel){
+    psel.innerHTML = '<option value="">— Seleccionar proveedor —</option>';
+    cmpProveedores.forEach(function(p){
+      psel.innerHTML += '<option value="'+p.id+'">'+p.nombre+'</option>';
+    });
+  }
+}
+
+function cmpTab(tab){
+  cmpTabActual = tab;
+  ['articulos','proveedores','precios','analisis'].forEach(function(t){
+    var btn = document.getElementById('cmp-tab-'+t);
+    var panel = document.getElementById('cmp-panel-'+t);
+    if(btn) btn.className = 'cmp-tab'+(t===tab?' active':'');
+    if(panel) panel.className = 'cmp-panel'+(t===tab?' active':'');
+  });
+  if(tab==='articulos') cmpRenderArticulos();
+  if(tab==='proveedores') cmpRenderProveedores();
+  if(tab==='precios') cmpRenderPrecios();
+  if(tab==='analisis'){ cmpRenderKpis(); cmpAnTab(cmpAnTabActual); }
+}
+
+function cmpAnTab(tab){
+  cmpAnTabActual = tab;
+  ['margen','familia','prov','evol','top'].forEach(function(t){
+    var btn = document.getElementById('cmp-an-tab-'+t);
+    if(btn) btn.className = 'btn btn-sm '+(t===tab?'btn-primary':'btn-ghost');
+  });
+  var cont = document.getElementById('cmp-analisis-content');
+  if(!cont) return;
+  if(tab==='margen')  cont.innerHTML = cmpHtmlMargen();
+  if(tab==='familia') cont.innerHTML = cmpHtmlFamilia();
+  if(tab==='prov')    cont.innerHTML = cmpHtmlComparativaProv();
+  if(tab==='evol')    cont.innerHTML = cmpHtmlEvolucion();
+  if(tab==='top')     cont.innerHTML = cmpHtmlTopVentas();
+}
+
+// ---- RENDER ARTÍCULOS ----
+function cmpRenderArticulos(){
+  var cont = document.getElementById('cmp-articulos-list');
+  if(!cont) return;
+  var search = (document.getElementById('cmp-art-search')||{}).value||'';
+  var famF   = (document.getElementById('cmp-art-familia-filter')||{}).value||'';
+  var locF   = (document.getElementById('cmp-art-local-filter')||{}).value||'';
+  var arts = cmpArticulos.filter(function(a){
+    if(search && a.nombre.toLowerCase().indexOf(search.toLowerCase())<0) return false;
+    if(famF && String(a.familia_id)!==String(famF)) return false;
+    if(locF && String(a.local_id)!==String(locF)) return false;
+    return true;
+  });
+  if(!arts.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin artículos. Pulsa <strong>+ Artículo</strong> para añadir.</div>';
+    return;
+  }
+  var html='<table class="cmp-table"><thead><tr>'
+    +'<th>Artículo</th><th>Familia</th><th>Unidad</th><th>Local</th><th>PVP</th><th>Mejor precio</th><th>Margen</th><th></th></tr></thead><tbody>';
+  arts.forEach(function(a){
+    var fam = cmpFamilias.find(function(f){ return f.id===a.familia_id; });
+    var localNom = a.local_id===1?'La Cala':a.local_id===2?"Roto's":'—';
+    var pvp = a.precio_venta||0;
+    // Mejor precio de compra (más reciente de cada proveedor, luego el menor)
+    var preciosArt = cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    var bestPrecio = null;
+    if(preciosArt.length){
+      // último precio por proveedor
+      var byProv={};
+      preciosArt.forEach(function(p){
+        if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p;
+      });
+      var ultimos = Object.values(byProv);
+      bestPrecio = ultimos.reduce(function(min,p){ return p.precio_compra<min.precio_compra?p:min; }, ultimos[0]);
+    }
+    var margenHtml='<span style="color:var(--muted)">—</span>';
+    if(pvp>0 && bestPrecio){
+      var margen = pvp - bestPrecio.precio_compra;
+      var pct = (margen/pvp*100).toFixed(1);
+      var cls = pct>=60?'margin-ok':pct>=30?'margin-warn':'margin-bad';
+      margenHtml='<span class="cmp-badge '+cls+'">'+pct+'% · '+margen.toFixed(2)+'€</span>';
+    }
+    html+='<tr>'
+      +'<td style="font-weight:600">'+a.nombre+'</td>'
+      +'<td>'+(fam?(fam.emoji||'')+' '+fam.nombre:'—')+'</td>'
+      +'<td style="color:var(--muted)">'+a.unidad+'</td>'
+      +'<td style="color:var(--muted);font-size:11px">'+localNom+'</td>'
+      +'<td style="color:var(--green)">'+(pvp>0?pvp.toFixed(2)+'€':'—')+'</td>'
+      +'<td style="color:var(--red)">'+(bestPrecio?bestPrecio.precio_compra.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+margenHtml+'</td>'
+      +'<td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px" onclick="cmpAbrirModalArticulo('+a.id+')">✏️</button>'
+      +'<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;border-color:var(--red);color:var(--red)" onclick="cmpEliminarArticulo('+a.id+')">🗑</button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  cont.innerHTML=html;
+}
+
+// ---- RENDER PROVEEDORES ----
+function cmpRenderProveedores(){
+  var cont = document.getElementById('cmp-proveedores-list');
+  if(!cont) return;
+  var search = (document.getElementById('cmp-prov-search')||{}).value||'';
+  var provs = cmpProveedores.filter(function(p){
+    return !search || p.nombre.toLowerCase().indexOf(search.toLowerCase())>=0;
+  });
+  if(!provs.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin proveedores. Pulsa <strong>+ Proveedor</strong> para añadir.</div>';
+    return;
+  }
+  var html='<table class="cmp-table"><thead><tr><th>Proveedor</th><th>Razón social</th><th>CIF</th><th>Contacto</th><th>Teléfono</th><th>Artículos</th><th></th></tr></thead><tbody>';
+  provs.forEach(function(p){
+    var numArts = cmpPrecios.filter(function(pr){ return pr.proveedor_id===p.id; });
+    var artsUnicos = [...new Set(numArts.map(function(x){ return x.articulo_id; }))].length;
+    html+='<tr>'
+      +'<td style="font-weight:600">'+p.nombre+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(p.razon_social||'—')+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(p.cif||'—')+'</td>'
+      +'<td style="font-size:11px">'+(p.contacto||'—')+'</td>'
+      +'<td style="font-size:11px">'+(p.telefono||'—')+'</td>'
+      +'<td><span class="cmp-badge" style="background:var(--darker);color:var(--accent)">'+artsUnicos+' arts.</span></td>'
+      +'<td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px" onclick="cmpAbrirModalProveedor('+p.id+')">✏️</button>'
+      +'<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;border-color:var(--red);color:var(--red)" onclick="cmpEliminarProveedor('+p.id+')">🗑</button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  cont.innerHTML=html;
+}
+
+// ---- RENDER PRECIOS ----
+function cmpRenderPrecios(){
+  var cont = document.getElementById('cmp-precios-list');
+  if(!cont) return;
+  var artF = (document.getElementById('cmp-precio-art')||{}).value||'';
+  // También actualizar select
+  var sel = document.getElementById('cmp-precio-art');
+  if(sel && !sel.innerHTML.includes('option value="') ){
+    sel.innerHTML='<option value="">— Todos los artículos —</option>';
+    cmpArticulos.forEach(function(a){ sel.innerHTML+='<option value="'+a.id+'">'+a.nombre+'</option>'; });
+  }
+  var precs = artF ? cmpPrecios.filter(function(p){ return String(p.articulo_id)===String(artF); }) : cmpPrecios;
+  if(!precs.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin precios registrados. Pulsa <strong>+ Precio</strong>.</div>';
+    return;
+  }
+  var html='<table class="cmp-table"><thead><tr><th>Artículo</th><th>Proveedor</th><th>Precio compra</th><th>PVP carta</th><th>Margen</th><th>Fecha</th><th>Notas</th><th></th></tr></thead><tbody>';
+  precs.sort(function(a,b){ return b.fecha>a.fecha?1:-1; }).forEach(function(p){
+    var art = cmpArticulos.find(function(a){ return a.id===p.articulo_id; });
+    var prov = cmpProveedores.find(function(v){ return v.id===p.proveedor_id; });
+    var pvp = art?art.precio_venta||0:0;
+    var margenHtml='<span style="color:var(--muted)">—</span>';
+    if(pvp>0){
+      var m=pvp-p.precio_compra, pct=(m/pvp*100).toFixed(1);
+      var cls=pct>=60?'margin-ok':pct>=30?'margin-warn':'margin-bad';
+      margenHtml='<span class="cmp-badge '+cls+'">'+pct+'%</span>';
+    }
+    html+='<tr>'
+      +'<td style="font-weight:600">'+(art?art.nombre:'—')+'</td>'
+      +'<td>'+(prov?prov.nombre:'—')+'</td>'
+      +'<td style="color:var(--red);font-weight:700">'+p.precio_compra.toFixed(2)+'€</td>'
+      +'<td style="color:var(--green)">'+(pvp>0?pvp.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+margenHtml+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+p.fecha+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(p.notas||'')+'</td>'
+      +'<td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;border-color:var(--red);color:var(--red)" onclick="cmpEliminarPrecio('+p.id+')">🗑</button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  cont.innerHTML=html;
+}
+
+// ---- ANÁLISIS ----
+function cmpRenderKpis(){
+  var cont = document.getElementById('cmp-kpis');
+  if(!cont) return;
+  var totalArts = cmpArticulos.length;
+  var totalProvs = cmpProveedores.length;
+  // Margen promedio
+  var margenes=[];
+  cmpArticulos.forEach(function(a){
+    var pvp=a.precio_venta||0; if(!pvp) return;
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    if(!precs.length) return;
+    var byProv={};
+    precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+    var best=Object.values(byProv).reduce(function(m,p){ return p.precio_compra<m.precio_compra?p:m; },Object.values(byProv)[0]);
+    margenes.push((pvp-best.precio_compra)/pvp*100);
+  });
+  var avgMargen = margenes.length ? (margenes.reduce(function(s,m){return s+m;},0)/margenes.length).toFixed(1) : '—';
+  cont.innerHTML=''
+    +'<div class="stat-card"><div class="stat-val">'+totalArts+'</div><div class="stat-label">Artículos</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+totalProvs+'</div><div class="stat-label">Proveedores</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+(avgMargen==='—'?'—':avgMargen+'%')+'</div><div class="stat-label">Margen medio</div></div>'
+    +'<div class="stat-card"><div class="stat-val">'+cmpPrecios.length+'</div><div class="stat-label">Precios registrados</div></div>';
+}
+
+function cmpHtmlMargen(){
+  var rows=[];
+  cmpArticulos.forEach(function(a){
+    var pvp=a.precio_venta||0;
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    var bestPrecio=null;
+    if(precs.length){
+      var byProv={};
+      precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+      bestPrecio=Object.values(byProv).reduce(function(m,p){ return p.precio_compra<m.precio_compra?p:m; },Object.values(byProv)[0]);
+    }
+    var margen=pvp>0&&bestPrecio?pvp-bestPrecio.precio_compra:null;
+    var pct=pvp>0&&bestPrecio?(margen/pvp*100):null;
+    rows.push({a:a,pvp:pvp,coste:bestPrecio?bestPrecio.precio_compra:null,margen:margen,pct:pct});
+  });
+  rows.sort(function(a,b){ return (b.pct||0)-(a.pct||0); });
+  var html='<table class="cmp-table"><thead><tr><th>Artículo</th><th>PVP</th><th>Mejor coste</th><th>Margen €</th><th>Margen %</th><th>Barra</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var pct=r.pct!==null?r.pct.toFixed(1):null;
+    var cls=pct!==null?(pct>=60?'margin-ok':pct>=30?'margin-warn':'margin-bad'):'';
+    var barra=pct!==null?'<div style="background:var(--border);border-radius:4px;height:8px;width:100px"><div style="background:'+(pct>=60?'#2ecc71':pct>=30?'#ffa040':'#e74c3c')+';height:8px;border-radius:4px;width:'+Math.min(100,Math.max(0,pct))+'%"></div></div>':'—';
+    html+='<tr>'
+      +'<td style="font-weight:600">'+r.a.nombre+'</td>'
+      +'<td style="color:var(--green)">'+(r.pvp>0?r.pvp.toFixed(2)+'€':'—')+'</td>'
+      +'<td style="color:var(--red)">'+(r.coste!==null?r.coste.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+(r.margen!==null?r.margen.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+(pct!==null?'<span class="cmp-badge '+cls+'">'+pct+'%</span>':'—')+'</td>'
+      +'<td>'+barra+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  return html;
+}
+
+function cmpHtmlFamilia(){
+  var famData={};
+  cmpFamilias.forEach(function(f){ famData[f.id]={fam:f,arts:[],margenes:[],ventas:0}; });
+  cmpArticulos.forEach(function(a){
+    if(!famData[a.familia_id]) return;
+    famData[a.familia_id].arts.push(a);
+    famData[a.familia_id].ventas+=(a.unidades_semana||0);
+    var pvp=a.precio_venta||0;
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    if(pvp>0&&precs.length){
+      var byProv={};
+      precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+      var best=Object.values(byProv).reduce(function(m,p){ return p.precio_compra<m.precio_compra?p:m; },Object.values(byProv)[0]);
+      famData[a.familia_id].margenes.push((pvp-best.precio_compra)/pvp*100);
+    }
+  });
+  var html='<table class="cmp-table"><thead><tr><th>Familia</th><th>Artículos</th><th>Margen medio</th><th>Barra</th></tr></thead><tbody>';
+  Object.values(famData).forEach(function(fd){
+    var avg=fd.margenes.length?(fd.margenes.reduce(function(s,m){return s+m;},0)/fd.margenes.length):null;
+    var cls=avg!==null?(avg>=60?'margin-ok':avg>=30?'margin-warn':'margin-bad'):'';
+    var barra=avg!==null?'<div style="background:var(--border);border-radius:4px;height:8px;width:120px"><div style="background:'+(avg>=60?'#2ecc71':avg>=30?'#ffa040':'#e74c3c')+';height:8px;border-radius:4px;width:'+Math.min(100,Math.max(0,avg))+'%"></div></div>':'—';
+    html+='<tr>'
+      +'<td style="font-weight:600">'+(fd.fam.emoji||'')+' '+fd.fam.nombre+'</td>'
+      +'<td>'+fd.arts.length+'</td>'
+      +'<td>'+(avg!==null?'<span class="cmp-badge '+cls+'">'+avg.toFixed(1)+'%</span>':'—')+'</td>'
+      +'<td>'+barra+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  return html;
+}
+
+function cmpHtmlComparativaProv(){
+  // Para cada artículo, mostrar precio de cada proveedor (último registrado)
+  var html='';
+  cmpArticulos.forEach(function(a){
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    if(!precs.length) return;
+    var byProv={};
+    precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+    var rows=Object.values(byProv).sort(function(a,b){ return a.precio_compra-b.precio_compra; });
+    if(rows.length<2) return; // solo mostrar si hay 2+ proveedores
+    var pvp=a.precio_venta||0;
+    html+='<div style="background:var(--darker);border-radius:10px;padding:12px;margin-bottom:12px">'
+      +'<div style="font-weight:700;margin-bottom:8px;font-size:13px">'+a.nombre+(pvp>0?' <span style="color:var(--green);font-size:11px">PVP: '+pvp.toFixed(2)+'€</span>':'')+'</div>'
+      +'<table class="cmp-table" style="margin-top:0"><thead><tr><th>Proveedor</th><th>Precio</th><th>Margen</th><th>Diferencia vs mejor</th></tr></thead><tbody>';
+    var mejor=rows[0].precio_compra;
+    rows.forEach(function(r,i){
+      var prov=cmpProveedores.find(function(v){ return v.id===r.proveedor_id; });
+      var diff=r.precio_compra-mejor;
+      var m=pvp>0?((pvp-r.precio_compra)/pvp*100):null;
+      var cls=m!==null?(m>=60?'margin-ok':m>=30?'margin-warn':'margin-bad'):'';
+      html+='<tr style="'+(i===0?'background:var(--card)':'')+'">'
+        +'<td style="font-weight:'+(i===0?'700':'400')+'">'+(i===0?'🥇 ':'')+(prov?prov.nombre:'—')+'</td>'
+        +'<td style="color:var(--red);font-weight:700">'+r.precio_compra.toFixed(2)+'€</td>'
+        +'<td>'+(m!==null?'<span class="cmp-badge '+cls+'">'+m.toFixed(1)+'%</span>':'—')+'</td>'
+        +'<td style="color:'+(i===0?'var(--green)':'var(--red)')+'">'+( i===0?'✓ Mejor precio':'+'+diff.toFixed(2)+'€')+'</td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  });
+  if(!html) html='<div style="text-align:center;color:var(--muted);padding:30px">Registra precios de 2+ proveedores para el mismo artículo para ver la comparativa.</div>';
+  return html;
+}
+
+function cmpHtmlEvolucion(){
+  // Selector de artículo + historial de precios por proveedor
+  var artSel='<select onchange="cmpRenderEvol(this.value)" style="margin-bottom:14px;min-width:200px"><option value="">— Seleccionar artículo —</option>';
+  cmpArticulos.forEach(function(a){ artSel+='<option value="'+a.id+'">'+a.nombre+'</option>'; });
+  artSel+='</select>';
+  return '<div>'+artSel+'<div id="cmp-evol-content"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Selecciona un artículo para ver la evolución de precios.</div></div></div>';
+}
+
+function cmpRenderEvol(artId){
+  var cont=document.getElementById('cmp-evol-content');
+  if(!cont) return;
+  if(!artId){ cont.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Selecciona un artículo.</div>'; return; }
+  var precs=cmpPrecios.filter(function(p){ return String(p.articulo_id)===String(artId); });
+  if(!precs.length){ cont.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Sin precios registrados para este artículo.</div>'; return; }
+  precs.sort(function(a,b){ return a.fecha>b.fecha?1:-1; });
+  var html='<table class="cmp-table"><thead><tr><th>Fecha</th><th>Proveedor</th><th>Precio compra</th><th>PVP</th><th>Margen</th><th>Notas</th></tr></thead><tbody>';
+  var art=cmpArticulos.find(function(a){ return String(a.id)===String(artId); });
+  var pvp=art?art.precio_venta||0:0;
+  precs.forEach(function(p){
+    var prov=cmpProveedores.find(function(v){ return v.id===p.proveedor_id; });
+    var m=pvp>0?((pvp-p.precio_compra)/pvp*100):null;
+    var cls=m!==null?(m>=60?'margin-ok':m>=30?'margin-warn':'margin-bad'):'';
+    html+='<tr>'
+      +'<td style="color:var(--muted)">'+p.fecha+'</td>'
+      +'<td>'+(prov?prov.nombre:'—')+'</td>'
+      +'<td style="color:var(--red);font-weight:700">'+p.precio_compra.toFixed(2)+'€</td>'
+      +'<td style="color:var(--green)">'+(pvp>0?pvp.toFixed(2)+'€':'—')+'</td>'
+      +'<td>'+(m!==null?'<span class="cmp-badge '+cls+'">'+m.toFixed(1)+'%</span>':'—')+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(p.notas||'')+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  cont.innerHTML=html;
+}
+
+function cmpHtmlTopVentas(){
+  var arts=cmpArticulos.filter(function(a){ return (a.unidades_semana||0)>0; });
+  arts.sort(function(a,b){ return (b.unidades_semana||0)-(a.unidades_semana||0); });
+  if(!arts.length) return '<div style="text-align:center;color:var(--muted);padding:30px">Introduce unidades vendidas/semana en los artículos para ver el ranking.</div>';
+  var top10=arts.slice(0,10);
+  var bot5=arts.slice(-5).reverse();
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  // Top 10
+  html+='<div><div style="font-weight:700;margin-bottom:10px;color:var(--green)">🏆 Top 10 más vendidos</div><table class="cmp-table"><thead><tr><th>#</th><th>Artículo</th><th>Uds/sem</th><th>Margen sem</th></tr></thead><tbody>';
+  top10.forEach(function(a,i){
+    var pvp=a.precio_venta||0;
+    var precs=cmpPrecios.filter(function(p){ return p.articulo_id===a.id; });
+    var margenSem=null;
+    if(pvp>0&&precs.length){
+      var byProv={};
+      precs.forEach(function(p){ if(!byProv[p.proveedor_id]||p.fecha>byProv[p.proveedor_id].fecha) byProv[p.proveedor_id]=p; });
+      var best=Object.values(byProv).reduce(function(m,p){ return p.precio_compra<m.precio_compra?p:m; },Object.values(byProv)[0]);
+      margenSem=(pvp-best.precio_compra)*(a.unidades_semana||0);
+    }
+    html+='<tr><td style="color:var(--accent);font-weight:700">'+(i+1)+'</td><td>'+a.nombre+'</td><td style="color:var(--accent)">'+(a.unidades_semana||0)+'</td><td style="color:var(--green)">'+(margenSem!==null?margenSem.toFixed(2)+'€':'—')+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  // Bottom 5
+  html+='<div><div style="font-weight:700;margin-bottom:10px;color:var(--red)">⚠️ 5 menos vendidos</div><table class="cmp-table"><thead><tr><th>#</th><th>Artículo</th><th>Uds/sem</th></tr></thead><tbody>';
+  bot5.forEach(function(a,i){
+    html+='<tr><td style="color:var(--red)">'+(i+1)+'</td><td>'+a.nombre+'</td><td style="color:var(--muted)">'+(a.unidades_semana||0)+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  html+='</div>';
+  return html;
+}
+
+// ---- MODALES ----
+function cmpAbrirModalArticulo(id){
+  cmpPopularFiltros();
+  // Poblar selector de proveedores
+  var provSel = document.getElementById('cmp-art-proveedor');
+  if(provSel){
+    provSel.innerHTML = '<option value="">— Seleccionar proveedor —</option>'
+      + cmpProveedores.map(function(p){ return '<option value="'+p.id+'">'+p.nombre+'</option>'; }).join('');
+  }
+  // Mostrar/ocultar campos proveedor+precio según si es nuevo o edición
+  var esNuevo = !id;
+  var rowProv = document.getElementById('cmp-art-row-proveedor');
+  if(rowProv) rowProv.style.display = esNuevo ? '' : 'none';
+  var m=document.getElementById('cmp-modal-articulo');
+  m.style.display='flex';
+  if(id){
+    var a=cmpArticulos.find(function(x){ return x.id===id; });
+    if(!a) return;
+    document.getElementById('cmp-modal-art-titulo').textContent='📦 Editar Artículo';
+    document.getElementById('cmp-art-id').value=a.id;
+    document.getElementById('cmp-art-nombre').value=a.nombre||'';
+    document.getElementById('cmp-art-familia').value=a.familia_id||'';
+    document.getElementById('cmp-art-unidad').value=a.unidad||'ud';
+    document.getElementById('cmp-art-local').value=a.local_id||1;
+    document.getElementById('cmp-art-pvp').value=a.precio_venta||'';
+    document.getElementById('cmp-art-ventas').value=a.unidades_semana||'';
+    document.getElementById('cmp-art-desc').value=a.descripcion||'';
+    document.getElementById('cmp-art-precio-compra').value='';
+    document.getElementById('cmp-art-proveedor').value='';
+    document.getElementById('cmp-art-margen-preview').style.display='none';
+  } else {
+    document.getElementById('cmp-modal-art-titulo').textContent='📦 Nuevo Artículo';
+    document.getElementById('cmp-art-id').value='';
+    ['cmp-art-nombre','cmp-art-desc','cmp-art-pvp','cmp-art-ventas','cmp-art-precio-compra'].forEach(function(fid){ document.getElementById(fid).value=''; });
+    document.getElementById('cmp-art-familia').value='';
+    document.getElementById('cmp-art-unidad').value='ud';
+    document.getElementById('cmp-art-local').value='1';
+    document.getElementById('cmp-art-proveedor').value='';
+    document.getElementById('cmp-art-margen-preview').style.display='none';
+  }
+}
+
+function cmpAbrirModalProveedor(id){
+  var m=document.getElementById('cmp-modal-proveedor');
+  m.style.display='flex';
+  if(id){
+    var p=cmpProveedores.find(function(x){ return x.id===id; });
+    if(!p) return;
+    document.getElementById('cmp-modal-prov-titulo').textContent='🏭 Editar Proveedor';
+    document.getElementById('cmp-prov-id').value=p.id;
+    document.getElementById('cmp-prov-nombre').value=p.nombre||'';
+    document.getElementById('cmp-prov-razon').value=p.razon_social||'';
+    document.getElementById('cmp-prov-cif').value=p.cif||'';
+    document.getElementById('cmp-prov-tel').value=p.telefono||'';
+    document.getElementById('cmp-prov-email').value=p.email||'';
+    document.getElementById('cmp-prov-contacto').value=p.contacto||'';
+    document.getElementById('cmp-prov-direccion').value=p.direccion||'';
+    document.getElementById('cmp-prov-notas').value=p.notas||'';
+  } else {
+    document.getElementById('cmp-modal-prov-titulo').textContent='🏭 Nuevo Proveedor';
+    document.getElementById('cmp-prov-id').value='';
+    ['cmp-prov-nombre','cmp-prov-razon','cmp-prov-cif','cmp-prov-tel','cmp-prov-email','cmp-prov-contacto','cmp-prov-direccion','cmp-prov-notas'].forEach(function(id){ document.getElementById(id).value=''; });
+  }
+}
+
+function cmpAbrirModalPrecio(){
+  cmpPopularFiltros();
+  var m=document.getElementById('cmp-modal-precio');
+  m.style.display='flex';
+  document.getElementById('cmp-precio-id').value='';
+  document.getElementById('cmp-precio-compra').value='';
+  document.getElementById('cmp-precio-notas').value='';
+  document.getElementById('cmp-precio-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('cmp-precio-margen-preview').style.display='none';
+  // Pre-seleccionar artículo si hay uno filtrado
+  var artF=(document.getElementById('cmp-precio-art')||{}).value||'';
+  if(artF) document.getElementById('cmp-precio-art-sel').value=artF;
+}
+
+function cmpAbrirModalFamilia(){
+  var m=document.getElementById('cmp-modal-familia');
+  m.style.display='flex';
+  document.getElementById('cmp-fam-nombre').value='';
+  document.getElementById('cmp-fam-emoji').value='';
+}
+
+function abrirEditarTelefonoEmpleado(empId, nombre, telActual){
+  var nuevo = prompt('📱 Teléfono WhatsApp de '+nombre+'\n(formato: 34612345678)', telActual||'');
+  if(nuevo===null) return; // cancelado
+  nuevo = nuevo.trim();
+  sbPatch('empleados', empId, {telefono: nuevo||null}).then(function(){
+    showToast('✓ Teléfono de '+nombre+' actualizado','green');
+    cargarUsuarios();
+  }).catch(function(e){
+    showToast('Error: '+e.message,'red');
+  });
+}
+
+function cmpCerrarModales(){
+  ['cmp-modal-articulo','cmp-modal-proveedor','cmp-modal-precio','cmp-modal-familia','cmp-modal-import'].forEach(function(id){
+    var m=document.getElementById(id); if(m) m.style.display='none';
+  });
+}
+
+function cmpCalcMargen(){
+  var artId=document.getElementById('cmp-precio-art-sel').value;
+  var coste=parseFloat(document.getElementById('cmp-precio-compra').value)||0;
+  var prev=document.getElementById('cmp-precio-margen-preview');
+  if(!artId||!coste){ prev.style.display='none'; return; }
+  var art=cmpArticulos.find(function(a){ return String(a.id)===String(artId); });
+  var pvp=art?art.precio_venta||0:0;
+  if(!pvp){ prev.style.display='none'; return; }
+  var m=pvp-coste, pct=(m/pvp*100);
+  prev.style.display='block';
+  document.getElementById('cmp-pm-pvp').textContent=pvp.toFixed(2)+'€';
+  document.getElementById('cmp-pm-coste').textContent=coste.toFixed(2)+'€';
+  var mEl=document.getElementById('cmp-pm-margen');
+  mEl.textContent=m.toFixed(2)+'€ ('+pct.toFixed(1)+'%)';
+  mEl.style.color=pct>=60?'#2ecc71':pct>=30?'#ffa040':'#e74c3c';
+}
+
+function cmpCalcMargenModal(){
+  var pvp=parseFloat(document.getElementById('cmp-art-pvp').value)||0;
+  var coste=parseFloat(document.getElementById('cmp-art-precio-compra').value)||0;
+  var prev=document.getElementById('cmp-art-margen-preview');
+  if(!pvp||!coste){ if(prev) prev.style.display='none'; return; }
+  var m=pvp-coste, pct=(m/pvp*100);
+  if(prev) prev.style.display='block';
+  document.getElementById('cmp-am-pvp').textContent=pvp.toFixed(2)+'€';
+  document.getElementById('cmp-am-coste').textContent=coste.toFixed(2)+'€';
+  var mEl=document.getElementById('cmp-am-margen');
+  mEl.textContent=m.toFixed(2)+'€ ('+pct.toFixed(1)+'%)';
+  mEl.style.color=pct>=60?'#2ecc71':pct>=30?'#ffa040':'#e74c3c';
+}
+
+// ---- GUARDAR EN BD ----
+async function cmpGuardarArticulo(){
+  var id=document.getElementById('cmp-art-id').value;
+  var provId=parseInt(document.getElementById('cmp-art-proveedor').value)||null;
+  var precioCompra=parseFloat(document.getElementById('cmp-art-precio-compra').value)||null;
+  var datos={
+    nombre:document.getElementById('cmp-art-nombre').value.trim(),
+    familia_id:parseInt(document.getElementById('cmp-art-familia').value)||null,
+    unidad:document.getElementById('cmp-art-unidad').value,
+    local_id:parseInt(document.getElementById('cmp-art-local').value)||1,
+    precio_venta:parseFloat(document.getElementById('cmp-art-pvp').value)||null,
+    unidades_semana:parseInt(document.getElementById('cmp-art-ventas').value)||null,
+    descripcion:document.getElementById('cmp-art-desc').value.trim()||null
+  };
+  if(!datos.nombre){ showToast('Introduce el nombre del artículo','orange'); return; }
+  if(!id && !provId){ showToast('Selecciona un proveedor habitual','orange'); return; }
+  if(!id && !precioCompra){ showToast('Introduce el precio de compra','orange'); return; }
+  try{
+    var artId;
+    if(id){
+      await sbPatch('cmp_articulos',id,datos);
+      artId = parseInt(id);
+      logAccion('EDITAR_ARTICULO','Artículo: '+datos.nombre,datos.local_id);
+    } else {
+      var nuevo = await sbPost('cmp_articulos',datos);
+      artId = nuevo && nuevo[0] ? nuevo[0].id : null;
+      logAccion('NUEVO_ARTICULO','Artículo: '+datos.nombre,datos.local_id);
+      // Guardar precio inicial en cmp_precios
+      if(artId && provId && precioCompra){
+        var hoy = new Date().toISOString().split('T')[0];
+        await sbPost('cmp_precios',{
+          articulo_id:artId,
+          proveedor_id:provId,
+          precio_compra:precioCompra,
+          fecha:hoy,
+          notas:'Precio inicial al dar de alta el artículo'
+        });
+      }
+    }
+    showToast('✓ Artículo guardado','green');
+    cmpCerrarModales();
+    await cmpCargarDatos();
+    cmpRenderArticulos();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpGuardarProveedor(){
+  var id=document.getElementById('cmp-prov-id').value;
+  var datos={
+    nombre:document.getElementById('cmp-prov-nombre').value.trim(),
+    razon_social:document.getElementById('cmp-prov-razon').value.trim()||null,
+    cif:document.getElementById('cmp-prov-cif').value.trim()||null,
+    telefono:document.getElementById('cmp-prov-tel').value.trim()||null,
+    email:document.getElementById('cmp-prov-email').value.trim()||null,
+    contacto:document.getElementById('cmp-prov-contacto').value.trim()||null,
+    direccion:document.getElementById('cmp-prov-direccion').value.trim()||null,
+    notas:document.getElementById('cmp-prov-notas').value.trim()||null
+  };
+  if(!datos.nombre){ showToast('Introduce el nombre del proveedor','orange'); return; }
+  try{
+    if(id){
+      await sbPatch('cmp_proveedores',id,datos);
+      logAccion('EDITAR_PROVEEDOR','Proveedor: '+datos.nombre,null);
+    } else {
+      await sbPost('cmp_proveedores',datos);
+      logAccion('NUEVO_PROVEEDOR','Proveedor: '+datos.nombre,null);
+    }
+    showToast('✓ Proveedor guardado','green');
+    cmpCerrarModales();
+    await cmpCargarDatos();
+    cmpRenderProveedores();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpGuardarPrecio(){
+  var datos={
+    articulo_id:parseInt(document.getElementById('cmp-precio-art-sel').value)||null,
+    proveedor_id:parseInt(document.getElementById('cmp-precio-prov-sel').value)||null,
+    precio_compra:parseFloat(document.getElementById('cmp-precio-compra').value)||null,
+    fecha:document.getElementById('cmp-precio-fecha').value,
+    notas:document.getElementById('cmp-precio-notas').value.trim()||null
+  };
+  if(!datos.articulo_id||!datos.proveedor_id||!datos.precio_compra){ showToast('Rellena artículo, proveedor y precio','orange'); return; }
+  try{
+    await sbPost('cmp_precios',datos);
+    var art=cmpArticulos.find(function(a){ return a.id===datos.articulo_id; });
+    logAccion('NUEVO_PRECIO',(art?art.nombre:'art '+datos.articulo_id)+' · '+datos.precio_compra+'€',null);
+    showToast('✓ Precio registrado','green');
+    cmpCerrarModales();
+    await cmpCargarDatos();
+    cmpRenderPrecios();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpGuardarFamilia(){
+  var datos={
+    nombre:document.getElementById('cmp-fam-nombre').value.trim(),
+    emoji:document.getElementById('cmp-fam-emoji').value.trim()||null
+  };
+  if(!datos.nombre){ showToast('Introduce el nombre de la familia','orange'); return; }
+  try{
+    await sbPost('cmp_familias',datos);
+    logAccion('NUEVA_FAMILIA','Familia: '+datos.nombre,null);
+    showToast('✓ Familia creada','green');
+    cmpCerrarModales();
+    await cmpCargarDatos();
+    cmpRenderArticulos();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpEliminarArticulo(id){
+  if(!confirm('¿Eliminar este artículo? Se eliminarán también sus precios.')) return;
+  try{
+    await sbDelete('cmp_precios','articulo_id=eq.'+id);
+    await sbDelete('cmp_articulos','id=eq.'+id);
+    logAccion('ELIMINAR_ARTICULO','ID '+id,null);
+    showToast('Artículo eliminado','orange');
+    await cmpCargarDatos();
+    cmpRenderArticulos();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpEliminarProveedor(id){
+  if(!confirm('¿Eliminar este proveedor?')) return;
+  try{
+    await sbDelete('cmp_proveedores','id=eq.'+id);
+    logAccion('ELIMINAR_PROVEEDOR','ID '+id,null);
+    showToast('Proveedor eliminado','orange');
+    await cmpCargarDatos();
+    cmpRenderProveedores();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function cmpEliminarPrecio(id){
+  if(!confirm('¿Eliminar este registro de precio?')) return;
+  try{
+    await sbDelete('cmp_precios','id=eq.'+id);
+    logAccion('ELIMINAR_PRECIO','ID '+id,null);
+    showToast('Precio eliminado','orange');
+    await cmpCargarDatos();
+    cmpRenderPrecios();
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+
+// ========== IMPORTACIÓN CSV / XLSX ==========
+
+var cmpImportTipo = '';
+var cmpImportDatos = [];
+
+var CMP_IMPORT_CONFIG = {
+  familias: {
+    titulo: '🗂 Importar Familias',
+    sub: 'Carga múltiples familias de golpe desde un CSV o Excel.',
+    cols: ['nombre', 'emoji'],
+    colsDesc: 'nombre (obligatorio) · emoji (opcional, ej: 🍺)',
+    tabla: 'cmp_familias',
+    obligatorios: ['nombre'],
+    mapear: function(row){ return { nombre: row.nombre||'', emoji: row.emoji||null }; },
+    validar: function(row){ return (row.nombre||'').trim() ? null : 'Falta nombre'; }
+  },
+  articulos: {
+    titulo: '📦 Importar Artículos',
+    sub: 'Carga múltiples artículos. La familia debe coincidir con el nombre exacto de una familia existente.',
+    cols: ['nombre', 'familia', 'unidad', 'local', 'precio_venta', 'unidades_semana', 'descripcion'],
+    colsDesc: 'nombre* · familia (nombre exacto) · unidad (ud/kg/l...) · local (1=La Cala, 2=Roto\'s) · precio_venta · unidades_semana · descripcion',
+    tabla: 'cmp_articulos',
+    obligatorios: ['nombre'],
+    mapear: function(row){
+      var famNombre = (row.familia||'').trim().toLowerCase();
+      var fam = cmpFamilias.find(function(f){ return f.nombre.toLowerCase()===famNombre; });
+      return {
+        nombre: (row.nombre||'').trim(),
+        familia_id: fam ? fam.id : null,
+        unidad: (row.unidad||'ud').trim(),
+        local_id: parseInt(row.local)||1,
+        precio_venta: parseFloat(row.precio_venta)||null,
+        unidades_semana: parseInt(row.unidades_semana)||null,
+        descripcion: (row.descripcion||'').trim()||null
+      };
+    },
+    validar: function(row){ return (row.nombre||'').trim() ? null : 'Falta nombre'; }
+  },
+  proveedores: {
+    titulo: '🏭 Importar Proveedores',
+    sub: 'Carga múltiples proveedores desde un CSV o Excel.',
+    cols: ['nombre', 'razon_social', 'cif', 'telefono', 'email', 'contacto', 'direccion', 'notas'],
+    colsDesc: 'nombre* · razon_social · cif · telefono · email · contacto · direccion · notas',
+    tabla: 'cmp_proveedores',
+    obligatorios: ['nombre'],
+    mapear: function(row){
+      return {
+        nombre: (row.nombre||'').trim(),
+        razon_social: (row.razon_social||'').trim()||null,
+        cif: (row.cif||'').trim()||null,
+        telefono: (row.telefono||'').trim()||null,
+        email: (row.email||'').trim()||null,
+        contacto: (row.contacto||'').trim()||null,
+        direccion: (row.direccion||'').trim()||null,
+        notas: (row.notas||'').trim()||null
+      };
+    },
+    validar: function(row){ return (row.nombre||'').trim() ? null : 'Falta nombre'; }
+  }
+};
+
+function cmpAbrirImport(tipo){
+  cmpImportTipo = tipo;
+  cmpImportDatos = [];
+  var cfg = CMP_IMPORT_CONFIG[tipo];
+  if(!cfg) return;
+  document.getElementById('cmp-import-titulo').textContent = cfg.titulo;
+  document.getElementById('cmp-import-sub').textContent = cfg.sub;
+  document.getElementById('cmp-import-cols').textContent = cfg.colsDesc;
+  document.getElementById('cmp-import-preview').style.display = 'none';
+  document.getElementById('cmp-import-btn-ok').style.display = 'none';
+  document.getElementById('cmp-import-errores').style.display = 'none';
+  var fileEl = document.getElementById('cmp-import-file');
+  if(fileEl) fileEl.value = '';
+  document.getElementById('cmp-modal-import').style.display = 'flex';
+}
+
+function cmpDropImport(e){
+  e.preventDefault();
+  document.getElementById('cmp-import-drop').style.borderColor = 'var(--border)';
+  var file = e.dataTransfer.files[0];
+  if(file) cmpProcesarArchivo(file);
+}
+
+function cmpLeerImport(input){
+  var file = input.files[0];
+  if(file) cmpProcesarArchivo(file);
+}
+
+function cmpProcesarArchivo(file){
+  var nombre = file.name.toLowerCase();
+  if(nombre.endsWith('.csv')){
+    var reader = new FileReader();
+    reader.onload = function(e){ cmpParsearCSV(e.target.result); };
+    reader.readAsText(file, 'UTF-8');
+  } else if(nombre.endsWith('.xlsx')||nombre.endsWith('.xls')){
+    var reader = new FileReader();
+    reader.onload = function(e){ cmpParsearXLSX(e.target.result); };
+    reader.readAsArrayBuffer(file);
+  } else {
+    showToast('Formato no soportado. Usa .csv o .xlsx','orange');
+  }
+}
+
+function cmpParsearCSV(text){
+  var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+  if(lines.length < 2){ showToast('El CSV debe tener cabecera y al menos una fila','orange'); return; }
+  // Detectar separador: ; o ,
+  var sep = lines[0].indexOf(';') >= 0 ? ';' : ',';
+  var headers = lines[0].split(sep).map(function(h){ return h.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_'); });
+  var rows = [];
+  for(var i=1;i<lines.length;i++){
+    var vals = lines[i].split(sep);
+    var row = {};
+    headers.forEach(function(h,idx){ row[h] = (vals[idx]||'').trim().replace(/^["']|["']$/g,''); });
+    rows.push(row);
+  }
+  cmpMostrarPreview(rows);
+}
+
+function cmpParsearXLSX(buffer){
+  // Parseo manual de XLSX (formato ZIP + XML) sin librerías externas
+  // Fallback: pedir CSV si no hay SheetJS disponible
+  try{
+    // Intentar usar SheetJS si está cargado
+    if(typeof XLSX !== 'undefined'){
+      var wb = XLSX.read(new Uint8Array(buffer), {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var json = XLSX.utils.sheet_to_json(ws, {defval:''});
+      var rows = json.map(function(row){
+        var clean = {};
+        Object.keys(row).forEach(function(k){
+          clean[k.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_')] = String(row[k]||'').trim();
+        });
+        return clean;
+      });
+      cmpMostrarPreview(rows);
+    } else {
+      showToast('Para Excel usa formato .csv (Guardar como → CSV UTF-8 en Excel)','orange');
+    }
+  }catch(e){
+    showToast('Error leyendo Excel: '+e.message+'. Prueba con CSV.','red');
+  }
+}
+
+function cmpMostrarPreview(rows){
+  var cfg = CMP_IMPORT_CONFIG[cmpImportTipo];
+  if(!cfg) return;
+
+  // Normalizar claves al nombre de columna esperado (tolerancia a nombres similares)
+  var alias = {
+    'nombre_comercial':'nombre','company':'nombre','proveedor':'nombre',
+    'articulo':'nombre','product':'nombre','familia_nombre':'familia',
+    'category':'familia','precio':'precio_venta','pvp':'precio_venta',
+    'unidades':'unidades_semana','ventas':'unidades_semana',
+    'local_id':'local','telephone':'telefono','phone':'telefono',
+    'mail':'email','contact':'contacto','address':'direccion'
+  };
+  rows = rows.map(function(row){
+    var norm = {};
+    Object.keys(row).forEach(function(k){
+      var key = alias[k]||k;
+      norm[key] = row[k];
+    });
+    return norm;
+  }).filter(function(row){
+    return cfg.obligatorios.some(function(ob){ return (row[ob]||'').trim(); });
+  });
+
+  if(!rows.length){
+    showToast('No se encontraron filas válidas. Comprueba la cabecera del archivo.','orange');
+    return;
+  }
+
+  // Validar
+  var errores = [];
+  rows.forEach(function(row, i){
+    var err = cfg.validar(row);
+    if(err) errores.push('Fila '+(i+2)+': '+err);
+  });
+
+  var preview = document.getElementById('cmp-import-preview');
+  var previewTit = document.getElementById('cmp-import-preview-titulo');
+  var previewTable = document.getElementById('cmp-import-preview-table');
+  var errDiv = document.getElementById('cmp-import-errores');
+  var btnOk = document.getElementById('cmp-import-btn-ok');
+  var countEl = document.getElementById('cmp-import-count');
+
+  preview.style.display = '';
+  previewTit.textContent = rows.length+' registros encontrados'+(errores.length?' · '+errores.length+' con error':'');
+
+  // Tabla preview (primeras 8 filas)
+  var cols = cfg.cols;
+  var thead = '<thead><tr>'+cols.map(function(c){ return '<th>'+c+'</th>'; }).join('')+'<th>Estado</th></tr></thead>';
+  var tbody = '<tbody>'+rows.slice(0,8).map(function(row, i){
+    var err = cfg.validar(row);
+    return '<tr>'+cols.map(function(c){ return '<td style="font-size:10px">'+(row[c]||'<span style="color:var(--muted)">—</span>')+'</td>'; }).join('')
+      +'<td>'+(err?'<span style="color:var(--red);font-size:10px">⚠ '+err+'</span>':'<span style="color:var(--green);font-size:10px">✓</span>')+'</td>'
+      +'</tr>';
+  }).join('')+(rows.length>8?'<tr><td colspan="'+(cols.length+1)+'" style="text-align:center;color:var(--muted);font-size:10px">... y '+(rows.length-8)+' más</td></tr>':'')+'</tbody>';
+  previewTable.innerHTML = thead+tbody;
+
+  if(errores.length){
+    errDiv.style.display = '';
+    errDiv.innerHTML = '⚠ '+errores.slice(0,5).join('<br>')+(errores.length>5?'<br>...y '+(errores.length-5)+' más':'');
+  } else {
+    errDiv.style.display = 'none';
+  }
+
+  var validos = rows.filter(function(row){ return !cfg.validar(row); });
+  cmpImportDatos = validos;
+
+  if(validos.length > 0){
+    btnOk.style.display = '';
+    countEl.textContent = validos.length;
+  } else {
+    btnOk.style.display = 'none';
+  }
+}
+
+async function cmpEjecutarImport(){
+  var cfg = CMP_IMPORT_CONFIG[cmpImportTipo];
+  if(!cfg || !cmpImportDatos.length) return;
+  var btnOk = document.getElementById('cmp-import-btn-ok');
+  btnOk.disabled = true;
+  btnOk.textContent = '⏳ Importando...';
+  var ok = 0, err = 0;
+  for(var i=0; i<cmpImportDatos.length; i++){
+    try{
+      var datos = cfg.mapear(cmpImportDatos[i]);
+      await sbPost(cfg.tabla, datos);
+      ok++;
+    }catch(e){ err++; }
+  }
+  logAccion('IMPORT_'+cmpImportTipo.toUpperCase(), ok+' registros importados'+(err?' · '+err+' errores':''), null);
+  showToast('✓ '+ok+' importados'+(err?' · '+err+' errores':''), ok>0?'green':'orange');
+  btnOk.disabled = false;
+  cmpCerrarModales();
+  await cmpCargarDatos();
+  if(cmpImportTipo==='articulos') cmpRenderArticulos();
+  if(cmpImportTipo==='proveedores') cmpRenderProveedores();
+  if(cmpImportTipo==='familias'){ cmpTab('articulos'); }
+}
+
+function cmpDescargarPlantilla(){
+  var cfg = CMP_IMPORT_CONFIG[cmpImportTipo];
+  if(!cfg) return;
+  var sep = ';';
+  // Solo cabeceras — sin filas de datos
+  var csv = cfg.cols.join(sep) + '\n';
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'plantilla_'+cmpImportTipo+'.csv';
+  a.click();
+}
+
+function cmpExportar(tipo){
+  var cfg = CMP_IMPORT_CONFIG[tipo];
+  if(!cfg) return;
+  var sep = ';';
+  var rows = [cfg.cols.join(sep)];
+  var datos = tipo==='articulos' ? cmpArticulos : tipo==='proveedores' ? cmpProveedores : tipo==='familias' ? cmpFamilias : [];
+  datos.forEach(function(d){
+    var fila = cfg.cols.map(function(col){
+      var v = d[col]===null||d[col]===undefined ? '' : String(d[col]);
+      // Escapar punto y coma dentro del valor
+      if(v.indexOf(sep)>=0) v='"'+v+'"';
+      return v;
+    });
+    rows.push(fila.join(sep));
+  });
+  var csv = rows.join('\n');
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'exportar_'+tipo+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  showToast('✓ Exportados '+datos.length+' registros', 'green');
+}
+// ========== MÓDULO RESERVAS v6.7 ==========
+var RES_MODO_API = false;
+var RES_TURNO_ACTUAL = 'comida';
+var RES_FILTRO_ESTADO = '';
+var resIdCounter = 1000;
+var resReservasLocales = []; // reservas añadidas en sesión
+
+// Config por local
+var RES_CONFIG = {
+  1: { capacidad:142, mesas:44, zonas:['Terraza Cubierta','Terraza','Sala'], turnos:{comida:'13:00',cena:'20:00'} },
+  2: { capacidad:80,  mesas:20, zonas:['Interior','Terraza'],                turnos:{comida:'13:00',cena:'20:00'} }
+};
+
+// Datos mock La Cala
+var RES_MOCK = [
+  {id:1,  fecha:'2026-03-25',turno:'comida',hora:'13:00',nombre:'García Martínez', pax:4, zona:'Sala',             mesa:'5',  estado:'seated',    origen:'Web',       notas:''},
+  {id:2,  fecha:'2026-03-25',turno:'comida',hora:'13:00',nombre:'López Ruiz',       pax:2, zona:'Terraza',         mesa:'18', estado:'confirmada', origen:'On the Go', notas:'Aniversario'},
+  {id:3,  fecha:'2026-03-25',turno:'comida',hora:'13:15',nombre:'Torres Jiménez',   pax:6, zona:'Terraza Cubierta',mesa:'32', estado:'confirmada', origen:'Web',       notas:'Cumpleaños - pedir tarta'},
+  {id:4,  fecha:'2026-03-25',turno:'comida',hora:'13:30',nombre:'Martín Sánchez',   pax:3, zona:'Sala',             mesa:'8',  estado:'pendiente',  origen:'Telefono',  notas:'Alergia gluten'},
+  {id:5,  fecha:'2026-03-25',turno:'comida',hora:'14:00',nombre:'Rodríguez Pérez',  pax:8, zona:'Terraza Cubierta',mesa:'35', estado:'confirmada', origen:'Agencia',   notas:'Grupo empresa'},
+  {id:6,  fecha:'2026-03-25',turno:'comida',hora:'14:00',nombre:'Fernández Gómez',  pax:2, zona:'Terraza',         mesa:'22', estado:'confirmada', origen:'Web',       notas:''},
+  {id:7,  fecha:'2026-03-25',turno:'comida',hora:'14:15',nombre:'Álvarez Castro',   pax:5, zona:'Sala',             mesa:'11', estado:'cancelada',  origen:'On the Go', notas:'Cancelado por enfermedad'},
+  {id:8,  fecha:'2026-03-25',turno:'comida',hora:'14:30',nombre:'Moreno Díaz',      pax:4, zona:'Terraza',         mesa:'25', estado:'confirmada', origen:'WhatsApp',  notas:'Menú ejecutivo'},
+  {id:9,  fecha:'2026-03-25',turno:'comida',hora:'15:00',nombre:'Muñoz Serrano',    pax:2, zona:'Sala',             mesa:'3',  estado:'released',   origen:'Web',       notas:'No show'},
+  {id:10, fecha:'2026-03-25',turno:'cena',  hora:'20:00',nombre:'Herrera Blanco',   pax:4, zona:'Terraza Cubierta',mesa:'33', estado:'confirmada', origen:'Web',       notas:''},
+  {id:11, fecha:'2026-03-25',turno:'cena',  hora:'20:00',nombre:'Jiménez Vega',     pax:2, zona:'Terraza',         mesa:'19', estado:'confirmada', origen:'On the Go', notas:''},
+  {id:12, fecha:'2026-03-25',turno:'cena',  hora:'20:15',nombre:'Navarro Ortega',   pax:6, zona:'Sala',             mesa:'7',  estado:'pendiente',  origen:'Telefono',  notas:'Mesa familiar'},
+  {id:13, fecha:'2026-03-25',turno:'cena',  hora:'20:30',nombre:'Ramos Fuentes',    pax:3, zona:'Terraza Cubierta',mesa:'38', estado:'confirmada', origen:'Web',       notas:''},
+  {id:14, fecha:'2026-03-25',turno:'cena',  hora:'21:00',nombre:'Iglesias Mora',    pax:10,zona:'Sala',             mesa:'14', estado:'confirmada', origen:'Agencia',   notas:'Evento corporativo - menú cerrado'},
+  {id:15, fecha:'2026-03-25',turno:'cena',  hora:'21:00',nombre:'Ruiz Campos',      pax:2, zona:'Terraza',         mesa:'20', estado:'cancelada',  origen:'Web',       notas:''},
+  {id:16, fecha:'2026-03-25',turno:'cena',  hora:'21:30',nombre:'Suárez Delgado',   pax:4, zona:'Terraza Cubierta',mesa:'40', estado:'confirmada', origen:'WhatsApp',  notas:'Veganos x2'},
+  {id:17, fecha:'2026-03-25',turno:'cena',  hora:'22:00',nombre:'Molina Peña',      pax:2, zona:'Sala',             mesa:'2',  estado:'confirmada', origen:'On the Go', notas:''}
+];
+
+var RES_ESTADO_STYLE = {
+  confirmada: {bg:'#153d15', color:'#2ecc71', label:'✅ Confirmada'},
+  pendiente:  {bg:'#3d3000', color:'#ffa040', label:'⏳ Pendiente'},
+  cancelada:  {bg:'#3d1515', color:'#e74c3c', label:'❌ Cancelada'},
+  seated:     {bg:'#15152d', color:'#6b8fff', label:'🪑 Seated'},
+  released:   {bg:'#2a1a2a', color:'#c080ff', label:'🔓 Released'}
+};
+
+function initReservas(){
+  setTimeout(function(){
+    var hoy = new Date().toISOString().split('T')[0];
+    var felEl = document.getElementById('res-fecha-sel');
+    if(felEl && !felEl.value) felEl.value = hoy;
+    var savedKey = localStorage.getItem('rt_res_apikey');
+    if(savedKey){ var ki=document.getElementById('res-apikey-input'); if(ki) ki.value=savedKey; }
+    res_renderModeUI();
+    res_cargar();
+  }, 50);
+}
+
+function toggleResMode(){
+  RES_MODO_API = !RES_MODO_API;
+  res_renderModeUI();
+  res_cargar();
+}
+
+function res_renderModeUI(){
+  var lbl = document.getElementById('res-mode-label');
+  var knob = document.getElementById('res-tog-knob');
+  var dot = document.getElementById('res-tog-dot');
+  var banner = document.getElementById('res-api-banner');
+  if(lbl) lbl.textContent = RES_MODO_API ? 'API' : 'MOCK';
+  if(lbl) lbl.style.color = RES_MODO_API ? '#3498db' : 'var(--accent)';
+  if(knob) knob.style.left = RES_MODO_API ? '15px' : '3px';
+  if(dot)  dot.style.background = RES_MODO_API ? '#3498db' : 'var(--border)';
+  if(banner) banner.style.display = RES_MODO_API ? 'block' : 'none';
+}
+
+function res_guardarApiKey(){
+  var v = (document.getElementById('res-apikey-input')||{}).value||'';
+  if(!v.trim()){ showToast('Introduce una API key válida','orange'); return; }
+  localStorage.setItem('rt_res_apikey', v.trim());
+  showToast('✓ API key guardada. En desarrollo la conexión con CoverManager.','green');
+}
+
+function resTurno(turno){
+  RES_TURNO_ACTUAL = turno;
+  // Actualizar pills
+  var cp = document.getElementById('res-pill-comida');
+  var np = document.getElementById('res-pill-cena');
+  if(cp){ cp.style.background = turno==='comida'?'#2ecc71':'none'; cp.style.color = turno==='comida'?'#0f1923':'var(--muted)'; cp.style.borderColor = turno==='comida'?'#2ecc71':'var(--border)'; }
+  if(np){ np.style.background = turno==='cena'?'#6b8fff':'none'; np.style.color = turno==='cena'?'#0f1923':'var(--muted)'; np.style.borderColor = turno==='cena'?'#6b8fff':'var(--border)'; }
+  res_cargar();
+}
+
+function resFiltro(estado){
+  RES_FILTRO_ESTADO = estado;
+  // Actualizar botones filtro
+  ['all','confirmada','pendiente','cancelada','seated'].forEach(function(k){
+    var el = document.getElementById('res-f-'+k);
+    if(!el) return;
+    var activo = (k==='' || k==='all') ? estado==='' : estado===k;
+    el.className = activo ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    if(!activo){
+      var colores = {confirmada:'#2ecc71',pendiente:'#ffa040',cancelada:'#e74c3c',seated:'#6b8fff'};
+      el.style.borderColor = colores[k]||'var(--border)';
+      el.style.color = colores[k]||'var(--muted)';
+    } else { el.style.borderColor=''; el.style.color=''; }
+  });
+  res_renderTabla();
+}
+
+function res_cargar(){
+  if(RES_MODO_API){
+    res_renderKpis([]);
+    res_renderTabla();
+    res_renderZonas([]);
+    showToast('🔌 Modo CoverManager API — integración en desarrollo','orange');
+    return;
+  }
+  // Modo MOCK
+  var fecha = (document.getElementById('res-fecha-sel')||{}).value||'2026-03-25';
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  // Combinar mock + reservas locales de sesión filtradas por fecha/local
+  var todas = RES_MOCK.filter(function(r){ return r.fecha===fecha; })
+    .concat(resReservasLocales.filter(function(r){ return r.fecha===fecha && r.local_id===(localId); }));
+  res_renderKpis(todas);
+  res_renderTabla(todas);
+  res_renderZonas(todas);
+}
+
+function res_getReservasFiltradas(todas){
+  var turno = RES_TURNO_ACTUAL;
+  var estado = RES_FILTRO_ESTADO;
+  return (todas||[]).filter(function(r){
+    if(r.turno !== turno) return false;
+    if(estado && r.estado !== estado) return false;
+    return true;
+  }).sort(function(a,b){ return a.hora > b.hora ? 1 : -1; });
+}
+
+function res_renderKpis(todas){
+  var cont = document.getElementById('res-kpis');
+  var bar  = document.getElementById('res-ocupacion-bar');
+  if(!cont) return;
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var delTurno = (todas||[]).filter(function(r){ return r.turno===RES_TURNO_ACTUAL; });
+  var activas = delTurno.filter(function(r){ return r.estado!=='cancelada'&&r.estado!=='released'; });
+  var totalPax = activas.reduce(function(s,r){ return s+(parseInt(r.pax)||0); },0);
+  var confirmadas = delTurno.filter(function(r){ return r.estado==='confirmada'; }).length;
+  var pendientes  = delTurno.filter(function(r){ return r.estado==='pendiente'; }).length;
+  var ocupPct = cfg.capacidad > 0 ? Math.round(totalPax/cfg.capacidad*100) : 0;
+  var ocColour = ocupPct>=90?'var(--red)':ocupPct>=70?'var(--orange)':'var(--green)';
+  cont.innerHTML =
+    '<div class="stat-card"><div class="stat-val" style="color:'+ocColour+'">'+ocupPct+'%</div><div class="stat-label">Ocupación</div></div>'
+   +'<div class="stat-card"><div class="stat-val">'+activas.length+'</div><div class="stat-label">Reservas activas</div></div>'
+   +'<div class="stat-card"><div class="stat-val" style="color:var(--accent)">'+totalPax+'</div><div class="stat-label">Pax / '+cfg.capacidad+' cap.</div></div>'
+   +'<div class="stat-card"><div class="stat-val" style="color:#ffa040">'+pendientes+'</div><div class="stat-label">Pendientes confirmar</div></div>';
+  // Barra de ocupación
+  if(bar){
+    bar.innerHTML = '<div style="display:flex;align-items:center;gap:10px">'
+      +'<div style="flex:1;background:var(--darker);border-radius:6px;height:12px;overflow:hidden;border:1px solid var(--border)">'
+      +'<div style="background:'+ocColour+';height:100%;width:'+Math.min(100,ocupPct)+'%;border-radius:6px;transition:width .5s"></div></div>'
+      +'<span style="font-size:12px;font-weight:700;color:'+ocColour+';min-width:80px">'+totalPax+' / '+cfg.capacidad+' pax</span>'
+      +'</div>';
+  }
+}
+
+function res_renderTabla(todas){
+  var cont = document.getElementById('res-tabla');
+  if(!cont) return;
+  // Si no se pasa todas, volver a buscar
+  if(!todas){
+    var fecha = (document.getElementById('res-fecha-sel')||{}).value||'2026-03-25';
+    var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+    todas = RES_MOCK.filter(function(r){ return r.fecha===fecha; })
+      .concat(resReservasLocales.filter(function(r){ return r.fecha===fecha && r.local_id===localId; }));
+  }
+  var filas = res_getReservasFiltradas(todas);
+  if(!filas.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin reservas para este turno'+(RES_FILTRO_ESTADO?' con estado "'+RES_FILTRO_ESTADO+'"':'')+'</div>';
+    return;
+  }
+  cont.innerHTML = filas.map(function(r){
+    var est = RES_ESTADO_STYLE[r.estado]||{bg:'var(--darker)',color:'var(--muted)',label:r.estado};
+    return '<div style="display:grid;grid-template-columns:60px 1fr 50px 110px 80px 100px 110px 36px;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border)20;align-items:center;font-size:13px;transition:background .15s" onmouseover="this.style.background=\'var(--darker)\'" onmouseout="this.style.background=\'\'">'
+      +'<span style="font-weight:700;color:var(--accent)">'+r.hora+'</span>'
+      +'<span style="font-weight:600">'+r.nombre+(r.notas?'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+r.notas+'</div>':'')+'</span>'
+      +'<span style="text-align:center;font-weight:700;color:var(--text)">'+r.pax+'</span>'
+      +'<span style="font-size:11px;color:var(--muted)">'+r.zona+'</span>'
+      +'<span style="font-size:11px;color:var(--muted)">Mesa '+r.mesa+'</span>'
+      +'<span style="font-size:11px;color:var(--muted)">'+r.origen+'</span>'
+      +'<span style="display:inline-block;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:700;background:'+est.bg+';color:'+est.color+'">'+est.label+'</span>'
+      +'<button onclick="res_abrirModalEditar('+r.id+')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 7px;color:var(--muted);cursor:pointer;font-size:11px">✏️</button>'
+      +'</div>';
+  }).join('');
+}
+
+function res_renderZonas(todas){
+  var cont = document.getElementById('res-zonas');
+  if(!cont) return;
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var delTurno = (todas||[]).filter(function(r){ return r.turno===RES_TURNO_ACTUAL && r.estado!=='cancelada'&&r.estado!=='released'; });
+  cont.innerHTML = cfg.zonas.map(function(zona){
+    var resZona = delTurno.filter(function(r){ return r.zona===zona; });
+    var paxZona = resZona.reduce(function(s,r){ return s+(parseInt(r.pax)||0); },0);
+    var pctZona = cfg.capacidad>0?Math.round(paxZona/cfg.capacidad*100*cfg.zonas.length):0;
+    var col = pctZona>=90?'var(--red)':pctZona>=60?'var(--orange)':'var(--green)';
+    return '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:12px">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">'+zona+'</div>'
+      +'<div style="font-size:22px;font-weight:700;color:'+col+'">'+resZona.length+' <span style="font-size:12px;color:var(--muted)">reservas</span></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+paxZona+' pax</div>'
+      +'<div style="margin-top:8px;background:var(--border);border-radius:4px;height:6px;overflow:hidden">'
+      +'<div style="background:'+col+';height:100%;width:'+Math.min(100,pctZona)+'%;border-radius:4px"></div></div>'
+      +'</div>';
+  }).join('');
+}
+
+function res_abrirModalNueva(){
+  document.getElementById('res-modal-titulo').textContent='📅 Nueva Reserva';
+  document.getElementById('res-edit-id').value='';
+  document.getElementById('res-f-nombre').value='';
+  document.getElementById('res-f-pax').value='2';
+  document.getElementById('res-f-mesa').value='';
+  document.getElementById('res-f-notas').value='';
+  document.getElementById('res-f-estado').value='confirmada';
+  document.getElementById('res-f-origen').value='Web';
+  // Zonas según local
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var zonaEl = document.getElementById('res-f-zona');
+  if(zonaEl){ zonaEl.innerHTML = cfg.zonas.map(function(z){return'<option value="'+z+'">'+z+'</option>';}).join(''); }
+  // Horas del turno
+  _res_poblarHoras(RES_TURNO_ACTUAL, localId);
+  document.getElementById('res-modal-nueva').style.display='flex';
+}
+
+function res_abrirModalEditar(id){
+  var r = RES_MOCK.find(function(x){return x.id===id;}) || resReservasLocales.find(function(x){return x.id===id;});
+  if(!r) return;
+  document.getElementById('res-modal-titulo').textContent='✏️ Editar Reserva';
+  document.getElementById('res-edit-id').value=id;
+  document.getElementById('res-f-nombre').value=r.nombre||'';
+  document.getElementById('res-f-pax').value=r.pax||2;
+  document.getElementById('res-f-mesa').value=r.mesa||'';
+  document.getElementById('res-f-notas').value=r.notas||'';
+  document.getElementById('res-f-estado').value=r.estado||'confirmada';
+  document.getElementById('res-f-origen').value=r.origen||'Web';
+  var localId = parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var zonaEl = document.getElementById('res-f-zona');
+  if(zonaEl){ zonaEl.innerHTML = cfg.zonas.map(function(z){return'<option value="'+z+'"'+(z===r.zona?' selected':'')+'>'+z+'</option>';}).join(''); }
+  _res_poblarHoras(r.turno||RES_TURNO_ACTUAL, localId, r.hora);
+  document.getElementById('res-modal-nueva').style.display='flex';
+}
+
+function _res_poblarHoras(turno, localId, selected){
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var base = cfg.turnos[turno]||'13:00';
+  var baseMin = parseInt(base.split(':')[0])*60+parseInt(base.split(':')[1]);
+  var hEl = document.getElementById('res-f-hora');
+  if(!hEl) return;
+  hEl.innerHTML='';
+  for(var m=0; m<=120; m+=15){
+    var tot=baseMin+m, hh=String(Math.floor(tot/60)).padStart(2,'0'), mm=String(tot%60).padStart(2,'0');
+    var str=hh+':'+mm;
+    hEl.innerHTML+='<option value="'+str+'"'+(str===selected?' selected':'')+'>'+str+'</option>';
+  }
+}
+
+function res_cerrarModal(){
+  document.getElementById('res-modal-nueva').style.display='none';
+}
+
+function res_guardar(){
+  var editId = document.getElementById('res-edit-id').value;
+  var nombre = document.getElementById('res-f-nombre').value.trim();
+  var pax    = parseInt(document.getElementById('res-f-pax').value)||1;
+  var hora   = document.getElementById('res-f-hora').value;
+  var zona   = document.getElementById('res-f-zona').value;
+  var mesa   = document.getElementById('res-f-mesa').value.trim();
+  var origen = document.getElementById('res-f-origen').value;
+  var estado = document.getElementById('res-f-estado').value;
+  var notas  = document.getElementById('res-f-notas').value.trim();
+  var fecha  = (document.getElementById('res-fecha-sel')||{}).value||new Date().toISOString().split('T')[0];
+  var localId= parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  if(!nombre){ showToast('Introduce el nombre del cliente','orange'); return; }
+  if(editId){
+    // Editar — buscar en locales primero, luego mock
+    var idx = resReservasLocales.findIndex(function(r){ return r.id===parseInt(editId); });
+    if(idx>=0){
+      Object.assign(resReservasLocales[idx],{nombre:nombre,pax:pax,hora:hora,zona:zona,mesa:mesa,origen:origen,estado:estado,notas:notas});
+    } else {
+      // Mock — edición en memoria
+      var mr = RES_MOCK.find(function(r){ return r.id===parseInt(editId); });
+      if(mr) Object.assign(mr,{nombre:nombre,pax:pax,hora:hora,zona:zona,mesa:mesa,origen:origen,estado:estado,notas:notas});
+    }
+    showToast('✓ Reserva actualizada','green');
+  } else {
+    resIdCounter++;
+    resReservasLocales.push({id:resIdCounter,fecha:fecha,local_id:localId,turno:RES_TURNO_ACTUAL,hora:hora,nombre:nombre,pax:pax,zona:zona,mesa:mesa,estado:estado,origen:origen,notas:notas});
+    showToast('✓ Reserva añadida','green');
+  }
+  res_cerrarModal();
+  res_cargar();
+}
+
+function imprimirReservas(){
+  var fecha  = (document.getElementById('res-fecha-sel')||{}).value||'—';
+  var localId= parseInt((document.getElementById('res-local-sel')||{}).value||'1');
+  var localNom = localId===1?'La Cala':"Roto's Burguer";
+  var turnoLabel = RES_TURNO_ACTUAL==='comida'?'Comida 13:00':'Cena 20:00';
+  var todas = RES_MOCK.filter(function(r){ return r.fecha===fecha; })
+    .concat(resReservasLocales.filter(function(r){ return r.fecha===fecha&&r.local_id===localId; }));
+  var filas = res_getReservasFiltradas(todas);
+  var totalPax = filas.filter(function(r){return r.estado!=='cancelada'&&r.estado!=='released';}).reduce(function(s,r){return s+(parseInt(r.pax)||0);},0);
+  var cfg = RES_CONFIG[localId]||RES_CONFIG[1];
+  var w = window.open('','_blank','width=900,height=700');
+  if(!w){alert('Permite ventanas emergentes');return;}
+  w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reservas '+localNom+' '+fecha+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px;color:#111}'
+    +'h1{font-size:16px;margin-bottom:4px}p{color:#666;margin-bottom:14px}'
+    +'table{width:100%;border-collapse:collapse}th{background:#f0f0f0;padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;border:1px solid #ddd}'
+    +'td{padding:6px 8px;border:1px solid #eee;font-size:11px}'
+    +'.conf{color:#050}.pend{color:#840}.canc{color:#c00}.seated{color:#003}.rel{color:#404}'
+    +'</style></head><body>'
+    +'<h1>📅 Reservas '+localNom+' · '+turnoLabel+'</h1>'
+    +'<p>Fecha: <strong>'+fecha+'</strong> · '+filas.length+' reservas · '+totalPax+' pax / '+cfg.capacidad+' capacidad</p>'
+    +'<table><thead><tr><th>Hora</th><th>Nombre</th><th>Pax</th><th>Zona</th><th>Mesa</th><th>Estado</th><th>Origen</th><th>Notas</th></tr></thead><tbody>'
+    +filas.map(function(r){var cl={confirmada:'conf',pendiente:'pend',cancelada:'canc',seated:'seated',released:'rel'}[r.estado]||'';return'<tr><td><strong>'+r.hora+'</strong></td><td>'+r.nombre+'</td><td>'+r.pax+'</td><td>'+r.zona+'</td><td>'+r.mesa+'</td><td class="'+cl+'">'+r.estado+'</td><td>'+r.origen+'</td><td>'+r.notas+'</td></tr>';}).join('')
+    +'</tbody></table>'
+    +'<p style="margin-top:14px;font-size:9px;color:#aaa">RelojTurnos v6.7 · '+new Date().toLocaleString('es-ES')+'</p>'
+    +'<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
+    +'</body></html>');
+  w.document.close();
+}
+// Cerrar modal reserva al clicar fuera
+document.addEventListener('click',function(e){
+  var m=document.getElementById('res-modal-nueva');
+  if(m&&m.style.display==='flex'&&e.target===m) res_cerrarModal();
+});
