@@ -4033,20 +4033,323 @@ function iaCopiar(){
   });
 }
 
-// ========== AVISOS TRABAJADORES v7.0 (screen15) — stub ==========
-function initAvisos(){ avCargarEmpleados(); avCargarHistorico(); }
-function avCargarEmpleados(){ }
-function avSelEmpleado(){ }
-function avIrPaso2(){ }
-function avVolver(paso){ }
-function avSelTipo(tipo, icono){ }
-function avSelNivel(nivel){ }
-function avGenerarAviso(){ }
-function avCopiar(){ }
-function avImprimir(){ }
-function avGuardar(){ }
-function avNuevoAviso(){ }
-function avCargarHistorico(){ }
+// ========== AVISOS TRABAJADORES v7.0 (screen15) ==========
+var avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, textoGenerado: '' };
+
+var AV_NIVEL_LABELS = { 1: 'Leve (Nivel 1)', 2: 'Moderado (Nivel 2)', 3: 'Grave (Nivel 3)' };
+var AV_NIVEL_DESCRIPCIONES = {
+  1: 'primer aviso verbal / advertencia informal por escrito',
+  2: 'aviso escrito formal / segundo apercibimiento',
+  3: 'expediente disciplinario / tercer aviso con posibles consecuencias'
+};
+
+function initAvisos(){
+  avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, textoGenerado: '' };
+  avMostrarPaso(1);
+  avCargarEmpleados();
+  avCargarHistorico();
+}
+
+function avMostrarPaso(n){
+  [1,2,3].forEach(function(i){
+    var el = document.getElementById('av-paso'+i);
+    if(el) el.style.display = (i===n) ? '' : 'none';
+  });
+  var res = document.getElementById('av-resultado');
+  var load = document.getElementById('av-loading');
+  if(res) res.style.display = 'none';
+  if(load) load.style.display = 'none';
+}
+
+async function avCargarEmpleados(){
+  var sel = document.getElementById('av-empleado-sel');
+  if(!sel) return;
+
+  // Intentar cargar desde Supabase; si falla, usar empleados en memoria
+  var lista = [];
+  try{
+    var localId = currentUser ? currentUser.local_id : null;
+    if(localId){
+      var emps = await sbGet('empleados', 'local_id=eq.'+localId+'&activo=eq.true&order=nombre.asc');
+      lista = emps.map(function(e){ return { id: e.id, nombre: e.nombre }; });
+    }
+  }catch(e){ /* fallback */ }
+
+  // Fallback: empleados en memoria (cargados en el cuadrante)
+  if(!lista.length && empleados.length){
+    lista = empleados.map(function(e){ return { id: e.bdId || e.id, nombre: e.nombre }; });
+  }
+
+  // Opciones hardcoded como último recurso
+  if(!lista.length){
+    lista = [
+      {id:null, nombre:'MARILYN'}, {id:null, nombre:'SONNY'},
+      {id:null, nombre:'ALEX'}, {id:null, nombre:'IRENE'},
+      {id:null, nombre:'ZEUS'}, {id:null, nombre:'CONNY'},
+      {id:null, nombre:'SANTIAGO'}, {id:null, nombre:'LENY'}
+    ];
+  }
+
+  sel.innerHTML = '<option value="">— Selecciona empleado —</option>';
+  lista.forEach(function(e){
+    var opt = document.createElement('option');
+    opt.value = e.id || e.nombre;
+    opt.textContent = e.nombre;
+    opt.dataset.nombre = e.nombre;
+    sel.appendChild(opt);
+  });
+}
+
+function avSelEmpleado(){
+  var sel = document.getElementById('av-empleado-sel');
+  var sig = document.getElementById('av-paso1-siguiente');
+  if(!sel || !sig) return;
+  var opt = sel.options[sel.selectedIndex];
+  if(sel.value){
+    avEstado.empleadoNombre = opt.dataset.nombre || opt.textContent;
+    avEstado.empleadoId = sel.value;
+    sig.style.display = '';
+  } else {
+    sig.style.display = 'none';
+  }
+}
+
+function avIrPaso2(){
+  if(!avEstado.empleadoNombre){ showToast('Selecciona un empleado primero', 'red'); return; }
+  // Limpiar selección previa de tipos
+  document.querySelectorAll('.av-tipo-btn').forEach(function(b){ b.classList.remove('selected'); });
+  avMostrarPaso(2);
+}
+
+function avVolver(paso){
+  avMostrarPaso(paso);
+  if(paso === 1){
+    var res = document.getElementById('av-resultado');
+    if(res) res.style.display = 'none';
+  }
+}
+
+function avSelTipo(tipo, icono){
+  avEstado.tipo = tipo;
+  avEstado.icono = icono;
+  document.querySelectorAll('.av-tipo-btn').forEach(function(b){ b.classList.remove('selected'); });
+  event.currentTarget.classList.add('selected');
+  setTimeout(function(){ avMostrarPaso(3); }, 180);
+}
+
+function avSelNivel(nivel){
+  avEstado.nivel = nivel;
+  [1,2,3].forEach(function(n){
+    var btn = document.getElementById('av-nivel-'+n);
+    if(!btn) return;
+    btn.style.background = (n===nivel) ? 'var(--accent)20' : 'var(--darker)';
+    btn.style.borderWidth = (n===nivel) ? '3px' : '2px';
+  });
+}
+
+async function avGenerarAviso(){
+  if(!avEstado.empleadoNombre || !avEstado.tipo || !avEstado.nivel){
+    showToast('Completa todos los pasos antes de generar', 'red'); return;
+  }
+
+  var descripcion = (document.getElementById('av-descripcion').value || '').trim();
+  var localNombre = '';
+  if(currentUser && currentUser.local_id){
+    localNombre = ({1:'Restaurante La Cala', 2:"Roto's Burguer"})[currentUser.local_id] || 'el restaurante';
+  } else {
+    localNombre = 'el restaurante';
+  }
+
+  var nivelLabel = AV_NIVEL_LABELS[avEstado.nivel];
+  var nivelDesc  = AV_NIVEL_DESCRIPCIONES[avEstado.nivel];
+  var fecha = new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'});
+
+  var prompt = 'Redacta un aviso formal de ' + nivelLabel + ' para el empleado '
+    + avEstado.empleadoNombre + ' de ' + localNombre + '.\n'
+    + 'Motivo de la incidencia: ' + avEstado.tipo + '.\n'
+    + 'Nivel de gravedad: ' + nivelLabel + ' (' + nivelDesc + ').\n'
+    + (descripcion ? 'Detalles adicionales: ' + descripcion + '.\n' : '')
+    + 'Fecha: ' + fecha + '.\n\n'
+    + 'El aviso debe:\n'
+    + '- Tener formato de documento formal (con cabecera, cuerpo y pie de firma)\n'
+    + '- Incluir la descripción de los hechos de forma objetiva y sin juicios de valor\n'
+    + '- Mencionar el artículo del convenio colectivo de hostelería aplicable si procede\n'
+    + '- Indicar las consecuencias de reincidencia según el nivel\n'
+    + '- Terminar con espacio para firma del empleado y firma de la dirección\n'
+    + '- Tono: profesional, formal, pero respetuoso';
+
+  var systemPrompt = 'Eres un experto en RRHH y relaciones laborales especializado en hostelería en España. '
+    + 'Redactas documentos laborales formales: avisos, apercibimientos y expedientes disciplinarios '
+    + 'ajustados al Convenio Colectivo de Hostelería y la legislación laboral española vigente.';
+
+  // Mostrar loading
+  document.getElementById('av-loading').style.display = '';
+  document.getElementById('av-paso3').style.display = 'none';
+  var btn = document.getElementById('av-btn-generar');
+  if(btn){ btn.disabled = true; }
+
+  try{
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 1200,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if(!resp.ok){
+      var errData = await resp.json().catch(function(){ return {}; });
+      throw new Error(errData.error ? errData.error.message : 'Error ' + resp.status);
+    }
+
+    var data = await resp.json();
+    var texto = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'Sin respuesta';
+    avEstado.textoGenerado = texto;
+
+    document.getElementById('av-loading').style.display = 'none';
+    document.getElementById('av-texto-generado').textContent = texto;
+    document.getElementById('av-resultado').style.display = '';
+
+    if(btn){ btn.disabled = false; }
+
+  }catch(e){
+    document.getElementById('av-loading').style.display = 'none';
+    document.getElementById('av-paso3').style.display = '';
+    if(btn){ btn.disabled = false; }
+    showToast('Error al generar el aviso: ' + e.message, 'red');
+  }
+}
+
+function avCopiar(){
+  var txt = avEstado.textoGenerado || '';
+  if(!txt) return;
+  navigator.clipboard.writeText(txt).then(function(){
+    showToast('Aviso copiado al portapapeles', 'green');
+  }).catch(function(){
+    showToast('No se pudo copiar automáticamente', 'orange');
+  });
+}
+
+function avImprimir(){
+  var txt = avEstado.textoGenerado || '';
+  if(!txt){ showToast('No hay aviso generado', 'red'); return; }
+  var w = window.open('', '_blank');
+  w.document.write(
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<title>Aviso ' + avEstado.empleadoNombre + '</title>'
+    + '<style>body{font-family:Arial,sans-serif;padding:40px;max-width:700px;margin:auto;font-size:14px;line-height:1.7}'
+    + 'h1{font-size:16px;border-bottom:2px solid #000;padding-bottom:8px}'
+    + 'pre{white-space:pre-wrap;font-family:inherit;font-size:14px}'
+    + '@media print{body{padding:20px}}'
+    + '</style></head><body>'
+    + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
+    + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.0 · Grupo El Reloj · '
+    + new Date().toLocaleString('es-ES') + '</p>'
+    + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
+    + '</body></html>'
+  );
+  w.document.close();
+}
+
+async function avGuardar(){
+  var txt = avEstado.textoGenerado;
+  if(!txt){ showToast('No hay aviso generado', 'red'); return; }
+
+  var btn = document.getElementById('av-btn-guardar');
+  if(btn){ btn.textContent = '⏳ Guardando...'; btn.disabled = true; }
+
+  var localId = currentUser ? currentUser.local_id : null;
+  var registro = {
+    empleado_nombre: avEstado.empleadoNombre,
+    tipo_incidencia:  avEstado.tipo,
+    nivel:            avEstado.nivel,
+    texto_aviso:      txt,
+    local_id:         localId,
+    creado_por:       currentUser ? (currentUser.nombre || currentUser.dni) : 'Dirección',
+    fecha_aviso:      new Date().toISOString().split('T')[0]
+  };
+  if(avEstado.empleadoId && !isNaN(parseInt(avEstado.empleadoId))){
+    registro.empleado_id = parseInt(avEstado.empleadoId);
+  }
+
+  try{
+    await sbPost('avisos_trabajadores', registro);
+    showToast('Aviso guardado correctamente', 'green');
+    if(btn){ btn.textContent = '✓ Guardado'; btn.style.background = 'var(--green)'; btn.style.color = 'var(--darker)'; }
+    avCargarHistorico();
+  }catch(e){
+    showToast('Error al guardar: ' + e.message, 'red');
+    if(btn){ btn.textContent = '💾 Guardar en BD'; btn.disabled = false; }
+  }
+}
+
+function avNuevoAviso(){
+  avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, textoGenerado: '' };
+  document.querySelectorAll('.av-tipo-btn').forEach(function(b){ b.classList.remove('selected'); });
+  [1,2,3].forEach(function(n){
+    var btn = document.getElementById('av-nivel-'+n);
+    if(btn){ btn.style.background = 'var(--darker)'; btn.style.borderWidth = '2px'; }
+  });
+  var desc = document.getElementById('av-descripcion');
+  if(desc) desc.value = '';
+  var btnG = document.getElementById('av-btn-guardar');
+  if(btnG){ btnG.textContent = '💾 Guardar en BD'; btnG.disabled = false; btnG.style.background = ''; btnG.style.color = ''; }
+  var paso1sig = document.getElementById('av-paso1-siguiente');
+  if(paso1sig) paso1sig.style.display = 'none';
+  var sel = document.getElementById('av-empleado-sel');
+  if(sel) sel.value = '';
+  avMostrarPaso(1);
+}
+
+async function avCargarHistorico(){
+  var cont = document.getElementById('av-historico');
+  if(!cont) return;
+  cont.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">Cargando...</div>';
+
+  try{
+    var filtros = 'order=id.desc&limit=20';
+    if(currentUser && currentUser.local_id){
+      filtros = 'local_id=eq.' + currentUser.local_id + '&' + filtros;
+    }
+    var rows = await sbGet('avisos_trabajadores', filtros);
+
+    if(!rows || !rows.length){
+      cont.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">No hay avisos registrados aún</div>';
+      return;
+    }
+
+    var AV_NIVEL_COLOR = {1:'#ffa040', 2:'#e67e22', 3:'#e74c3c'};
+    var AV_NIVEL_TEXTO = {1:'Leve', 2:'Moderado', 3:'Grave'};
+
+    cont.innerHTML = rows.map(function(r){
+      var col = AV_NIVEL_COLOR[r.nivel] || 'var(--muted)';
+      var niv = AV_NIVEL_TEXTO[r.nivel] || 'N'+r.nivel;
+      var fecha = r.fecha_aviso || (r.created_at ? r.created_at.split('T')[0] : '—');
+      var preview = (r.texto_aviso || '').substring(0, 120).replace(/\n/g,' ') + '...';
+      return '<div style="border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:8px;background:var(--darker)">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
+        + '<span style="font-weight:700;font-size:14px;color:var(--text)">' + (r.empleado_nombre||'—') + '</span>'
+        + '<span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;background:'+col+'20;color:'+col+'">'+niv+'</span>'
+        + '<span style="font-size:11px;color:var(--muted)">'+r.tipo_incidencia+'</span>'
+        + '<span style="font-size:10px;color:var(--muted);margin-left:auto">'+fecha+'</span>'
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+preview+'</div>'
+        + '</div>';
+    }).join('');
+
+  }catch(e){
+    cont.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:14px">⚠ Error al cargar: ' + e.message + '</div>';
+  }
+}
 
 // ========== CHECKLIST ROTATIVO v7.0 (screen16) — stub ==========
 function initChecklist(){ clCargarDia(); }
