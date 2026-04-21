@@ -4351,8 +4351,229 @@ async function avCargarHistorico(){
   }
 }
 
-// ========== CHECKLIST ROTATIVO v7.0 (screen16) — stub ==========
-function initChecklist(){ clCargarDia(); }
-function clCargarDia(){ }
-function clAnadirTarea(){ }
-function clGuardarNota(){ }
+// ========== CHECKLIST ROTATIVO v7.0 (screen16) ==========
+
+var CL_TAREAS_BASE = [
+  'Revisar y limpiar todas las mesas y sillas',
+  'Reponer servilletas, palilleros y salsas en mesas',
+  'Limpiar la barra y zona de trabajo de sala',
+  'Revisar y rellenar dispensadores (jabón, papel)',
+  'Barrer y fregar el suelo de sala y terraza',
+  'Limpiar cristales y espejos de la entrada',
+  'Comprobar y limpiar baños (papel, jabón, suelo)',
+  'Revisar stock de bebidas y comunicar roturas',
+  'Montar mise en place para el servicio',
+  'Comprobar funcionamiento de TPV y caja',
+  'Revisar temperatura de cámaras frigoríficas',
+  'Vaciar papeleras y gestionar residuos',
+  'Verificar iluminación (fundidas, estado)',
+  'Anotar incidencias del turno anterior',
+  'Pasar parte al siguiente turno'
+];
+
+// Estado en memoria para el día actual
+var clTareasHoy = [];      // [{id, texto, hecha, hora_completado, extra}]
+var clFechaActual = '';
+var clResponsableActual = '';
+var clGuardandoNota = false;
+
+function initChecklist(){
+  var fechaEl = document.getElementById('cl-fecha');
+  if(fechaEl && !fechaEl.value){
+    fechaEl.value = new Date().toISOString().split('T')[0];
+  }
+  clCargarDia();
+}
+
+function clFechaISO(){
+  var el = document.getElementById('cl-fecha');
+  return el ? el.value : new Date().toISOString().split('T')[0];
+}
+
+// Determina qué empleado toca hoy por rotación (índice del día desde epoch % nEmpleados)
+function clResponsableDelDia(fecha){
+  var listaEmps = [];
+
+  // Usar empleados en memoria si hay
+  if(empleados.length){
+    listaEmps = empleados.map(function(e){ return e.nombre; });
+  } else {
+    listaEmps = ['MARILYN','SONNY','ALEX','IRENE','ZEUS','CONNY','SANTIAGO','LENY'];
+  }
+
+  if(!listaEmps.length) return '—';
+
+  // Calcular número de día desde una fecha base fija (01/01/2024)
+  var base = new Date('2024-01-01');
+  var d    = new Date(fecha + 'T12:00:00');
+  var diff = Math.round((d - base) / 86400000);
+  var idx  = ((diff % listaEmps.length) + listaEmps.length) % listaEmps.length;
+  return listaEmps[idx];
+}
+
+async function clCargarDia(){
+  var fecha = clFechaISO();
+  clFechaActual = fecha;
+  clResponsableActual = clResponsableDelDia(fecha);
+
+  // Mostrar responsable
+  var nomEl = document.getElementById('cl-responsable-nombre');
+  if(nomEl) nomEl.textContent = clResponsableActual;
+
+  // Intentar cargar desde Supabase
+  var tareasGuardadas = null;
+  try{
+    var localId = currentUser ? currentUser.local_id : null;
+    var filtros = 'fecha=eq.' + fecha + '&order=posicion.asc';
+    if(localId) filtros = 'local_id=eq.' + localId + '&' + filtros;
+    var rows = await sbGet('checklist_diario', filtros);
+    if(rows && rows.length) tareasGuardadas = rows;
+  }catch(e){ /* sin conexión — modo local */ }
+
+  if(tareasGuardadas && tareasGuardadas.length){
+    // Reconstruir desde BD
+    clTareasHoy = tareasGuardadas.map(function(r){
+      return {
+        id:             r.id,
+        texto:          r.tarea,
+        hecha:          !!r.completada,
+        hora_completado:r.hora_completado || '',
+        extra:          !!r.extra,
+        posicion:       r.posicion || 0
+      };
+    });
+    // Cargar nota del día
+    var notaEl = document.getElementById('cl-nota-dia');
+    if(notaEl && tareasGuardadas[0] && tareasGuardadas[0].nota_dia){
+      notaEl.value = tareasGuardadas[0].nota_dia || '';
+    }
+  } else {
+    // Crear tareas base para hoy
+    clTareasHoy = CL_TAREAS_BASE.map(function(txt, i){
+      return { id: null, texto: txt, hecha: false, hora_completado: '', extra: false, posicion: i };
+    });
+    var notaEl = document.getElementById('cl-nota-dia');
+    if(notaEl) notaEl.value = '';
+  }
+
+  clRenderTareas();
+}
+
+function clRenderTareas(){
+  var cont = document.getElementById('cl-tareas-lista');
+  if(!cont) return;
+
+  cont.innerHTML = '';
+  var hechas = clTareasHoy.filter(function(t){ return t.hecha; }).length;
+  var total  = clTareasHoy.length;
+
+  clTareasHoy.forEach(function(tarea, idx){
+    var div = document.createElement('div');
+    div.className = 'cl-tarea-item' + (tarea.hecha ? ' done' : '');
+    div.innerHTML =
+      '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">'
+      + (tarea.hecha ? '✓' : '') + '</div>'
+      + '<div class="cl-tarea-texto">' + tarea.texto + (tarea.extra ? ' <span style="font-size:10px;color:var(--accent);font-weight:700">EXTRA</span>' : '') + '</div>'
+      + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
+    cont.appendChild(div);
+  });
+
+  // Actualizar barra de progreso
+  var pct = total > 0 ? Math.round((hechas / total) * 100) : 0;
+  var bar = document.getElementById('cl-progreso-bar');
+  var txt = document.getElementById('cl-progreso-txt');
+  if(bar) bar.style.width = pct + '%';
+  if(txt) txt.textContent = hechas + ' / ' + total;
+}
+
+async function clToggleTarea(idx){
+  var tarea = clTareasHoy[idx];
+  if(!tarea) return;
+
+  tarea.hecha = !tarea.hecha;
+  tarea.hora_completado = tarea.hecha
+    ? new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})
+    : '';
+
+  clRenderTareas();
+  await clGuardarTarea(idx);
+}
+
+async function clGuardarTarea(idx){
+  var tarea = clTareasHoy[idx];
+  if(!tarea) return;
+
+  var localId = currentUser ? currentUser.local_id : null;
+  var nota    = (document.getElementById('cl-nota-dia') || {}).value || '';
+
+  var registro = {
+    fecha:           clFechaActual,
+    tarea:           tarea.texto,
+    completada:      tarea.hecha,
+    hora_completado: tarea.hora_completado || null,
+    responsable:     clResponsableActual,
+    posicion:        tarea.posicion,
+    extra:           tarea.extra,
+    local_id:        localId,
+    nota_dia:        nota
+  };
+
+  try{
+    if(tarea.id){
+      await sbPatch('checklist_diario', tarea.id, {
+        completada:      tarea.hecha,
+        hora_completado: tarea.hora_completado || null,
+        nota_dia:        nota
+      });
+    } else {
+      var result = await sbPost('checklist_diario', registro);
+      if(result && result[0]) tarea.id = result[0].id;
+    }
+  }catch(e){
+    // Silencioso — modo offline funciona sin BD
+    console.warn('checklist_diario save error:', e.message);
+  }
+}
+
+async function clAnadirTarea(){
+  var inp = document.getElementById('cl-tarea-nueva');
+  if(!inp) return;
+  var txt = (inp.value || '').trim();
+  if(!txt){ showToast('Escribe el nombre de la tarea', 'orange'); return; }
+
+  var nueva = {
+    id:             null,
+    texto:          txt,
+    hecha:          false,
+    hora_completado:'',
+    extra:          true,
+    posicion:       clTareasHoy.length
+  };
+  clTareasHoy.push(nueva);
+  inp.value = '';
+  clRenderTareas();
+
+  // Guardar en BD
+  var idx = clTareasHoy.length - 1;
+  await clGuardarTarea(idx);
+  showToast('Tarea añadida', 'green');
+}
+
+var clNotaTimer = null;
+function clGuardarNota(){
+  // Debounce: guardar la nota 1.5s después del último cambio
+  clearTimeout(clNotaTimer);
+  clNotaTimer = setTimeout(async function(){
+    if(!clTareasHoy.length) return;
+    var nota = (document.getElementById('cl-nota-dia') || {}).value || '';
+    // Actualizar la primera tarea (o cualquiera) con la nota
+    for(var i = 0; i < clTareasHoy.length; i++){
+      if(clTareasHoy[i].id){
+        try{
+          await sbPatch('checklist_diario', clTareasHoy[i].id, { nota_dia: nota });
+        }catch(e){ /* silencioso */ }
+        break;
+      }
+    }
+  }, 1500);
+}
