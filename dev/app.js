@@ -3812,8 +3812,9 @@ function initDashboard(){
 }
 
 // ========== ASISTENTE IA v7.0 (screen14) ==========
-var CLAUDE_API_KEY = 'RELOJTURNOS_CONFIG_PLACEHOLDER';
-var CLAUDE_MODEL   = 'claude-sonnet-4-20250514';
+// API key cargada desde dev/config.js (no está en git — ver config.example.js)
+var CLAUDE_API_KEY = (window.RELOJTURNOS_CONFIG && window.RELOJTURNOS_CONFIG.CLAUDE_API_KEY) || '';
+var CLAUDE_MODEL   = (window.RELOJTURNOS_CONFIG && window.RELOJTURNOS_CONFIG.CLAUDE_MODEL)   || 'claude-sonnet-4-20250514';
 
 var IA_CATS = {
   redactar: {

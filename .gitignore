@@ -1,0 +1,6 @@
+# API keys y configuración local — NUNCA subir
+dev/config.js
+
+# OS
+.DS_Store
+Thumbs.db
