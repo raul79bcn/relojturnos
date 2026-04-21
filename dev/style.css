@@ -220,3 +220,37 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 
 /* ===== SCREEN10 móvil (extraído de inline) ===== */
 @media(max-width:640px){#screen10 .card > div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}}
+
+/* ===== DASHBOARD v7.0 ===== */
+.dash-btn{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;user-select:none}
+.dash-btn:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 20px #00000040}
+.dash-btn-icon{font-size:36px;margin-bottom:10px;line-height:1}
+.dash-btn-label{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px}
+.dash-btn-sub{font-size:12px;color:var(--muted)}
+.dash-btn-highlight{border-color:#e74c3c40;background:#2d151520}
+.dash-btn-highlight:hover{border-color:#e74c3c}
+.dash-btn-ia{border-color:#9b59b640;background:#25152d20}
+.dash-btn-ia:hover{border-color:#9b59b6}
+@media(max-width:640px){#dash-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}.dash-btn{padding:18px 10px}.dash-btn-icon{font-size:28px}.dash-btn-label{font-size:14px}}
+
+/* ===== ASISTENTE IA / AVISOS ===== */
+.ia-flow-step{animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ia-cat-btn{background:var(--darker);border:2px solid var(--border);border-radius:14px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .2s}
+.ia-cat-btn:hover{border-color:var(--accent);background:var(--accent)10}
+.av-tipo-btn{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.av-tipo-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent)10}
+.av-tipo-btn.selected{border-color:var(--accent);background:var(--accent)20;color:var(--accent)}
+.av-tipo-icon{font-size:18px;flex-shrink:0}
+.av-nivel-btn{background:var(--darker);border:2px solid var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all .2s}
+.av-nivel-btn:hover{transform:translateY(-2px)}
+.av-nivel-btn.selected{background:var(--darker);opacity:1}
+
+/* ===== CHECKLIST ===== */
+.cl-tarea-item{display:flex;align-items:center;gap:12px;background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;transition:all .2s}
+.cl-tarea-item.done{opacity:0.6;border-color:var(--green)40}
+.cl-tarea-item.done .cl-tarea-texto{text-decoration:line-through;color:var(--muted)}
+.cl-tarea-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:14px}
+.cl-tarea-check.checked{background:var(--green);border-color:var(--green);color:#fff}
+.cl-tarea-texto{flex:1;font-size:14px;font-weight:500}
+.cl-tarea-hora{font-size:11px;color:var(--muted);flex-shrink:0}

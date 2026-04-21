@@ -99,11 +99,14 @@
     <div class="nav-menu-wrap">
       <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleNavMenu(event)">☰ <span style="font-size:11px">Menú</span></button>
       <div class="nav-menu-dropdown" id="nav-menu-dropdown" style="left:0;right:auto">
+        <div class="nav-menu-item" id="nmenu-0" onclick="goStep(0);closeNavMenu()">🏠 <span>Dashboard</span></div>
+        <div class="nav-menu-sep"></div>
+        <div class="nav-menu-item" id="nmenu-14" onclick="goStep(14);closeNavMenu()">🤖 <span>Asistente IA</span></div>
+        <div class="nav-menu-item" id="nmenu-15" onclick="goStep(15);closeNavMenu()">⚠️ <span>Avisos</span></div>
+        <div class="nav-menu-item" id="nmenu-16" onclick="goStep(16);closeNavMenu()">✅ <span>Checklist</span></div>
+        <div class="nav-menu-sep"></div>
         <div class="nav-menu-item" id="nmenu-7" onclick="goStep(7);closeNavMenu()">💰 <span data-i18n="nav_costes">Costes</span></div>
         <div class="nav-menu-item" id="nmenu-8" onclick="goStep(8);closeNavMenu()">📄 <span data-i18n="nav_direccion">Dirección General</span></div>
-        <div class="nav-menu-item" id="nmenu-13" onclick="goStep(13);closeNavMenu()">📅 <span data-i18n="nav_reservas">Reservas</span></div>
-        <div class="nav-menu-sep"></div>
-        <div class="nav-menu-item" id="nmenu-11" onclick="goStep(11);closeNavMenu()">💵 <span data-i18n="nav_arqueo">Arqueo</span></div>
         <div class="nav-menu-item" id="nmenu-12" onclick="goStep(12);closeNavMenu()">🛒 <span data-i18n="nav_compras">Compras</span></div>
         <div class="nav-menu-sep"></div>
         <div class="nav-menu-item" id="nmenu-9" onclick="goStep(9);closeNavMenu()">👥 <span data-i18n="nav_usuarios">Usuarios</span></div>
@@ -123,7 +126,6 @@
     <div class="step" id="step10" style="display:none"></div>
     <div class="step" id="step11" style="display:none"></div>
     <div class="step" id="step12" style="display:none"></div>
-    <div class="step" id="step13" style="display:none"></div>
   </div>
 
   <!-- PASO 1 -->
@@ -457,7 +459,6 @@
         <button class="btn btn-secondary" onclick="goStep(7)">&#8592; Costes</button>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="imprimirDirector()" data-i18n="p8_imprimir">🖨 Imprimir resumen</button>
-          <button class="btn btn-ghost btn-sm" onclick="goStep(11)" style="border-color:#f39c12;color:#f39c12" data-i18n="p8_arqueo">💰 Arqueo de caja</button>
         </div>
       </div>
     </div>
@@ -784,146 +785,288 @@
     </div>
   </div>
 
-  <!-- PASO 11: ARQUEO DE CAJA -->
-  <div class="screen" id="screen11">
-    <div class="card">
-      <div class="card-title" data-i18n="p11_titulo">💰 Arqueo de Caja</div>
-      <div class="card-sub">Registro de cierre de turno · <span id="arqueo-local-label" style="color:var(--accent)"></span></div>
-      <!-- Banner edición activa -->
-      <div id="arq-edit-banner" style="display:none;background:#3d2a00;border:1px solid #ffc107;border-radius:8px;padding:9px 14px;font-size:11px;color:#ffc107;margin-bottom:12px;align-items:center;gap:8px" data-i18n="arq_edit_banner">
-        ✏️ <strong>Modo edición</strong> — Estás modificando un arqueo guardado. Pulsa <strong>Guardar</strong> para confirmar o <strong>Limpiar</strong> para cancelar.
+  <!-- PANTALLAS NUEVAS v7.0 SE INSERTAN AQUÍ -->
+
+  <!-- SCREEN 0: DASHBOARD -->
+  <div class="screen" id="screen0">
+    <div id="dashboard-greeting" style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:24px">
+      <div id="dash-saludo" style="font-size:26px;font-weight:700;color:var(--accent);margin-bottom:6px">Buenos días, Lorena 👋</div>
+      <div id="dash-fecha" style="font-size:15px;color:var(--muted);margin-bottom:4px"></div>
+      <div id="dash-local" style="font-size:13px;color:var(--muted)"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="dash-grid">
+      <div class="dash-btn" onclick="goStep(1)" title="Cuadrante semanal">
+        <div class="dash-btn-icon">📅</div>
+        <div class="dash-btn-label">Cuadrante</div>
+        <div class="dash-btn-sub">Planifica la semana</div>
       </div>
-
-      <!-- Selector local + turno + fecha -->
-      <div class="form-row" style="margin-bottom:14px">
-        <div class="form-group">
-          <label data-i18n="arq_lbl_local">Local</label>
-          <select id="arq-local" class="inp-sm" onchange="arqueoLocalChange()">
-            <option value="1">&#127869; La Cala</option>
-            <option value="2">&#127828; Roto's Burguer</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-i18n="arq_lbl_turno">Turno</label>
-          <select id="arq-turno" class="inp-sm">
-            <option value="manana">&#9728;&#65039; Mañana</option>
-            <option value="noche">&#127769; Noche</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-i18n="arq_lbl_fecha">Fecha</label>
-          <input type="date" id="arq-fecha" class="inp-sm">
-        </div>
-        <div class="form-group">
-          <label data-i18n="arq_lbl_resp">Responsable</label>
-          <div id="arq-responsable-display" style="background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--accent)"></div>
-          <input type="hidden" id="arq-responsable">
-        </div>
+      <div class="dash-btn" onclick="goStep(3)" title="Gestión del equipo">
+        <div class="dash-btn-icon">👥</div>
+        <div class="dash-btn-label">Equipo</div>
+        <div class="dash-btn-sub">Empleados y turnos</div>
       </div>
-
-      <!-- Fondo y cambio extra -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px" data-i18n="arq_sec_efectivo">&#128176; Efectivo inicial</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="arq_lbl_fondo">Fondo de caja (€)</label>
-            <input type="number" id="arq-fondo" class="inp-sm" value="600" min="0" step="0.01" oninput="calcArqueo()">
-            <div style="font-size:9px;color:var(--muted);margin-top:2px" data-i18n="arq_hint_fondo">Importe fijo siempre en caja</div>
-          </div>
-          <div class="form-group">
-            <label data-i18n="arq_lbl_cambio">Cambio extra añadido (€)</label>
-            <input type="number" id="arq-cambio-extra" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
-            <div style="font-size:9px;color:var(--muted);margin-top:2px" data-i18n="arq_hint_cambio">Sacado de caja fuerte si faltaba</div>
-          </div>
-        </div>
+      <div class="dash-btn dash-btn-highlight" onclick="goStep(15)" title="Avisos a trabajadores">
+        <div class="dash-btn-icon">⚠️</div>
+        <div class="dash-btn-label">Avisos</div>
+        <div class="dash-btn-sub">Incidencias formales</div>
       </div>
-
-      <!-- Ingresos -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px" data-i18n="arq_sec_ingresos">&#8679; Ingresos del turno</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="arq_lbl_venta">Venta total del turno (€)</label>
-            <input type="number" id="arq-venta" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
-          </div>
-          <div class="form-group">
-            <label data-i18n="arq_lbl_visa">Cobrado por VISA/TPV (€)</label>
-            <input type="number" id="arq-visa" class="inp-sm" value="0" min="0" step="0.01" oninput="calcArqueo()">
-            <div style="font-size:9px;color:var(--muted);margin-top:2px" data-i18n="arq_hint_visa">Se descuenta del efectivo</div>
-          </div>
-        </div>
+      <div class="dash-btn" onclick="goStep(16)" title="Checklist diario">
+        <div class="dash-btn-icon">✅</div>
+        <div class="dash-btn-label">Checklist</div>
+        <div class="dash-btn-sub">Tareas del día</div>
       </div>
-
-      <!-- Pagos proveedores -->
-      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;color:var(--red)" data-i18n="arq_sec_pagos">&#8681; Pagos a proveedores</div>
-          <button class="btn btn-ghost btn-sm" onclick="addProveedor()" style="font-size:11px;padding:4px 10px" data-i18n="arq_btn_anadir">&#65291; Añadir</button>
-        </div>
-        <div id="arq-proveedores-list"></div>
-        <div id="arq-proveedores-empty" style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0" data-i18n="arq_sin_pagos">Sin pagos a proveedores este turno</div>
-        <div style="display:flex;justify-content:flex-end;margin-top:8px;font-size:12px;color:var(--red)">
-          <span data-i18n="arq_total_pagos_lbl">Total pagos:</span> <strong style="margin-left:8px;color:var(--red)" id="arq-total-pagos">0,00 €</strong>
-        </div>
+      <div class="dash-btn dash-btn-ia" onclick="goStep(14)" title="Asistente IA">
+        <div class="dash-btn-icon">🤖</div>
+        <div class="dash-btn-label">Asistente IA</div>
+        <div class="dash-btn-sub">Claude te ayuda</div>
       </div>
-
-      <!-- Resultado -->
-      <div style="background:var(--card);border:2px solid var(--accent);border-radius:12px;padding:16px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px" data-i18n="arq_sec_resultado">&#128202; Resultado del turno</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-          <div style="background:var(--darker);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:10px;color:var(--muted);margin-bottom:4px" data-i18n="arq_total_caja">Total entradas</div>
-            <div style="font-size:18px;font-weight:700;color:var(--green)" id="arq-res-total">0,00 €</div>
-          </div>
-          <div style="background:var(--darker);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:10px;color:var(--muted);margin-bottom:4px" data-i18n="arq_total_salidas">Total salidas</div>
-            <div style="font-size:18px;font-weight:700;color:var(--red)" id="arq-res-salidas">0,00 €</div>
-          </div>
-        </div>
-        <div style="background:var(--accent)20;border:1px solid var(--accent)60;border-radius:10px;padding:14px;text-align:center">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px" data-i18n="arq_ef_recaud">&#128181; EFECTIVO RECAUDACIÓN → CAJA FUERTE</div>
-          <div style="font-size:32px;font-weight:700;color:var(--green)" id="arq-res-efectivo">0,00 €</div>
-          <div id="arq-res-ingresar" style="display:none"></div>
-          <div style="font-size:10px;color:var(--muted);margin-top:8px" data-i18n="arq_hint_fuerte">El fondo de <strong id="arq-res-fondo-label" style="color:var(--accent)">600</strong>€ queda en el cajón para el siguiente turno</div>
-        </div>
-      </div>
-
-      <!-- Notas -->
-      <div class="form-group" style="margin-bottom:14px">
-        <label data-i18n="arq_lbl_notas">Notas / Incidencias</label>
-        <textarea id="arq-notas" class="inp-sm" rows="2" placeholder="Observaciones del turno..." style="width:100%;resize:vertical"></textarea>
-      </div>
-
-      <div id="arq-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
-      <div id="arq-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
-
-      <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(8)" data-i18n="arq_btn_volver">&#8592; Volver</button>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="limpiarArqueo()" style="border-color:var(--muted);color:var(--muted)" data-i18n="arq_btn_limpiar">&#8635; Limpiar</button>
-          <button class="btn btn-ghost btn-sm no-print" onclick="imprimirArqueo()" style="border-color:var(--accent);color:var(--accent)" data-i18n="arq_btn_imprimir">&#128424; Imprimir</button>
-          <button class="btn btn-primary" onclick="guardarArqueo()" data-i18n="arq_btn_guardar">&#128190; Guardar arqueo</button>
-        </div>
-      </div>
-
-      <!-- Histórico -->
-      <div style="margin-top:22px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;color:var(--text)" data-i18n="arq_historico_titulo">&#128197; Últimos arqueos guardados</div>
-          <button id="arq-hist-expand-btn" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 10px;display:none" onclick="arqExpandirHistorico()">Ver todos &#9660;</button>
-        </div>
-        <!-- Vista resumida: solo 3 -->
-        <div id="arq-historico-preview"></div>
-        <!-- Vista expandida: todos con scroll -->
-        <div id="arq-historico-full" style="display:none;max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:10px">
-          <div id="arq-historico-full-inner"></div>
-          <div style="text-align:center;margin-top:8px">
-            <button class="btn btn-ghost btn-sm" style="font-size:10px" onclick="arqColapsarHistorico()">&#9650; Colapsar</button>
-          </div>
-        </div>
+      <div class="dash-btn" onclick="goStep(12)" title="Gestión de compras">
+        <div class="dash-btn-icon">🛒</div>
+        <div class="dash-btn-label">Compras</div>
+        <div class="dash-btn-sub">Artículos y proveedores</div>
       </div>
     </div>
   </div>
+
+  <!-- SCREEN 14: ASISTENTE IA -->
+  <div class="screen" id="screen14">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">🤖 Asistente IA</div>
+        <span style="font-size:9px;background:#9b59b620;color:#9b59b6;padding:3px 9px;border-radius:12px;font-weight:700">CLAUDE · SONNET</span>
+      </div>
+      <div class="card-sub">Tu asistente inteligente para gestión de restaurante</div>
+
+      <div id="ia-paso1" class="ia-flow-step">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px">¿En qué te puedo ayudar?</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+          <div class="ia-cat-btn" onclick="iaSelCat('redactar')">
+            <div style="font-size:28px;margin-bottom:8px">✍️</div>
+            <div style="font-weight:700;font-size:15px">Redactar</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Comunicados, avisos, cartas</div>
+          </div>
+          <div class="ia-cat-btn" onclick="iaSelCat('legal')">
+            <div style="font-size:28px;margin-bottom:8px">⚖️</div>
+            <div style="font-weight:700;font-size:15px">Duda legal</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Laboral, RRHH, convenio</div>
+          </div>
+          <div class="ia-cat-btn" onclick="iaSelCat('carta')">
+            <div style="font-size:28px;margin-bottom:8px">🍽️</div>
+            <div style="font-weight:700;font-size:15px">Carta y precios</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Menús, fichas, costes</div>
+          </div>
+          <div class="ia-cat-btn" onclick="iaSelCat('gestoria')">
+            <div style="font-size:28px;margin-bottom:8px">📊</div>
+            <div style="font-weight:700;font-size:15px">Gestoría</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Contabilidad, impuestos</div>
+          </div>
+          <div class="ia-cat-btn" onclick="iaSelCat('otro')">
+            <div style="font-size:28px;margin-bottom:8px">💬</div>
+            <div style="font-weight:700;font-size:15px">Otro</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">Cualquier consulta</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ia-paso2" class="ia-flow-step" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <button class="btn btn-ghost btn-sm" onclick="iaVolver(1)">← Volver</button>
+          <div id="ia-cat-label" style="font-size:15px;font-weight:700;color:var(--accent)"></div>
+        </div>
+        <div id="ia-subcats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px"></div>
+      </div>
+
+      <div id="ia-paso3" class="ia-flow-step" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <button class="btn btn-ghost btn-sm" onclick="iaVolver(2)">← Volver</button>
+          <div id="ia-subcat-label" style="font-size:14px;font-weight:700;color:var(--accent)"></div>
+        </div>
+        <div style="margin-bottom:14px">
+          <label>Añade contexto o detalles (opcional)</label>
+          <textarea id="ia-contexto" rows="4" placeholder="Describe tu situación con más detalle..." style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:Arial,sans-serif;font-size:14px;outline:none;resize:vertical"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="iaEnviar()" id="ia-btn-enviar">🤖 Consultar a Claude</button>
+      </div>
+
+      <div id="ia-respuesta" style="display:none;margin-top:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700;color:var(--accent)">🤖 Respuesta de Claude</div>
+          <button class="btn btn-ghost btn-sm" onclick="iaNuevaConsulta()">+ Nueva consulta</button>
+          <button class="btn btn-ghost btn-sm" onclick="iaCopiar()" id="ia-btn-copiar">📋 Copiar</button>
+        </div>
+        <div id="ia-respuesta-texto" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:18px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
+      </div>
+
+      <div id="ia-loading" style="display:none;text-align:center;padding:30px">
+        <div style="font-size:32px;margin-bottom:10px">⏳</div>
+        <div style="color:var(--muted);font-size:14px">Claude está pensando...</div>
+      </div>
+
+      <div class="btn-row space" style="margin-top:20px">
+        <button class="btn btn-secondary" onclick="goStep(0)">← Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 15: AVISOS TRABAJADORES -->
+  <div class="screen" id="screen15">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">⚠️ Avisos a Trabajadores</div>
+        <span style="font-size:9px;background:#e74c3c20;color:#e74c3c;padding:3px 9px;border-radius:12px;font-weight:700">SOLO DIRECCIÓN</span>
+      </div>
+      <div class="card-sub">Genera avisos formales con asistencia de IA</div>
+
+      <div id="av-paso1" class="ia-flow-step">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px">1. Selecciona el empleado</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+          <select id="av-empleado-sel" style="flex:1;min-width:200px" onchange="avSelEmpleado()">
+            <option value="">— Selecciona empleado —</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="avCargarEmpleados()">🔄 Actualizar lista</button>
+        </div>
+        <div id="av-paso1-siguiente" style="display:none">
+          <button class="btn btn-primary" onclick="avIrPaso2()">Siguiente → Tipo de incidencia</button>
+        </div>
+      </div>
+
+      <div id="av-paso2" class="ia-flow-step" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <button class="btn btn-ghost btn-sm" onclick="avVolver(1)">← Volver</button>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">2. Tipo de incidencia</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px" id="av-tipos-grid">
+          <div class="av-tipo-btn" onclick="avSelTipo('Llegada tarde repetida','⏰')"><span class="av-tipo-icon">⏰</span>Llegada tarde repetida</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Ausencia injustificada','🚫')"><span class="av-tipo-icon">🚫</span>Ausencia injustificada</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Mal comportamiento con clientes','😡')"><span class="av-tipo-icon">😡</span>Mal comportamiento con clientes</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Incumplimiento de uniforme','👕')"><span class="av-tipo-icon">👕</span>Incumplimiento de uniforme</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Uso indebido del móvil','📱')"><span class="av-tipo-icon">📱</span>Uso indebido del móvil</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Conflicto con compañeros','⚡')"><span class="av-tipo-icon">⚡</span>Conflicto con compañeros</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Negligencia en el trabajo','⚠️')"><span class="av-tipo-icon">⚠️</span>Negligencia en el trabajo</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Incumplimiento de APPCC/higiene','🧹')"><span class="av-tipo-icon">🧹</span>Incumplimiento APPCC/higiene</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Desobediencia a instrucciones','📋')"><span class="av-tipo-icon">📋</span>Desobediencia a instrucciones</div>
+          <div class="av-tipo-btn" onclick="avSelTipo('Abandono del puesto','🚶')"><span class="av-tipo-icon">🚶</span>Abandono del puesto</div>
+        </div>
+      </div>
+
+      <div id="av-paso3" class="ia-flow-step" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <button class="btn btn-ghost btn-sm" onclick="avVolver(2)">← Volver</button>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">3. Nivel de gravedad</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+          <div class="av-nivel-btn" id="av-nivel-1" onclick="avSelNivel(1)" style="border-color:#ffa040;color:#ffa040">
+            <div style="font-size:22px">1</div>
+            <div style="font-weight:700;margin-top:4px">Leve</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Advertencia verbal / Primer aviso</div>
+          </div>
+          <div class="av-nivel-btn" id="av-nivel-2" onclick="avSelNivel(2)" style="border-color:#e67e22;color:#e67e22">
+            <div style="font-size:22px">2</div>
+            <div style="font-weight:700;margin-top:4px">Moderado</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Aviso escrito / Segundo aviso</div>
+          </div>
+          <div class="av-nivel-btn" id="av-nivel-3" onclick="avSelNivel(3)" style="border-color:#e74c3c;color:#e74c3c">
+            <div style="font-size:22px">3</div>
+            <div style="font-weight:700;margin-top:4px">Grave</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Expediente disciplinario</div>
+          </div>
+        </div>
+        <div style="margin-bottom:14px">
+          <label>Descripción adicional de los hechos (opcional)</label>
+          <textarea id="av-descripcion" rows="3" placeholder="Describe los hechos con detalle..." style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:Arial,sans-serif;font-size:14px;outline:none;resize:vertical"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="avGenerarAviso()" id="av-btn-generar">🤖 Generar aviso formal con IA</button>
+      </div>
+
+      <div id="av-resultado" style="display:none;margin-top:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <div style="font-size:14px;font-weight:700;color:var(--text)">📄 Aviso generado</div>
+          <button class="btn btn-ghost btn-sm" onclick="avCopiar()">📋 Copiar</button>
+          <button class="btn btn-ghost btn-sm" onclick="avImprimir()" style="border-color:var(--accent);color:var(--accent)">🖨 Imprimir</button>
+          <button class="btn btn-primary btn-sm" onclick="avGuardar()" id="av-btn-guardar">💾 Guardar en BD</button>
+        </div>
+        <div id="av-texto-generado" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:18px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
+        <div style="margin-top:12px">
+          <button class="btn btn-ghost btn-sm" onclick="avNuevoAviso()">+ Nuevo aviso</button>
+        </div>
+      </div>
+
+      <div id="av-loading" style="display:none;text-align:center;padding:30px">
+        <div style="font-size:32px;margin-bottom:10px">⏳</div>
+        <div style="color:var(--muted);font-size:14px">Generando aviso con IA...</div>
+      </div>
+
+      <div style="margin-top:28px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+          <span>📋 Avisos guardados</span>
+          <button class="btn btn-ghost btn-sm" onclick="avCargarHistorico()" style="font-size:11px">🔄 Actualizar</button>
+        </div>
+        <div id="av-historico" style="max-height:300px;overflow-y:auto">
+          <div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">Cargando...</div>
+        </div>
+      </div>
+
+      <div class="btn-row space" style="margin-top:20px">
+        <button class="btn btn-secondary" onclick="goStep(0)">← Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 16: CHECKLIST ROTATIVO -->
+  <div class="screen" id="screen16">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">✅ Checklist Diario</div>
+        <span style="font-size:9px;background:#2ecc7120;color:#2ecc71;padding:3px 9px;border-radius:12px;font-weight:700">ROTATIVO</span>
+      </div>
+      <div class="card-sub">Tareas diarias con asignación rotatoria por empleado</div>
+
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Fecha</div>
+          <input type="date" id="cl-fecha" onchange="clCargarDia()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text);font-size:14px;outline:none">
+        </div>
+        <div id="cl-responsable-display" style="text-align:right">
+          <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Responsable hoy</div>
+          <div id="cl-responsable-nombre" style="font-size:18px;font-weight:700;color:var(--accent)">—</div>
+        </div>
+      </div>
+
+      <div id="cl-progreso" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px">
+          <span>Progreso del día</span>
+          <span id="cl-progreso-txt">0 / 0</span>
+        </div>
+        <div style="background:var(--border);border-radius:6px;height:8px;overflow:hidden">
+          <div id="cl-progreso-bar" style="height:100%;background:var(--green);width:0%;transition:width .3s;border-radius:6px"></div>
+        </div>
+      </div>
+
+      <div id="cl-tareas-lista" style="margin-bottom:14px"></div>
+
+      <div style="background:var(--darker);border:1px dashed var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">+ Tarea adicional para hoy</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="cl-tarea-nueva" placeholder="Escribe una tarea extra..." style="flex:1">
+          <button class="btn btn-ghost btn-sm" onclick="clAnadirTarea()">Añadir</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label>Nota del día (incidencias, observaciones...)</label>
+        <textarea id="cl-nota-dia" rows="2" placeholder="Opcional: anota incidencias del día..." style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:Arial,sans-serif;font-size:14px;outline:none;resize:vertical" oninput="clGuardarNota()"></textarea>
+      </div>
+
+      <div class="btn-row space">
+        <button class="btn btn-secondary" onclick="goStep(0)">← Dashboard</button>
+        <button class="btn btn-ghost btn-sm" onclick="clCargarDia()" style="border-color:var(--green);color:var(--green)">🔄 Actualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- (screen11 Arqueo eliminado en v7.0) -->
+
+
   <!-- PASO 12: GESTIÓN DE COMPRAS -->
   <div class="screen" id="screen12">
     <div class="card">
@@ -1002,101 +1145,14 @@
       </div>
 
       <div class="btn-row space" style="margin-top:18px">
-        <button class="btn btn-secondary" onclick="goStep(11)">← Arqueo</button>
-      </div>
-    </div>
-
-    </div>
-  </div>
-
-  <!-- PASO 13: RESERVAS -->
-  <div class="screen" id="screen13">
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0">📅 Reservas</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:9px;background:#3498db20;color:#3498db;padding:3px 9px;border-radius:12px;font-weight:700">DIRECTOR/A · DIR. GENERAL</span>
-          <div style="display:flex;align-items:center;gap:6px;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:5px 10px">
-            <span style="font-size:10px;color:var(--muted)">Fuente:</span>
-            <span id="res-mode-label" style="font-size:11px;font-weight:700;color:var(--accent)">MOCK</span>
-            <div id="res-mode-toggle" onclick="toggleResMode()" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:2px 6px;border:1px solid var(--border);border-radius:6px;font-size:10px;color:var(--muted)">
-              <div id="res-tog-dot" style="width:26px;height:14px;border-radius:7px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0"><div id="res-tog-knob" style="position:absolute;width:8px;height:8px;border-radius:50%;background:white;top:3px;left:3px;transition:left .2s"></div></div>
-              CoverManager
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="res-api-banner" style="display:none;background:#1a1a2d;border:1px solid #3498db40;border-radius:8px;padding:10px 14px;font-size:11px;color:#6b8fff;margin:10px 0">
-        🔌 <strong>CoverManager API</strong> — Conecta tu cuenta para sincronizar reservas en tiempo real. Solicita la API key a Miriam.
-        <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="text" id="res-apikey-input" placeholder="Introduce tu API key de CoverManager..." style="flex:1;min-width:200px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:11px;outline:none">
-          <button onclick="res_guardarApiKey()" class="btn btn-primary btn-sm" style="font-size:11px;padding:6px 12px">💾 Guardar key</button>
-        </div>
-      </div>
-
-      <!-- Selectores: local + fecha + turno -->
-      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--darker);border-radius:10px;border:1px solid var(--border)">
-        <div>
-          <label style="font-size:10px;margin-bottom:3px">LOCAL</label>
-          <select id="res-local-sel" onchange="res_cargar()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text);font-size:13px;min-width:160px;outline:none">
-            <option value="1">🍽 La Cala</option>
-            <option value="2">🍔 Roto's Burguer</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:10px;margin-bottom:3px">FECHA</label>
-          <input type="date" id="res-fecha-sel" onchange="res_cargar()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text);font-size:13px;outline:none">
-        </div>
-        <div style="display:flex;gap:6px">
-          <button id="res-pill-comida" onclick="resTurno('comida')" style="padding:8px 16px;border-radius:20px;border:2px solid #2ecc71;background:#1a2d1a;color:#2ecc71;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">☀️ Comida 13:00</button>
-          <button id="res-pill-cena" onclick="resTurno('cena')" style="padding:8px 16px;border-radius:20px;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">🌙 Cena 20:00</button>
-        </div>
-        <button onclick="res_cargar()" class="btn btn-ghost btn-sm" style="border-color:var(--green);color:var(--green)">🔄 Actualizar</button>
-        <button onclick="res_abrirModalNueva()" class="btn btn-primary btn-sm">+ Nueva reserva</button>
-      </div>
-
-      <!-- KPIs del turno -->
-      <div id="res-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px"></div>
-
-      <!-- Barra de ocupación -->
-      <div id="res-ocupacion-bar" style="margin-bottom:16px"></div>
-
-      <!-- Filtros rápidos por estado -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
-        <span style="font-size:10px;color:var(--muted)">Filtrar:</span>
-        <button onclick="resFiltro('')" id="res-f-all" class="btn btn-primary btn-sm" style="font-size:10px;padding:4px 10px">Todas</button>
-        <button onclick="resFiltro('confirmada')" id="res-f-confirmada" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 10px;border-color:#2ecc71;color:#2ecc71">✅ Confirmadas</button>
-        <button onclick="resFiltro('pendiente')" id="res-f-pendiente" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 10px;border-color:#ffa040;color:#ffa040">⏳ Pendientes</button>
-        <button onclick="resFiltro('cancelada')" id="res-f-cancelada" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 10px;border-color:#e74c3c;color:#e74c3c">❌ Canceladas</button>
-        <button onclick="resFiltro('seated')" id="res-f-seated" class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 10px;border-color:#6b8fff;color:#6b8fff">🪑 En mesa</button>
-      </div>
-
-      <!-- Tabla de reservas -->
-      <div style="overflow-x:auto;margin-bottom:18px">
-        <div style="display:grid;grid-template-columns:60px 1fr 50px 110px 80px 100px 110px 36px;gap:6px;padding:7px 10px;background:var(--darker);border-radius:7px;margin-bottom:4px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
-          <span>Hora</span><span>Nombre</span><span>Pax</span><span>Zona</span><span>Mesa</span><span>Origen</span><span>Estado</span><span></span>
-        </div>
-        <div id="res-tabla"></div>
-      </div>
-
-      <!-- Vista resumen por zonas -->
-      <div style="margin-top:4px">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🗺 Vista por zonas</div>
-        <div id="res-zonas" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
-      </div>
-
-      <div class="btn-row space" style="margin-top:20px">
         <button class="btn btn-secondary" onclick="goStep(8)">← Dirección General</button>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm" onclick="imprimirReservas()" style="border-color:var(--accent);color:var(--accent)">🖨 Imprimir turno</button>
-        </div>
       </div>
+    </div>
+
     </div>
   </div>
 
-</div>
 
-<!-- MODAL NUEVA / EDITAR RESERVA -->
 <div id="res-modal-nueva" style="display:none;position:fixed;inset:0;background:#00000090;z-index:300;align-items:center;justify-content:center">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(480px,95vw);max-height:90vh;overflow-y:auto">
     <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="res-modal-titulo">&#128197; Nueva Reserva</div>
