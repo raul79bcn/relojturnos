@@ -3811,13 +3811,227 @@ function initDashboard(){
   }
 }
 
-// ========== ASISTENTE IA v7.0 (screen14) — stub, implementación completa pendiente ==========
-function initAsistenteIA(){ /* implementado en FASE 3 */ }
-function iaSelCat(cat){ showToast('Asistente IA: próximamente', 'orange'); }
-function iaVolver(paso){ }
-function iaEnviar(){ }
-function iaNuevaConsulta(){ }
-function iaCopiar(){ }
+// ========== ASISTENTE IA v7.0 (screen14) ==========
+var CLAUDE_API_KEY = 'RELOJTURNOS_CONFIG_PLACEHOLDER';
+var CLAUDE_MODEL   = 'claude-sonnet-4-20250514';
+
+var IA_CATS = {
+  redactar: {
+    label: '✍️ Redactar',
+    system: 'Eres un asistente experto en comunicación para hostelería y restauración. Redactas textos profesionales, claros y correctos en español para restaurantes del Grupo El Reloj (La Cala y Roto\'s Burguer, Barcelona).',
+    opciones: [
+      { texto: 'Comunicado interno para el equipo', prompt: 'Redacta un comunicado interno profesional para el equipo de restaurante.' },
+      { texto: 'Aviso de cambio de horario', prompt: 'Redacta un aviso formal de cambio de horario laboral para los empleados.' },
+      { texto: 'Carta de bienvenida a cliente VIP', prompt: 'Redacta una carta de bienvenida para un cliente VIP de un restaurante de nivel.' },
+      { texto: 'Nota informativa sobre nueva normativa', prompt: 'Redacta una nota informativa para el equipo explicando una nueva normativa interna del restaurante.' },
+      { texto: 'Mensaje de felicitación al equipo', prompt: 'Redacta un mensaje de felicitación y agradecimiento al equipo de sala y cocina por los resultados obtenidos.' },
+      { texto: 'Comunicado de cierre temporal / vacaciones', prompt: 'Redacta un comunicado de cierre temporal del restaurante por vacaciones, tanto para clientes como para el equipo.' },
+      { texto: 'Protocolo de atención al cliente', prompt: 'Redacta un protocolo breve de atención al cliente para el equipo de sala de un restaurante.' },
+      { texto: 'Texto libre — describe lo que necesitas', prompt: '' }
+    ]
+  },
+  legal: {
+    label: '⚖️ Duda legal',
+    system: 'Eres un asesor laboral y legal especializado en hostelería y restauración en España. Conoces el Convenio Colectivo de Hostelería de Cataluña, la legislación laboral española y las normativas del sector. Ofreces orientación práctica y clara, siempre recomendando consultar con un abogado para casos específicos.',
+    opciones: [
+      { texto: '¿Cuántos días de vacaciones corresponden?', prompt: '¿Cuántos días de vacaciones anuales corresponden a un empleado de hostelería según el convenio de Cataluña? ¿Cómo se calculan y cuándo se disfrutan?' },
+      { texto: 'Horas extra: cálculo y compensación', prompt: 'Explica cómo se calculan y compensan las horas extra en hostelería en España. ¿Cuándo se pagan y cuándo se compensan con descanso?' },
+      { texto: 'Baja médica: derechos y obligaciones', prompt: '¿Cuáles son los derechos y obligaciones del empleado y del empleador ante una baja médica en hostelería? ¿Qué documentación se necesita?' },
+      { texto: 'Contrato temporal vs indefinido', prompt: '¿Cuándo se puede usar un contrato temporal en hostelería? ¿Qué limites hay? ¿Cuándo pasa a ser indefinido automáticamente?' },
+      { texto: 'Despido disciplinario: causas y procedimiento', prompt: '¿Cuáles son las causas justificadas para un despido disciplinario en hostelería? ¿Qué procedimiento se debe seguir para que sea válido?' },
+      { texto: 'APPCC: obligaciones del local', prompt: '¿Cuáles son las obligaciones legales en materia de APPCC (Análisis de Peligros y Puntos de Control Crítico) para un restaurante en Cataluña?' },
+      { texto: 'Contrato a tiempo parcial: horas y complementos', prompt: '¿Cómo funciona el contrato a tiempo parcial en hostelería? ¿Qué son las horas complementarias y cuántas se pueden hacer?' },
+      { texto: 'Texto libre — describe tu duda', prompt: '' }
+    ]
+  },
+  carta: {
+    label: '🍽️ Carta y precios',
+    system: 'Eres un experto en gastronomía, hostelería y gestión de restaurantes con experiencia en diseño de menús, fichas técnicas de cocina, análisis de costes y estrategia de precios para restaurantes en España.',
+    opciones: [
+      { texto: 'Sugerencia de platos de temporada', prompt: 'Sugiere 6 platos de temporada (primavera/verano) para incluir en la carta de un restaurante de cocina mediterránea en Barcelona.' },
+      { texto: 'Calcular precio de venta de un plato', prompt: 'Explica cómo calcular el precio de venta de un plato de restaurante considerando food cost, mano de obra y margen objetivo. Pon un ejemplo práctico.' },
+      { texto: 'Descripción de platos para la carta', prompt: 'Redacta descripciones atractivas para la carta para 3 platos: un entrante, un principal y un postre de cocina mediterránea moderna.' },
+      { texto: 'Menú del día: estructura y precio', prompt: '¿Cómo estructurar un menú del día rentable para un restaurante en Barcelona? ¿Cuál es el precio orientativo y qué debe incluir?' },
+      { texto: 'Análisis de rentabilidad de carta', prompt: 'Explica cómo hacer un análisis de rentabilidad (ingeniería de menú) para identificar los platos estrella, rentables, incógnita y perro de una carta.' },
+      { texto: 'Adaptación de menú para alérgenos', prompt: 'Explica las obligaciones legales sobre información de alérgenos en la carta de un restaurante en España y cómo adaptarla correctamente.' },
+      { texto: 'Ideas para menú de grupo / evento', prompt: 'Propón 3 opciones de menú cerrado para grupos de 15-30 personas en un restaurante de nivel medio-alto en Barcelona.' },
+      { texto: 'Texto libre — describe lo que necesitas', prompt: '' }
+    ]
+  },
+  gestoria: {
+    label: '📊 Gestoría',
+    system: 'Eres un asesor contable y fiscal especializado en pymes de hostelería y restauración en España. Conoces el IVA de restauración, los modelos tributarios, las obligaciones contables y las ayudas disponibles para el sector.',
+    opciones: [
+      { texto: 'IVA en restauración: tipos y excepciones', prompt: '¿Qué tipos de IVA aplican en un restaurante en España? ¿Cuándo se aplica el 10% y cuándo el 21%? Pon ejemplos concretos.' },
+      { texto: 'Modelos trimestrales que debo presentar', prompt: '¿Qué modelos tributarios debe presentar trimestralmente un restaurante (SL o autónomo) en España? Explica brevemente cada uno.' },
+      { texto: 'Gastos deducibles del restaurante', prompt: '¿Qué gastos son deducibles para un restaurante en el Impuesto de Sociedades o IRPF? Lista los más habituales con indicación de porcentaje deducible.' },
+      { texto: 'Nóminas: SS empresa y retenciones IRPF', prompt: 'Explica cómo se calcula la Seguridad Social a cargo de la empresa en hostelería y cómo funciona la retención de IRPF en nóminas.' },
+      { texto: 'Ayudas y subvenciones para hostelería', prompt: '¿Qué ayudas y subvenciones existen actualmente para restaurantes y hostelería en Cataluña/España? Indica cómo acceder a ellas.' },
+      { texto: 'Amortización de equipamiento y obras', prompt: '¿Cómo funciona la amortización fiscal de maquinaria, equipamiento de cocina y obras de reforma en un restaurante? ¿Qué tablas se usan?' },
+      { texto: 'Diferencia entre autónomo y SL para restaurante', prompt: '¿Cuándo conviene más operar como autónomo o como Sociedad Limitada para un restaurante? Explica las diferencias en coste, responsabilidad y fiscalidad.' },
+      { texto: 'Texto libre — describe tu consulta', prompt: '' }
+    ]
+  },
+  otro: {
+    label: '💬 Otro',
+    system: 'Eres un asistente experto en gestión de restaurantes, hostelería, RRHH, operaciones y servicio al cliente. Tienes amplio conocimiento del sector en España y Catalunya. Respondes de forma práctica, concisa y útil.',
+    opciones: [
+      { texto: 'Cómo motivar al equipo de sala', prompt: '¿Cuáles son las mejores estrategias para motivar y retener al equipo de sala en un restaurante? Dame 5 ideas prácticas y aplicables.' },
+      { texto: 'Gestión de conflictos entre empleados', prompt: '¿Cómo gestionar un conflicto entre dos empleados de sala de un restaurante? Explica el proceso paso a paso desde la dirección.' },
+      { texto: 'Reducir el food waste (desperdicio)', prompt: 'Dame 6 estrategias prácticas para reducir el desperdicio alimentario (food waste) en un restaurante sin afectar la calidad.' },
+      { texto: 'Cómo responder a una reseña negativa', prompt: 'Escribe una respuesta profesional y empática a una reseña negativa en Google que dice que el servicio fue lento y la comida llegó fría.' },
+      { texto: 'Plan de formación para nuevo empleado', prompt: 'Crea un plan de formación de 5 días para incorporar a un nuevo camarero en un restaurante de nivel medio-alto.' },
+      { texto: 'Check de apertura/cierre del restaurante', prompt: 'Crea un checklist completo de apertura y otro de cierre para el responsable de turno de un restaurante.' },
+      { texto: 'Estrategias para aumentar el ticket medio', prompt: 'Dame 5 técnicas de venta cruzada y upselling para aumentar el ticket medio en un restaurante sin resultar agresivo.' },
+      { texto: 'Texto libre — escribe tu pregunta', prompt: '' }
+    ]
+  }
+};
+
+var iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '' };
+
+function initAsistenteIA(){
+  iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '' };
+  document.getElementById('ia-paso1').style.display = '';
+  document.getElementById('ia-paso2').style.display = 'none';
+  document.getElementById('ia-paso3').style.display = 'none';
+  document.getElementById('ia-respuesta').style.display = 'none';
+  document.getElementById('ia-loading').style.display = 'none';
+}
+
+function iaSelCat(catKey){
+  var cat = IA_CATS[catKey];
+  if(!cat) return;
+  iaEstado.catKey = catKey;
+  iaEstado.cat = cat;
+
+  document.getElementById('ia-cat-label').textContent = cat.label;
+
+  var grid = document.getElementById('ia-subcats');
+  grid.innerHTML = '';
+  cat.opciones.forEach(function(op, idx){
+    var div = document.createElement('div');
+    div.className = 'av-tipo-btn';
+    div.style.cursor = 'pointer';
+    div.textContent = op.texto;
+    div.onclick = function(){ iaSelOpcion(idx); };
+    grid.appendChild(div);
+  });
+
+  document.getElementById('ia-paso1').style.display = 'none';
+  document.getElementById('ia-paso2').style.display = '';
+}
+
+function iaSelOpcion(idx){
+  var cat = iaEstado.cat;
+  if(!cat) return;
+  var op = cat.opciones[idx];
+  iaEstado.opcionIdx = idx;
+  iaEstado.promtBase = op.prompt;
+
+  document.getElementById('ia-subcat-label').textContent = cat.label + ' › ' + op.texto;
+  var ctx = document.getElementById('ia-contexto');
+  if(ctx){ ctx.value = ''; ctx.placeholder = op.prompt ? 'Añade contexto específico (opcional)...' : 'Escribe tu pregunta o solicitud...'; }
+
+  document.getElementById('ia-paso2').style.display = 'none';
+  document.getElementById('ia-paso3').style.display = '';
+}
+
+function iaVolver(paso){
+  if(paso === 1){
+    document.getElementById('ia-paso2').style.display = 'none';
+    document.getElementById('ia-paso3').style.display = 'none';
+    document.getElementById('ia-paso1').style.display = '';
+  } else if(paso === 2){
+    document.getElementById('ia-paso3').style.display = 'none';
+    document.getElementById('ia-paso2').style.display = '';
+  }
+}
+
+async function iaEnviar(){
+  var cat = iaEstado.cat;
+  if(!cat) return;
+
+  var contexto = (document.getElementById('ia-contexto').value || '').trim();
+  var prompt = iaEstado.promtBase || '';
+
+  if(!prompt && !contexto){
+    showToast('Escribe tu consulta antes de enviar', 'red');
+    return;
+  }
+
+  var msgFinal = prompt;
+  if(contexto){
+    msgFinal = prompt ? prompt + '\n\nContexto adicional: ' + contexto : contexto;
+  }
+
+  // Añadir contexto de restaurante
+  var localInfo = '';
+  if(currentUser && currentUser.local_id){
+    var nombres = {1:'Restaurante La Cala (Barcelona)', 2:"Roto's Burguer (Barcelona)"};
+    localInfo = nombres[currentUser.local_id] || '';
+  }
+  if(localInfo) msgFinal += '\n\n[Contexto: ' + localInfo + ', Grupo El Reloj]';
+
+  // Mostrar loading
+  document.getElementById('ia-paso3').style.display = 'none';
+  document.getElementById('ia-loading').style.display = '';
+
+  var btn = document.getElementById('ia-btn-enviar');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Consultando...'; }
+
+  try{
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 1024,
+        system: cat.system,
+        messages: [{ role: 'user', content: msgFinal }]
+      })
+    });
+
+    if(!resp.ok){
+      var errData = await resp.json().catch(function(){ return {}; });
+      throw new Error(errData.error ? errData.error.message : 'Error ' + resp.status);
+    }
+
+    var data = await resp.json();
+    var texto = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'Sin respuesta';
+
+    document.getElementById('ia-loading').style.display = 'none';
+    document.getElementById('ia-respuesta-texto').textContent = texto;
+    document.getElementById('ia-respuesta').style.display = '';
+
+  }catch(e){
+    document.getElementById('ia-loading').style.display = 'none';
+    document.getElementById('ia-paso3').style.display = '';
+    if(btn){ btn.disabled = false; btn.textContent = '🤖 Consultar a Claude'; }
+    showToast('Error al contactar con la IA: ' + e.message, 'red');
+  }
+}
+
+function iaNuevaConsulta(){
+  initAsistenteIA();
+}
+
+function iaCopiar(){
+  var txt = (document.getElementById('ia-respuesta-texto') || {}).textContent || '';
+  if(!txt) return;
+  navigator.clipboard.writeText(txt).then(function(){
+    showToast('Copiado al portapapeles', 'green');
+    var btn = document.getElementById('ia-btn-copiar');
+    if(btn){ btn.textContent = '✓ Copiado'; setTimeout(function(){ btn.textContent = '📋 Copiar'; }, 2000); }
+  }).catch(function(){
+    showToast('No se pudo copiar automáticamente', 'orange');
+  });
+}
 
 // ========== AVISOS TRABAJADORES v7.0 (screen15) — stub ==========
 function initAvisos(){ avCargarEmpleados(); avCargarHistorico(); }
