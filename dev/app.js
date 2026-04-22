@@ -4362,8 +4362,12 @@ async function avGuardar(){
     if(btn){ btn.textContent = '✓ Guardado'; btn.style.background = 'var(--green)'; btn.style.color = 'var(--darker)'; }
     avCargarHistorico();
   }catch(e){
-    showToast('Error al guardar: ' + e.message, 'red');
     if(btn){ btn.textContent = '💾 Guardar en BD'; btn.disabled = false; }
+    if(e.message && (e.message.includes('does not exist') || e.message.includes('42P01') || e.message.includes('relation'))){
+      showToast('⚠ Tabla no creada en BD. Ejecuta el SQL de inicialización en Supabase → SQL Editor.', 'red');
+    } else {
+      showToast('Error al guardar: ' + e.message, 'red');
+    }
   }
 }
 
@@ -4422,7 +4426,27 @@ async function avCargarHistorico(){
     }).join('');
 
   }catch(e){
-    cont.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:14px">⚠ Error al cargar: ' + e.message + '</div>';
+    if(e.message && (e.message.includes('does not exist') || e.message.includes('42P01') || e.message.includes('relation'))){
+      cont.innerHTML = '<div style="color:var(--red);font-size:13px;padding:14px;border:1px solid var(--red);border-radius:8px;background:#e74c3c10">'
+        + '<b>⚠ Tabla no encontrada en la BD</b><br><br>'
+        + 'Ejecuta este SQL en <b>Supabase → SQL Editor</b>:<br><br>'
+        + '<code style="font-size:11px;display:block;background:#00000030;padding:10px;border-radius:6px;white-space:pre-wrap">'
+        + 'CREATE TABLE IF NOT EXISTS avisos_trabajadores (\n'
+        + '  id bigserial primary key,\n'
+        + '  fecha timestamp default now(),\n'
+        + '  empleado_nombre text,\n'
+        + '  empleado_id int,\n'
+        + '  tipo_incidencia text,\n'
+        + '  nivel int,\n'
+        + '  texto_aviso text,\n'
+        + '  local_id int,\n'
+        + '  creado_por text,\n'
+        + '  fecha_aviso date\n'
+        + ');'
+        + '</code></div>';
+    } else {
+      cont.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:14px">⚠ Error al cargar: ' + e.message + '</div>';
+    }
   }
 }
 
