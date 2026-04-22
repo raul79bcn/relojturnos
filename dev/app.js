@@ -3915,16 +3915,17 @@ var IA_CATS = {
     ]
   },
   gestoria: {
-    label: '📊 Gestoría',
-    system: 'Eres un asesor contable y fiscal especializado en pymes de hostelería y restauración en España. Conoces el IVA de restauración, los modelos tributarios, las obligaciones contables y las ayudas disponibles para el sector.',
+    label: '📋 Gestoría',
+    system: 'Eres un experto en relaciones laborales, Seguridad Social y gestión de RRHH para hostelería en España. Ayudas a gestores de restaurantes a redactar comunicaciones formales para su gestoría: altas, bajas, contratos, incidencias y documentación laboral. Respondes de forma profesional, clara y estructurada.',
     opciones: [
-      { texto: 'IVA en restauración: tipos y excepciones', prompt: '¿Qué tipos de IVA aplican en un restaurante en España? ¿Cuándo se aplica el 10% y cuándo el 21%? Pon ejemplos concretos.' },
-      { texto: 'Modelos trimestrales que debo presentar', prompt: '¿Qué modelos tributarios debe presentar trimestralmente un restaurante (SL o autónomo) en España? Explica brevemente cada uno.' },
-      { texto: 'Gastos deducibles del restaurante', prompt: '¿Qué gastos son deducibles para un restaurante en el Impuesto de Sociedades o IRPF? Lista los más habituales con indicación de porcentaje deducible.' },
-      { texto: 'Nóminas: SS empresa y retenciones IRPF', prompt: 'Explica cómo se calcula la Seguridad Social a cargo de la empresa en hostelería y cómo funciona la retención de IRPF en nóminas.' },
-      { texto: 'Ayudas y subvenciones para hostelería', prompt: '¿Qué ayudas y subvenciones existen actualmente para restaurantes y hostelería en Cataluña/España? Indica cómo acceder a ellas.' },
-      { texto: 'Amortización de equipamiento y obras', prompt: '¿Cómo funciona la amortización fiscal de maquinaria, equipamiento de cocina y obras de reforma en un restaurante? ¿Qué tablas se usan?' },
-      { texto: 'Diferencia entre autónomo y SL para restaurante', prompt: '¿Cuándo conviene más operar como autónomo o como Sociedad Limitada para un restaurante? Explica las diferencias en coste, responsabilidad y fiscalidad.' },
+      { texto: 'Alta de nuevo trabajador en SS', prompt: 'Redacta un mensaje formal para la gestoría comunicando el alta de un nuevo trabajador en la Seguridad Social. Incluye los datos que hay que proporcionar: nombre completo, DNI, fecha de inicio, categoría profesional, tipo de contrato y jornada.' },
+      { texto: 'Baja de trabajador en SS', prompt: 'Redacta un mensaje formal para la gestoría comunicando la baja de un trabajador en la Seguridad Social. Indica los datos necesarios, la causa de baja y los plazos legales de comunicación.' },
+      { texto: 'Comunicar baja médica', prompt: 'Redacta un mensaje formal para la gestoría comunicando que un trabajador está de baja médica. Incluye qué documentación hay que enviar (parte de baja), en qué plazos y cómo afecta a la nómina.' },
+      { texto: 'Comunicar sanción disciplinaria', prompt: 'Redacta un mensaje formal para la gestoría comunicando que se va a aplicar una sanción disciplinaria a un trabajador. Indica los pasos legales previos (audiencia, comunicación escrita) y la documentación necesaria.' },
+      { texto: 'Envío de documentos (DNI, contrato, etc.)', prompt: 'Redacta un mensaje formal para la gestoría acompañando el envío de documentación de un trabajador. Especifica qué documentos se incluyen (DNI, contrato firmado, titulación, etc.) y para qué trámite concreto se envían.' },
+      { texto: 'Cambio de jornada o categoría', prompt: 'Redacta un mensaje formal para la gestoría comunicando un cambio de jornada laboral o de categoría profesional de un trabajador. Indica los datos del cambio, la fecha de efectividad y el tipo de anexo o novación contractual necesario.' },
+      { texto: 'Solicitar finiquito', prompt: 'Redacta un mensaje formal para la gestoría solicitando la elaboración del finiquito de un trabajador que causa baja voluntaria. Incluye los datos del trabajador, fecha de baja y los conceptos habituales del finiquito en hostelería (vacaciones pendientes, parte proporcional de pagas extras).' },
+      { texto: 'Consulta de nómina', prompt: 'Redacta un mensaje formal para la gestoría haciendo una consulta sobre una nómina concreta. Explica cómo estructurar la consulta indicando: nombre del trabajador, mes al que corresponde, concepto en duda y qué resultado se esperaba.' },
       { texto: 'Texto libre — describe tu consulta', prompt: '' }
     ]
   },
