@@ -818,7 +818,7 @@
       <div id="dash-fecha" style="font-size:15px;color:var(--muted);margin-bottom:4px"></div>
       <div id="dash-local" style="font-size:13px;color:var(--muted)"></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="dash-grid">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px" id="dash-grid">
       <div class="dash-btn" onclick="goStep(1)" title="Cuadrante semanal">
         <div class="dash-btn-icon">📅</div>
         <div class="dash-btn-label">Cuadrante</div>
@@ -848,6 +848,16 @@
         <div class="dash-btn-icon">🛒</div>
         <div class="dash-btn-label">Compras</div>
         <div class="dash-btn-sub">Artículos y proveedores</div>
+      </div>
+      <div class="dash-btn" onclick="goStep(7)" title="Costes y nóminas">
+        <div class="dash-btn-icon">💰</div>
+        <div class="dash-btn-label">Costes</div>
+        <div class="dash-btn-sub">Nóminas y SS</div>
+      </div>
+      <div class="dash-btn" onclick="goStep(8)" title="Dirección General">
+        <div class="dash-btn-icon">📄</div>
+        <div class="dash-btn-label">Dirección</div>
+        <div class="dash-btn-sub">Informes y registros</div>
       </div>
     </div>
   </div>
