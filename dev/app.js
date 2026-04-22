@@ -4867,18 +4867,25 @@ async function wclToggle(idx){
   }catch(e){ console.warn('wcl save:', e); }
 }
 
-function clGenerarEnlace(){
+function clEnviarWA(){
   var fecha = clFechaISO();
   var emp   = clResponsableActual || '';
   if(!emp || emp === '—'){ showToast('Carga primero el checklist del día', 'orange'); return; }
+
   var url = location.origin + location.pathname + '?cl=' + fecha + '&emp=' + encodeURIComponent(emp);
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url)
-      .then(function(){ showToast('✓ Enlace copiado para ' + emp, 'green'); })
-      .catch(function(){ prompt('Copia este enlace para ' + emp + ':', url); });
-  } else {
-    prompt('Copia este enlace para ' + emp + ':', url);
+  var msg = 'Hola ' + emp + '! Aquí tienes el checklist de hoy:\n' + url;
+
+  // Intentar usar teléfono del empleado
+  var telefono = '';
+  if(window._empleadosBDDatos && window._empleadosBDDatos[emp]){
+    telefono = (window._empleadosBDDatos[emp].telefono || '').replace(/\D/g, '');
   }
+  var waUrl = telefono
+    ? 'https://wa.me/' + telefono + '?text=' + encodeURIComponent(msg)
+    : 'https://wa.me/?text=' + encodeURIComponent(msg);
+
+  window.open(waUrl, '_blank');
+  showToast('Abriendo WhatsApp para ' + emp, 'green');
 }
 
 // Detectar modo trabajador al cargar la página
