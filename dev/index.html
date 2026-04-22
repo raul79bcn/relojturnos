@@ -773,6 +773,13 @@
           <div style="background:#1a2d1a;border:1px solid #2a5a2a;border-radius:7px;padding:10px 12px;font-size:11px;color:#8ddb8d" data-i18n="p10_nota">
             &#9432; Los cambios se guardan en tu navegador al instante.
           </div>
+
+          <!-- Clave API -->
+          <div style="margin-top:16px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">🔑 Clave API (Asistente IA)</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Se guarda localmente en tu navegador, nunca en el servidor.</div>
+            <button class="btn btn-ghost btn-sm" onclick="mostrarModalApiKey()" style="width:100%">🔄 Cambiar clave API</button>
+          </div>
         </div>
       </div>
 
@@ -1414,7 +1421,39 @@
   </div>
 </div>
 
-<script src="config.js"></script>
+<!-- MODAL CONFIGURACIÓN API KEY (primera vez o reset) -->
+<div id="modal-apikey" style="display:none;position:fixed;inset:0;background:#000000cc;z-index:99999;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px 32px;width:min(480px,95vw);box-shadow:0 12px 48px #00000080">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:48px;margin-bottom:12px">🤖</div>
+      <div style="font-size:20px;font-weight:700;color:var(--accent);margin-bottom:6px">Configurar Asistente IA</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">
+        Para usar el Asistente IA, Avisos y otras funciones inteligentes<br>necesitas introducir tu clave de Claude (Anthropic).
+      </div>
+    </div>
+
+    <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px;font-size:12px;color:var(--muted);line-height:1.7">
+      💡 <strong style="color:var(--text)">¿Dónde conseguirla?</strong><br>
+      Accede a <strong style="color:var(--accent)">console.anthropic.com</strong> → API Keys → Create Key
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px">Clave API de Claude</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="password" id="apikey-input" placeholder="sk-ant-api03-..." style="flex:1;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:12px 14px;color:var(--text);font-family:monospace;font-size:13px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')guardarApiKey()">
+        <button onclick="toggleApiKeyVisible()" style="background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:11px 12px;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0" id="apikey-eye-btn" title="Mostrar/ocultar">👁</button>
+      </div>
+      <div id="apikey-error" style="display:none;color:var(--red);font-size:12px;margin-top:6px">⚠ La clave no parece válida. Debe empezar por <strong>sk-ant-</strong></div>
+    </div>
+
+    <button onclick="guardarApiKey()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:12px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">🔒 Guardar y continuar</button>
+    <button onclick="cerrarModalApiKey()" style="width:100%;background:none;border:1px solid var(--border);border-radius:12px;padding:11px;font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:14px">Ahora no</button>
+    <div style="text-align:center;font-size:11px;color:var(--muted)">
+      La clave se guarda solo en <strong style="color:var(--text)">tu navegador</strong> (localStorage).<br>Nunca se envía a ningún servidor externo, salvo a la API de Anthropic.
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

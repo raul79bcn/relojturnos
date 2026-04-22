@@ -3781,6 +3781,7 @@ function cargarIdiomaGuardado(){
 function abrirDashboard(){
   goStep(0);
   initDashboard();
+  if(!apiKeyValida(getClaudeApiKey())) mostrarModalApiKey();
 }
 
 function initDashboard(){
@@ -3811,10 +3812,62 @@ function initDashboard(){
   }
 }
 
+// ========== API KEY MANAGER ==========
+// La key se guarda en localStorage — nunca en el repositorio
+var CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+
+function getClaudeApiKey(){
+  return localStorage.getItem('rt_claude_key') || '';
+}
+
+function setClaudeApiKey(key){
+  localStorage.setItem('rt_claude_key', key.trim());
+}
+
+function apiKeyValida(key){
+  return typeof key === 'string' && key.trim().startsWith('sk-ant-');
+}
+
+function mostrarModalApiKey(){
+  var modal = document.getElementById('modal-apikey');
+  if(modal){
+    modal.style.display = 'flex';
+    var inp = document.getElementById('apikey-input');
+    if(inp){ inp.value = ''; setTimeout(function(){ inp.focus(); }, 100); }
+    document.getElementById('apikey-error').style.display = 'none';
+  }
+}
+
+function cerrarModalApiKey(){
+  var modal = document.getElementById('modal-apikey');
+  if(modal) modal.style.display = 'none';
+}
+
+function toggleApiKeyVisible(){
+  var inp = document.getElementById('apikey-input');
+  var btn = document.getElementById('apikey-eye-btn');
+  if(!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  if(btn) btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function guardarApiKey(){
+  var inp = document.getElementById('apikey-input');
+  var errEl = document.getElementById('apikey-error');
+  var key = inp ? inp.value.trim() : '';
+  if(!apiKeyValida(key)){
+    if(errEl) errEl.style.display = 'block';
+    if(inp) inp.focus();
+    return;
+  }
+  if(errEl) errEl.style.display = 'none';
+  setClaudeApiKey(key);
+  cerrarModalApiKey();
+  showToast('✓ Clave guardada correctamente', 'green');
+}
+
+
 // ========== ASISTENTE IA v7.0 (screen14) ==========
-// API key cargada desde dev/config.js (no está en git — ver config.example.js)
-var CLAUDE_API_KEY = (window.RELOJTURNOS_CONFIG && window.RELOJTURNOS_CONFIG.CLAUDE_API_KEY) || '';
-var CLAUDE_MODEL   = (window.RELOJTURNOS_CONFIG && window.RELOJTURNOS_CONFIG.CLAUDE_MODEL)   || 'claude-sonnet-4-20250514';
 
 var IA_CATS = {
   redactar: {
@@ -3950,6 +4003,10 @@ function iaVolver(paso){
 }
 
 async function iaEnviar(){
+  if(!apiKeyValida(getClaudeApiKey())){
+    mostrarModalApiKey();
+    return;
+  }
   var cat = iaEstado.cat;
   if(!cat) return;
 
@@ -3986,7 +4043,7 @@ async function iaEnviar(){
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_API_KEY,
+        'x-api-key': getClaudeApiKey(),
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
@@ -4149,6 +4206,10 @@ function avSelNivel(nivel){
 }
 
 async function avGenerarAviso(){
+  if(!apiKeyValida(getClaudeApiKey())){
+    mostrarModalApiKey();
+    return;
+  }
   if(!avEstado.empleadoNombre || !avEstado.tipo || !avEstado.nivel){
     showToast('Completa todos los pasos antes de generar', 'red'); return;
   }
@@ -4194,7 +4255,7 @@ async function avGenerarAviso(){
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_API_KEY,
+        'x-api-key': getClaudeApiKey(),
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
