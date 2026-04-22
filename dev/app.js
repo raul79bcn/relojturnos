@@ -3816,7 +3816,7 @@ function initDashboard(){
 
 // ========== API KEY MANAGER ==========
 // La key se guarda en localStorage — nunca en el repositorio
-var CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+var CLAUDE_MODEL = 'claude-sonnet-4-6';
 
 function getClaudeApiKey(){
   return localStorage.getItem('rt_claude_key') || '';
