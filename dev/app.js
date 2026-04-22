@@ -582,7 +582,7 @@ function closeNavMenu(){ closeSidebar(); }
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSidebar(); });
 
 function goStep(n){
-  for(var i=0;i<=16;i++){
+  for(var i=0;i<=17;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
@@ -591,8 +591,8 @@ function goStep(n){
   var stepsBar=document.getElementById('steps-bar');
   if(stepsBar) stepsBar.style.display=(n>=1&&n<=6)?'flex':'none';
   // Marcar item activo en sidebar
-  var snavMap={0:0,1:1,2:1,3:1,4:1,5:1,6:1,7:7,8:8,9:9,10:10,12:12,14:14,15:15,16:16};
-  [0,1,7,8,9,10,12,14,15,16].forEach(function(i){
+  var snavMap={0:0,1:1,2:1,3:1,4:1,5:1,6:1,7:7,8:8,9:9,10:10,12:12,14:14,15:15,16:16,17:17};
+  [0,1,7,8,9,10,12,14,15,16,17].forEach(function(i){
     var el=document.getElementById('snav-'+i);
     if(el) el.classList.toggle('active', snavMap[n]===i);
   });
@@ -603,7 +603,15 @@ function goStep(n){
   if(n===14){ initAsistenteIA(); }
   if(n===15){ initAvisos(); }
   if(n===16){ initChecklist(); }
+  if(n===17){ initEquipo17(); }
   window.scrollTo(0,0);
+}
+
+async function initEquipo17(){
+  if(!empleados.length) await cargarEmpleadosBD();
+  if(!turnosConfig.length) buildTurnosConfig();
+  renderEmpleados();
+  renderLorenaHorario();
 }
 
 function nextStep(from){
@@ -920,11 +928,16 @@ function updLorena(idx){
 
 function renderEmpleados(){
   renderLorenaHorario();
-  var cont=document.getElementById('empleados-list');cont.innerHTML='';
-  // Lista de nombres disponibles del local (excluye directoras)
+  _fillEmpCont('empleados-list');
+  _fillEmpCont('empleados-list-17');
+}
+
+function _fillEmpCont(contId){
+  var cont = document.getElementById(contId);
+  if(!cont) return;
+  cont.innerHTML = '';
   var EXCLUIR = ['LORENA','MIRIAM','MIRYAM'];
   var nombresDisp = empleados.map(function(e){ return e.nombre; });
-  // Añadir opciones de BD si existen
   var bdNombres = (window._empleadosBDNombres||[]).filter(function(n){
     return EXCLUIR.indexOf(n.toUpperCase())<0;
   });
@@ -935,10 +948,7 @@ function renderEmpleados(){
     var rOpts=ROLES.map(function(r){return'<option value="'+r+'"'+(emp.rol===r?' selected':'')+'>'+r+'</option>';}).join('');
     var activeTurnos=turnosConfig.filter(function(t){return t.active;});
     var tOpts=activeTurnos.map(function(t){return'<option value="'+t.id+'"'+(emp.turno===t.id?' selected':'')+'>'+t.emoji+' '+t.nome+'</option>';}).join('');
-
-    // Selector de nombre con todos los empleados del local
     var allNames = bdNombres.length ? bdNombres : nombresDisp;
-    // Asegurar que el nombre actual esté en la lista
     if(emp.nombre && allNames.indexOf(emp.nombre)<0) allNames = [emp.nombre].concat(allNames);
     var nameOpts = '<option value="">'+t('sel_empleado')+'</option>'
       + allNames.map(function(n){
