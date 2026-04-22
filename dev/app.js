@@ -4453,21 +4453,23 @@ async function avCargarHistorico(){
 // ========== CHECKLIST ROTATIVO v7.0 (screen16) ==========
 
 var CL_TAREAS_BASE = [
-  'Revisar y limpiar todas las mesas y sillas',
-  'Reponer servilletas, palilleros y salsas en mesas',
-  'Limpiar la barra y zona de trabajo de sala',
-  'Revisar y rellenar dispensadores (jabón, papel)',
-  'Barrer y fregar el suelo de sala y terraza',
-  'Limpiar cristales y espejos de la entrada',
-  'Comprobar y limpiar baños (papel, jabón, suelo)',
-  'Revisar stock de bebidas y comunicar roturas',
-  'Montar mise en place para el servicio',
-  'Comprobar funcionamiento de TPV y caja',
-  'Revisar temperatura de cámaras frigoríficas',
-  'Vaciar papeleras y gestionar residuos',
-  'Verificar iluminación (fundidas, estado)',
-  'Anotar incidencias del turno anterior',
-  'Pasar parte al siguiente turno'
+  // BARRA
+  { texto: 'Limpiar la barra y zona de trabajo',          grupo: 'Barra', tipo: 'check' },
+  { texto: 'Revisar stock de bebidas y comunicar roturas', grupo: 'Barra', tipo: 'check' },
+  { texto: 'Temperatura cámara frigorífica de barra',      grupo: 'Barra', tipo: 'temperatura' },
+  { texto: 'Estado del equipo de barra (cafetera, etc.)',  grupo: 'Barra', tipo: 'equipo' },
+  // SALA
+  { texto: 'Revisar y limpiar todas las mesas y sillas',   grupo: 'Sala', tipo: 'check' },
+  { texto: 'Reponer servilletas, palilleros y salsas',     grupo: 'Sala', tipo: 'check' },
+  { texto: 'Barrer y fregar el suelo de sala y terraza',   grupo: 'Sala', tipo: 'check' },
+  { texto: 'Limpiar cristales y espejos de la entrada',    grupo: 'Sala', tipo: 'check' },
+  { texto: 'Comprobar y limpiar baños (papel, jabón)',     grupo: 'Sala', tipo: 'check' },
+  { texto: 'Montar mise en place para el servicio',        grupo: 'Sala', tipo: 'check' },
+  { texto: 'Comprobar funcionamiento de TPV y caja',       grupo: 'Sala', tipo: 'check' },
+  // COCINA
+  { texto: 'Temperatura cámara frigorífica de cocina',     grupo: 'Cocina', tipo: 'temperatura' },
+  { texto: 'Estado del equipo de cocina (horno, freidora)', grupo: 'Cocina', tipo: 'equipo' },
+  { texto: 'Vaciar papeleras y gestionar residuos',        grupo: 'Cocina', tipo: 'check' }
 ];
 
 // Estado en memoria para el día actual
@@ -4531,12 +4533,16 @@ async function clCargarDia(){
 
   if(tareasGuardadas && tareasGuardadas.length){
     // Reconstruir desde BD
-    clTareasHoy = tareasGuardadas.map(function(r){
+    clTareasHoy = tareasGuardadas.map(function(r, i){
+      var base = CL_TAREAS_BASE[r.posicion] || CL_TAREAS_BASE[i] || {};
       return {
         id:             r.id,
         texto:          r.tarea,
+        grupo:          r.grupo || base.grupo || 'Sala',
+        tipo:           r.tipo  || base.tipo  || 'check',
         hecha:          !!r.completada,
         hora_completado:r.hora_completado || '',
+        valorExtra:     r.valor_extra || '',
         extra:          !!r.extra,
         posicion:       r.posicion || 0
       };
@@ -4548,8 +4554,8 @@ async function clCargarDia(){
     }
   } else {
     // Crear tareas base para hoy
-    clTareasHoy = CL_TAREAS_BASE.map(function(txt, i){
-      return { id: null, texto: txt, hecha: false, hora_completado: '', extra: false, posicion: i };
+    clTareasHoy = CL_TAREAS_BASE.map(function(tarea, i){
+      return { id: null, texto: tarea.texto, grupo: tarea.grupo, tipo: tarea.tipo, hecha: false, hora_completado: '', valorExtra: '', extra: false, posicion: i };
     });
     var notaEl = document.getElementById('cl-nota-dia');
     if(notaEl) notaEl.value = '';
@@ -4566,13 +4572,67 @@ function clRenderTareas(){
   var hechas = clTareasHoy.filter(function(t){ return t.hecha; }).length;
   var total  = clTareasHoy.length;
 
-  clTareasHoy.forEach(function(tarea, idx){
+  var GRUPOS = ['Barra', 'Sala', 'Cocina'];
+  var GRUPO_ICONS = { Barra: '🍹', Sala: '🪑', Cocina: '👨‍🍳' };
+
+  GRUPOS.forEach(function(grupo){
+    var grupoTareas = clTareasHoy.filter(function(t){ return t.grupo === grupo || (!t.grupo && grupo === 'Sala'); });
+    if(!grupoTareas.length) return;
+
+    // Header de grupo
+    var header = document.createElement('div');
+    header.style.cssText = 'font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px 0;margin-top:8px;border-bottom:1px solid var(--border)';
+    header.textContent = (GRUPO_ICONS[grupo] || '') + ' ' + grupo;
+    cont.appendChild(header);
+
+    grupoTareas.forEach(function(tarea){
+      var idx = clTareasHoy.indexOf(tarea);
+      var div = document.createElement('div');
+      div.className = 'cl-tarea-item' + (tarea.hecha ? ' done' : '');
+
+      if(tarea.tipo === 'temperatura'){
+        div.innerHTML =
+          '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">' + (tarea.hecha ? '✓' : '') + '</div>'
+          + '<div class="cl-tarea-texto" style="flex:1">' + tarea.texto + '</div>'
+          + '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">'
+          + '<input type="number" step="0.1" placeholder="°C" value="' + (tarea.valorExtra || '') + '" style="width:64px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:13px;outline:none" onchange="clSetValorExtra(' + idx + ',this.value)">'
+          + '<span style="font-size:11px;color:var(--muted)">°C</span>'
+          + '</div>'
+          + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
+      } else if(tarea.tipo === 'equipo'){
+        var esIncidencia = tarea.valorExtra && tarea.valorExtra !== 'ok';
+        div.innerHTML =
+          '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">' + (tarea.hecha ? '✓' : '') + '</div>'
+          + '<div style="flex:1">'
+          + '<div class="cl-tarea-texto">' + tarea.texto + '</div>'
+          + '<div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap">'
+          + '<select style="background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none" onchange="clSetEquipoEstado(' + idx + ',this.value)">'
+          + '<option value="ok"' + (!tarea.valorExtra || tarea.valorExtra === 'ok' ? ' selected' : '') + '>✅ Todo OK</option>'
+          + '<option value="incidencia"' + (esIncidencia ? ' selected' : '') + '>⚠ Hay incidencia</option>'
+          + '</select>'
+          + (esIncidencia ? '<input type="text" placeholder="Describe la incidencia..." value="' + (tarea.notaIncidencia || '').replace(/"/g, '&quot;') + '" style="flex:1;min-width:120px;background:var(--darker);border:1px solid var(--red);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none" onchange="clSetNotaIncidencia(' + idx + ',this.value)">' : '')
+          + '</div>'
+          + '</div>'
+          + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
+      } else {
+        div.innerHTML =
+          '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">' + (tarea.hecha ? '✓' : '') + '</div>'
+          + '<div class="cl-tarea-texto">' + tarea.texto + (tarea.extra ? ' <span style="font-size:10px;color:var(--accent);font-weight:700">EXTRA</span>' : '') + '</div>'
+          + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
+      }
+      cont.appendChild(div);
+    });
+  });
+
+  // Tareas extra sin grupo
+  var sinGrupo = clTareasHoy.filter(function(t){ return t.extra && !GRUPOS.includes(t.grupo); });
+  sinGrupo.forEach(function(tarea){
+    var idx = clTareasHoy.indexOf(tarea);
     var div = document.createElement('div');
     div.className = 'cl-tarea-item' + (tarea.hecha ? ' done' : '');
     div.innerHTML =
-      '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">'
-      + (tarea.hecha ? '✓' : '') + '</div>'
-      + '<div class="cl-tarea-texto">' + tarea.texto + (tarea.extra ? ' <span style="font-size:10px;color:var(--accent);font-weight:700">EXTRA</span>' : '') + '</div>'
+      '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">' + (tarea.hecha ? '✓' : '') + '</div>'
+      + '<div class="cl-tarea-texto">' + tarea.texto + ' <span style="font-size:10px;color:var(--accent);font-weight:700">EXTRA</span></div>'
       + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
     cont.appendChild(div);
   });
@@ -4583,6 +4643,28 @@ function clRenderTareas(){
   var txt = document.getElementById('cl-progreso-txt');
   if(bar) bar.style.width = pct + '%';
   if(txt) txt.textContent = hechas + ' / ' + total;
+}
+
+function clSetValorExtra(idx, val){
+  var tarea = clTareasHoy[idx];
+  if(!tarea) return;
+  tarea.valorExtra = val;
+  clGuardarTarea(idx);
+}
+
+function clSetEquipoEstado(idx, val){
+  var tarea = clTareasHoy[idx];
+  if(!tarea) return;
+  tarea.valorExtra = val;
+  clRenderTareas();
+  clGuardarTarea(idx);
+}
+
+function clSetNotaIncidencia(idx, val){
+  var tarea = clTareasHoy[idx];
+  if(!tarea) return;
+  tarea.notaIncidencia = val;
+  clGuardarTarea(idx);
 }
 
 async function clToggleTarea(idx){
@@ -4614,7 +4696,11 @@ async function clGuardarTarea(idx){
     posicion:        tarea.posicion,
     extra:           tarea.extra,
     local_id:        localId,
-    nota_dia:        nota
+    nota_dia:        nota,
+    grupo:           tarea.grupo || null,
+    tipo:            tarea.tipo  || 'check',
+    valor_extra:     tarea.valorExtra || null,
+    nota_incidencia: tarea.notaIncidencia || null
   };
 
   try{
@@ -4622,7 +4708,9 @@ async function clGuardarTarea(idx){
       await sbPatch('checklist_diario', tarea.id, {
         completada:      tarea.hecha,
         hora_completado: tarea.hora_completado || null,
-        nota_dia:        nota
+        nota_dia:        nota,
+        valor_extra:     tarea.valorExtra || null,
+        nota_incidencia: tarea.notaIncidencia || null
       });
     } else {
       var result = await sbPost('checklist_diario', registro);
@@ -4711,17 +4799,19 @@ async function wclInit(fecha, empleado){
     var rows = await sbGet('checklist_diario',
       'fecha=eq.'+fecha+'&responsable=eq.'+encodeURIComponent(empleado)+'&order=posicion.asc');
     if(rows && rows.length){
-      wclTareas = rows.map(function(r){
-        return {id:r.id, texto:r.tarea, hecha:!!r.completada, hora:r.hora_completado||'', posicion:r.posicion||0};
+      wclTareas = rows.map(function(r,i){
+        var base = CL_TAREAS_BASE[r.posicion] || CL_TAREAS_BASE[i] || {};
+        return {id:r.id, texto:r.tarea, grupo:r.grupo||base.grupo||'Sala', tipo:r.tipo||base.tipo||'check',
+                hecha:!!r.completada, hora:r.hora_completado||'', posicion:r.posicion||0};
       });
     } else {
-      wclTareas = CL_TAREAS_BASE.map(function(txt,i){
-        return {id:null, texto:txt, hecha:false, hora:'', posicion:i};
+      wclTareas = CL_TAREAS_BASE.map(function(tarea,i){
+        return {id:null, texto:tarea.texto, grupo:tarea.grupo, tipo:tarea.tipo, hecha:false, hora:'', posicion:i};
       });
     }
   }catch(e){
-    wclTareas = CL_TAREAS_BASE.map(function(txt,i){
-      return {id:null, texto:txt, hecha:false, hora:'', posicion:i};
+    wclTareas = CL_TAREAS_BASE.map(function(tarea,i){
+      return {id:null, texto:tarea.texto, grupo:tarea.grupo, tipo:tarea.tipo, hecha:false, hora:'', posicion:i};
     });
   }
   wclRender();
