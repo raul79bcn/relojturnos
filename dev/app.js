@@ -560,25 +560,26 @@ function onLocalChange(){
   if(v!==lastLocal){empleados=[];empCounter=0;eventos=[];extrasDia=[];extraCounter=0;lastLocal=v;}
 }
 
-function toggleNavMenu(e){
-  e.stopPropagation();
-  var btn = document.getElementById('nav-menu-btn');
-  var dd  = document.getElementById('nav-menu-dropdown');
-  var open = dd.classList.contains('open');
-  dd.classList.toggle('open', !open);
-  btn.classList.toggle('open', !open);
+function toggleSidebar(){
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  var open = sb && sb.classList.contains('open');
+  if(sb) sb.classList.toggle('open', !open);
+  if(ov) ov.classList.toggle('open', !open);
+  document.body.classList.toggle('sidebar-open', !open);
 }
-function closeNavMenu(){
-  var dd = document.getElementById('nav-menu-dropdown');
-  var btn = document.getElementById('nav-menu-btn');
-  if(dd) dd.classList.remove('open');
-  if(btn) btn.classList.remove('open');
+function closeSidebar(){
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  if(sb) sb.classList.remove('open');
+  if(ov) ov.classList.remove('open');
+  document.body.classList.remove('sidebar-open');
 }
-// Cerrar dropdown al clicar fuera
-document.addEventListener('click', function(e){
-  var wrap = document.getElementById('nav-menu-btn');
-  if(wrap && !wrap.closest('.nav-menu-wrap').contains(e.target)) closeNavMenu();
-});
+// Alias legacy — some calls may still use old names
+function toggleNavMenu(e){ if(e) e.stopPropagation(); toggleSidebar(); }
+function closeNavMenu(){ closeSidebar(); }
+// Cerrar sidebar al clicar fuera (teclado Escape)
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSidebar(); });
 
 function goStep(n){
   for(var i=0;i<=16;i++){
@@ -586,14 +587,15 @@ function goStep(n){
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
   }
-  // Marcar item activo en dropdown
-  [7,8,9,10,12,14,15,16].forEach(function(i){
-    var el=document.getElementById('nmenu-'+i);
-    if(el) el.classList.toggle('active', i===n);
+  // Mostrar barra de pasos solo en el flujo Cuadrante (screens 1-6)
+  var stepsBar=document.getElementById('steps-bar');
+  if(stepsBar) stepsBar.style.display=(n>=1&&n<=6)?'flex':'none';
+  // Marcar item activo en sidebar
+  var snavMap={0:0,1:1,2:1,3:1,4:1,5:1,6:1,7:7,8:8,9:9,10:10,12:12,14:14,15:15,16:16};
+  [0,1,7,8,9,10,12,14,15,16].forEach(function(i){
+    var el=document.getElementById('snav-'+i);
+    if(el) el.classList.toggle('active', snavMap[n]===i);
   });
-  // Resaltar botón menú si estamos en una pantalla del dropdown
-  var btn=document.getElementById('nav-menu-btn');
-  if(btn) btn.classList.toggle('open', n>=7);
   if(n===7) renderCostes();
   if(n===9) cargarUsuarios();
   if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
@@ -2553,14 +2555,14 @@ function checkMostrarBtnUsuarios(){
   var u = currentUser;
   if(!u) return;
   var esDir = u.rol==='directora'||u.rol==='directora_general'||u.rol==='admin';
-  // Controlar visibilidad en el dropdown
-  ['nmenu-9','nmenu-10','nmenu-11','nmenu-12'].forEach(function(id){
+  // Controlar visibilidad en el sidebar
+  ['snav-9','snav-10','snav-12'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.style.display = esDir ? '' : 'none';
   });
-  // nmenu-8 (Dirección Gral.) solo para directora_general y admin
-  var nm8 = document.getElementById('nmenu-8');
-  if(nm8) nm8.style.display = (u.rol==='directora_general'||u.rol==='admin') ? '' : 'none';
+  // snav-8 (Dirección Gral.) solo para directora_general y admin
+  var sn8 = document.getElementById('snav-8');
+  if(sn8) sn8.style.display = (u.rol==='directora_general'||u.rol==='admin') ? '' : 'none';
 }
 
 // showStep alias

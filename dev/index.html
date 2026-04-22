@@ -82,10 +82,45 @@
   </div>
 </div>
 
-<header style="display:none">
-  <div class="logo">
-    <div class="logo-icon" id="header-logo-icon">&#9201;</div>
-    <div><div class="logo-text" id="header-appname">RelojTurnos</div><div class="logo-sub" id="header-groupname">Grupo El Reloj</div></div>
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div id="sidebar">
+  <div id="sidebar-head">
+    <div class="logo">
+      <div class="logo-icon" id="sb-logo-icon">&#9201;</div>
+      <div><div class="logo-text" id="sb-appname">RelojTurnos</div><div class="logo-sub" id="sb-groupname">Grupo El Reloj</div></div>
+    </div>
+    <button onclick="closeSidebar()" id="sidebar-close-btn" title="Cerrar menú">&#10005;</button>
+  </div>
+  <nav id="sidebar-nav">
+    <div class="snav-item" id="snav-0" onclick="goStep(0);closeSidebar()">&#127968; Dashboard</div>
+    <div class="snav-sep"></div>
+    <div class="snav-label">Cuadrante</div>
+    <div class="snav-item" id="snav-1" onclick="goStep(1);closeSidebar()">&#128197; Planificar semana</div>
+    <div class="snav-sep"></div>
+    <div class="snav-label">Herramientas IA</div>
+    <div class="snav-item" id="snav-14" onclick="goStep(14);closeSidebar()">&#129302; Asistente IA</div>
+    <div class="snav-item" id="snav-15" onclick="goStep(15);closeSidebar()">&#9888;&#65039; Avisos</div>
+    <div class="snav-item" id="snav-16" onclick="goStep(16);closeSidebar()">&#9989; Checklist</div>
+    <div class="snav-sep"></div>
+    <div class="snav-label">Administración</div>
+    <div class="snav-item" id="snav-7" onclick="goStep(7);closeSidebar()">&#128176; Costes</div>
+    <div class="snav-item" id="snav-8" onclick="goStep(8);closeSidebar()">&#128196; Dirección General</div>
+    <div class="snav-item" id="snav-12" onclick="goStep(12);closeSidebar()">&#128722; Compras</div>
+    <div class="snav-sep"></div>
+    <div class="snav-item" id="snav-9" onclick="goStep(9);closeSidebar()">&#128101; Usuarios</div>
+    <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
+  </nav>
+  <div id="sidebar-footer">
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.0 &middot; Grupo El Reloj</div>
+  </div>
+</div>
+<header style="display:none" id="app-header">
+  <div style="display:flex;align-items:center;gap:12px">
+    <button id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Menú" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;padding:4px 8px;line-height:1;border-radius:6px">&#9776;</button>
+    <div class="logo">
+      <div class="logo-icon" id="header-logo-icon">&#9201;</div>
+      <div><div class="logo-text" id="header-appname">RelojTurnos</div><div class="logo-sub" id="header-groupname">Grupo El Reloj</div></div>
+    </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
     <div class="header-info">Local: <span id="header-local">&#8212;</span> &nbsp;&middot;&nbsp; Semana: <span id="header-semana">&#8212;</span></div>
@@ -94,25 +129,7 @@
 </header>
 
 <div class="container" style="display:none">
-  <div class="steps">
-    <!-- Botón menú desplegable — izquierda -->
-    <div class="nav-menu-wrap">
-      <button class="nav-menu-btn" id="nav-menu-btn" onclick="toggleNavMenu(event)">☰ <span style="font-size:11px">Menú</span></button>
-      <div class="nav-menu-dropdown" id="nav-menu-dropdown" style="left:0;right:auto">
-        <div class="nav-menu-item" id="nmenu-0" onclick="goStep(0);closeNavMenu()">🏠 <span>Dashboard</span></div>
-        <div class="nav-menu-sep"></div>
-        <div class="nav-menu-item" id="nmenu-14" onclick="goStep(14);closeNavMenu()">🤖 <span>Asistente IA</span></div>
-        <div class="nav-menu-item" id="nmenu-15" onclick="goStep(15);closeNavMenu()">⚠️ <span>Avisos</span></div>
-        <div class="nav-menu-item" id="nmenu-16" onclick="goStep(16);closeNavMenu()">✅ <span>Checklist</span></div>
-        <div class="nav-menu-sep"></div>
-        <div class="nav-menu-item" id="nmenu-7" onclick="goStep(7);closeNavMenu()">💰 <span data-i18n="nav_costes">Costes</span></div>
-        <div class="nav-menu-item" id="nmenu-8" onclick="goStep(8);closeNavMenu()">📄 <span data-i18n="nav_direccion">Dirección General</span></div>
-        <div class="nav-menu-item" id="nmenu-12" onclick="goStep(12);closeNavMenu()">🛒 <span data-i18n="nav_compras">Compras</span></div>
-        <div class="nav-menu-sep"></div>
-        <div class="nav-menu-item" id="nmenu-9" onclick="goStep(9);closeNavMenu()">👥 <span data-i18n="nav_usuarios">Usuarios</span></div>
-        <div class="nav-menu-item" id="nmenu-10" onclick="goStep(10);closeNavMenu()">🎨 <span data-i18n="nav_ajustes">Ajustes</span></div>
-      </div>
-    </div>
+  <div class="steps" id="steps-bar" style="display:none">
     <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text" data-i18n="nav_local">Local</span></div>
     <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text" data-i18n="nav_turnos">Turnos</span></div>
     <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text" data-i18n="nav_equipo">Equipo</span></div>
