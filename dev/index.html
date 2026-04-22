@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.1 – Grupo El Reloj</title>
+<title>RelojTurnos v7.2 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.1</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.2</span></div>
   </div>
 </div>
 
@@ -1093,7 +1093,8 @@
 
       <div class="btn-row space">
         <button class="btn btn-secondary" onclick="goStep(0)">← Dashboard</button>
-        <button class="btn btn-ghost btn-sm" onclick="clCargarDia()" style="border-color:var(--green);color:var(--green)">🔄 Actualizar</button>
+        <button class="btn btn-ghost btn-sm" onclick="clGenerarEnlace()" style="border-color:var(--blue);color:var(--blue)" title="Genera enlace directo para que el trabajador marque su checklist sin login">&#128206; Enlace trabajador</button>
+        <button class="btn btn-ghost btn-sm" onclick="clCargarDia()" style="border-color:var(--green);color:var(--green)">&#128260; Actualizar</button>
       </div>
     </div>
   </div>
@@ -1477,6 +1478,40 @@
     <button onclick="cerrarModalApiKey()" style="width:100%;background:none;border:1px solid var(--border);border-radius:12px;padding:11px;font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:14px">Ahora no</button>
     <div style="text-align:center;font-size:11px;color:var(--muted)">
       La clave se guarda solo en <strong style="color:var(--text)">tu navegador</strong> (localStorage).<br>Nunca se envía a ningún servidor externo, salvo a la API de Anthropic.
+    </div>
+  </div>
+</div>
+
+
+<!-- VISTA TRABAJADOR — acceso sin login via URL ?cl=FECHA&emp=NOMBRE -->
+<div id="worker-cl-view" style="display:none;position:fixed;inset:0;background:var(--darker);z-index:9998;overflow-y:auto;padding:16px 12px">
+  <div style="max-width:500px;margin:0 auto">
+    <div style="text-align:center;padding:24px 0 16px">
+      <div style="font-size:40px;margin-bottom:10px">&#9989;</div>
+      <div style="font-size:20px;font-weight:700;color:var(--accent);margin-bottom:4px" id="wcl-titulo">Checklist del Día</div>
+      <div id="wcl-empleado-txt" style="font-size:15px;font-weight:600;color:var(--text);margin-top:4px"></div>
+      <div id="wcl-fecha-txt" style="font-size:12px;color:var(--muted);margin-top:2px"></div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px">
+        <span>Progreso del día</span><span id="wcl-prog-txt">0 / 0</span>
+      </div>
+      <div style="background:var(--border);border-radius:6px;height:10px;overflow:hidden">
+        <div id="wcl-prog-bar" style="height:100%;background:var(--green);width:0%;transition:width .4s;border-radius:6px"></div>
+      </div>
+    </div>
+
+    <div id="wcl-tareas" style="margin-bottom:16px"></div>
+
+    <div id="wcl-completo" style="display:none;text-align:center;background:#1a2d1a;border:1px solid var(--green);border-radius:14px;padding:28px;margin-bottom:16px;animation:fadeIn .4s ease">
+      <div style="font-size:40px;margin-bottom:10px">&#127881;</div>
+      <div style="font-size:18px;font-weight:700;color:var(--green)">&#161;Checklist completado!</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px">Todas las tareas marcadas. &#161;Buen trabajo!</div>
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
+      RelojTurnos v7.1 &middot; Grupo El Reloj
     </div>
   </div>
 </div>

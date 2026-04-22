@@ -4641,3 +4641,126 @@ function clGuardarNota(){
     }
   }, 1500);
 }
+
+// ========== WORKER CHECKLIST v7.2 — acceso sin login via URL ==========
+var wclTareas = [];
+var wclFecha  = '';
+var wclEmpleado = '';
+
+function checkWorkerChecklistUrl(){
+  var params = new URLSearchParams(window.location.search);
+  var cl  = params.get('cl');
+  var emp = params.get('emp');
+  if(!cl || !emp) return;
+  emp = decodeURIComponent(emp);
+  var loginEl = document.getElementById('login-screen');
+  if(loginEl) loginEl.style.display = 'none';
+  var view = document.getElementById('worker-cl-view');
+  if(view) view.style.display = '';
+  wclInit(cl, emp);
+}
+
+async function wclInit(fecha, empleado){
+  wclFecha    = fecha;
+  wclEmpleado = empleado;
+  var tEl = document.getElementById('wcl-titulo');
+  var eEl = document.getElementById('wcl-empleado-txt');
+  var fEl = document.getElementById('wcl-fecha-txt');
+  if(tEl) tEl.textContent = '✅ Checklist de ' + empleado;
+  if(eEl) eEl.textContent = '👤 ' + empleado;
+  if(fEl){
+    var d = new Date(fecha + 'T12:00:00');
+    fEl.textContent = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  }
+  try{
+    var rows = await sbGet('checklist_diario',
+      'fecha=eq.'+fecha+'&responsable=eq.'+encodeURIComponent(empleado)+'&order=posicion.asc');
+    if(rows && rows.length){
+      wclTareas = rows.map(function(r){
+        return {id:r.id, texto:r.tarea, hecha:!!r.completada, hora:r.hora_completado||'', posicion:r.posicion||0};
+      });
+    } else {
+      wclTareas = CL_TAREAS_BASE.map(function(txt,i){
+        return {id:null, texto:txt, hecha:false, hora:'', posicion:i};
+      });
+    }
+  }catch(e){
+    wclTareas = CL_TAREAS_BASE.map(function(txt,i){
+      return {id:null, texto:txt, hecha:false, hora:'', posicion:i};
+    });
+  }
+  wclRender();
+}
+
+function wclRender(){
+  var cont = document.getElementById('wcl-tareas');
+  if(!cont) return;
+  cont.innerHTML = '';
+  var hechas = wclTareas.filter(function(t){return t.hecha;}).length;
+  var total  = wclTareas.length;
+  wclTareas.forEach(function(tarea, idx){
+    var div = document.createElement('div');
+    div.className = 'cl-tarea-item' + (tarea.hecha ? ' done' : '');
+    div.style.cursor = 'pointer';
+    div.style.marginBottom = '8px';
+    div.addEventListener('click', function(){ wclToggle(idx); });
+    div.innerHTML =
+      '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'">'+( tarea.hecha?'✓':'')+'</div>'
+      +'<div class="cl-tarea-texto">'+tarea.texto+'</div>'
+      +'<div class="cl-tarea-hora">'+(tarea.hora||'')+'</div>';
+    cont.appendChild(div);
+  });
+  var pct = total > 0 ? Math.round((hechas/total)*100) : 0;
+  var bar = document.getElementById('wcl-prog-bar');
+  var txt = document.getElementById('wcl-prog-txt');
+  if(bar) bar.style.width = pct + '%';
+  if(txt) txt.textContent = hechas + ' / ' + total;
+  var ok = document.getElementById('wcl-completo');
+  if(ok) ok.style.display = (hechas===total && total>0) ? '' : 'none';
+}
+
+async function wclToggle(idx){
+  var tarea = wclTareas[idx];
+  if(!tarea) return;
+  tarea.hecha = !tarea.hecha;
+  tarea.hora  = tarea.hecha
+    ? new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '';
+  wclRender();
+  try{
+    if(tarea.id){
+      await sbPatch('checklist_diario', tarea.id, {
+        completada: tarea.hecha, hora_completado: tarea.hora || null
+      });
+    } else {
+      var result = await sbPost('checklist_diario',{
+        fecha:wclFecha, tarea:tarea.texto, completada:tarea.hecha,
+        hora_completado:tarea.hora||null, responsable:wclEmpleado,
+        posicion:tarea.posicion, local_id:null, nota_dia:null
+      });
+      if(result && result[0]) tarea.id = result[0].id;
+    }
+  }catch(e){ console.warn('wcl save:', e); }
+}
+
+function clGenerarEnlace(){
+  var fecha = clFechaISO();
+  var emp   = clResponsableActual || '';
+  if(!emp || emp === '—'){ showToast('Carga primero el checklist del día', 'orange'); return; }
+  var url = location.origin + location.pathname + '?cl=' + fecha + '&emp=' + encodeURIComponent(emp);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url)
+      .then(function(){ showToast('✓ Enlace copiado para ' + emp, 'green'); })
+      .catch(function(){ prompt('Copia este enlace para ' + emp + ':', url); });
+  } else {
+    prompt('Copia este enlace para ' + emp + ':', url);
+  }
+}
+
+// Detectar modo trabajador al cargar la página
+(function(){
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', checkWorkerChecklistUrl);
+  } else {
+    checkWorkerChecklistUrl();
+  }
+})();
