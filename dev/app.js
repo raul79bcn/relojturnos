@@ -3955,11 +3955,13 @@ var IA_CATS = {
   }
 };
 
-var iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '' };
+var iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '', canal: null };
 
 function initAsistenteIA(){
-  iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '' };
+  iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '', canal: null };
   document.getElementById('ia-paso1').style.display = '';
+  var canalEl = document.getElementById('ia-paso-canal');
+  if(canalEl) canalEl.style.display = 'none';
   document.getElementById('ia-paso2').style.display = 'none';
   document.getElementById('ia-paso3').style.display = 'none';
   document.getElementById('ia-respuesta').style.display = 'none';
@@ -3971,9 +3973,17 @@ function iaSelCat(catKey){
   if(!cat) return;
   iaEstado.catKey = catKey;
   iaEstado.cat = cat;
+  iaEstado.canal = null;
+
+  document.getElementById('ia-paso1').style.display = 'none';
+
+  if(catKey === 'redactar'){
+    var canalEl = document.getElementById('ia-paso-canal');
+    if(canalEl) canalEl.style.display = '';
+    return;
+  }
 
   document.getElementById('ia-cat-label').textContent = cat.label;
-
   var grid = document.getElementById('ia-subcats');
   grid.innerHTML = '';
   cat.opciones.forEach(function(op, idx){
@@ -3984,8 +3994,27 @@ function iaSelCat(catKey){
     div.onclick = function(){ iaSelOpcion(idx); };
     grid.appendChild(div);
   });
+  document.getElementById('ia-paso2').style.display = '';
+}
 
-  document.getElementById('ia-paso1').style.display = 'none';
+function iaSelCanal(canal){
+  iaEstado.canal = canal;
+  var canalEl = document.getElementById('ia-paso-canal');
+  if(canalEl) canalEl.style.display = 'none';
+
+  var cat = iaEstado.cat;
+  if(!cat) return;
+  document.getElementById('ia-cat-label').textContent = cat.label + ' · ' + (canal === 'email' ? '📧 Email' : '💬 WhatsApp');
+  var grid = document.getElementById('ia-subcats');
+  grid.innerHTML = '';
+  cat.opciones.forEach(function(op, idx){
+    var div = document.createElement('div');
+    div.className = 'av-tipo-btn';
+    div.style.cursor = 'pointer';
+    div.textContent = op.texto;
+    div.onclick = function(){ iaSelOpcion(idx); };
+    grid.appendChild(div);
+  });
   document.getElementById('ia-paso2').style.display = '';
 }
 
@@ -3996,7 +4025,8 @@ function iaSelOpcion(idx){
   iaEstado.opcionIdx = idx;
   iaEstado.promtBase = op.prompt;
 
-  document.getElementById('ia-subcat-label').textContent = cat.label + ' › ' + op.texto;
+  var canalLabel = iaEstado.canal === 'email' ? ' · 📧 Email' : (iaEstado.canal === 'whatsapp' ? ' · 💬 WhatsApp' : '');
+  document.getElementById('ia-subcat-label').textContent = cat.label + canalLabel + ' › ' + op.texto;
   var ctx = document.getElementById('ia-contexto');
   if(ctx){ ctx.value = ''; ctx.placeholder = op.prompt ? 'Añade contexto específico (opcional)...' : 'Escribe tu pregunta o solicitud...'; }
 
@@ -4006,9 +4036,12 @@ function iaSelOpcion(idx){
 
 function iaVolver(paso){
   if(paso === 1){
+    var canalEl = document.getElementById('ia-paso-canal');
+    if(canalEl) canalEl.style.display = 'none';
     document.getElementById('ia-paso2').style.display = 'none';
     document.getElementById('ia-paso3').style.display = 'none';
     document.getElementById('ia-paso1').style.display = '';
+    iaEstado.canal = null;
   } else if(paso === 2){
     document.getElementById('ia-paso3').style.display = 'none';
     document.getElementById('ia-paso2').style.display = '';
@@ -4044,6 +4077,16 @@ async function iaEnviar(){
   }
   if(localInfo) msgFinal += '\n\n[Contexto: ' + localInfo + ', Grupo El Reloj]';
 
+  // Ajustar system prompt según canal para categoría Redactar
+  var systemPrompt = cat.system;
+  if(iaEstado.catKey === 'redactar' && iaEstado.canal){
+    if(iaEstado.canal === 'email'){
+      systemPrompt += ' El texto debe enviarse por EMAIL: usa un tono formal, profesional y estructurado, con saludo y despedida apropiados.';
+    } else if(iaEstado.canal === 'whatsapp'){
+      systemPrompt += ' El texto debe enviarse por WHATSAPP entre compañeros de trabajo: usa un tono cercano, directo y amigable. Sin formalidades excesivas. Puede incluir algún emoji si encaja. Mensaje conciso.';
+    }
+  }
+
   // Mostrar loading
   document.getElementById('ia-paso3').style.display = 'none';
   document.getElementById('ia-loading').style.display = '';
@@ -4063,7 +4106,7 @@ async function iaEnviar(){
       body: JSON.stringify({
         model: CLAUDE_MODEL,
         max_tokens: 1024,
-        system: cat.system,
+        system: systemPrompt,
         messages: [{ role: 'user', content: msgFinal }]
       })
     });
