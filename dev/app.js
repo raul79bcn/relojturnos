@@ -5084,6 +5084,219 @@ function cmpRenderProveedores(){
     + '</tbody></table>';
 }
 
+function cmpRenderPrecios(){
+  var cont = document.getElementById('cmp-precios-list');
+  if(!cont) return;
+
+  // Rellenar selector de artículo del filtro
+  var artSel = document.getElementById('cmp-precio-art');
+  if(artSel){
+    var curVal = artSel.value;
+    artSel.innerHTML = '<option value="">— Todos los artículos —</option>'
+      + cmpArticulos.map(function(a){
+          return '<option value="'+a.id+'"'+(String(curVal)===String(a.id)?' selected':'')+'>'+a.nombre+'</option>';
+        }).join('');
+  }
+
+  var artFil = artSel ? artSel.value : '';
+  var lista  = artFil
+    ? cmpPrecios.filter(function(p){ return String(p.articulo_id) === artFil; })
+    : cmpPrecios;
+
+  lista = lista.slice().sort(function(a,b){ return (b.fecha||'') > (a.fecha||'') ? 1 : -1; });
+
+  if(!lista.length){
+    cont.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:32px">'+
+      (cmpPrecios.length ? 'Sin resultados para ese artículo' : 'No hay precios registrados. Pulsa <b>+ Precio</b> para añadir el primero.')+'</div>';
+    return;
+  }
+
+  cont.innerHTML = '<table class="cmp-table" style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">'
+    + '<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
+    + '<th style="padding:8px 6px;text-align:left">Artículo</th>'
+    + '<th style="padding:8px 6px;text-align:left">Proveedor</th>'
+    + '<th style="padding:8px 6px;text-align:right">Precio compra</th>'
+    + '<th style="padding:8px 6px;text-align:right">Margen</th>'
+    + '<th style="padding:8px 6px;text-align:left">Fecha</th>'
+    + '<th style="padding:8px 6px;text-align:left">Notas</th>'
+    + '<th style="padding:8px 6px;text-align:center">Acc.</th>'
+    + '</tr></thead><tbody>'
+    + lista.map(function(pr){
+        var art    = cmpArticulos.find(function(a){ return a.id === pr.articulo_id; });
+        var pvp    = art ? (parseFloat(art.pvp) || 0) : 0;
+        var coste  = parseFloat(pr.precio) || 0;
+        var margen = pvp > 0 ? Math.round(((pvp - coste) / pvp) * 100) : null;
+        var mColor = margen === null ? 'var(--muted)' : (margen >= 60 ? '#2ecc71' : margen >= 40 ? '#f39c12' : '#e74c3c');
+        return '<tr style="border-top:1px solid var(--border)">'
+          + '<td style="padding:8px 6px;font-weight:600">'+(art ? art.nombre : '—')+'</td>'
+          + '<td style="padding:8px 6px;color:var(--muted)">'+cmpNombreProveedor(pr.proveedor_id)+'</td>'
+          + '<td style="padding:8px 6px;text-align:right;color:var(--red)">'+(coste ? coste.toFixed(2)+' €' : '—')+'</td>'
+          + '<td style="padding:8px 6px;text-align:right;font-weight:700;color:'+mColor+'">'+(margen !== null ? margen+'%' : '—')+'</td>'
+          + '<td style="padding:8px 6px;color:var(--muted)">'+(pr.fecha||'—')+'</td>'
+          + '<td style="padding:8px 6px;color:var(--muted);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(pr.notas||'—')+'</td>'
+          + '<td style="padding:8px 6px;text-align:center">'
+          + '<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px;color:var(--red);border-color:var(--red)" onclick="cmpEliminarPrecio('+pr.id+')">🗑</button>'
+          + '</td></tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+
+function cmpRenderAnalisis(){
+  cmpRenderKpis();
+  cmpAnTab(cmpAnTabActual || 'margen');
+}
+
+function cmpRenderKpis(){
+  var cont = document.getElementById('cmp-kpis');
+  if(!cont) return;
+  var totalArts  = cmpArticulos.length;
+  var totalProvs = cmpProveedores.length;
+  var artsConPvp = cmpArticulos.filter(function(a){ return parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0; });
+  var margenMedio = artsConPvp.length
+    ? Math.round(artsConPvp.reduce(function(s,a){
+        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+        return s + ((pvp - c) / pvp) * 100;
+      }, 0) / artsConPvp.length)
+    : null;
+  var kpis = [
+    { label: 'Artículos', valor: totalArts, color: 'var(--accent)' },
+    { label: 'Proveedores', valor: totalProvs, color: '#3498db' },
+    { label: 'Margen medio', valor: margenMedio !== null ? margenMedio + '%' : '—',
+      color: margenMedio === null ? 'var(--muted)' : margenMedio >= 60 ? '#2ecc71' : margenMedio >= 40 ? '#f39c12' : '#e74c3c' },
+    { label: 'Precios registrados', valor: cmpPrecios.length, color: '#9b59b6' }
+  ];
+  cont.innerHTML = kpis.map(function(k){
+    return '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">'
+      + '<div style="font-size:22px;font-weight:700;color:'+k.color+'">'+k.valor+'</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+k.label+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function cmpAnTab(tab){
+  cmpAnTabActual = tab;
+  ['margen','familia','prov','evol','top'].forEach(function(t){
+    var btn = document.getElementById('cmp-an-tab-'+t);
+    if(btn){ btn.className = t === tab ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-ghost'; }
+  });
+  var cont = document.getElementById('cmp-analisis-content');
+  if(!cont) return;
+
+  if(tab === 'margen'){
+    var arts = cmpArticulos.filter(function(a){ return parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0; })
+      .map(function(a){
+        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+        return { nombre: a.nombre, margen: Math.round(((pvp-c)/pvp)*100), pvp: pvp, coste: c };
+      }).sort(function(a,b){ return b.margen - a.margen; });
+    if(!arts.length){ cont.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px">Añade artículos con precio compra y PVP para ver el análisis.</div>'; return; }
+    cont.innerHTML = arts.map(function(a){
+      var col = a.margen >= 60 ? '#2ecc71' : a.margen >= 40 ? '#f39c12' : '#e74c3c';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'
+        + '<div style="flex:1;font-size:13px">'+a.nombre+'</div>'
+        + '<div style="width:120px;background:var(--border);border-radius:4px;height:8px;overflow:hidden">'
+        + '<div style="width:'+Math.min(a.margen,100)+'%;height:100%;background:'+col+'"></div></div>'
+        + '<div style="width:44px;text-align:right;font-weight:700;color:'+col+'">'+a.margen+'%</div>'
+        + '</div>';
+    }).join('');
+
+  } else if(tab === 'familia'){
+    var grupos = {};
+    cmpArticulos.forEach(function(a){
+      var fam = cmpNombreFamilia(a.familia_id);
+      if(!grupos[fam]) grupos[fam] = { count: 0, margens: [] };
+      grupos[fam].count++;
+      if(parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0){
+        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+        grupos[fam].margens.push(((pvp-c)/pvp)*100);
+      }
+    });
+    var rows = Object.keys(grupos).map(function(fam){
+      var g = grupos[fam];
+      var med = g.margens.length ? Math.round(g.margens.reduce(function(s,v){return s+v;},0)/g.margens.length) : null;
+      return { fam: fam, count: g.count, margen: med };
+    }).sort(function(a,b){ return b.count - a.count; });
+    cont.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
+      + '<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
+      + '<th style="padding:8px 6px;text-align:left">Familia</th>'
+      + '<th style="padding:8px 6px;text-align:right">Artículos</th>'
+      + '<th style="padding:8px 6px;text-align:right">Margen medio</th>'
+      + '</tr></thead><tbody>'
+      + rows.map(function(r){
+          var col = r.margen === null ? 'var(--muted)' : r.margen >= 60 ? '#2ecc71' : r.margen >= 40 ? '#f39c12' : '#e74c3c';
+          return '<tr style="border-top:1px solid var(--border)">'
+            + '<td style="padding:8px 6px">'+r.fam+'</td>'
+            + '<td style="padding:8px 6px;text-align:right">'+r.count+'</td>'
+            + '<td style="padding:8px 6px;text-align:right;font-weight:700;color:'+col+'">'+(r.margen !== null ? r.margen+'%' : '—')+'</td>'
+            + '</tr>';
+        }).join('')
+      + '</tbody></table>';
+
+  } else if(tab === 'prov'){
+    var provData = {};
+    cmpArticulos.forEach(function(a){
+      var pnombre = cmpNombreProveedor(a.proveedor_id);
+      if(!provData[pnombre]) provData[pnombre] = { count: 0, costeTotal: 0 };
+      provData[pnombre].count++;
+      provData[pnombre].costeTotal += parseFloat(a.precio_compra) || 0;
+    });
+    var provRows = Object.keys(provData).sort(function(a,b){ return provData[b].count - provData[a].count; });
+    if(!provRows.length){ cont.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px">Sin datos de proveedores todavía.</div>'; return; }
+    cont.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
+      + '<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
+      + '<th style="padding:8px 6px;text-align:left">Proveedor</th>'
+      + '<th style="padding:8px 6px;text-align:right">Artículos</th>'
+      + '<th style="padding:8px 6px;text-align:right">Coste total</th>'
+      + '</tr></thead><tbody>'
+      + provRows.map(function(pn){
+          var d = provData[pn];
+          return '<tr style="border-top:1px solid var(--border)">'
+            + '<td style="padding:8px 6px">'+pn+'</td>'
+            + '<td style="padding:8px 6px;text-align:right">'+d.count+'</td>'
+            + '<td style="padding:8px 6px;text-align:right;color:var(--red)">'+d.costeTotal.toFixed(2)+' €</td>'
+            + '</tr>';
+        }).join('')
+      + '</tbody></table>';
+
+  } else if(tab === 'evol'){
+    if(!cmpPrecios.length){ cont.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px">Registra precios históricos para ver la evolución.</div>'; return; }
+    var porArt = {};
+    cmpPrecios.forEach(function(pr){
+      var art = cmpArticulos.find(function(a){ return a.id === pr.articulo_id; });
+      var nombre = art ? art.nombre : 'Art. #'+pr.articulo_id;
+      if(!porArt[nombre]) porArt[nombre] = [];
+      porArt[nombre].push({ fecha: pr.fecha||'', precio: parseFloat(pr.precio)||0 });
+    });
+    cont.innerHTML = Object.keys(porArt).map(function(nombre){
+      var entries = porArt[nombre].sort(function(a,b){ return a.fecha > b.fecha ? 1 : -1; });
+      var ultimo = entries[entries.length-1];
+      var primero = entries[0];
+      var diff = entries.length > 1 ? ((ultimo.precio - primero.precio) / primero.precio * 100).toFixed(1) : null;
+      var col = diff === null ? 'var(--muted)' : parseFloat(diff) > 0 ? '#e74c3c' : '#2ecc71';
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'
+        + '<div style="font-size:13px;font-weight:600">'+nombre+'</div>'
+        + '<div style="font-size:11px;color:var(--muted);margin-top:3px">'
+        + entries.map(function(e){ return e.fecha+': <b>'+e.precio.toFixed(2)+' €</b>'; }).join(' → ')
+        + (diff !== null ? ' <span style="color:'+col+';font-weight:700">('+( parseFloat(diff)>0 ? '+':'')+diff+'%)</span>' : '')
+        + '</div></div>';
+    }).join('');
+
+  } else if(tab === 'top'){
+    var arts = cmpArticulos.filter(function(a){ return parseInt(a.ventas_semana) > 0; })
+      .sort(function(a,b){ return parseInt(b.ventas_semana) - parseInt(a.ventas_semana); });
+    if(!arts.length){ cont.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px">Añade unidades vendidas/semana a los artículos para ver el ranking.</div>'; return; }
+    cont.innerHTML = arts.map(function(a, i){
+      var pvp = parseFloat(a.pvp)||0, v = parseInt(a.ventas_semana)||0;
+      var ingSem = (pvp * v).toFixed(2);
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'
+        + '<div style="width:24px;text-align:center;font-weight:700;color:var(--muted)">'+(i+1)+'</div>'
+        + '<div style="flex:1;font-size:13px;font-weight:600">'+a.nombre+'</div>'
+        + '<div style="font-size:12px;color:var(--muted)">'+v+' ud/sem</div>'
+        + '<div style="font-size:12px;color:#2ecc71;font-weight:700">'+ingSem+' €/sem</div>'
+        + '</div>';
+    }).join('');
+  }
+}
+
 // ========== Detectar modo trabajador al cargar la página
 (function(){
   if(document.readyState === 'loading'){
