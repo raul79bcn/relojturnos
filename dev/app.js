@@ -4931,7 +4931,58 @@ function clEnviarWA(){
   showToast('Abriendo WhatsApp para ' + emp, 'green');
 }
 
-// ========== COMPRAS v7.10 (screen12) ==========
+// ========== CUADRANTE AUTO-LOAD v7.11 ==========
+
+async function abrirCuadrante(){
+  // 1. Seleccionar local del usuario actual
+  if(currentUser && currentUser.local_id){
+    var nombreLocal = LOCALES_NOMBRE[currentUser.local_id] || '';
+    var sel = document.getElementById('local-select');
+    if(sel && nombreLocal){
+      sel.value = nombreLocal;
+      onLocalChange();
+    }
+  }
+
+  // 2. Asegurar que fecha-inicio apunta a la semana actual
+  var fi = document.getElementById('fecha-inicio');
+  if(fi && fi.options.length){
+    // Seleccionar el lunes de la semana actual (i===0 en buildFechas)
+    var today = new Date();
+    var monday = new Date(today);
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    var mondayISO = monday.toISOString().split('T')[0];
+    // Buscar la opción más cercana a esa fecha
+    var mejor = null, mejorDiff = Infinity;
+    for(var i = 0; i < fi.options.length; i++){
+      var diff = Math.abs(new Date(fi.options[i].value) - monday);
+      if(diff < mejorDiff){ mejorDiff = diff; mejor = i; }
+    }
+    if(mejor !== null) fi.selectedIndex = mejor;
+  }
+
+  updateHeader();
+
+  // 3. Cargar empleados si no están
+  if(!empleados.length) await cargarEmpleadosBD();
+  if(!turnosConfig.length) buildTurnosConfig();
+
+  // 4. Intentar cargar cuadrante guardado de esta semana
+  showToast('Cargando cuadrante...', 'orange');
+  var cuadId = await cargarCuadrantePrevio();
+
+  if(cuadId){
+    // Cuadrante encontrado → renderizar directo en screen6
+    sugerirYRenderizar();
+    showToast('Cuadrante cargado desde BD', 'green');
+  } else {
+    // Sin cuadrante guardado → ir al wizard desde paso 1
+    goStep(1);
+    showToast('No hay cuadrante guardado para esta semana', 'orange');
+  }
+}
+
+
 
 function cmpCargarDatos(){
   try{ cmpFamilias    = JSON.parse(localStorage.getItem('rt_cmp_familias')    || '[]'); }catch(e){ cmpFamilias=[]; }
