@@ -4959,6 +4959,131 @@ function initCompras(){
   cmpRenderArticulos();
 }
 
+function cmpTab(tab){
+  cmpTabActual = tab;
+  document.querySelectorAll('.cmp-tab').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('cmp-tab-' + tab);
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.cmp-panel').forEach(function(p){ p.classList.remove('active'); });
+  var panel = document.getElementById('cmp-panel-' + tab);
+  if(panel) panel.classList.add('active');
+  if(tab === 'articulos')   cmpRenderArticulos();
+  if(tab === 'proveedores') cmpRenderProveedores();
+  if(tab === 'precios')     cmpRenderPrecios();
+  if(tab === 'analisis')    cmpRenderAnalisis();
+}
+
+function cmpNombreFamilia(id){
+  var f = cmpFamilias.find(function(x){ return x.id === id; });
+  return f ? (f.emoji ? f.emoji + ' ' + f.nombre : f.nombre) : '—';
+}
+
+function cmpNombreProveedor(id){
+  var p = cmpProveedores.find(function(x){ return x.id === id; });
+  return p ? p.nombre : '—';
+}
+
+function cmpRenderArticulos(){
+  var cont = document.getElementById('cmp-articulos-list');
+  if(!cont) return;
+
+  var busq   = (document.getElementById('cmp-art-search')         || {}).value || '';
+  var famFil = (document.getElementById('cmp-art-familia-filter') || {}).value || '';
+  var locFil = (document.getElementById('cmp-art-local-filter')   || {}).value || '';
+
+  var lista = cmpArticulos.filter(function(a){
+    if(busq   && a.nombre.toLowerCase().indexOf(busq.toLowerCase()) < 0) return false;
+    if(famFil && String(a.familia_id) !== famFil) return false;
+    if(locFil && String(a.local_id)   !== locFil) return false;
+    return true;
+  });
+
+  // Rellenar selector de familias del filtro
+  var famSel = document.getElementById('cmp-art-familia-filter');
+  if(famSel){
+    var curFam = famSel.value;
+    famSel.innerHTML = '<option value="">Todas las familias</option>'
+      + cmpFamilias.map(function(f){
+          return '<option value="'+f.id+'"'+(String(curFam)===String(f.id)?' selected':'')+'>'+
+                 (f.emoji||'')+(f.emoji?' ':'')+f.nombre+'</option>';
+        }).join('');
+  }
+
+  if(!lista.length){
+    cont.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:32px">'+
+      (cmpArticulos.length ? 'Sin resultados para esa búsqueda' : 'No hay artículos. Pulsa <b>+ Artículo</b> para añadir el primero.')+'</div>';
+    return;
+  }
+
+  cont.innerHTML = '<table class="cmp-table" style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">'
+    + '<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
+    + '<th style="padding:8px 6px;text-align:left">Artículo</th>'
+    + '<th style="padding:8px 6px;text-align:left">Familia</th>'
+    + '<th style="padding:8px 6px;text-align:left">Proveedor</th>'
+    + '<th style="padding:8px 6px;text-align:right">Coste</th>'
+    + '<th style="padding:8px 6px;text-align:right">PVP</th>'
+    + '<th style="padding:8px 6px;text-align:right">Margen</th>'
+    + '<th style="padding:8px 6px;text-align:center">Acciones</th>'
+    + '</tr></thead><tbody>'
+    + lista.map(function(a){
+        var coste  = parseFloat(a.precio_compra) || 0;
+        var pvp    = parseFloat(a.pvp)           || 0;
+        var margen = pvp > 0 ? Math.round(((pvp - coste) / pvp) * 100) : null;
+        var mColor = margen === null ? 'var(--muted)' : (margen >= 60 ? '#2ecc71' : margen >= 40 ? '#f39c12' : '#e74c3c');
+        return '<tr style="border-top:1px solid var(--border)">'
+          + '<td style="padding:8px 6px;font-weight:600">'+a.nombre+'</td>'
+          + '<td style="padding:8px 6px;color:var(--muted)">'+cmpNombreFamilia(a.familia_id)+'</td>'
+          + '<td style="padding:8px 6px;color:var(--muted)">'+cmpNombreProveedor(a.proveedor_id)+'</td>'
+          + '<td style="padding:8px 6px;text-align:right;color:var(--red)">'+(coste ? coste.toFixed(2)+' €' : '—')+'</td>'
+          + '<td style="padding:8px 6px;text-align:right">'+(pvp ? pvp.toFixed(2)+' €' : '—')+'</td>'
+          + '<td style="padding:8px 6px;text-align:right;font-weight:700;color:'+mColor+'">'+(margen !== null ? margen+'%' : '—')+'</td>'
+          + '<td style="padding:8px 6px;text-align:center;white-space:nowrap">'
+          + '<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="cmpAbrirModalArticulo('+a.id+')">✏️</button> '
+          + '<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px;color:var(--red);border-color:var(--red)" onclick="cmpEliminarArticulo('+a.id+')">🗑</button>'
+          + '</td></tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+
+function cmpRenderProveedores(){
+  var cont = document.getElementById('cmp-proveedores-list');
+  if(!cont) return;
+
+  var busq  = (document.getElementById('cmp-prov-search') || {}).value || '';
+  var lista = cmpProveedores.filter(function(p){
+    return !busq || p.nombre.toLowerCase().indexOf(busq.toLowerCase()) >= 0;
+  });
+
+  if(!lista.length){
+    cont.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:32px">'+
+      (cmpProveedores.length ? 'Sin resultados' : 'No hay proveedores. Pulsa <b>+ Proveedor</b> para añadir el primero.')+'</div>';
+    return;
+  }
+
+  cont.innerHTML = '<table class="cmp-table" style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">'
+    + '<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
+    + '<th style="padding:8px 6px;text-align:left">Nombre</th>'
+    + '<th style="padding:8px 6px;text-align:left">CIF</th>'
+    + '<th style="padding:8px 6px;text-align:left">Teléfono</th>'
+    + '<th style="padding:8px 6px;text-align:left">Email</th>'
+    + '<th style="padding:8px 6px;text-align:left">Contacto</th>'
+    + '<th style="padding:8px 6px;text-align:center">Acciones</th>'
+    + '</tr></thead><tbody>'
+    + lista.map(function(p){
+        return '<tr style="border-top:1px solid var(--border)">'
+          + '<td style="padding:8px 6px;font-weight:600">'+p.nombre+'</td>'
+          + '<td style="padding:8px 6px;color:var(--muted)">'+(p.cif||'—')+'</td>'
+          + '<td style="padding:8px 6px">'+(p.tel ? '<a href="tel:'+p.tel+'" style="color:var(--accent)">'+p.tel+'</a>' : '—')+'</td>'
+          + '<td style="padding:8px 6px">'+(p.email ? '<a href="mailto:'+p.email+'" style="color:var(--accent)">'+p.email+'</a>' : '—')+'</td>'
+          + '<td style="padding:8px 6px;color:var(--muted)">'+(p.contacto||'—')+'</td>'
+          + '<td style="padding:8px 6px;text-align:center;white-space:nowrap">'
+          + '<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="cmpAbrirModalProveedor('+p.id+')">✏️</button> '
+          + '<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px;color:var(--red);border-color:var(--red)" onclick="cmpEliminarProveedor('+p.id+')">🗑</button>'
+          + '</td></tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+
 // ========== Detectar modo trabajador al cargar la página
 (function(){
   if(document.readyState === 'loading'){
