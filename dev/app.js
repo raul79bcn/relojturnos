@@ -4385,19 +4385,14 @@ async function avGuardar(){
   var btn = document.getElementById('av-btn-guardar');
   if(btn){ btn.textContent = '⏳ Guardando...'; btn.disabled = true; }
 
-  var localId = currentUser ? currentUser.local_id : null;
+  var localId = currentUser ? currentUser.local_id : (window.localActivoId || null);
   var registro = {
-    empleado_nombre: avEstado.empleadoNombre,
-    tipo_incidencia:  avEstado.tipo,
-    nivel:            avEstado.nivel,
-    texto_aviso:      txt,
-    local_id:         localId,
-    creado_por:       currentUser ? (currentUser.nombre || currentUser.dni) : 'Dirección',
-    fecha_aviso:      new Date().toISOString().split('T')[0]
+    empleado: avEstado.empleadoNombre,
+    tipo:     avEstado.tipo,
+    nivel:    String(avEstado.nivel),
+    texto:    txt,
+    local_id: localId
   };
-  if(avEstado.empleadoId && !isNaN(parseInt(avEstado.empleadoId))){
-    registro.empleado_id = parseInt(avEstado.empleadoId);
-  }
 
   try{
     await sbPost('avisos_trabajadores', registro);
@@ -4439,9 +4434,8 @@ async function avCargarHistorico(){
 
   try{
     var filtros = 'order=id.desc&limit=20';
-    if(currentUser && currentUser.local_id){
-      filtros = 'local_id=eq.' + currentUser.local_id + '&' + filtros;
-    }
+    var lid = (currentUser && currentUser.local_id) || window.localActivoId;
+    if(lid) filtros = 'local_id=eq.' + lid + '&' + filtros;
     var rows = await sbGet('avisos_trabajadores', filtros);
 
     if(!rows || !rows.length){
@@ -4455,13 +4449,13 @@ async function avCargarHistorico(){
     cont.innerHTML = rows.map(function(r){
       var col = AV_NIVEL_COLOR[r.nivel] || 'var(--muted)';
       var niv = AV_NIVEL_TEXTO[r.nivel] || 'N'+r.nivel;
-      var fecha = r.fecha_aviso || (r.created_at ? r.created_at.split('T')[0] : '—');
-      var preview = (r.texto_aviso || '').substring(0, 120).replace(/\n/g,' ') + '...';
+      var fecha = r.created_at ? r.created_at.split('T')[0] : '—';
+      var preview = (r.texto || '').substring(0, 120).replace(/\n/g,' ') + '...';
       return '<div style="border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:8px;background:var(--darker)">'
         + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
-        + '<span style="font-weight:700;font-size:14px;color:var(--text)">' + (r.empleado_nombre||'—') + '</span>'
+        + '<span style="font-weight:700;font-size:14px;color:var(--text)">' + (r.empleado||'—') + '</span>'
         + '<span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;background:'+col+'20;color:'+col+'">'+niv+'</span>'
-        + '<span style="font-size:11px;color:var(--muted)">'+r.tipo_incidencia+'</span>'
+        + '<span style="font-size:11px;color:var(--muted)">'+(r.tipo||'')+'</span>'
         + '<span style="font-size:10px;color:var(--muted);margin-left:auto">'+fecha+'</span>'
         + '</div>'
         + '<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+preview+'</div>'
