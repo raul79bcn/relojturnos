@@ -4931,7 +4931,35 @@ function clEnviarWA(){
   showToast('Abriendo WhatsApp para ' + emp, 'green');
 }
 
-// Detectar modo trabajador al cargar la página
+// ========== COMPRAS v7.10 (screen12) ==========
+
+function cmpCargarDatos(){
+  try{ cmpFamilias    = JSON.parse(localStorage.getItem('rt_cmp_familias')    || '[]'); }catch(e){ cmpFamilias=[]; }
+  try{ cmpArticulos   = JSON.parse(localStorage.getItem('rt_cmp_articulos')   || '[]'); }catch(e){ cmpArticulos=[]; }
+  try{ cmpProveedores = JSON.parse(localStorage.getItem('rt_cmp_proveedores') || '[]'); }catch(e){ cmpProveedores=[]; }
+  try{ cmpPrecios     = JSON.parse(localStorage.getItem('rt_cmp_precios')     || '[]'); }catch(e){ cmpPrecios=[]; }
+}
+
+function cmpGuardarDatos(){
+  localStorage.setItem('rt_cmp_familias',    JSON.stringify(cmpFamilias));
+  localStorage.setItem('rt_cmp_articulos',   JSON.stringify(cmpArticulos));
+  localStorage.setItem('rt_cmp_proveedores', JSON.stringify(cmpProveedores));
+  localStorage.setItem('rt_cmp_precios',     JSON.stringify(cmpPrecios));
+}
+
+function initCompras(){
+  cmpCargarDatos();
+  cmpTabActual = 'articulos';
+  document.querySelectorAll('.cmp-tab').forEach(function(b){ b.classList.remove('active'); });
+  var tabBtn = document.getElementById('cmp-tab-articulos');
+  if(tabBtn) tabBtn.classList.add('active');
+  document.querySelectorAll('.cmp-panel').forEach(function(p){ p.classList.remove('active'); });
+  var panel = document.getElementById('cmp-panel-articulos');
+  if(panel) panel.classList.add('active');
+  cmpRenderArticulos();
+}
+
+// ========== Detectar modo trabajador al cargar la página
 (function(){
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', checkWorkerChecklistUrl);
