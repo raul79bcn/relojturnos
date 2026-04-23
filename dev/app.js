@@ -634,7 +634,7 @@ async function cargarEmpleadosBD(){
   }
   try{
     showToast(t('toast_cargando_equipo'),'orange');
-    var emps = await sbGet('empleados','local_id=eq.'+localId+'&activo=eq.true&order=id.asc');
+    var emps = await sbGet('empleados','local_id=eq.'+localId+'&activo=neq.false&order=id.asc');
     if(emps.length){
       empleados=[];
       empCounter=0;
