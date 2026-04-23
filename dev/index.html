@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.9 – Grupo El Reloj</title>
+<title>RelojTurnos v7.11 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -95,7 +95,7 @@
     <div class="snav-item" id="snav-0" onclick="goStep(0);closeSidebar()">&#127968; Dashboard</div>
     <div class="snav-sep"></div>
     <div class="snav-label">Cuadrante</div>
-    <div class="snav-item" id="snav-1" onclick="goStep(1);closeSidebar()">&#128197; Planificar semana</div>
+    <div class="snav-item" id="snav-1" onclick="abrirCuadrante();closeSidebar()">&#128197; Cuadrante semanal</div>
     <div class="snav-item" id="snav-17" onclick="goStep(17);closeSidebar()">&#128101; Gestión del equipo</div>
     <div class="snav-sep"></div>
     <div class="snav-label">Herramientas IA</div>
@@ -812,7 +812,7 @@
       <div id="dash-local" style="font-size:13px;color:var(--muted)"></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px" id="dash-grid">
-      <div class="dash-btn" onclick="goStep(1)" title="Cuadrante semanal">
+      <div class="dash-btn" onclick="abrirCuadrante()" title="Cuadrante semanal">
         <div class="dash-btn-icon">📅</div>
         <div class="dash-btn-label">Cuadrante</div>
         <div class="dash-btn-sub">Planifica la semana</div>
