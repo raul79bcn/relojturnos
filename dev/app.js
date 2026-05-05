@@ -311,8 +311,8 @@ async function cargarPortalCuadrante(user){
 
 function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
   var DIAS_S = ['L','M','X','J','V','S','D'];
-  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',tarde2:'T2',intermedio:'I',intermedio2:'I2',fiesta:'🏖',mediafiesta:'½'};
-  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',tarde2:'#ff9040',intermedio:'#c080ff',intermedio2:'#a070e0',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
+  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',tarde2:'T2',intermedio:'I',intermedio2:'I2',seguido1:'S1',seguido2:'S2',fiesta:'🏖',mediafiesta:'½'};
+  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',tarde2:'#ff9040',intermedio:'#c080ff',intermedio2:'#a070e0',seguido1:'#20b0a0',seguido2:'#10c080',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
 
   var html = '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-align:center">'+cuad.semana_label+'</div>';
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">';
@@ -336,7 +336,7 @@ function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
   });
   html += '</tbody></table></div>';
   html += '<div style="margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">';
-  [{l:'M',c:'var(--green)',tk:'turno_m_label'},{l:'N',c:'#6b8fff',tk:'turno_n_label'},{l:'T',c:'#ffa040',tk:'turno_t_label'},{l:'T2',c:'#ff9040',tk:'turno_t2_label'},{l:'I',c:'#c080ff',tk:'turno_i_label'},{l:'I2',c:'#a070e0',tk:'turno_i2_label'},{l:'🏖',c:'#ff6b6b',tk:'turno_fiesta'},{l:'½',c:'#ffaa40',tk:'turno_mediafiesta'}]
+  [{l:'M',c:'var(--green)',tk:'turno_m_label'},{l:'N',c:'#6b8fff',tk:'turno_n_label'},{l:'T',c:'#ffa040',tk:'turno_t_label'},{l:'T2',c:'#ff9040',tk:'turno_t2_label'},{l:'I',c:'#c080ff',tk:'turno_i_label'},{l:'I2',c:'#a070e0',tk:'turno_i2_label'},{l:'S1',c:'#20b0a0',tk:'turno_s1_label'},{l:'S2',c:'#10c080',tk:'turno_s2_label'},{l:'🏖',c:'#ff6b6b',tk:'turno_fiesta'},{l:'½',c:'#ffaa40',tk:'turno_mediafiesta'}]
     .forEach(function(x){ html += '<span><strong style="color:'+x.c+'">'+x.l+'</strong> '+t(x.tk)+'</span>'; });
   html += '</div>';
   el.innerHTML = html;
@@ -657,7 +657,7 @@ async function empDarDeBaja(bdId, nombre){
 async function empEliminar(bdId, nombre){
   if(!confirm('¿ELIMINAR DEFINITIVAMENTE a ' + nombre + '? Esta acción no se puede deshacer.')) return;
   try{
-    await sbDelete('empleados', bdId);
+    await sbDelete('empleados', 'id=eq.'+bdId);
     showToast(nombre + ' eliminado definitivamente', 'red');
     empleados = [];
     await cargarEmpleadosBD();
@@ -761,6 +761,8 @@ function buildTurnosConfig(){
       {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'18:00',fin:'03:00',badge:'badge-noche',     color:'#3498db',active:true},
       {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
       {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:'13:00',fin:'22:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
+      {id:'seguido1', nome:'Seguido 1',      emoji:'\u23e9',       ini:'09:00',fin:'18:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
+      {id:'seguido2', nome:'Seguido 2',      emoji:'\u23ed',       ini:'10:00',fin:'19:00',badge:'badge-seguido2',  color:'#10c080',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'23:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   } else if(local==="Roto's Burguer"){
@@ -771,6 +773,8 @@ function buildTurnosConfig(){
       {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'16:00',fin:'00:00',badge:'badge-noche',     color:'#3498db',active:true},
       {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:'12:00',fin:'20:00',badge:'badge-intermedio',color:'#9b59b6',active:false},
       {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:'13:00',fin:'21:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
+      {id:'seguido1', nome:'Seguido 1',      emoji:'\u23e9',       ini:'11:00',fin:'19:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
+      {id:'seguido2', nome:'Seguido 2',      emoji:'\u23ed',       ini:'12:00',fin:'20:00',badge:'badge-seguido2',  color:'#10c080',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'00:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   } else {
@@ -785,6 +789,8 @@ function buildTurnosConfig(){
       {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:mid2, fin:ci,  badge:'badge-noche',      color:'#3498db',active:true},
       {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:iS,   fin:iE,  badge:'badge-intermedio', color:'#9b59b6',active:false},
       {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:iS,   fin:iE,  badge:'badge-intermedio2',color:'#a070e0',active:false},
+      {id:'seguido1', nome:'Seguido 1',      emoji:'\u23e9',       ini:ap,   fin:mid2,badge:'badge-seguido1',  color:'#20b0a0',active:false},
+      {id:'seguido2', nome:'Seguido 2',      emoji:'\u23ed',       ini:mid1, fin:ci,  badge:'badge-seguido2',  color:'#10c080',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:ap,   fin:mid1,ini2:mid2,fin2:ci,badge:'badge-partido',color:'#ffa040',active:false,esPartido:true},
     ];
   }
@@ -1008,7 +1014,7 @@ function _fillEmpCont(contId){
     var init=emp.nombre?emp.nombre.substring(0,2).toUpperCase():'??';
     var rOpts=ROLES.map(function(r){return'<option value="'+r+'"'+(emp.rol===r?' selected':'')+'>'+r+'</option>';}).join('');
     var activeTurnos=turnosConfig.filter(function(t){return t.active;});
-    var tOpts=activeTurnos.map(function(t){return'<option value="'+t.id+'"'+(emp.turno===t.id?' selected':'')+'>'+t.emoji+' '+t.nome+'</option>';}).join('');
+    var tOpts=activeTurnos.map(function(t){return'<option value="'+t.id+'"'+(emp.turno===t.id?' selected':'')+'>'+t.emoji+' '+t.nome+' '+t.ini+'–'+t.fin+'</option>';}).join('');
     var allNames = bdNombres.length ? bdNombres : nombresDisp;
     if(emp.nombre && allNames.indexOf(emp.nombre)<0) allNames = [emp.nombre].concat(allNames);
     var nameOpts = '<option value="">'+t('sel_empleado')+'</option>'
@@ -1080,7 +1086,7 @@ function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos'
 // ========== LÓGICA FIESTAS v6.4 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
-var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, tarde2:1, intermedio:1, intermedio2:1};
+var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, tarde2:1, intermedio:1, intermedio2:1, seguido1:1, seguido2:1};
 
 function toMinTurno(str){
   if(!str) return 0;
@@ -1351,7 +1357,7 @@ function renderTurnosAsig(){
     html+='<div class="dias-grid-row"><div style="font-size:11px;font-weight:700;color:'+color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( emp.nombre||'Emp '+emp.id)+'</div>';
     DIAS.forEach(function(_,di){
       var tv=emp.turnos?emp.turnos[di]:emp.turno;
-      var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+'</option>';}).join('')
+      var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+' '+tc.ini+'–'+tc.fin+'</option>';}).join('')
         +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>\u00bd '+t('turno_mediafiesta')+'</option>'
         +'<option value="fiesta"'+(tv==='fiesta'?' selected':'')+'>🏖 '+t('turno_fiesta')+'</option>';
       html+='<div><select class="dia-select '+tv+'" onchange="updTurno('+emp.id+','+di+',this.value,this)">'+opts+'</select></div>';
@@ -1711,6 +1717,8 @@ function guardarImagen(){
     +'.badge-intermedio2{background:#1e1030;color:#a070e0}'
     +'.badge-tarde{background:#2d2515;color:#ffa040}'
     +'.badge-tarde2{background:#2d1e0a;color:#ff9040}'
+    +'.badge-seguido1{background:#0a2520;color:#20b0a0}'
+    +'.badge-seguido2{background:#0a2018;color:#10c080}'
     +'.cob-ok{color:#2ecc71;font-weight:700;font-size:12px}'
     +'.cob-warn{color:#e67e22;font-weight:700;font-size:12px}'
     +'.cob-low{color:#e74c3c;font-weight:700;font-size:12px}'
@@ -1765,6 +1773,8 @@ function imprimirCuadrante(){
     +'.badge-intermedio2{background:#e8d0ff;color:#503}'
     +'.badge-tarde{background:#fff0e0;color:#840}'
     +'.badge-tarde2{background:#ffe8d0;color:#960}'
+    +'.badge-seguido1{background:#d0f0ec;color:#0a6050}'
+    +'.badge-seguido2{background:#c0f0d8;color:#0a5030}'
     +'.cob-ok{color:#050;font-weight:700;font-size:11px}'
     +'.cob-warn{color:#840;font-weight:700;font-size:11px}'
     +'.cob-low{color:#c00;font-weight:700;font-size:11px}'
@@ -2723,7 +2733,16 @@ async function abrirEditarEmpleado(id){
     document.getElementById('ee-nombre').value = e.nombre||'';
     document.getElementById('ee-telefono').value = e.telefono||'';
     document.getElementById('ee-local').value = e.local_id||1;
-    document.getElementById('ee-turno').value = e.turno_habitual||'manana';
+    // Rebuild turno select dynamically from turnosConfig
+    var eeTurno = document.getElementById('ee-turno');
+    if(turnosConfig.length){
+      eeTurno.innerHTML = turnosConfig.map(function(tc){
+        var sel = (e.turno_habitual===tc.id)?' selected':'';
+        return '<option value="'+tc.id+'"'+sel+'>'+tc.emoji+' '+tc.nome+' '+tc.ini+'–'+tc.fin+'</option>';
+      }).join('');
+    } else {
+      eeTurno.value = e.turno_habitual||'manana';
+    }
     document.getElementById('ee-activo').value = e.activo===false ? '0' : '1';
     document.getElementById('ee-error').style.display='none';
     document.getElementById('ee-ok').style.display='none';
@@ -2753,7 +2772,7 @@ async function guardarEditarEmpleado(){
 async function eliminarEmpleadoSinUser(id, nombre){
   if(!confirm('¿ELIMINAR DEFINITIVAMENTE a '+nombre+'? Esta acción no se puede deshacer.')) return;
   try{
-    await sbDelete('empleados', id);
+    await sbDelete('empleados', 'id=eq.'+id);
     showToast(nombre+' eliminado','red');
     cargarUsuarios();
   }catch(e){ showToast('Error al eliminar: '+e.message,'red'); }
@@ -3266,7 +3285,7 @@ var I18N = {
     // Misc
     cobertura:'COBERTURA', personas:'pers.',
     turno_m_label:'Mañana', turno_n_label:'Noche', turno_t_label:'Tarde', turno_t2_label:'Tarde 2',
-    turno_i_label:'Intermedio', turno_i2_label:'Intermedio 2', turno_p_label:'Partido', turno_mf_label:'½ Media fiesta',
+    turno_i_label:'Intermedio', turno_i2_label:'Intermedio 2', turno_s1_label:'Seguido 1', turno_s2_label:'Seguido 2', turno_p_label:'Partido', turno_mf_label:'½ Media fiesta',
     apoyo_operativo:'Apoyo operativo · No computa en cobertura',
     generado_por:'Generado por', todos_derechos:'Todos los derechos reservados',
     wa_confirm_prefix:'¿Enviar turno individual por WhatsApp a ',
@@ -3530,7 +3549,7 @@ var I18N = {
     err_cambiar_pass:'Error en canviar la contrasenya. Torna-ho a intentar.',
     cobertura:'COBERTURA', personas:'pers.',
     turno_m_label:'Matí', turno_n_label:'Nit', turno_t_label:'Tarda', turno_t2_label:'Tarda 2',
-    turno_i_label:'Intermedi', turno_i2_label:'Intermedi 2', turno_p_label:'Partit', turno_mf_label:'½ Mitja festa',
+    turno_i_label:'Intermedi', turno_i2_label:'Intermedi 2', turno_s1_label:'Seguit 1', turno_s2_label:'Seguit 2', turno_p_label:'Partit', turno_mf_label:'½ Mitja festa',
     apoyo_operativo:'Horari orientatiu · No computa en cobertura',
     generado_por:'Generat per', todos_derechos:'Tots els drets reservats',
     wa_confirm_prefix:'Enviar torn individual per WhatsApp a ',
@@ -3783,7 +3802,7 @@ var I18N = {
     err_cambiar_pass:'Error changing password. Please try again.',
     cobertura:'COVERAGE', personas:'staff',
     turno_m_label:'Morning', turno_n_label:'Night', turno_t_label:'Afternoon', turno_t2_label:'Afternoon 2',
-    turno_i_label:'Split', turno_i2_label:'Split 2', turno_p_label:'Split shift', turno_mf_label:'½ Half day off',
+    turno_i_label:'Split', turno_i2_label:'Split 2', turno_s1_label:'Straight 1', turno_s2_label:'Straight 2', turno_p_label:'Split shift', turno_mf_label:'½ Half day off',
     apoyo_operativo:'Guide schedule · Not counted in floor coverage',
     generado_por:'Generated by', todos_derechos:'All rights reserved',
     wa_confirm_prefix:'Send individual WhatsApp to ',
@@ -4568,7 +4587,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.22 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.23 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
