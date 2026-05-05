@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.24 – Grupo El Reloj</title>
+<title>RelojTurnos v7.25 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.24</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.25</span></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.24 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.25 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -402,7 +402,7 @@
       </div>
 
       <div class="btn-row space" style="margin-top:18px">
-        <button class="btn btn-secondary" onclick="goStep(6)" data-i18n="p7_atras">← Cuadrante</button>
+        <button class="btn btn-secondary" onclick="goStep(0)" data-i18n="p7_atras">🏠 Dashboard</button>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="imprimirCostes()">&#128424; Imprimir informe</button>
           <button class="btn btn-primary btn-sm" onclick="goStep(1)" data-i18n="p6_nueva_semana">+ Nueva semana</button>
@@ -547,7 +547,7 @@
       </div>
 
       <div class="btn-row space" style="margin-top:18px">
-        <button class="btn btn-secondary" onclick="goStep(8)">&#8592; Dirección General</button>
+        <button class="btn btn-secondary" onclick="goStep(0)">🏠 Dashboard</button>
         <button class="btn btn-ghost btn-sm" onclick="cargarUsuarios()" style="border-color:var(--green);color:var(--green)">&#128257; Actualizar lista</button>
       </div>
     </div>
@@ -848,7 +848,7 @@
       <!-- @media móvil — colapsar a 1 columna -->
 
       <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(9)" data-i18n="p10_btn_usuarios">&#8592; Usuarios</button>
+        <button class="btn btn-secondary" onclick="goStep(0)" data-i18n="p10_btn_usuarios">🏠 Dashboard</button>
         <button class="btn btn-ghost btn-sm" onclick="resetPersonalizacion()" style="border-color:var(--red);color:var(--red)" data-i18n="p10_btn_reset">&#8635; Restablecer por defecto</button>
       </div>
     </div>
@@ -1261,7 +1261,7 @@
       </div>
 
       <div class="btn-row space" style="margin-top:18px">
-        <button class="btn btn-secondary" onclick="goStep(8)">← Dirección General</button>
+        <button class="btn btn-secondary" onclick="goStep(0)">🏠 Dashboard</button>
       </div>
     </div>
 
@@ -1623,7 +1623,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.24 &middot; Grupo El Reloj
+      RelojTurnos v7.25 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
