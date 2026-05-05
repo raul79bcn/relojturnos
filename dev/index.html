@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.23 – Grupo El Reloj</title>
+<title>RelojTurnos v7.24 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.23</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.24</span></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.23 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.24 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -879,22 +879,17 @@
         <div class="dash-btn-label">Empleados</div>
         <div class="dash-btn-sub">Alta y gestión usuarios</div>
       </div>
-      <div class="dash-btn" onclick="goStep(17)" title="Gestión del equipo">
-        <div class="dash-btn-icon">👥</div>
-        <div class="dash-btn-label">Gestión Equipo</div>
-        <div class="dash-btn-sub">Empleados y turnos</div>
-      </div>
       <div class="dash-btn" onclick="abrirCuadrante()" title="Cuadrante semanal">
         <div class="dash-btn-icon">📅</div>
         <div class="dash-btn-label">Cuadrante</div>
         <div class="dash-btn-sub">Planifica la semana</div>
       </div>
-      <!-- Fila 2 -->
       <div class="dash-btn" onclick="goStep(7)" title="Costes y nóminas">
         <div class="dash-btn-icon">💰</div>
         <div class="dash-btn-label">Costes</div>
         <div class="dash-btn-sub">Nóminas y SS</div>
       </div>
+      <!-- Fila 2 -->
       <div class="dash-btn" onclick="goStep(16)" title="Checklist diario">
         <div class="dash-btn-icon">✅</div>
         <div class="dash-btn-label">Checklist</div>
@@ -905,12 +900,12 @@
         <div class="dash-btn-label">Asistente IA</div>
         <div class="dash-btn-sub">Claude te ayuda</div>
       </div>
-      <!-- Fila 3 -->
       <div class="dash-btn" onclick="goStep(12)" title="Gestión de compras">
         <div class="dash-btn-icon">🛒</div>
         <div class="dash-btn-label">Compras</div>
         <div class="dash-btn-sub">Artículos y proveedores</div>
       </div>
+      <!-- Fila 3 -->
       <div class="dash-btn" onclick="abrirVistaDirector()" title="Dirección General">
         <div class="dash-btn-icon">📋</div>
         <div class="dash-btn-label">Informes</div>
@@ -920,6 +915,11 @@
         <div class="dash-btn-icon">⚠️</div>
         <div class="dash-btn-label">Avisos</div>
         <div class="dash-btn-sub">Incidencias formales</div>
+      </div>
+      <div class="dash-btn" onclick="goStep(10)" title="Ajustes de la app">
+        <div class="dash-btn-icon">⚙️</div>
+        <div class="dash-btn-label">Ajustes</div>
+        <div class="dash-btn-sub">Personalización</div>
       </div>
     </div>
   </div>
@@ -1623,7 +1623,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.23 &middot; Grupo El Reloj
+      RelojTurnos v7.24 &middot; Grupo El Reloj
     </div>
   </div>
 </div>

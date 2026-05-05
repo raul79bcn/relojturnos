@@ -9,6 +9,7 @@ var localActivoId = parseInt(localStorage.getItem('rt_local_activo_id')) || 1;
 function setLocalActivo(id){
   localActivoId = parseInt(id) || 1;
   localStorage.setItem('rt_local_activo_id', localActivoId);
+  precargarTurnos();
   initDashboardLocal();
   // Sincronizar el selector del cuadrante si existe
   var sel = document.getElementById('local-select');
@@ -29,6 +30,34 @@ function initDashboardLocal(){
   });
 }
 
+function precargarTurnos(){
+  if(localActivoId === 1){
+    turnosConfig=[
+      {id:'manana',    nome:'Mañana',    emoji:'☀️', ini:'07:30',fin:'16:30',badge:'badge-manana',    color:'#2ecc71',active:true},
+      {id:'tarde',     nome:'Tarde',           emoji:'🌅', ini:'15:00',fin:'00:00',badge:'badge-tarde',     color:'#e67e22',active:true},
+      {id:'tarde2',    nome:'Tarde 2',         emoji:'🌆', ini:'16:00',fin:'01:00',badge:'badge-tarde2',    color:'#ff9040',active:false},
+      {id:'noche',     nome:'Noche',           emoji:'🌙', ini:'18:00',fin:'03:00',badge:'badge-noche',     color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',      emoji:'🔄', ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
+      {id:'intermedio2',nome:'Intermedio 2',   emoji:'🔁', ini:'13:00',fin:'22:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
+      {id:'seguido1',  nome:'Seguido 1',       emoji:'⏩',       ini:'09:00',fin:'18:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
+      {id:'seguido2',  nome:'Seguido 2',       emoji:'⏭',       ini:'10:00',fin:'19:00',badge:'badge-seguido2',  color:'#10c080',active:false},
+      {id:'partido',   nome:'Partido',         emoji:'✂️', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'23:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
+    ];
+  } else {
+    turnosConfig=[
+      {id:'manana',    nome:'Mañana',    emoji:'☀️', ini:'11:00',fin:'19:00',badge:'badge-manana',    color:'#2ecc71',active:true},
+      {id:'tarde',     nome:'Tarde',           emoji:'🌅', ini:'14:00',fin:'23:00',badge:'badge-tarde',     color:'#e67e22',active:true},
+      {id:'tarde2',    nome:'Tarde 2',         emoji:'🌆', ini:'15:00',fin:'00:00',badge:'badge-tarde2',    color:'#ff9040',active:false},
+      {id:'noche',     nome:'Noche',           emoji:'🌙', ini:'16:00',fin:'00:00',badge:'badge-noche',     color:'#3498db',active:true},
+      {id:'intermedio',nome:'Intermedio',      emoji:'🔄', ini:'12:00',fin:'20:00',badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'intermedio2',nome:'Intermedio 2',   emoji:'🔁', ini:'13:00',fin:'21:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
+      {id:'seguido1',  nome:'Seguido 1',       emoji:'⏩',       ini:'11:00',fin:'19:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
+      {id:'seguido2',  nome:'Seguido 2',       emoji:'⏭',       ini:'12:00',fin:'20:00',badge:'badge-seguido2',  color:'#10c080',active:false},
+      {id:'partido',   nome:'Partido',         emoji:'✂️', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'00:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
+    ];
+  }
+}
+precargarTurnos();
 
 var cmpFamilias=[], cmpArticulos=[], cmpProveedores=[], cmpPrecios=[];
 var cmpTabActual='articulos', cmpAnTabActual='margen';
@@ -4587,7 +4616,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.23 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.24 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
