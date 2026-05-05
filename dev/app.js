@@ -3,7 +3,33 @@ var DIAS_SHORT=['LUN','MAR','MI\u00c9','JUE','VIE','S\u00c1B','DOM'];
 var COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#ff9800'];
 var ROLES=['Resp. Ma\u00f1ana','Resp. Noche','Cam. Ma\u00f1ana','Cam. Noche','Cam. Tarde','Cam. Intermedio','Cocinero','Ayud. Cocina','Encargado','Barman'];
 
-// ========== COMPRAS DATA ==========
+// ========== LOCAL ACTIVO (persiste en localStorage) ==========
+var localActivoId = parseInt(localStorage.getItem('rt_local_activo_id')) || 1;
+
+function setLocalActivo(id){
+  localActivoId = parseInt(id) || 1;
+  localStorage.setItem('rt_local_activo_id', localActivoId);
+  initDashboardLocal();
+  // Sincronizar el selector del cuadrante si existe
+  var sel = document.getElementById('local-select');
+  if(sel) sel.value = (localActivoId === 2 ? "Roto's Burguer" : 'La Cala');
+}
+
+function initDashboardLocal(){
+  var nombres = {1:'\ud83c\udf7d La Cala', 2:"\ud83c\udf54 Roto's Burguer"};
+  var lbl = document.getElementById('dash-local-nombre');
+  if(lbl) lbl.textContent = nombres[localActivoId] || '\u2014';
+  // Resaltar bot\u00f3n activo
+  [1,2].forEach(function(i){
+    var btn = document.getElementById('dash-local-btn-' + i);
+    if(!btn) return;
+    btn.className = i === localActivoId
+      ? 'btn btn-sm btn-primary'
+      : 'btn btn-sm btn-ghost';
+  });
+}
+
+
 var cmpFamilias=[], cmpArticulos=[], cmpProveedores=[], cmpPrecios=[];
 var cmpTabActual='articulos', cmpAnTabActual='margen';
 
@@ -596,6 +622,7 @@ function goStep(n){
     var el=document.getElementById('snav-'+i);
     if(el) el.classList.toggle('active', snavMap[n]===i);
   });
+  if(n===0) initDashboardLocal();
   if(n===7) renderCostes();
   if(n===9) cargarUsuarios();
   if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
