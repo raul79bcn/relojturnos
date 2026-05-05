@@ -649,13 +649,16 @@ function nextStep(from){
 }
 
 async function cargarEmpleadosBD(){
-  var local = getLocal();
-  var localId = localIdMap[local];
-  if(!localId && local === 'La Cala') localId = 1;
-  if(!localId && local === "Roto's Burguer") localId = 2;
-  if(!localId){ 
-    // Sin conexión BD — usar empleados por defecto
-    if(empleados.length===0) initDef(local);
+  // Usar localActivoId del dashboard si está disponible; si no, intentar desde el selector del cuadrante
+  var localId = window.localActivoId || null;
+  if(!localId){
+    var local = getLocal();
+    localId = localIdMap[local];
+    if(!localId && local === 'La Cala') localId = 1;
+    if(!localId && local === "Roto's Burguer") localId = 2;
+  }
+  if(!localId){
+    if(empleados.length===0) initDef('');
     renderEmpleados();
     return;
   }
