@@ -4940,12 +4940,16 @@ function clEnviarWA(){
   if(!emp || emp === '—'){ showToast('Carga primero el checklist del día', 'orange'); return; }
 
   var url = location.origin + location.pathname + '?cl=' + fecha + '&emp=' + encodeURIComponent(emp);
-  var msg = 'Hola ' + emp + '! Aquí tienes el checklist de hoy:\n' + url;
+  var msg = 'Hola ' + emp + '! 👋 Aquí tienes tu checklist de hoy:\n' + url;
 
-  // Intentar usar teléfono del empleado
+  // Obtener teléfono del empleado desde BD
   var telefono = '';
   if(window._empleadosBDDatos && window._empleadosBDDatos[emp]){
-    telefono = (window._empleadosBDDatos[emp].telefono || '').replace(/\D/g, '');
+    telefono = (window._empleadosBDDatos[emp].telefono || '').replace(/[\s\-()]/g, '');
+  }
+  // Normalizar: añadir +34 si es número español sin prefijo (9 dígitos empezando por 6/7)
+  if(telefono && !telefono.startsWith('+') && /^[67]\d{8}$/.test(telefono)){
+    telefono = '34' + telefono;
   }
   var waUrl = telefono
     ? 'https://wa.me/' + telefono + '?text=' + encodeURIComponent(msg)
