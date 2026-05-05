@@ -311,8 +311,8 @@ async function cargarPortalCuadrante(user){
 
 function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
   var DIAS_S = ['L','M','X','J','V','S','D'];
-  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',intermedio:'I',fiesta:'🏖',mediafiesta:'½'};
-  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',intermedio:'#c080ff',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
+  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',tarde2:'T2',intermedio:'I',intermedio2:'I2',fiesta:'🏖',mediafiesta:'½'};
+  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',tarde2:'#ff9040',intermedio:'#c080ff',intermedio2:'#a070e0',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
 
   var html = '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-align:center">'+cuad.semana_label+'</div>';
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">';
@@ -336,7 +336,7 @@ function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
   });
   html += '</tbody></table></div>';
   html += '<div style="margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">';
-  [{l:'M',c:'var(--green)',tk:'turno_m_label'},{l:'N',c:'#6b8fff',tk:'turno_n_label'},{l:'T',c:'#ffa040',tk:'turno_t_label'},{l:'I',c:'#c080ff',tk:'turno_i_label'},{l:'🏖',c:'#ff6b6b',tk:'turno_fiesta'},{l:'½',c:'#ffaa40',tk:'turno_mediafiesta'}]
+  [{l:'M',c:'var(--green)',tk:'turno_m_label'},{l:'N',c:'#6b8fff',tk:'turno_n_label'},{l:'T',c:'#ffa040',tk:'turno_t_label'},{l:'T2',c:'#ff9040',tk:'turno_t2_label'},{l:'I',c:'#c080ff',tk:'turno_i_label'},{l:'I2',c:'#a070e0',tk:'turno_i2_label'},{l:'🏖',c:'#ff6b6b',tk:'turno_fiesta'},{l:'½',c:'#ffaa40',tk:'turno_mediafiesta'}]
     .forEach(function(x){ html += '<span><strong style="color:'+x.c+'">'+x.l+'</strong> '+t(x.tk)+'</span>'; });
   html += '</div>';
   el.innerHTML = html;
@@ -732,16 +732,20 @@ function buildTurnosConfig(){
     turnosConfig=[
       {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:'07:30',fin:'16:30',badge:'badge-manana',    color:'#2ecc71',active:true},
       {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:'15:00',fin:'00:00',badge:'badge-tarde',     color:'#e67e22',active:true},
+      {id:'tarde2',   nome:'Tarde 2',        emoji:'\ud83c\udf06', ini:'16:00',fin:'01:00',badge:'badge-tarde2',    color:'#ff9040',active:false},
       {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'18:00',fin:'03:00',badge:'badge-noche',     color:'#3498db',active:true},
-      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
+      {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
+      {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:'13:00',fin:'22:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'23:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   } else if(local==="Roto's Burguer"){
     turnosConfig=[
       {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:'11:00',fin:'19:00',badge:'badge-manana',    color:'#2ecc71',active:true},
       {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:'14:00',fin:'23:00',badge:'badge-tarde',     color:'#e67e22',active:true},
+      {id:'tarde2',   nome:'Tarde 2',        emoji:'\ud83c\udf06', ini:'15:00',fin:'00:00',badge:'badge-tarde2',    color:'#ff9040',active:false},
       {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'16:00',fin:'00:00',badge:'badge-noche',     color:'#3498db',active:true},
-      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:'12:00',fin:'20:00',badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:'12:00',fin:'20:00',badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:'13:00',fin:'21:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'00:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   } else {
@@ -751,9 +755,11 @@ function buildTurnosConfig(){
     var iS=toStr(s+Math.round(third*0.7/30)*30),iE=toStr(s+Math.round(third*1.7/30)*30);
     turnosConfig=[
       {id:'manana',   nome:'Ma\u00f1ana',   emoji:'\u2600\ufe0f', ini:ap,   fin:mid1,badge:'badge-manana',    color:'#2ecc71',active:true},
-      {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:mid1, fin:mid2,badge:'badge-tarde',     color:'#e67e22',active:false},
-      {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:mid2, fin:ci,  badge:'badge-noche',     color:'#3498db',active:true},
-      {id:'intermedio',nome:'Intermedio',    emoji:'\ud83d\udd04', ini:iS,   fin:iE,  badge:'badge-intermedio',color:'#9b59b6',active:false},
+      {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:mid1, fin:mid2,badge:'badge-tarde',      color:'#e67e22',active:false},
+      {id:'tarde2',   nome:'Tarde 2',        emoji:'\ud83c\udf06', ini:mid1, fin:mid2,badge:'badge-tarde2',     color:'#ff9040',active:false},
+      {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:mid2, fin:ci,  badge:'badge-noche',      color:'#3498db',active:true},
+      {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:iS,   fin:iE,  badge:'badge-intermedio', color:'#9b59b6',active:false},
+      {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:iS,   fin:iE,  badge:'badge-intermedio2',color:'#a070e0',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:ap,   fin:mid1,ini2:mid2,fin2:ci,badge:'badge-partido',color:'#ffa040',active:false,esPartido:true},
     ];
   }
@@ -1039,7 +1045,7 @@ function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos'
 // ========== LÓGICA FIESTAS v6.4 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
-var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, intermedio:1}; // mínimos por turno
+var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, tarde2:1, intermedio:1, intermedio2:1};
 
 function toMinTurno(str){
   if(!str) return 0;
@@ -1667,7 +1673,9 @@ function guardarImagen(){
     +'.badge-manana{background:#152d15;color:#5ddb5d}'
     +'.badge-noche{background:#15152d;color:#6b8fff}'
     +'.badge-intermedio{background:#25152d;color:#c080ff}'
+    +'.badge-intermedio2{background:#1e1030;color:#a070e0}'
     +'.badge-tarde{background:#2d2515;color:#ffa040}'
+    +'.badge-tarde2{background:#2d1e0a;color:#ff9040}'
     +'.cob-ok{color:#2ecc71;font-weight:700;font-size:12px}'
     +'.cob-warn{color:#e67e22;font-weight:700;font-size:12px}'
     +'.cob-low{color:#e74c3c;font-weight:700;font-size:12px}'
@@ -1719,7 +1727,9 @@ function imprimirCuadrante(){
     +'.badge-manana{background:#e0ffe0;color:#050}'
     +'.badge-noche{background:#e0e8ff;color:#003}'
     +'.badge-intermedio{background:#f0e0ff;color:#404}'
+    +'.badge-intermedio2{background:#e8d0ff;color:#503}'
     +'.badge-tarde{background:#fff0e0;color:#840}'
+    +'.badge-tarde2{background:#ffe8d0;color:#960}'
     +'.cob-ok{color:#050;font-weight:700;font-size:11px}'
     +'.cob-warn{color:#840;font-weight:700;font-size:11px}'
     +'.cob-low{color:#c00;font-weight:700;font-size:11px}'
@@ -3097,8 +3107,8 @@ var I18N = {
     toast_password_incorrecta:'La contraseña actual es incorrecta',
     // Misc
     cobertura:'COBERTURA', personas:'pers.',
-    turno_m_label:'Mañana', turno_n_label:'Noche', turno_t_label:'Tarde',
-    turno_i_label:'Intermedio', turno_p_label:'Partido', turno_mf_label:'½ Media fiesta',
+    turno_m_label:'Mañana', turno_n_label:'Noche', turno_t_label:'Tarde', turno_t2_label:'Tarde 2',
+    turno_i_label:'Intermedio', turno_i2_label:'Intermedio 2', turno_p_label:'Partido', turno_mf_label:'½ Media fiesta',
     apoyo_operativo:'Apoyo operativo · No computa en cobertura',
     generado_por:'Generado por', todos_derechos:'Todos los derechos reservados',
     wa_confirm_prefix:'¿Enviar turno individual por WhatsApp a ',
@@ -3361,8 +3371,8 @@ var I18N = {
     err_crear_usuario:'Error en crear usuari: ',
     err_cambiar_pass:'Error en canviar la contrasenya. Torna-ho a intentar.',
     cobertura:'COBERTURA', personas:'pers.',
-    turno_m_label:'Matí', turno_n_label:'Nit', turno_t_label:'Tarda',
-    turno_i_label:'Intermedi', turno_p_label:'Partit', turno_mf_label:'½ Mitja festa',
+    turno_m_label:'Matí', turno_n_label:'Nit', turno_t_label:'Tarda', turno_t2_label:'Tarda 2',
+    turno_i_label:'Intermedi', turno_i2_label:'Intermedi 2', turno_p_label:'Partit', turno_mf_label:'½ Mitja festa',
     apoyo_operativo:'Horari orientatiu · No computa en cobertura',
     generado_por:'Generat per', todos_derechos:'Tots els drets reservats',
     wa_confirm_prefix:'Enviar torn individual per WhatsApp a ',
@@ -3614,8 +3624,8 @@ var I18N = {
     err_crear_usuario:'Error creating user: ',
     err_cambiar_pass:'Error changing password. Please try again.',
     cobertura:'COVERAGE', personas:'staff',
-    turno_m_label:'Morning', turno_n_label:'Night', turno_t_label:'Afternoon',
-    turno_i_label:'Split', turno_p_label:'Split shift', turno_mf_label:'½ Half day off',
+    turno_m_label:'Morning', turno_n_label:'Night', turno_t_label:'Afternoon', turno_t2_label:'Afternoon 2',
+    turno_i_label:'Split', turno_i2_label:'Split 2', turno_p_label:'Split shift', turno_mf_label:'½ Half day off',
     apoyo_operativo:'Guide schedule · Not counted in floor coverage',
     generado_por:'Generated by', todos_derechos:'All rights reserved',
     wa_confirm_prefix:'Send individual WhatsApp to ',
