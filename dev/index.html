@@ -821,20 +821,27 @@
       <div style="font-size:12px;color:var(--muted);margin-left:auto">Seleccionado: <b id="dash-local-nombre" style="color:var(--accent)">—</b></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="dash-grid">
-      <div class="dash-btn" onclick="abrirCuadrante()" title="Cuadrante semanal">
-        <div class="dash-btn-icon">📅</div>
-        <div class="dash-btn-label">Cuadrante</div>
-        <div class="dash-btn-sub">Planifica la semana</div>
+      <!-- Fila 1 -->
+      <div class="dash-btn" onclick="goStep(9)" title="Gestión de usuarios">
+        <div class="dash-btn-icon">🧑‍💼</div>
+        <div class="dash-btn-label">Empleados</div>
+        <div class="dash-btn-sub">Alta y gestión usuarios</div>
       </div>
       <div class="dash-btn" onclick="goStep(17)" title="Gestión del equipo">
         <div class="dash-btn-icon">👥</div>
         <div class="dash-btn-label">Gestión Equipo</div>
         <div class="dash-btn-sub">Empleados y turnos</div>
       </div>
-      <div class="dash-btn dash-btn-highlight" onclick="goStep(15)" title="Avisos a trabajadores">
-        <div class="dash-btn-icon">⚠️</div>
-        <div class="dash-btn-label">Avisos</div>
-        <div class="dash-btn-sub">Incidencias formales</div>
+      <div class="dash-btn" onclick="abrirCuadrante()" title="Cuadrante semanal">
+        <div class="dash-btn-icon">📅</div>
+        <div class="dash-btn-label">Cuadrante</div>
+        <div class="dash-btn-sub">Planifica la semana</div>
+      </div>
+      <!-- Fila 2 -->
+      <div class="dash-btn" onclick="goStep(7)" title="Costes y nóminas">
+        <div class="dash-btn-icon">💰</div>
+        <div class="dash-btn-label">Costes</div>
+        <div class="dash-btn-sub">Nóminas y SS</div>
       </div>
       <div class="dash-btn" onclick="goStep(16)" title="Checklist diario">
         <div class="dash-btn-icon">✅</div>
@@ -846,25 +853,21 @@
         <div class="dash-btn-label">Asistente IA</div>
         <div class="dash-btn-sub">Claude te ayuda</div>
       </div>
+      <!-- Fila 3 -->
       <div class="dash-btn" onclick="goStep(12)" title="Gestión de compras">
         <div class="dash-btn-icon">🛒</div>
         <div class="dash-btn-label">Compras</div>
         <div class="dash-btn-sub">Artículos y proveedores</div>
       </div>
-      <div class="dash-btn" onclick="goStep(7)" title="Costes y nóminas">
-        <div class="dash-btn-icon">💰</div>
-        <div class="dash-btn-label">Costes</div>
-        <div class="dash-btn-sub">Nóminas y SS</div>
-      </div>
-      <div class="dash-btn" onclick="goStep(9)" title="Gestión de usuarios">
-        <div class="dash-btn-icon">🧑‍💼</div>
-        <div class="dash-btn-label">Empleados</div>
-        <div class="dash-btn-sub">Alta y gestión usuarios</div>
-      </div>
       <div class="dash-btn" onclick="abrirVistaDirector()" title="Dirección General">
         <div class="dash-btn-icon">📋</div>
         <div class="dash-btn-label">Informes</div>
         <div class="dash-btn-sub">Dirección General</div>
+      </div>
+      <div class="dash-btn dash-btn-highlight" onclick="goStep(15)" title="Avisos a trabajadores">
+        <div class="dash-btn-icon">⚠️</div>
+        <div class="dash-btn-label">Avisos</div>
+        <div class="dash-btn-sub">Incidencias formales</div>
       </div>
     </div>
   </div>
