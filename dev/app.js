@@ -2576,7 +2576,8 @@ async function cargarUsuarios(){
             +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+(e.nombre||'—')+'</div>'
             +'<div style="font-size:10px;color:var(--muted)">'+localLabel+' · '+tel+'</div>'
             +'</div>'
-            +'<button onclick="abrirEditarTelefonoEmpleado('+e.id+',\''+((e.nombre||'').replace(/'/g,"\\'"))+'\',\''+((e.telefono||'').replace(/'/g,"\\'"))+'\')" style="background:none;border:1px solid #25d36640;border-radius:7px;padding:4px 9px;color:#25d366;font-size:11px;cursor:pointer;flex-shrink:0">📱 Tel.</button>'
+            +'<button onclick="abrirEditarEmpleado('+e.id+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>'
+            +'<button onclick="eliminarEmpleadoSinUser('+e.id+',\''+((e.nombre||'').replace(/'/g,"\\'"))+'\')" style="background:none;border:1px solid #e5393540;border-radius:7px;padding:4px 9px;color:#e53935;font-size:11px;cursor:pointer;flex-shrink:0">🗑</button>'
             +'</div>';
         }).join('');
       }
@@ -2650,6 +2651,112 @@ async function crearUsuario(){
     errEl.style.display='block';
     console.error('crearUsuario error:',e);
   }
+}
+
+// ===== EDITAR USUARIO REGISTRADO =====
+var _euUsuarios = [];
+async function abrirEditarUsuario(id){
+  try{
+    var rows = await sbGet('usuarios','id=eq.'+id);
+    if(!rows||!rows.length){ showToast('Usuario no encontrado','red'); return; }
+    var u = rows[0];
+    document.getElementById('eu-id').value = u.id;
+    document.getElementById('eu-nombre').value = u.nombre||'';
+    document.getElementById('eu-dni').value = u.dni||'';
+    document.getElementById('eu-rol').value = u.rol||'empleado';
+    document.getElementById('eu-local').value = u.local_id||1;
+    document.getElementById('eu-activo').value = u.activo ? '1' : '0';
+    document.getElementById('eu-pass').value = '';
+    document.getElementById('eu-ss').value = u.ss||'';
+    document.getElementById('eu-telefono').value = u.telefono||'';
+    document.getElementById('eu-email').value = u.email||'';
+    document.getElementById('eu-direccion').value = u.direccion||'';
+    euRolChange();
+    document.getElementById('eu-error').style.display='none';
+    document.getElementById('eu-ok').style.display='none';
+    var m = document.getElementById('modal-editar-usuario');
+    m.style.display='flex';
+  }catch(e){ showToast('Error al cargar usuario: '+e.message,'red'); }
+}
+function euRolChange(){
+  var rol = document.getElementById('eu-rol').value;
+  var lg = document.getElementById('eu-local-group');
+  if(lg) lg.style.display = rol==='directora_general' ? 'none' : '';
+}
+function cerrarEditarUsuario(){
+  document.getElementById('modal-editar-usuario').style.display='none';
+}
+async function guardarEditarUsuario(){
+  var id      = parseInt(document.getElementById('eu-id').value);
+  var nombre  = (document.getElementById('eu-nombre').value||'').trim();
+  var dni     = (document.getElementById('eu-dni').value||'').trim().toUpperCase();
+  var rol     = document.getElementById('eu-rol').value;
+  var localId = rol==='directora_general' ? null : parseInt(document.getElementById('eu-local').value);
+  var activo  = document.getElementById('eu-activo').value==='1';
+  var pass    = (document.getElementById('eu-pass').value||'').trim();
+  var ss      = (document.getElementById('eu-ss').value||'').trim();
+  var tel     = (document.getElementById('eu-telefono').value||'').trim();
+  var email   = (document.getElementById('eu-email').value||'').trim();
+  var dir     = (document.getElementById('eu-direccion').value||'').trim();
+  var errEl   = document.getElementById('eu-error');
+  var okEl    = document.getElementById('eu-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  if(!nombre||!dni){ errEl.textContent='Nombre y DNI son obligatorios'; errEl.style.display='block'; return; }
+  var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo, ss:ss, telefono:tel, email:email, direccion:dir };
+  if(pass){ datos.password_hash = await hashPass(pass); }
+  try{
+    await sbPatch('usuarios', id, datos);
+    logAccion('EDITAR_USUARIO', nombre+' · DNI: '+dni, localId||null);
+    okEl.textContent = '✓ Cambios guardados';
+    okEl.style.display = 'block';
+    setTimeout(function(){ cerrarEditarUsuario(); cargarUsuarios(); }, 1000);
+  }catch(e){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
+}
+
+// ===== EDITAR / ELIMINAR EMPLEADO SIN USUARIO =====
+async function abrirEditarEmpleado(id){
+  try{
+    var rows = await sbGet('empleados','id=eq.'+id);
+    if(!rows||!rows.length){ showToast('Empleado no encontrado','red'); return; }
+    var e = rows[0];
+    document.getElementById('ee-id').value = e.id;
+    document.getElementById('ee-nombre').value = e.nombre||'';
+    document.getElementById('ee-telefono').value = e.telefono||'';
+    document.getElementById('ee-local').value = e.local_id||1;
+    document.getElementById('ee-turno').value = e.turno_habitual||'manana';
+    document.getElementById('ee-activo').value = e.activo===false ? '0' : '1';
+    document.getElementById('ee-error').style.display='none';
+    document.getElementById('ee-ok').style.display='none';
+    document.getElementById('modal-editar-empleado').style.display='flex';
+  }catch(ex){ showToast('Error: '+ex.message,'red'); }
+}
+function cerrarEditarEmpleado(){
+  document.getElementById('modal-editar-empleado').style.display='none';
+}
+async function guardarEditarEmpleado(){
+  var id     = parseInt(document.getElementById('ee-id').value);
+  var nombre = (document.getElementById('ee-nombre').value||'').trim().toUpperCase();
+  var tel    = (document.getElementById('ee-telefono').value||'').trim();
+  var local  = parseInt(document.getElementById('ee-local').value);
+  var turno  = document.getElementById('ee-turno').value;
+  var activo = document.getElementById('ee-activo').value==='1';
+  var errEl  = document.getElementById('ee-error');
+  var okEl   = document.getElementById('ee-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  if(!nombre){ errEl.textContent='El nombre es obligatorio'; errEl.style.display='block'; return; }
+  try{
+    await sbPatch('empleados', id, { nombre:nombre, telefono:tel||null, local_id:local, turno_habitual:turno, activo:activo });
+    okEl.textContent='✓ Datos guardados'; okEl.style.display='block';
+    setTimeout(function(){ cerrarEditarEmpleado(); cargarUsuarios(); }, 1000);
+  }catch(e){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
+}
+async function eliminarEmpleadoSinUser(id, nombre){
+  if(!confirm('¿ELIMINAR DEFINITIVAMENTE a '+nombre+'? Esta acción no se puede deshacer.')) return;
+  try{
+    await sbDelete('empleados', id);
+    showToast(nombre+' eliminado','red');
+    cargarUsuarios();
+  }catch(e){ showToast('Error al eliminar: '+e.message,'red'); }
 }
 
 function checkMostrarBtnUsuarios(){
@@ -4461,7 +4568,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.21 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.22 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'

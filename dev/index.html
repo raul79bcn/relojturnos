@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.21 – Grupo El Reloj</title>
+<title>RelojTurnos v7.22 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.21</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.22</span></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.21 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.22 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -622,6 +622,58 @@
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
           <button class="btn btn-ghost btn-sm" onclick="cerrarEditarUsuario()">Cancelar</button>
           <button class="btn btn-primary btn-sm" onclick="guardarEditarUsuario()">💾 Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL EDITAR EMPLEADO SIN USUARIO -->
+    <div id="modal-editar-empleado" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(400px,95vw);max-height:90vh;overflow-y:auto">
+        <div style="font-size:14px;font-weight:700;margin-bottom:16px">✏️ Editar Empleado</div>
+        <input type="hidden" id="ee-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="ee-nombre" placeholder="NOMBRE COMPLETO" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-group">
+            <label>Teléfono / WhatsApp</label>
+            <input type="tel" id="ee-telefono" placeholder="34612345678" maxlength="15">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Local</label>
+            <select id="ee-local">
+              <option value="1">🍽 La Cala</option>
+              <option value="2">🍔 Roto's Burguer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Turno habitual</label>
+            <select id="ee-turno">
+              <option value="manana">🌅 Mañana</option>
+              <option value="tarde">🌆 Tarde</option>
+              <option value="tarde2">🌆 Tarde 2</option>
+              <option value="noche">🌙 Noche</option>
+              <option value="intermedio">🔁 Intermedio</option>
+              <option value="intermedio2">🔁 Intermedio 2</option>
+              <option value="festivo">🎉 Festivo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="ee-activo">
+            <option value="1">✅ Activo</option>
+            <option value="0">❌ Inactivo</option>
+          </select>
+        </div>
+        <div id="ee-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:8px"></div>
+        <div id="ee-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost btn-sm" onclick="cerrarEditarEmpleado()">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="guardarEditarEmpleado()">💾 Guardar cambios</button>
         </div>
       </div>
     </div>
@@ -1571,7 +1623,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.21 &middot; Grupo El Reloj
+      RelojTurnos v7.22 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
