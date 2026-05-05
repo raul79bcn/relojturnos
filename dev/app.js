@@ -686,7 +686,7 @@ async function empDarDeBaja(bdId, nombre){
 async function empEliminar(bdId, nombre){
   if(!confirm('¿ELIMINAR DEFINITIVAMENTE a ' + nombre + '? Esta acción no se puede deshacer.')) return;
   try{
-    await sbDelete('empleados', 'id=eq.'+bdId);
+    await _borrarEmpleadoConDependientes(bdId, nombre);
     showToast(nombre + ' eliminado definitivamente', 'red');
     empleados = [];
     await cargarEmpleadosBD();
@@ -2586,6 +2586,9 @@ async function cargarUsuarios(){
         var localLabel = !u.local_id ? "La Cala · Roto's Burguer" : (LOCALES[u.local_id]||'Local '+u.local_id);
         subInfo = (ROLES[u.rol]||u.rol)+' · DNI: '+(u.dni||'—')+' · '+localLabel;
       }
+      var PROTEGIDOS = ['LORENA','MIRIAM','MIRYAM'];
+      var nombreUp = (u.nombre||'').toUpperCase().trim();
+      var esProtegido = PROTEGIDOS.indexOf(nombreUp) >= 0;
       return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px">'
         +'<div style="width:32px;height:32px;border-radius:50%;background:'+col+'20;color:'+col+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>'
         +'<div style="flex:1;min-width:0">'
@@ -2594,33 +2597,9 @@ async function cargarUsuarios(){
         +'</div>'
         +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(u.activo?'#15351520':'#35151520')+';color:'+(u.activo?'var(--green)':'var(--red)')+';border:1px solid '+(u.activo?'var(--green)':'var(--red)')+'40;flex-shrink:0">'+(u.activo?'ACTIVO':'INACTIVO')+'</span>'
         +'<button onclick="abrirEditarUsuario('+u.id+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>'
+        +(esProtegido ? '' : '<button onclick="eliminarUsuario('+u.id+',\''+nombreUp+'\')" style="background:none;border:1px solid #e5393540;border-radius:7px;padding:4px 9px;color:#e53935;font-size:11px;cursor:pointer;flex-shrink:0">🗑</button>')
         +'</div>';
     }).join('');
-
-    // Empleados sin usuario (creados directamente en Supabase)
-    try{
-      var nombresConUsuario = rows.map(function(u){ return (u.nombre||'').toLowerCase().trim(); });
-      var emps = await sbGet('empleados','order=nombre.asc');
-      var empsSinUser = (emps||[]).filter(function(e){
-        return nombresConUsuario.indexOf((e.nombre||'').toLowerCase().trim()) < 0;
-      });
-      if(empsSinUser.length){
-        html += '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px;padding-left:4px">📋 Empleados sin usuario (solo teléfono)</div>';
-        html += empsSinUser.map(function(e){
-          var localLabel = LOCALES[e.local_id]||'Local '+e.local_id;
-          var tel = e.telefono ? '📱 '+e.telefono : '<span style="color:var(--red);font-style:italic">sin teléfono</span>';
-          return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:8px 12px;margin-bottom:5px;opacity:0.85">'
-            +'<div style="width:32px;height:32px;border-radius:50%;background:#55555520;color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+((e.nombre||'?').substring(0,2).toUpperCase())+'</div>'
-            +'<div style="flex:1;min-width:0">'
-            +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+(e.nombre||'—')+'</div>'
-            +'<div style="font-size:10px;color:var(--muted)">'+localLabel+' · '+tel+'</div>'
-            +'</div>'
-            +'<button onclick="abrirEditarEmpleado('+e.id+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>'
-            +'<button onclick="eliminarEmpleadoSinUser('+e.id+',\''+((e.nombre||'').replace(/'/g,"\\'"))+'\')" style="background:none;border:1px solid #e5393540;border-radius:7px;padding:4px 9px;color:#e53935;font-size:11px;cursor:pointer;flex-shrink:0">🗑</button>'
-            +'</div>';
-        }).join('');
-      }
-    }catch(e3){ console.warn('emps sin usuario:',e3); }
 
     lista.innerHTML = html;
   }catch(e){
@@ -2798,10 +2777,37 @@ async function guardarEditarEmpleado(){
     setTimeout(function(){ cerrarEditarEmpleado(); cargarUsuarios(); }, 1000);
   }catch(e){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
 }
+async function _borrarEmpleadoConDependientes(empId, nombre){
+  // Borrar registros dependientes primero para evitar 409
+  try{ await sbDelete('turnos_cuadrante','empleado_id=eq.'+empId); }catch(_){}
+  try{ await sbDelete('salarios','empleado_id=eq.'+empId); }catch(_){}
+  try{
+    await sbDelete('empleados','id=eq.'+empId);
+  }catch(e){
+    // Si sigue fallando por FK, soft-delete
+    await sbPatch('empleados', empId, {activo: false});
+    throw new Error('No se pudo eliminar definitivamente, marcado como inactivo');
+  }
+}
+
 async function eliminarEmpleadoSinUser(id, nombre){
   if(!confirm('¿ELIMINAR DEFINITIVAMENTE a '+nombre+'? Esta acción no se puede deshacer.')) return;
   try{
-    await sbDelete('empleados', 'id=eq.'+id);
+    await _borrarEmpleadoConDependientes(id, nombre);
+    showToast(nombre+' eliminado','red');
+    cargarUsuarios();
+  }catch(e){ showToast(e.message,'orange'); cargarUsuarios(); }
+}
+
+async function eliminarUsuario(id, nombre){
+  var PROTEGIDOS = ['LORENA','MIRIAM','MIRYAM'];
+  if(PROTEGIDOS.indexOf((nombre||'').toUpperCase().trim()) >= 0){
+    showToast('Este usuario está protegido y no puede eliminarse', 'red');
+    return;
+  }
+  if(!confirm('¿ELIMINAR DEFINITIVAMENTE al usuario '+nombre+'? Esta acción no se puede deshacer.')) return;
+  try{
+    await sbDelete('usuarios','id=eq.'+id);
     showToast(nombre+' eliminado','red');
     cargarUsuarios();
   }catch(e){ showToast('Error al eliminar: '+e.message,'red'); }
@@ -4616,7 +4622,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.25 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.26 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
