@@ -641,6 +641,31 @@ async function initEquipo17(){
   renderLorenaHorario();
 }
 
+async function empDarDeBaja(bdId, nombre){
+  if(!confirm('¿Dar de baja a ' + nombre + '? Se marcará como inactivo en la BD (no se elimina).')) return;
+  try{
+    await sbPatch('empleados', bdId, { activo: false });
+    showToast(nombre + ' dado de baja', 'orange');
+    // Refrescar lista
+    empleados = [];
+    await cargarEmpleadosBD();
+  }catch(e){
+    showToast('Error al dar de baja: ' + e.message, 'red');
+  }
+}
+
+async function empEliminar(bdId, nombre){
+  if(!confirm('¿ELIMINAR DEFINITIVAMENTE a ' + nombre + '? Esta acción no se puede deshacer.')) return;
+  try{
+    await sbDelete('empleados', bdId);
+    showToast(nombre + ' eliminado definitivamente', 'red');
+    empleados = [];
+    await cargarEmpleadosBD();
+  }catch(e){
+    showToast('Error al eliminar: ' + e.message, 'red');
+  }
+}
+
 function nextStep(from){
   if(from===1){if(!getLocal()){alert(t('alert_selecciona_local'));return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
   else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
@@ -1008,6 +1033,16 @@ function _fillEmpCont(contId){
       +'</select></div>'
       +'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; '+t('p3_horas_auto')+'</div>'
+      +(contId==='empleados-list-17'?(function(){
+          var bd=window._empleadosBDDatos&&window._empleadosBDDatos[emp.nombre];
+          var bid=bd?bd.bdId:null;
+          if(!bid) return '';
+          var ns=emp.nombre.replace(/'/g,"\\'");
+          return '<div style="display:flex;gap:8px;margin-top:8px">'
+            +'<button onclick="empDarDeBaja('+bid+',\''+ns+'\')" style="flex:1;padding:7px;background:#ff9800;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px">📴 Dar de baja</button>'
+            +'<button onclick="empEliminar('+bid+',\''+ns+'\')" style="flex:1;padding:7px;background:#e53935;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px">🗑 Eliminar</button>'
+            +'</div>';
+        })():'')
       +'</div>';
   });
 }
@@ -2580,14 +2615,30 @@ async function crearUsuario(){
   var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
   await sbPost('usuarios', nuevo);
   logAccion('CREAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
-  // Si hay datos de contacto y tiene local, guardar/actualizar en empleados
-  if(localId && (telefono||email||direccion)){
+  // Insertar/actualizar también en tabla empleados para que aparezca en Gestión Equipo
+  if(localId){
     try{
       var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(nombre));
+      var rolEmpleado = rol === 'directora' ? 'Encargado' : 'Cam. Mañana';
       if(empEx && empEx.length){
-        await sbPatch('empleados', empEx[0].id, {telefono:telefono||null, email:email||null, direccion:direccion||null});
+        await sbPatch('empleados', empEx[0].id, {
+          activo: true,
+          rol: rolEmpleado,
+          telefono: telefono||null,
+          email: email||null
+        });
+      } else {
+        await sbPost('empleados', {
+          nombre: nombre,
+          local_id: localId,
+          activo: true,
+          rol: rolEmpleado,
+          turno_habitual: 'manana',
+          telefono: telefono||null,
+          email: email||null
+        });
       }
-    }catch(e2){ console.warn('empleados contacto update:', e2); }
+    }catch(e2){ console.warn('empleados insert/update:', e2); }
   }
     okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
     okEl.style.display = 'block';
@@ -4410,7 +4461,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.18 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.20 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
