@@ -4583,7 +4583,10 @@ function iaVolver(paso){
 }
 
 async function iaEnviar(){
-  if(!apiKeyValida(getClaudeApiKey())){
+  var _iaKey = getClaudeApiKey();
+  console.log('[IA] API key state:', _iaKey ? 'ok ('+_iaKey.substring(0,12)+'...)' : 'NOT SET');
+  if(!apiKeyValida(_iaKey)){
+    showToast('⚠️ Configura tu clave API de Claude para usar el asistente', 'red');
     mostrarModalApiKey();
     return;
   }
@@ -4658,10 +4661,11 @@ async function iaEnviar(){
     document.getElementById('ia-respuesta').style.display = '';
 
   }catch(e){
+    console.error('[IA] Error en llamada a Claude:', e);
     document.getElementById('ia-loading').style.display = 'none';
     document.getElementById('ia-paso3').style.display = '';
     if(btn){ btn.disabled = false; btn.textContent = '🤖 Consultar a Claude'; }
-    showToast('Error al contactar con la IA: ' + e.message, 'red');
+    showToast('Error IA: ' + e.message, 'red');
   }
 }
 
