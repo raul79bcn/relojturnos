@@ -75,9 +75,12 @@ const SUPA_URL = 'https://ttewezdnroiqtetmgyrh.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0ZXdlemRucm9pcXRldG1neXJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3OTExMDIsImV4cCI6MjA4ODM2NzEwMn0.mA5tWItknmHmBe7-8AZpN9579RRwEaM3ZybYpQBc2Pw';
 
 async function sbGet(table, filters){
-  var url = SUPA_URL+'/rest/v1/'+table+'?'+( filters||'order=id.asc');
+  var url = SUPA_URL+'/rest/v1/'+table+'?'+(filters||'order=id.asc');
   var r = await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'}});
-  if(!r.ok) throw new Error('GET '+table+' error '+r.status);
+  if(!r.ok){
+    var body = await r.json().catch(function(){ return {}; });
+    throw new Error('GET '+table+' '+r.status+': '+(body.message||body.hint||body.code||JSON.stringify(body)));
+  }
   return r.json();
 }
 
@@ -4989,7 +4992,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.44 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.45 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5190,15 +5193,46 @@ async function clCargarDia(){
   try{
     var localId = currentUser ? currentUser.local_id : null;
     var filtros = 'fecha=eq.'+fecha+'&order=posicion.asc';
-    if(localId) filtros = 'local_id=eq.'+localId+'&'+filtros;
+    if(localId) filtros += '&or=(local_id.eq.'+localId+',local_id.is.null)';
     var rows = await sbGet('checklist_diario', filtros);
     if(rows && rows.length) tareasGuardadas = rows;
   }catch(e){
     sbError = e;
-    console.warn('[Checklist] Supabase error:', e.message);
+    console.error('[Checklist] Supabase error:', e.message);
   }
 
-  if(sbError) showToast('Sin conexión con el servidor — cargando tareas locales', 'orange');
+  if(sbError){
+    var errMsg = sbError.message || '';
+    var tablaFalta = errMsg.includes('does not exist') || errMsg.includes('42P01') || errMsg.includes('relation');
+    if(tablaFalta){
+      var crearSQL = 'CREATE TABLE IF NOT EXISTS public.checklist_diario (\n'
+        +'  id bigserial primary key,\n'
+        +'  fecha date not null,\n'
+        +'  tarea text,\n'
+        +'  completada boolean default false,\n'
+        +'  hora_completado text,\n'
+        +'  responsable text,\n'
+        +'  posicion int,\n'
+        +'  extra boolean default false,\n'
+        +'  local_id int,\n'
+        +'  nota_dia text,\n'
+        +'  grupo text,\n'
+        +'  tipo text default \'check\',\n'
+        +'  valor_extra text,\n'
+        +'  nota_incidencia text\n'
+        +');';
+      var cont2 = document.getElementById('cl-tareas-lista');
+      if(cont2) cont2.innerHTML =
+        '<div style="background:var(--darker);border:1px solid var(--red);border-radius:10px;padding:16px">'
+        +'<div style="color:var(--red);font-weight:700;margin-bottom:8px">⚠️ Tabla checklist_diario no existe en Supabase</div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-bottom:8px">Ejecuta este SQL en Supabase → SQL Editor → New query:</div>'
+        +'<pre style="background:var(--dark);border-radius:6px;padding:10px;font-size:11px;color:#2ecc71;overflow-x:auto;white-space:pre-wrap">'+crearSQL+'</pre>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:8px">Error exacto: '+errMsg+'</div>'
+        +'</div>';
+      return;
+    }
+    showToast('Error BD: ' + errMsg, 'red');
+  }
 
   try{
     if(!Array.isArray(CL_TAREAS_BASE)) CL_TAREAS_BASE = [];
@@ -5508,6 +5542,7 @@ var wclTareas = [];
 var wclFecha  = '';
 var wclEmpleado = '';
 var wclSeccion  = null;
+var wclLocalId  = null;
 var wclNotificado = false;
 
 function checkWorkerChecklistUrl(){
@@ -5520,15 +5555,17 @@ function checkWorkerChecklistUrl(){
   var cl  = params.get('cl');
   var emp = params.get('emp');
 
-  var fecha, nombre, sec;
+  var fecha, nombre, sec, lid;
   if(checklist && empleado){
     fecha  = checklist;
     nombre = decodeURIComponent(empleado);
     sec    = seccion ? decodeURIComponent(seccion) : null;
+    lid    = params.get('local_id') ? parseInt(params.get('local_id')) : null;
   } else if(cl && emp){
     fecha  = cl;
     nombre = decodeURIComponent(emp);
     sec    = null;
+    lid    = null;
   } else {
     return;
   }
@@ -5537,13 +5574,14 @@ function checkWorkerChecklistUrl(){
   if(loginEl) loginEl.style.display = 'none';
   var view = document.getElementById('worker-cl-view');
   if(view) view.style.display = '';
-  wclInit(fecha, nombre, sec);
+  wclInit(fecha, nombre, sec, lid);
 }
 
-async function wclInit(fecha, empleado, seccion){
+async function wclInit(fecha, empleado, seccion, localId){
   wclFecha      = fecha;
   wclEmpleado   = empleado;
   wclSeccion    = seccion ? seccion.toLowerCase() : null;
+  wclLocalId    = localId || null;
   wclNotificado = false;
   var GRUPO_LABELS = { barra:'Barra', sala:'Sala', cocina:'Cocina', almacen:'Almacén' };
   var seccionLabel = seccion ? (GRUPO_LABELS[seccion.toLowerCase()] || seccion) : null;
@@ -5558,8 +5596,9 @@ async function wclInit(fecha, empleado, seccion){
     fEl.textContent = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   }
   try{
-    var rows = await sbGet('checklist_diario',
-      'fecha=eq.'+fecha+'&responsable=eq.'+encodeURIComponent(empleado)+'&order=posicion.asc');
+    var wclFiltro = 'fecha=eq.'+fecha+'&responsable=eq.'+encodeURIComponent(empleado)+'&order=posicion.asc';
+    if(wclLocalId) wclFiltro += '&or=(local_id.eq.'+wclLocalId+',local_id.is.null)';
+    var rows = await sbGet('checklist_diario', wclFiltro);
     if(rows && rows.length){
       var filtered = seccion
         ? rows.filter(function(r){ return (r.grupo||'').toLowerCase() === seccion.toLowerCase(); })
@@ -5615,22 +5654,29 @@ function wclRender(){
   var allDone = (hechas === total && total > 0);
   var ok = document.getElementById('wcl-completo');
   if(ok) ok.style.display = allDone ? '' : 'none';
-  if(allDone && !wclNotificado){
-    wclNotificado = true;
-    wclNotificarLorena();
-  }
+  var btnConf = document.getElementById('wcl-btn-confirmar');
+  if(btnConf) btnConf.style.display = allDone ? '' : 'none';
 }
 
-function wclNotificarLorena(){
+function wclConfirmarYEnviar(){
+  var btn = document.getElementById('wcl-btn-confirmar');
+  if(btn){ btn.disabled = true; btn.textContent = '✅ Enviado'; }
+
   var lorena = localStorage.getItem('rt_wa_lorena') || '';
-  if(!lorena) return;
   var GRUPO_LABELS = { barra:'Barra', sala:'Sala', cocina:'Cocina', almacen:'Almacén' };
   var secLabel = wclSeccion ? (GRUPO_LABELS[wclSeccion] || wclSeccion) : 'su sección';
   var d = new Date(wclFecha + 'T12:00:00');
   var fechaFmt = d.toLocaleDateString('es-ES', { day:'numeric', month:'long' });
   var hora = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
   var msg = wclEmpleado + ' ha completado el checklist de ' + secLabel + ' ✅ — ' + fechaFmt + ' ' + hora;
-  window.open('https://wa.me/' + lorena + '?text=' + encodeURIComponent(msg), '_blank');
+
+  if(lorena){
+    window.open('https://wa.me/' + lorena + '?text=' + encodeURIComponent(msg), '_blank');
+  } else {
+    // No Lorena number configured — copy message to clipboard as fallback
+    navigator.clipboard.writeText(msg).catch(function(){});
+    alert('Número de Lorena no configurado en Ajustes.\nMensaje copiado: ' + msg);
+  }
 }
 
 async function wclToggle(idx){
@@ -5649,7 +5695,8 @@ async function wclToggle(idx){
       var result = await sbPost('checklist_diario',{
         fecha:wclFecha, tarea:tarea.texto, completada:tarea.hecha,
         hora_completado:tarea.hora||null, responsable:wclEmpleado,
-        posicion:tarea.posicion, local_id:null, nota_dia:null
+        posicion:tarea.posicion, local_id:wclLocalId||null, nota_dia:null,
+        grupo:tarea.grupo||null, tipo:tarea.tipo||'check'
       });
       if(result && result[0]) tarea.id = result[0].id;
     }
@@ -5663,10 +5710,12 @@ function clEnviarWAGrupo(grupo){
 
   var GRUPO_LABELS = { Barra:'Barra', Sala:'Sala', Cocina:'Cocina', Almacen:'Almacén' };
   var seccion = grupo.toLowerCase();
+  var localId = currentUser ? currentUser.local_id : '';
   var url = location.origin + location.pathname
     + '?checklist=' + fecha
     + '&empleado=' + encodeURIComponent(emp)
-    + '&seccion=' + encodeURIComponent(seccion);
+    + '&seccion=' + encodeURIComponent(seccion)
+    + (localId ? '&local_id=' + localId : '');
   var msg = 'Hola ' + emp + '! 👋 Aquí tienes tu checklist de ' + (GRUPO_LABELS[grupo]||grupo) + ' para hoy:\n' + url;
 
   var telefono = '';
