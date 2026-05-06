@@ -4693,7 +4693,7 @@ function iaCopiar(){
 }
 
 // ========== AVISOS TRABAJADORES v7.0 (screen15) ==========
-var avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, textoGenerado: '' };
+var avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, canal: '', textoGenerado: '' };
 
 var AV_NIVEL_LABELS = { 1: 'Leve (Nivel 1)', 2: 'Moderado (Nivel 2)', 3: 'Grave (Nivel 3)' };
 var AV_NIVEL_DESCRIPCIONES = {
@@ -4703,16 +4703,16 @@ var AV_NIVEL_DESCRIPCIONES = {
 };
 
 function initAvisos(){
-  avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, textoGenerado: '' };
+  avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, canal: '', textoGenerado: '' };
   avMostrarPaso(1);
   avCargarEmpleados();
   avCargarHistorico();
 }
 
 function avMostrarPaso(n){
-  [1,2,3].forEach(function(i){
+  [1,2,3,'canal'].forEach(function(i){
     var el = document.getElementById('av-paso'+i);
-    if(el) el.style.display = (i===n) ? '' : 'none';
+    if(el) el.style.display = (i===n || String(i)===String(n)) ? '' : 'none';
   });
   var res = document.getElementById('av-resultado');
   var load = document.getElementById('av-loading');
@@ -4782,6 +4782,7 @@ function avIrPaso2(){
 
 function avVolver(paso){
   avMostrarPaso(paso);
+  avEstado.canal = '';
   if(paso === 1){
     var res = document.getElementById('av-resultado');
     if(res) res.style.display = 'none';
@@ -4804,6 +4805,26 @@ function avSelNivel(nivel){
     btn.style.background = (n===nivel) ? 'var(--accent)20' : 'var(--darker)';
     btn.style.borderWidth = (n===nivel) ? '3px' : '2px';
   });
+}
+
+function avIrPasoCanal(){
+  if(!avEstado.nivel){
+    showToast('Selecciona el nivel de gravedad primero', 'red'); return;
+  }
+  // Actualizar etiqueta de contexto
+  var ctx = document.getElementById('av-canal-contexto');
+  if(ctx) ctx.textContent = (avEstado.icono||'') + ' ' + avEstado.tipo + ' — ' + (AV_NIVEL_LABELS[avEstado.nivel]||'') + ' — ' + avEstado.empleadoNombre;
+  avMostrarPaso('canal');
+}
+
+function avSelCanalYGenerar(canal){
+  avEstado.canal = canal;
+  // Marcar botón seleccionado
+  ['email','whatsapp'].forEach(function(c){
+    var btn = document.getElementById('av-canal-btn-'+c);
+    if(btn) btn.style.outline = (c===canal) ? '3px solid var(--accent)' : 'none';
+  });
+  setTimeout(function(){ avGenerarAviso(); }, 150);
 }
 
 async function avGenerarAviso(){
@@ -4833,24 +4854,37 @@ async function avGenerarAviso(){
   var nivelLabel = AV_NIVEL_LABELS[nivel] || 'Aviso';
   var nivelDesc  = (AV_NIVEL_DESCRIPCIONES && AV_NIVEL_DESCRIPCIONES[nivel]) ? AV_NIVEL_DESCRIPCIONES[nivel] : nivelLabel;
   var fecha = new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'});
+  var canal = avEstado.canal || 'email';
 
-  var prompt = 'Redacta un aviso formal de ' + nivelLabel + ' para el empleado '
-    + avEstado.empleadoNombre + ' de ' + localNombre + '.\n'
-    + 'Motivo de la incidencia: ' + avEstado.tipo + '.\n'
-    + 'Nivel de gravedad: ' + nivelLabel + ' (' + nivelDesc + ').\n'
-    + (descripcion ? 'Detalles adicionales: ' + descripcion + '.\n' : '')
-    + 'Fecha: ' + fecha + '.\n\n'
-    + 'El aviso debe:\n'
-    + '- Tener formato de documento formal (con cabecera, cuerpo y pie de firma)\n'
-    + '- Incluir la descripción de los hechos de forma objetiva y sin juicios de valor\n'
-    + '- Mencionar el artículo del convenio colectivo de hostelería aplicable si procede\n'
-    + '- Indicar las consecuencias de reincidencia según el nivel\n'
-    + '- Terminar con espacio para firma del empleado y firma de la dirección\n'
-    + '- Tono: profesional, formal, pero respetuoso';
+  var systemPrompt, prompt;
 
-  var systemPrompt = 'Eres un experto en RRHH y relaciones laborales especializado en hostelería en España. '
-    + 'Redactas documentos laborales formales: avisos, apercibimientos y expedientes disciplinarios '
-    + 'ajustados al Convenio Colectivo de Hostelería y la legislación laboral española vigente.';
+  if(canal === 'whatsapp'){
+    systemPrompt = 'Eres Lorena, directora de ' + localNombre + '. '
+      + 'Escribes mensajes de WhatsApp directos, cortos y cercanos a tu equipo. '
+      + 'REGLAS ESTRICTAS: escribe en primera persona (yo soy Lorena), sin markdown, sin asteriscos, '
+      + 'sin viñetas ni guiones de lista, frases muy cortas, máximo 5-6 líneas en total, '
+      + 'tono serio pero cercano, sin lenguaje legal ni tecnicismos, firma solo con "Lorena" al final.';
+    prompt = 'Escríbele un WhatsApp a ' + avEstado.empleadoNombre
+      + ' sobre lo siguiente: ' + avEstado.tipo + '.\n'
+      + 'Nivel de gravedad: ' + nivelLabel + '.\n'
+      + (descripcion ? 'Detalles: ' + descripcion + '.\n' : '')
+      + 'Fecha: ' + fecha + '.\n'
+      + 'Recuerda: sin markdown, máximo 5-6 líneas, firma "Lorena" al final.';
+  } else {
+    systemPrompt = 'Eres Lorena, directora de ' + localNombre + '. '
+      + 'Escribes emails al equipo con un tono formal pero humano, en primera persona. '
+      + 'REGLAS ESTRICTAS: sin tecnicismos legales ni lenguaje de abogados, '
+      + 'párrafos cortos (3-4 líneas máximo), máximo media página A4 en total. '
+      + 'Estructura obligatoria: (1) qué ocurrió, (2) qué consecuencias tiene, '
+      + '(3) qué se espera a partir de ahora. '
+      + 'Al final firma con "Lorena / Directora / ' + localNombre + '".';
+    prompt = 'Escríbele un email de aviso a ' + avEstado.empleadoNombre
+      + ' sobre: ' + avEstado.tipo + '.\n'
+      + 'Nivel: ' + nivelLabel + ' (' + nivelDesc + ').\n'
+      + (descripcion ? 'Detalles: ' + descripcion + '.\n' : '')
+      + 'Fecha: ' + fecha + '.\n'
+      + 'Recuerda: tono humano, sin legalismo, estructura en tres partes, media página máximo.';
+  }
 
   // Mostrar loading
   document.getElementById('av-loading').style.display = '';
@@ -4923,7 +4957,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.38 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.39 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -4963,7 +4997,7 @@ async function avGuardar(){
 }
 
 function avNuevoAviso(){
-  avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, textoGenerado: '' };
+  avEstado = { empleadoNombre: '', empleadoId: null, tipo: '', icono: '', nivel: 0, canal: '', textoGenerado: '' };
   document.querySelectorAll('.av-tipo-btn').forEach(function(b){ b.classList.remove('selected'); });
   [1,2,3].forEach(function(n){
     var btn = document.getElementById('av-nivel-'+n);
