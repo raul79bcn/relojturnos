@@ -3379,10 +3379,12 @@ function enviarWATodos(){
 }
 
 function guardarConfigWA(){
-  var lacala = (document.getElementById('cfg-wa-lacala')||{}).value || '';
-  var rotos  = (document.getElementById('cfg-wa-rotos')||{}).value  || '';
+  var lacala  = (document.getElementById('cfg-wa-lacala') ||{}).value || '';
+  var rotos   = (document.getElementById('cfg-wa-rotos')  ||{}).value || '';
+  var lorena  = (document.getElementById('cfg-wa-lorena') ||{}).value || '';
   localStorage.setItem('rt_wa_lacala', lacala.replace(/\s+/g,''));
   localStorage.setItem('rt_wa_rotos',  rotos.replace(/\s+/g,''));
+  localStorage.setItem('rt_wa_lorena', lorena.replace(/\s+/g,''));
   showToast(t('toast_wa_numeros'),'green');
 }
 
@@ -3410,12 +3412,14 @@ function cargarParamsCosteGuardados(){
   var div = localStorage.getItem('rt_div');
   var waLacala = localStorage.getItem('rt_wa_lacala');
   var waRotos  = localStorage.getItem('rt_wa_rotos');
+  var waLorena = localStorage.getItem('rt_wa_lorena');
   if(ss){ SS_EMPRESA = parseFloat(ss)/100; }
   if(div){ DIVISOR_CUSTOM = parseFloat(div); }
   var elSS=document.getElementById('cfg-ss'); if(elSS&&ss) elSS.value=ss;
   var elDiv=document.getElementById('cfg-divisor'); if(elDiv&&div) elDiv.value=div;
   var elWaL=document.getElementById('cfg-wa-lacala'); if(elWaL&&waLacala) elWaL.value=waLacala;
   var elWaR=document.getElementById('cfg-wa-rotos'); if(elWaR&&waRotos) elWaR.value=waRotos;
+  var elWaLor=document.getElementById('cfg-wa-lorena'); if(elWaLor&&waLorena) elWaLor.value=waLorena;
   var ejEl = document.getElementById('cfg-coste-ej');
   if(ejEl){ var div2=div?parseFloat(div):4.33; var ss2=ss?parseFloat(ss)/100:0.39; ejEl.textContent=(1800*(1+ss2)/div2).toFixed(2)+' €'; }
 }
@@ -4985,7 +4989,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.43 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.44 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5329,6 +5333,53 @@ function clRenderTareas(){
   var txt = document.getElementById('cl-progreso-txt');
   if(bar) bar.style.width = pct+'%';
   if(txt) txt.textContent = hechas+' / '+total;
+  clRenderResumen();
+}
+
+function clRenderResumen(){
+  var cont = document.getElementById('cl-resumen');
+  if(!cont) return;
+  if(!clTareasHoy.length){ cont.innerHTML = ''; return; }
+
+  var GRUPOS      = ['Barra', 'Sala', 'Cocina', 'Almacen'];
+  var GRUPO_ICONS = { Barra:'🍹', Sala:'🪑', Cocina:'👨‍🍳', Almacen:'📦' };
+  var GRUPO_LBL   = { Barra:'Barra', Sala:'Sala', Cocina:'Cocina', Almacen:'Almacén' };
+  var rowsHtml = '';
+
+  GRUPOS.forEach(function(grupo){
+    var tareas = clTareasHoy.filter(function(t){ return t.grupo === grupo; });
+    if(!tareas.length) return;
+    var resp   = clResponsablesGrupo[grupo] || '—';
+    var total  = tareas.length;
+    var hechas = tareas.filter(function(t){ return t.hecha; }).length;
+    var pct    = total > 0 ? Math.round(hechas/total*100) : 0;
+    var horas  = tareas.filter(function(t){ return t.hecha && t.hora_completado; }).map(function(t){ return t.hora_completado; });
+    var horaFin = horas.length ? horas.sort().pop() : '';
+    var incids  = tareas.filter(function(t){ return t.notaIncidencia; });
+    var color   = pct === 100 ? 'var(--green)' : 'var(--accent)';
+    rowsHtml +=
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--text)">'+(GRUPO_ICONS[grupo]||'')+' '+(GRUPO_LBL[grupo]||grupo)+'</div>'
+      +'<div style="font-size:11px;color:var(--muted)">👤 '+resp+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;align-items:center">'
+      +'<span style="font-weight:700;color:'+color+'">'+hechas+'/'+total+(pct===100?' ✅':'')+'</span>'
+      +(horaFin ? '<span style="color:var(--muted)">⏱ '+horaFin+'</span>' : '')
+      +(incids.length ? '<span style="color:var(--red)">⚠ '+incids.length+' incidencia'+(incids.length>1?'s':'')+'</span>' : '')
+      +'</div>'
+      +'<div style="margin-top:8px;background:var(--border);border-radius:3px;height:4px;overflow:hidden">'
+      +'<div style="height:100%;background:'+color+';width:'+pct+'%;border-radius:3px;transition:width .3s"></div>'
+      +'</div>'
+      +'</div>';
+  });
+
+  if(!rowsHtml){ cont.innerHTML = ''; return; }
+  cont.innerHTML =
+    '<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:4px">'
+    +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">📊 Resumen del día</div>'
+    +rowsHtml
+    +'</div>';
 }
 
 function clSetValorExtra(idx, val){
@@ -5456,6 +5507,8 @@ function clGuardarNota(){
 var wclTareas = [];
 var wclFecha  = '';
 var wclEmpleado = '';
+var wclSeccion  = null;
+var wclNotificado = false;
 
 function checkWorkerChecklistUrl(){
   var params = new URLSearchParams(window.location.search);
@@ -5488,8 +5541,10 @@ function checkWorkerChecklistUrl(){
 }
 
 async function wclInit(fecha, empleado, seccion){
-  wclFecha    = fecha;
-  wclEmpleado = empleado;
+  wclFecha      = fecha;
+  wclEmpleado   = empleado;
+  wclSeccion    = seccion ? seccion.toLowerCase() : null;
+  wclNotificado = false;
   var GRUPO_LABELS = { barra:'Barra', sala:'Sala', cocina:'Cocina', almacen:'Almacén' };
   var seccionLabel = seccion ? (GRUPO_LABELS[seccion.toLowerCase()] || seccion) : null;
 
@@ -5557,8 +5612,25 @@ function wclRender(){
   var txt = document.getElementById('wcl-prog-txt');
   if(bar) bar.style.width = pct + '%';
   if(txt) txt.textContent = hechas + ' / ' + total;
+  var allDone = (hechas === total && total > 0);
   var ok = document.getElementById('wcl-completo');
-  if(ok) ok.style.display = (hechas===total && total>0) ? '' : 'none';
+  if(ok) ok.style.display = allDone ? '' : 'none';
+  if(allDone && !wclNotificado){
+    wclNotificado = true;
+    wclNotificarLorena();
+  }
+}
+
+function wclNotificarLorena(){
+  var lorena = localStorage.getItem('rt_wa_lorena') || '';
+  if(!lorena) return;
+  var GRUPO_LABELS = { barra:'Barra', sala:'Sala', cocina:'Cocina', almacen:'Almacén' };
+  var secLabel = wclSeccion ? (GRUPO_LABELS[wclSeccion] || wclSeccion) : 'su sección';
+  var d = new Date(wclFecha + 'T12:00:00');
+  var fechaFmt = d.toLocaleDateString('es-ES', { day:'numeric', month:'long' });
+  var hora = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+  var msg = wclEmpleado + ' ha completado el checklist de ' + secLabel + ' ✅ — ' + fechaFmt + ' ' + hora;
+  window.open('https://wa.me/' + lorena + '?text=' + encodeURIComponent(msg), '_blank');
 }
 
 async function wclToggle(idx){
