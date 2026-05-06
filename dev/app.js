@@ -1299,14 +1299,16 @@ function getFiestasFijas(emp){
 function sugerirTurnos(){
   if(!turnosConfig.length) buildTurnosConfig();
   var df = getDiasFlojos();
+  var MIN_COB = 5;
+  var hMFel = document.getElementById('horas-media-fiesta');
+  var hMF = hMFel ? (+hMFel.value||5) : 5;
 
-  // Inicializar todos con turno habitual
   empleados.forEach(function(emp){
     emp.turnos = Array(7).fill(emp.turno);
     if(!emp.diasFiesta) emp.diasFiesta = 1.5;
+    emp._mediaGap = -1;
   });
 
-  // Aplicar primero las fiestas fijas inamovibles
   empleados.forEach(function(emp){
     var fijas = getFiestasFijas(emp);
     if(!fijas) return;
@@ -1315,138 +1317,248 @@ function sugerirTurnos(){
       emp.turnos[dia]=tipo;
       if(tipo==='mediafiesta' && ini && fin){
         if(!emp.horarioEspecial) emp.horarioEspecial={};
-        emp.horarioEspecial[dia]={ini:ini, fin:fin};
+        emp.horarioEspecial[dia]={ini:ini,fin:fin};
       }
     });
   });
 
-  // Construir pares consecutivos candidatos ordenados por prioridad:
-  // score 0: ambos días son flojos (máxima prioridad)
-  // score 1: un día flojo + el adyacente no flojo
-  // score 2: ningún día flojo, pares consecutivos restantes (fallback)
-  var candidatePairs = [];
-  var seenPairs = {};
-  var i, d;
-  for(i=0; i<df.length; i++){
+  function calcCovSlots(dia){
+    var slots = new Array(48).fill(0);
+    var acts = turnosConfig.filter(function(tc){ return tc.active; });
+    empleados.forEach(function(emp){
+      var tv = emp.turnos[dia];
+      if(tv==='fiesta') return;
+      var tc = acts.find(function(x){ return x.id===emp.turno; });
+      if(!tc) return;
+      var a, b;
+      if(tv==='mediafiesta'){
+        a = toMinTurno(tc.ini);
+        b = a + hMF*60;
+      } else if(tc.esPartido){
+        a=toMinTurno(tc.ini); b=toMinTurno(tc.fin);
+        if(b<=a) b+=1440;
+        for(var s=Math.floor(a/30);s<Math.ceil(b/30);s++) slots[s%48]++;
+        a=toMinTurno(tc.ini2); b=toMinTurno(tc.fin2);
+        if(b<=a) b+=1440;
+        for(var s2=Math.floor(a/30);s2<Math.ceil(b/30);s2++) slots[s2%48]++;
+        return;
+      } else {
+        a=toMinTurno(tc.ini); b=toMinTurno(tc.fin);
+        if(b<=a) b+=1440;
+      }
+      for(var s=Math.floor(a/30);s<Math.ceil(b/30);s++) slots[s%48]++;
+    });
+    return slots;
+  }
+
+  function causariaGap(emp, dia){
+    if(emp.turnos[dia]==='fiesta'||emp.turnos[dia]==='mediafiesta') return false;
+    var acts = turnosConfig.filter(function(tc){ return tc.active; });
+    var tc = acts.find(function(x){ return x.id===emp.turno; });
+    if(!tc||tc.esPartido) return false;
+    var slots = calcCovSlots(dia);
+    var a=toMinTurno(tc.ini), b=toMinTurno(tc.fin);
+    if(b<=a) b+=1440;
+    for(var s=Math.floor(a/30);s<Math.ceil(b/30);s++){
+      if(slots[s%48]-1 < MIN_COB) return true;
+    }
+    return false;
+  }
+
+  // FASE 1: gap-fill — asignar mediafiesta en días con franjas < MIN_COB
+  for(var dGap=0; dGap<7; dGap++){
+    var slotsDia = calcCovSlots(dGap);
+    var actsGap = turnosConfig.filter(function(tc){ return tc.active; });
+    for(var gs=0; gs<48; gs++){
+      if(slotsDia[gs]>=MIN_COB) continue;
+      var filled = false;
+      for(var ei=0; ei<empleados.length && !filled; ei++){
+        var emp = empleados[ei];
+        if(getFiestasFijas(emp)) continue;
+        if(emp._mediaGap>=0) continue;
+        if((parseFloat(emp.diasFiesta)||1.5)<1) continue;
+        if(emp.turnos[dGap]==='fiesta'||emp.turnos[dGap]==='mediafiesta') continue;
+        var tc = actsGap.find(function(x){ return x.id===emp.turno; });
+        if(!tc||tc.esPartido) continue;
+        var a=toMinTurno(tc.ini), b=toMinTurno(tc.fin);
+        if(b<=a) b+=1440;
+        var rel=(gs*30 - a%1440 + 1440)%1440;
+        if(rel < hMF*60 && rel < (b-a)){
+          emp.turnos[dGap]='mediafiesta';
+          emp._mediaGap=dGap;
+          slotsDia=calcCovSlots(dGap);
+          filled=true;
+        }
+      }
+    }
+  }
+
+  var candidatePairs=[], seenPairs={}, i, d;
+  for(i=0;i<df.length;i++){
     d=df[i];
     if(df.indexOf(d+1)>=0 && !seenPairs[d+','+(d+1)]){
-      candidatePairs.push({d1:d, d2:d+1, score:0});
+      candidatePairs.push({d1:d,d2:d+1,score:0});
       seenPairs[d+','+(d+1)]=true;
     }
   }
-  for(i=0; i<df.length; i++){
+  for(i=0;i<df.length;i++){
     d=df[i];
     if(d+1<=6 && df.indexOf(d+1)<0 && !seenPairs[d+','+(d+1)]){
-      candidatePairs.push({d1:d, d2:d+1, score:1});
+      candidatePairs.push({d1:d,d2:d+1,score:1});
       seenPairs[d+','+(d+1)]=true;
     }
     if(d-1>=0 && df.indexOf(d-1)<0 && !seenPairs[(d-1)+','+d]){
-      candidatePairs.push({d1:d-1, d2:d, score:1});
+      candidatePairs.push({d1:d-1,d2:d,score:1});
       seenPairs[(d-1)+','+d]=true;
     }
   }
-  for(d=0; d<=5; d++){
+  for(d=0;d<=5;d++){
     if(!seenPairs[d+','+(d+1)]){
-      candidatePairs.push({d1:d, d2:d+1, score:2});
+      candidatePairs.push({d1:d,d2:d+1,score:2});
     }
   }
 
-  // Días ordenados para fallback de día único (flojos primero, luego resto)
-  var diasOrdenados = df.slice().concat([0,1,2,3,4,5,6].filter(function(x){ return df.indexOf(x)<0; }));
+  var diasOrdenados=df.slice().concat([0,1,2,3,4,5,6].filter(function(x){return df.indexOf(x)<0;}));
 
-  // Agrupar empleados por turno para rotación coordinada
-  var turnoGroups = {};
+  var turnoGroups={};
   empleados.forEach(function(emp){
     if(getFiestasFijas(emp)) return;
     if(!turnoGroups[emp.turno]) turnoGroups[emp.turno]=[];
     turnoGroups[emp.turno].push(emp);
   });
 
-  // Asignar fiestas a cada empleado sin fiestas fijas
+  // FASE 2: asignar fiestas con conciencia de cobertura
   empleados.forEach(function(emp){
     if(getFiestasFijas(emp)) return;
 
-    var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
-    var tieneMedia  = (diasFiesta % 1) !== 0;
-    var diasEnteros = Math.floor(diasFiesta);
-
-    // Índice de rotación: posición en grupo de turno + offset acumulado
-    var grupoTurno = turnoGroups[emp.turno]||[emp];
-    var turnoIdx   = grupoTurno.indexOf(emp);
-    var rotBase    = turnoIdx + (emp._rotOffset||0);
-    var nPairs     = candidatePairs.length;
+    var diasFiesta=parseFloat(emp.diasFiesta)||1.5;
+    var tieneMedia=(diasFiesta%1)!==0;
+    var diasEnteros=Math.floor(diasFiesta);
+    var grupoTurno=turnoGroups[emp.turno]||[emp];
+    var turnoIdx=grupoTurno.indexOf(emp);
+    var rotBase=turnoIdx+(emp._rotOffset||0);
+    var nPairs=candidatePairs.length;
+    var preMed=emp._mediaGap;
+    var pairOk, d1, d2, k, dd, par, attempt, nDias, asignados;
 
     if(tieneMedia && diasEnteros===1){
-      // CASO PRINCIPAL (1.5 días): par consecutivo fiesta+mediafiesta
-      var pairOk = null;
-      for(var attempt=0; attempt<nPairs; attempt++){
-        var par = candidatePairs[(rotBase+attempt) % nPairs];
-        var d1=par.d1, d2=par.d2;
-        if(emp.turnos[d1]!=='fiesta' && emp.turnos[d1]!=='mediafiesta' &&
-           emp.turnos[d2]!=='fiesta' && emp.turnos[d2]!=='mediafiesta' &&
-           puedeTomarFiesta(emp,d1) && puedeTomarFiesta(emp,d2)){
-          pairOk=par; break;
+      if(preMed>=0){
+        var fiestaDay=-1;
+        var cands=[];
+        if(preMed-1>=0 && emp.turnos[preMed-1]!=='fiesta' && emp.turnos[preMed-1]!=='mediafiesta') cands.push(preMed-1);
+        if(preMed+1<=6 && emp.turnos[preMed+1]!=='fiesta' && emp.turnos[preMed+1]!=='mediafiesta') cands.push(preMed+1);
+        for(k=0;k<cands.length;k++){
+          if(!causariaGap(emp,cands[k])&&puedeTomarFiesta(emp,cands[k])){fiestaDay=cands[k];break;}
         }
-      }
-      if(pairOk){
-        var d1=pairOk.d1, d2=pairOk.d2;
-        // El día más flojo recibe la fiesta completa; el otro la media
-        if(df.indexOf(d2)>=0 && df.indexOf(d1)<0){
-          emp.turnos[d1]='mediafiesta';
-          emp.turnos[d2]='fiesta';
-        } else {
-          emp.turnos[d1]='fiesta';
-          emp.turnos[d2]='mediafiesta';
+        if(fiestaDay<0){
+          for(k=0;k<cands.length;k++){
+            if(puedeTomarFiesta(emp,cands[k])){fiestaDay=cands[k];break;}
+          }
         }
+        if(fiestaDay<0){
+          nDias=diasOrdenados.length;
+          for(k=0;k<nDias;k++){
+            dd=diasOrdenados[k];
+            if(dd!==preMed&&emp.turnos[dd]!=='fiesta'&&emp.turnos[dd]!=='mediafiesta'&&puedeTomarFiesta(emp,dd)){
+              fiestaDay=dd;break;
+            }
+          }
+        }
+        if(fiestaDay>=0) emp.turnos[fiestaDay]='fiesta';
       } else {
-        // Fallback: mejor día único como fiesta
-        var nDias=diasOrdenados.length;
-        for(var k=0; k<nDias; k++){
-          var dd=diasOrdenados[(rotBase+k)%nDias];
-          if(emp.turnos[dd]!=='fiesta' && puedeTomarFiesta(emp,dd)){
-            emp.turnos[dd]='fiesta'; break;
+        pairOk=null;
+        for(attempt=0;attempt<nPairs;attempt++){
+          par=candidatePairs[(rotBase+attempt)%nPairs];
+          d1=par.d1;d2=par.d2;
+          if(emp.turnos[d1]!=='fiesta'&&emp.turnos[d1]!=='mediafiesta'&&
+             emp.turnos[d2]!=='fiesta'&&emp.turnos[d2]!=='mediafiesta'&&
+             puedeTomarFiesta(emp,d1)&&puedeTomarFiesta(emp,d2)&&
+             !causariaGap(emp,d1)&&!causariaGap(emp,d2)){
+            pairOk=par;break;
+          }
+        }
+        if(!pairOk){
+          for(attempt=0;attempt<nPairs;attempt++){
+            par=candidatePairs[(rotBase+attempt)%nPairs];
+            d1=par.d1;d2=par.d2;
+            if(emp.turnos[d1]!=='fiesta'&&emp.turnos[d1]!=='mediafiesta'&&
+               emp.turnos[d2]!=='fiesta'&&emp.turnos[d2]!=='mediafiesta'&&
+               puedeTomarFiesta(emp,d1)&&puedeTomarFiesta(emp,d2)){
+              pairOk=par;break;
+            }
+          }
+        }
+        if(pairOk){
+          d1=pairOk.d1;d2=pairOk.d2;
+          if(df.indexOf(d2)>=0&&df.indexOf(d1)<0){
+            emp.turnos[d1]='mediafiesta';emp.turnos[d2]='fiesta';
+          } else {
+            emp.turnos[d1]='fiesta';emp.turnos[d2]='mediafiesta';
+          }
+        } else {
+          nDias=diasOrdenados.length;
+          for(k=0;k<nDias;k++){
+            dd=diasOrdenados[(rotBase+k)%nDias];
+            if(emp.turnos[dd]!=='fiesta'&&emp.turnos[dd]!=='mediafiesta'&&puedeTomarFiesta(emp,dd)){
+              emp.turnos[dd]='fiesta';break;
+            }
           }
         }
       }
-
-    } else if(!tieneMedia && diasEnteros===1){
-      // 1 día entero: mejor día flojo disponible con rotación
-      var nDias=diasOrdenados.length;
-      for(var k=0; k<nDias; k++){
-        var dd=diasOrdenados[(rotBase+k)%nDias];
-        if(emp.turnos[dd]!=='fiesta' && puedeTomarFiesta(emp,dd)){
-          emp.turnos[dd]='fiesta'; break;
+    } else if(!tieneMedia&&diasEnteros===1){
+      nDias=diasOrdenados.length;
+      var assigned=false;
+      for(k=0;k<nDias;k++){
+        dd=diasOrdenados[(rotBase+k)%nDias];
+        if(emp.turnos[dd]!=='fiesta'&&emp.turnos[dd]!=='mediafiesta'&&puedeTomarFiesta(emp,dd)&&!causariaGap(emp,dd)){
+          emp.turnos[dd]='fiesta';assigned=true;break;
         }
       }
-
+      if(!assigned){
+        for(k=0;k<nDias;k++){
+          dd=diasOrdenados[(rotBase+k)%nDias];
+          if(emp.turnos[dd]!=='fiesta'&&emp.turnos[dd]!=='mediafiesta'&&puedeTomarFiesta(emp,dd)){
+            emp.turnos[dd]='fiesta';break;
+          }
+        }
+      }
     } else if(diasEnteros>=2){
-      // 2+ días: pares consecutivos para cubrir días requeridos
-      var asignados=[];
-      for(var attempt=0; attempt<nPairs && asignados.length<diasEnteros; attempt++){
-        var par=candidatePairs[(rotBase+attempt)%nPairs];
-        var d1=par.d1, d2=par.d2;
-        if(asignados.indexOf(d1)<0 && asignados.indexOf(d2)<0 &&
-           emp.turnos[d1]!=='fiesta' && emp.turnos[d2]!=='fiesta' &&
-           puedeTomarFiesta(emp,d1) && puedeTomarFiesta(emp,d2)){
+      asignados=[];
+      for(attempt=0;attempt<nPairs&&asignados.length<diasEnteros;attempt++){
+        par=candidatePairs[(rotBase+attempt)%nPairs];
+        d1=par.d1;d2=par.d2;
+        if(asignados.indexOf(d1)<0&&asignados.indexOf(d2)<0&&
+           emp.turnos[d1]!=='fiesta'&&emp.turnos[d2]!=='fiesta'&&
+           puedeTomarFiesta(emp,d1)&&puedeTomarFiesta(emp,d2)&&
+           !causariaGap(emp,d1)&&!causariaGap(emp,d2)){
           asignados.push(d1,d2);
         }
       }
-      // Relleno si faltan días
       if(asignados.length<diasEnteros){
-        var nDias=diasOrdenados.length;
-        for(var k=0; k<nDias && asignados.length<diasEnteros; k++){
-          var dd=diasOrdenados[k];
-          if(asignados.indexOf(dd)<0 && emp.turnos[dd]!=='fiesta' && puedeTomarFiesta(emp,dd))
+        for(attempt=0;attempt<nPairs&&asignados.length<diasEnteros;attempt++){
+          par=candidatePairs[(rotBase+attempt)%nPairs];
+          d1=par.d1;d2=par.d2;
+          if(asignados.indexOf(d1)<0&&asignados.indexOf(d2)<0&&
+             emp.turnos[d1]!=='fiesta'&&emp.turnos[d2]!=='fiesta'&&
+             puedeTomarFiesta(emp,d1)&&puedeTomarFiesta(emp,d2)){
+            asignados.push(d1,d2);
+          }
+        }
+      }
+      if(asignados.length<diasEnteros){
+        nDias=diasOrdenados.length;
+        for(k=0;k<nDias&&asignados.length<diasEnteros;k++){
+          dd=diasOrdenados[k];
+          if(asignados.indexOf(dd)<0&&emp.turnos[dd]!=='fiesta'&&emp.turnos[dd]!=='mediafiesta'&&puedeTomarFiesta(emp,dd))
             asignados.push(dd);
         }
       }
-      asignados.slice(0,diasEnteros).forEach(function(dd){ emp.turnos[dd]='fiesta'; });
-      // Media fiesta adyacente si aplica
-      if(tieneMedia && asignados.length>0){
+      asignados.slice(0,diasEnteros).forEach(function(dd){emp.turnos[dd]='fiesta';});
+      if(tieneMedia&&asignados.length>0){
         var dLast=asignados[asignados.length-1];
         var cMedia=-1;
-        if(dLast-1>=0 && asignados.indexOf(dLast-1)<0 && emp.turnos[dLast-1]!=='fiesta' && puedeTomarFiesta(emp,dLast-1)) cMedia=dLast-1;
-        if(cMedia<0 && dLast+1<=6 && asignados.indexOf(dLast+1)<0 && emp.turnos[dLast+1]!=='fiesta' && puedeTomarFiesta(emp,dLast+1)) cMedia=dLast+1;
+        if(dLast-1>=0&&asignados.indexOf(dLast-1)<0&&emp.turnos[dLast-1]!=='fiesta'&&emp.turnos[dLast-1]!=='mediafiesta'&&puedeTomarFiesta(emp,dLast-1)) cMedia=dLast-1;
+        if(cMedia<0&&dLast+1<=6&&asignados.indexOf(dLast+1)<0&&emp.turnos[dLast+1]!=='fiesta'&&emp.turnos[dLast+1]!=='mediafiesta'&&puedeTomarFiesta(emp,dLast+1)) cMedia=dLast+1;
         if(cMedia>=0) emp.turnos[cMedia]='mediafiesta';
       }
     }
@@ -4792,7 +4904,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.35 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.36 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
