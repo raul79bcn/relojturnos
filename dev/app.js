@@ -4800,7 +4800,10 @@ function avSelNivel(nivel){
 }
 
 async function avGenerarAviso(){
-  if(!apiKeyValida(getClaudeApiKey())){
+  var _avKey = getClaudeApiKey();
+  console.log('[Avisos IA] API key state:', _avKey ? 'ok ('+_avKey.substring(0,12)+'...)' : 'NOT SET');
+  if(!apiKeyValida(_avKey)){
+    showToast('⚠️ Configura tu clave API de Claude para generar avisos', 'red');
     mostrarModalApiKey();
     return;
   }
@@ -4877,6 +4880,7 @@ async function avGenerarAviso(){
     if(btn){ btn.disabled = false; }
 
   }catch(e){
+    console.error('[Avisos IA] Error en llamada a Claude:', e);
     document.getElementById('av-loading').style.display = 'none';
     document.getElementById('av-paso3').style.display = '';
     if(btn){ btn.disabled = false; }
