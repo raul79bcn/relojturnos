@@ -1263,67 +1263,143 @@ function sugerirTurnos(){
     if(!fijas) return;
     fijas.forEach(function(f){
       var dia=f[0], tipo=f[1], ini=f[2], fin=f[3];
-      emp.turnos[dia] = tipo;
-      // Si tiene horario especial en media fiesta, guardarlo
+      emp.turnos[dia]=tipo;
       if(tipo==='mediafiesta' && ini && fin){
-        if(!emp.horarioEspecial) emp.horarioEspecial = {};
-        emp.horarioEspecial[dia] = {ini:ini, fin:fin};
+        if(!emp.horarioEspecial) emp.horarioEspecial={};
+        emp.horarioEspecial[dia]={ini:ini, fin:fin};
       }
     });
   });
 
-  // Ordenar días: primero los flojos, luego los demás evitando V/S/D al final
-  var diasOrdenados = [];
-  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
-  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
-  [0,1,2,3,4,5,6].forEach(function(d){
-    if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d);
-  });
-  [0,1,2,3,4,5,6].forEach(function(d){
-    if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d);
+  // Construir pares consecutivos candidatos ordenados por prioridad:
+  // score 0: ambos días son flojos (máxima prioridad)
+  // score 1: un día flojo + el adyacente no flojo
+  // score 2: ningún día flojo, pares consecutivos restantes (fallback)
+  var candidatePairs = [];
+  var seenPairs = {};
+  var i, d;
+  for(i=0; i<df.length; i++){
+    d=df[i];
+    if(df.indexOf(d+1)>=0 && !seenPairs[d+','+(d+1)]){
+      candidatePairs.push({d1:d, d2:d+1, score:0});
+      seenPairs[d+','+(d+1)]=true;
+    }
+  }
+  for(i=0; i<df.length; i++){
+    d=df[i];
+    if(d+1<=6 && df.indexOf(d+1)<0 && !seenPairs[d+','+(d+1)]){
+      candidatePairs.push({d1:d, d2:d+1, score:1});
+      seenPairs[d+','+(d+1)]=true;
+    }
+    if(d-1>=0 && df.indexOf(d-1)<0 && !seenPairs[(d-1)+','+d]){
+      candidatePairs.push({d1:d-1, d2:d, score:1});
+      seenPairs[(d-1)+','+d]=true;
+    }
+  }
+  for(d=0; d<=5; d++){
+    if(!seenPairs[d+','+(d+1)]){
+      candidatePairs.push({d1:d, d2:d+1, score:2});
+    }
+  }
+
+  // Días ordenados para fallback de día único (flojos primero, luego resto)
+  var diasOrdenados = df.slice().concat([0,1,2,3,4,5,6].filter(function(x){ return df.indexOf(x)<0; }));
+
+  // Agrupar empleados por turno para rotación coordinada
+  var turnoGroups = {};
+  empleados.forEach(function(emp){
+    if(getFiestasFijas(emp)) return;
+    if(!turnoGroups[emp.turno]) turnoGroups[emp.turno]=[];
+    turnoGroups[emp.turno].push(emp);
   });
 
-  // Asignar fiestas automáticas al resto (saltando empleados con fiestas fijas)
-  empleados.forEach(function(emp, empIdx){
-    // Si tiene fiestas fijas, no tocar — ya están asignadas
+  // Asignar fiestas a cada empleado sin fiestas fijas
+  empleados.forEach(function(emp){
     if(getFiestasFijas(emp)) return;
 
     var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
-    var tieneMedia = (diasFiesta % 1) !== 0;
+    var tieneMedia  = (diasFiesta % 1) !== 0;
     var diasEnteros = Math.floor(diasFiesta);
 
-    var offset = (empIdx + (emp._rotOffset||0)) % diasOrdenados.length;
-    var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
+    // Índice de rotación: posición en grupo de turno + offset acumulado
+    var grupoTurno = turnoGroups[emp.turno]||[emp];
+    var turnoIdx   = grupoTurno.indexOf(emp);
+    var rotBase    = turnoIdx + (emp._rotOffset||0);
+    var nPairs     = candidatePairs.length;
 
-    var asignados = [];
-    var intentos = 0;
-
-    for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
-      var dia = diasCandidatos[i];
-      if(asignados.indexOf(dia)>=0) continue;
-      if(puedeTomarFiesta(emp, dia)){
-        asignados.push(dia);
-      }
-      intentos++;
-      if(intentos>14) break;
-    }
-
-    asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
-
-    if(tieneMedia && asignados.length>0){
-      var diaFiesta = asignados[asignados.length-1];
-      var candidatoMedia = -1;
-      var diaAntes = diaFiesta - 1;
-      if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)){
-        candidatoMedia = diaAntes;
-      }
-      if(candidatoMedia<0){
-        var diaDespues = diaFiesta + 1;
-        if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)){
-          candidatoMedia = diaDespues;
+    if(tieneMedia && diasEnteros===1){
+      // CASO PRINCIPAL (1.5 días): par consecutivo fiesta+mediafiesta
+      var pairOk = null;
+      for(var attempt=0; attempt<nPairs; attempt++){
+        var par = candidatePairs[(rotBase+attempt) % nPairs];
+        var d1=par.d1, d2=par.d2;
+        if(emp.turnos[d1]!=='fiesta' && emp.turnos[d1]!=='mediafiesta' &&
+           emp.turnos[d2]!=='fiesta' && emp.turnos[d2]!=='mediafiesta' &&
+           puedeTomarFiesta(emp,d1) && puedeTomarFiesta(emp,d2)){
+          pairOk=par; break;
         }
       }
-      if(candidatoMedia>=0) emp.turnos[candidatoMedia]='mediafiesta';
+      if(pairOk){
+        var d1=pairOk.d1, d2=pairOk.d2;
+        // El día más flojo recibe la fiesta completa; el otro la media
+        if(df.indexOf(d2)>=0 && df.indexOf(d1)<0){
+          emp.turnos[d1]='mediafiesta';
+          emp.turnos[d2]='fiesta';
+        } else {
+          emp.turnos[d1]='fiesta';
+          emp.turnos[d2]='mediafiesta';
+        }
+      } else {
+        // Fallback: mejor día único como fiesta
+        var nDias=diasOrdenados.length;
+        for(var k=0; k<nDias; k++){
+          var dd=diasOrdenados[(rotBase+k)%nDias];
+          if(emp.turnos[dd]!=='fiesta' && puedeTomarFiesta(emp,dd)){
+            emp.turnos[dd]='fiesta'; break;
+          }
+        }
+      }
+
+    } else if(!tieneMedia && diasEnteros===1){
+      // 1 día entero: mejor día flojo disponible con rotación
+      var nDias=diasOrdenados.length;
+      for(var k=0; k<nDias; k++){
+        var dd=diasOrdenados[(rotBase+k)%nDias];
+        if(emp.turnos[dd]!=='fiesta' && puedeTomarFiesta(emp,dd)){
+          emp.turnos[dd]='fiesta'; break;
+        }
+      }
+
+    } else if(diasEnteros>=2){
+      // 2+ días: pares consecutivos para cubrir días requeridos
+      var asignados=[];
+      for(var attempt=0; attempt<nPairs && asignados.length<diasEnteros; attempt++){
+        var par=candidatePairs[(rotBase+attempt)%nPairs];
+        var d1=par.d1, d2=par.d2;
+        if(asignados.indexOf(d1)<0 && asignados.indexOf(d2)<0 &&
+           emp.turnos[d1]!=='fiesta' && emp.turnos[d2]!=='fiesta' &&
+           puedeTomarFiesta(emp,d1) && puedeTomarFiesta(emp,d2)){
+          asignados.push(d1,d2);
+        }
+      }
+      // Relleno si faltan días
+      if(asignados.length<diasEnteros){
+        var nDias=diasOrdenados.length;
+        for(var k=0; k<nDias && asignados.length<diasEnteros; k++){
+          var dd=diasOrdenados[k];
+          if(asignados.indexOf(dd)<0 && emp.turnos[dd]!=='fiesta' && puedeTomarFiesta(emp,dd))
+            asignados.push(dd);
+        }
+      }
+      asignados.slice(0,diasEnteros).forEach(function(dd){ emp.turnos[dd]='fiesta'; });
+      // Media fiesta adyacente si aplica
+      if(tieneMedia && asignados.length>0){
+        var dLast=asignados[asignados.length-1];
+        var cMedia=-1;
+        if(dLast-1>=0 && asignados.indexOf(dLast-1)<0 && emp.turnos[dLast-1]!=='fiesta' && puedeTomarFiesta(emp,dLast-1)) cMedia=dLast-1;
+        if(cMedia<0 && dLast+1<=6 && asignados.indexOf(dLast+1)<0 && emp.turnos[dLast+1]!=='fiesta' && puedeTomarFiesta(emp,dLast+1)) cMedia=dLast+1;
+        if(cMedia>=0) emp.turnos[cMedia]='mediafiesta';
+      }
     }
   });
 }
@@ -1344,41 +1420,7 @@ function rotarFiestas(){
 }
 
 function sugerirTurnosConOffset(){
-  if(!turnosConfig.length) buildTurnosConfig();
-  var df = getDiasFlojos();
-  var diasOrdenados = [];
-  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
-  df.forEach(function(d){ if(DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
-  [0,1,2,3,4,5,6].forEach(function(d){ if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)<0) diasOrdenados.push(d); });
-  [0,1,2,3,4,5,6].forEach(function(d){ if(df.indexOf(d)<0 && DIAS_EVITAR_FIESTA.indexOf(d)>=0) diasOrdenados.push(d); });
-
-  empleados.forEach(function(emp, empIdx){
-    emp.turnos = Array(7).fill(emp.turno);
-    if(!emp.diasFiesta) emp.diasFiesta = 1.5;
-    var diasFiesta = parseFloat(emp.diasFiesta)||1.5;
-    var tieneMedia = (diasFiesta % 1) !== 0;
-    var diasEnteros = Math.floor(diasFiesta);
-    var offset = (empIdx + (emp._rotOffset||0)) % Math.max(diasOrdenados.length,1);
-    var diasCandidatos = diasOrdenados.slice(offset).concat(diasOrdenados.slice(0, offset));
-    var asignados = [];
-    for(var i=0; i<diasCandidatos.length && asignados.length<diasEnteros; i++){
-      var dia = diasCandidatos[i];
-      if(asignados.indexOf(dia)>=0) continue;
-      if(puedeTomarFiesta(emp, dia)) asignados.push(dia);
-    }
-    asignados.forEach(function(d){ emp.turnos[d]='fiesta'; });
-    if(tieneMedia && asignados.length>0){
-      var diaFiesta = asignados[asignados.length-1];
-      var candidatoMedia = -1;
-      var diaAntes = diaFiesta - 1;
-      if(diaAntes>=0 && emp.turnos[diaAntes]!=='fiesta' && puedeTomarFiesta(emp, diaAntes)) candidatoMedia = diaAntes;
-      if(candidatoMedia<0){
-        var diaDespues = diaFiesta + 1;
-        if(diaDespues<=6 && emp.turnos[diaDespues]!=='fiesta' && puedeTomarFiesta(emp, diaDespues)) candidatoMedia = diaDespues;
-      }
-      if(candidatoMedia>=0) emp.turnos[candidatoMedia]='mediafiesta';
-    }
-  });
+  sugerirTurnos();
 }
 
 function renderTurnosAsig(){
@@ -4689,7 +4731,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.31 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.32 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
