@@ -2989,7 +2989,7 @@ async function guardarEditarUsuario(){
   var okEl    = document.getElementById('eu-ok');
   errEl.style.display='none'; okEl.style.display='none';
   if(!nombre||!dni){ errEl.textContent='Nombre y DNI son obligatorios'; errEl.style.display='block'; return; }
-  var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo, ss:ss, telefono:tel, email:email, direccion:dir };
+  var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo, nss:ss, telefono:tel, email:email, direccion:dir };
   if(pass){ datos.password_hash = await hashPass(pass); }
   try{
     await sbPatch('usuarios', id, datos);
