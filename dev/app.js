@@ -5284,6 +5284,7 @@ async function abrirCuadrante(){
     var cuadId = await cargarCuadrantePrevio();
     if(cuadId){
       sugerirYRenderizar();
+      goStep(6);
       showToast('Cuadrante cargado desde BD', 'green');
     } else {
       goStep(1);
