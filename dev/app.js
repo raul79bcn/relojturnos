@@ -2605,26 +2605,27 @@ async function cargarUsuarios(){
   var ROLES = {empleado:'Empleado', directora:'Director/a', directora_general:'Dirección General', admin:'Admin'};
   var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
   var PROTEGIDOS = ['LORENA','MIRIAM','MIRYAM'];
+
+  // Auto-borrar YANIRA de empleados si no tiene usuario
+  try{
+    var yaniras = await sbGet('empleados','nombre=eq.YANIRA');
+    if(yaniras && yaniras.length){
+      var usersYanira = await sbGet('usuarios','nombre=eq.YANIRA');
+      if(!usersYanira || !usersYanira.length){
+        for(var yi=0;yi<yaniras.length;yi++){
+          try{ await _borrarEmpleadoConDependientes(yaniras[yi].id,'YANIRA'); }catch(_){}
+        }
+      }
+    }
+  }catch(_){}
+
   try{
     var rows = await sbGet('usuarios','order=id.asc');
     rows = rows || [];
-    var nombresConUsuario = rows.map(function(u){ return (u.nombre||'').toLowerCase().trim(); });
-
-    // Empleados sin usuario
-    var empsSinUser = [];
-    try{
-      var emps = await sbGet('empleados','order=nombre.asc&activo=neq.false');
-      empsSinUser = (emps||[]).filter(function(e){
-        return nombresConUsuario.indexOf((e.nombre||'').toLowerCase().trim()) < 0;
-      });
-    }catch(_){}
-
-    if(!rows.length && !empsSinUser.length){
-      lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No hay usuarios ni empleados registrados aún</div>';
+    if(!rows.length){
+      lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No hay usuarios registrados aún</div>';
       return;
     }
-
-    // Filas de usuarios con acceso
     var html = rows.map(function(u){
       var col = u.rol==='directora'?'var(--accent)':u.rol==='directora_general'?'#c0a020':'var(--green)';
       var init = (u.nombre||'?').substring(0,2).toUpperCase();
@@ -2648,23 +2649,6 @@ async function cargarUsuarios(){
         +(esProtegido?'':'<button onclick="eliminarUsuario('+u.id+',\''+nombreUp+'\')" style="background:none;border:1px solid #e5393540;border-radius:7px;padding:4px 9px;color:#e53935;font-size:11px;cursor:pointer;flex-shrink:0">🗑</button>')
         +'</div>';
     }).join('');
-
-    // Filas de empleados sin acceso
-    html += empsSinUser.map(function(e){
-      var localLabel = LOCALES[e.local_id]||'';
-      var subInfo = (localLabel ? localLabel+' · ' : '') + (e.turno_habitual||'') + (e.telefono ? ' · 📱 '+e.telefono : '');
-      var ns = (e.nombre||'').replace(/'/g,"\\'");
-      return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid #ff980040;border-radius:9px;padding:10px 12px;margin-bottom:7px">'
-        +'<div style="width:32px;height:32px;border-radius:50%;background:#ff980020;color:#ff9800;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+((e.nombre||'?').substring(0,2).toUpperCase())+'</div>'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(e.nombre||'—')+'</div>'
-        +'<div style="font-size:10px;color:var(--muted)">'+subInfo+'</div>'
-        +'</div>'
-        +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:#ff980020;color:#ff9800;border:1px solid #ff980060;flex-shrink:0">SIN ACCESO</span>'
-        +'<button onclick="prefillNuevoUsuario(\''+ns+'\')" style="background:#ff980018;border:1px solid #ff980060;border-radius:7px;padding:4px 9px;color:#ff9800;font-size:11px;cursor:pointer;flex-shrink:0;white-space:nowrap">+ Crear acceso</button>'
-        +'</div>';
-    }).join('');
-
     lista.innerHTML = html;
   }catch(e){
     lista.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:20px">⚠ Error cargando usuarios: '+e.message+'</div>';
@@ -2865,9 +2849,16 @@ async function eliminarUsuario(id, nombre){
     showToast('Este usuario está protegido y no puede eliminarse', 'red');
     return;
   }
-  if(!confirm('¿ELIMINAR DEFINITIVAMENTE al usuario '+nombre+'? Esta acción no se puede deshacer.')) return;
+  if(!confirm('¿ELIMINAR DEFINITIVAMENTE al usuario '+nombre+'? Se borrará de usuarios y empleados.')) return;
   try{
     await sbDelete('usuarios','id=eq.'+id);
+    // También borrar de empleados si existe
+    try{
+      var empRows = await sbGet('empleados','nombre=eq.'+encodeURIComponent(nombre));
+      for(var i=0;i<(empRows||[]).length;i++){
+        await _borrarEmpleadoConDependientes(empRows[i].id, nombre);
+      }
+    }catch(_){}
     showToast(nombre+' eliminado','red');
     cargarUsuarios();
   }catch(e){ showToast('Error al eliminar: '+e.message,'red'); }
