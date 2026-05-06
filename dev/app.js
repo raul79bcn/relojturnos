@@ -4625,9 +4625,9 @@ async function iaEnviar(){
   var systemPrompt = cat.system;
   if(iaEstado.catKey === 'redactar' && iaEstado.canal){
     if(iaEstado.canal === 'email'){
-      systemPrompt += ' El texto debe enviarse por EMAIL: usa un tono formal, profesional y estructurado, con saludo y despedida apropiados.';
+      systemPrompt = 'Eres Lorena, directora de La Cala. Escribe en primera persona, tono humano y cuidado sin tecnicismos, máximo una cara de folio, estructura clara y natural, firma Lorena – Directora – La Cala al final.';
     } else if(iaEstado.canal === 'whatsapp'){
-      systemPrompt += ' El texto debe enviarse por WHATSAPP entre compañeros de trabajo: usa un tono cercano, directo y amigable. Sin formalidades excesivas. Puede incluir algún emoji si encaja. Mensaje conciso.';
+      systemPrompt = 'Eres Lorena, directora de La Cala. Escribe como si mandaras un WhatsApp al grupo del equipo. Primera persona, tono de compañera cercana, sin asteriscos ni markdown, frases cortas y naturales, firma Lorena al final.';
     }
   }
 
@@ -4859,11 +4859,7 @@ async function avGenerarAviso(){
   var systemPrompt, prompt;
 
   if(canal === 'whatsapp'){
-    systemPrompt = 'Eres Lorena, directora de ' + localNombre + '. '
-      + 'Escribes mensajes de WhatsApp directos, cortos y cercanos a tu equipo. '
-      + 'REGLAS ESTRICTAS: escribe en primera persona (yo soy Lorena), sin markdown, sin asteriscos, '
-      + 'sin viñetas ni guiones de lista, frases muy cortas, máximo 5-6 líneas en total, '
-      + 'tono serio pero cercano, sin lenguaje legal ni tecnicismos, firma solo con "Lorena" al final.';
+    systemPrompt = 'Eres Lorena, directora de La Cala. Escribe en primera persona, tono cercano como un WhatsApp entre compañeros, sin markdown ni asteriscos, máximo 6 líneas, firma Lorena al final.';
     prompt = 'Escríbele un WhatsApp a ' + avEstado.empleadoNombre
       + ' sobre lo siguiente: ' + avEstado.tipo + '.\n'
       + 'Nivel de gravedad: ' + nivelLabel + '.\n'
@@ -4871,13 +4867,7 @@ async function avGenerarAviso(){
       + 'Fecha: ' + fecha + '.\n'
       + 'Recuerda: sin markdown, máximo 5-6 líneas, firma "Lorena" al final.';
   } else {
-    systemPrompt = 'Eres Lorena, directora de ' + localNombre + '. '
-      + 'Escribes emails al equipo con un tono formal pero humano, en primera persona. '
-      + 'REGLAS ESTRICTAS: sin tecnicismos legales ni lenguaje de abogados, '
-      + 'párrafos cortos (3-4 líneas máximo), máximo media página A4 en total. '
-      + 'Estructura obligatoria: (1) qué ocurrió, (2) qué consecuencias tiene, '
-      + '(3) qué se espera a partir de ahora. '
-      + 'Al final firma con "Lorena / Directora / ' + localNombre + '".';
+    systemPrompt = 'Eres Lorena, directora de La Cala. Escribe en primera persona, tono humano sin tecnicismos legales, máximo media página, estructura: hecho + consecuencia + expectativa futura, firma Lorena – Directora – La Cala al final.';
     prompt = 'Escríbele un email de aviso a ' + avEstado.empleadoNombre
       + ' sobre: ' + avEstado.tipo + '.\n'
       + 'Nivel: ' + nivelLabel + ' (' + nivelDesc + ').\n'
