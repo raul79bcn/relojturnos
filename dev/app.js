@@ -4687,7 +4687,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.30 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.31 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5282,13 +5282,13 @@ async function abrirCuadrante(){
   showToast('Cargando cuadrante...', 'orange');
   try{
     var cuadId = await cargarCuadrantePrevio();
-    if(cuadId){
+    if(cuadId && empleados.length > 0){
       sugerirYRenderizar();
       goStep(6);
       showToast('Cuadrante cargado desde BD', 'green');
     } else {
       goStep(1);
-      showToast('No hay cuadrante guardado para este local — empieza uno nuevo', 'orange');
+      showToast(cuadId ? 'Cuadrante encontrado pero sin empleados — revisa Gestión Equipo' : 'No hay cuadrante guardado para este local — empieza uno nuevo', 'orange');
     }
   }catch(e){
     goStep(1);
