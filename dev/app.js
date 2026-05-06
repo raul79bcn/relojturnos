@@ -4621,14 +4621,14 @@ async function iaEnviar(){
   }
   if(localInfo) msgFinal += '\n\n[Contexto: ' + localInfo + ', Grupo El Reloj]';
 
-  // Ajustar system prompt según canal para categoría Redactar
-  var systemPrompt = cat.system;
-  if(iaEstado.catKey === 'redactar' && iaEstado.canal){
-    if(iaEstado.canal === 'email'){
-      systemPrompt = 'Eres Lorena, directora de La Cala. Escribe en primera persona, tono humano y cuidado sin tecnicismos, máximo una cara de folio, estructura clara y natural, firma Lorena – Directora – La Cala al final.';
-    } else if(iaEstado.canal === 'whatsapp'){
-      systemPrompt = 'Eres Lorena, directora de La Cala. Escribe como si mandaras un WhatsApp al grupo del equipo. Primera persona, tono de compañera cercana, sin asteriscos ni markdown, frases cortas y naturales, firma Lorena al final.';
-    }
+  // System prompt según canal
+  var systemPrompt;
+  if(iaEstado.canal === 'whatsapp'){
+    systemPrompt = 'Eres Lorena, directora del restaurante La Cala en Barcelona. Responde SIEMPRE en primera persona, como si fueras tú quien escribe. Tono cercano y natural, como un mensaje entre compañeros. SIN asteriscos, SIN markdown, SIN tablas, SIN headers con #. Frases cortas. Máximo 6-8 líneas en total. Firma siempre: Lorena';
+  } else if(iaEstado.canal === 'email'){
+    systemPrompt = 'Eres Lorena, directora del restaurante La Cala en Barcelona. Responde SIEMPRE en primera persona. Tono humano y directo, sin tecnicismos ni lenguaje legal. SIN markdown, SIN tablas, SIN headers con #. Máximo 15 líneas. Estructura: situación + qué se necesita + gracias. Firma: Lorena, Directora, La Cala';
+  } else {
+    systemPrompt = 'Eres el asistente de Lorena, directora de restaurante. Da respuestas CORTAS y PRÁCTICAS, máximo 8 líneas, sin markdown, sin tecnicismos, en lenguaje cotidiano';
   }
 
   // Mostrar loading
@@ -4710,10 +4710,12 @@ function initAvisos(){
 }
 
 function avMostrarPaso(n){
-  [1,2,3,'canal'].forEach(function(i){
+  [1,2,3].forEach(function(i){
     var el = document.getElementById('av-paso'+i);
-    if(el) el.style.display = (i===n || String(i)===String(n)) ? '' : 'none';
+    if(el) el.style.display = (i===n) ? '' : 'none';
   });
+  var canalEl = document.getElementById('av-paso-canal');
+  if(canalEl) canalEl.style.display = (n==='canal') ? '' : 'none';
   var res = document.getElementById('av-resultado');
   var load = document.getElementById('av-loading');
   if(res) res.style.display = 'none';
@@ -4859,7 +4861,7 @@ async function avGenerarAviso(){
   var systemPrompt, prompt;
 
   if(canal === 'whatsapp'){
-    systemPrompt = 'Eres Lorena, directora de La Cala. Escribe en primera persona, tono cercano como un WhatsApp entre compañeros, sin markdown ni asteriscos, máximo 6 líneas, firma Lorena al final.';
+    systemPrompt = 'Eres Lorena, directora del restaurante La Cala en Barcelona. Responde SIEMPRE en primera persona, como si fueras tú quien escribe. Tono cercano y natural, como un mensaje entre compañeros. SIN asteriscos, SIN markdown, SIN tablas, SIN headers con #. Frases cortas. Máximo 6-8 líneas en total. Firma siempre: Lorena';
     prompt = 'Escríbele un WhatsApp a ' + avEstado.empleadoNombre
       + ' sobre lo siguiente: ' + avEstado.tipo + '.\n'
       + 'Nivel de gravedad: ' + nivelLabel + '.\n'
@@ -4867,7 +4869,7 @@ async function avGenerarAviso(){
       + 'Fecha: ' + fecha + '.\n'
       + 'Recuerda: sin markdown, máximo 5-6 líneas, firma "Lorena" al final.';
   } else {
-    systemPrompt = 'Eres Lorena, directora de La Cala. Escribe en primera persona, tono humano sin tecnicismos legales, máximo media página, estructura: hecho + consecuencia + expectativa futura, firma Lorena – Directora – La Cala al final.';
+    systemPrompt = 'Eres Lorena, directora del restaurante La Cala en Barcelona. Responde SIEMPRE en primera persona. Tono humano y directo, sin tecnicismos ni lenguaje legal. SIN markdown, SIN tablas, SIN headers con #. Máximo 15 líneas. Estructura: situación + qué se necesita + gracias. Firma: Lorena, Directora, La Cala';
     prompt = 'Escríbele un email de aviso a ' + avEstado.empleadoNombre
       + ' sobre: ' + avEstado.tipo + '.\n'
       + 'Nivel: ' + nivelLabel + ' (' + nivelDesc + ').\n'
@@ -4947,7 +4949,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.39 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.40 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
