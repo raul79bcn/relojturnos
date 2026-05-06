@@ -2984,13 +2984,15 @@ async function cargarVistaPublica(cuadId){
     };
 
     var TURNO_STYLE = {
-      manana:   {bg:'#0d2e12', color:'#2ecc71', border:'#1a5a22'},
-      tarde:    {bg:'#2e1e00', color:'#f39c12', border:'#5a3a00'},
-      noche:    {bg:'#0d0d2e', color:'#5b9bd5', border:'#1a2a5a'},
-      intermedio:{bg:'#1e0d2e',color:'#9b59b6', border:'#3a1a5a'},
-      partido:  {bg:'#2e1e00', color:'#ffa040', border:'#5a3a00'},
-      fiesta:   {bg:'#2e0d0d', color:'#e74c3c', border:'#5a1a1a'},
-      mediafiesta:{bg:'#2e0d0d',color:'#e74c3c',border:'#5a1a1a'}
+      manana:     {bg:'#d4f5d4', color:'#145214', border:'#7ec87e'},
+      tarde:      {bg:'#fff0d4', color:'#7a4500', border:'#d4a050'},
+      noche:      {bg:'#d4e8f8', color:'#1a3d6a', border:'#6a9bc0'},
+      intermedio: {bg:'#ead4f5', color:'#541a7a', border:'#a06abf'},
+      partido:    {bg:'#ffe8c8', color:'#7a3800', border:'#d4905a'},
+      seguido1:   {bg:'#c8f5ee', color:'#0a5a50', border:'#5abfb0'},
+      seguido2:   {bg:'#c8f5e0', color:'#0a5a30', border:'#5abf80'},
+      fiesta:     {bg:'#f5d4d4', color:'#7a1a1a', border:'#d47a7a'},
+      mediafiesta:{bg:'#f5d4d4', color:'#7a1a1a', border:'#d47a7a'}
     };
 
     var turnoMap = {};
@@ -3005,9 +3007,9 @@ async function cargarVistaPublica(cuadId){
     var html = '';
 
     // Header del cuadrante
-    html += '<div style="background:var(--darker);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px">';
-    html += '<div style="font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px">📅 '+cuad.semana_label+'</div>';
-    html += '<div style="font-size:13px;color:var(--muted)">📍 '+localNombre+' · '+emps.length+' empleados</div>';
+    html += '<div style="background:#f0f4f0;border:1px solid #cccccc;border-radius:12px;padding:14px 16px;margin-bottom:16px">';
+    html += '<div style="font-size:20px;font-weight:800;color:#145214;margin-bottom:4px">📅 '+cuad.semana_label+'</div>';
+    html += '<div style="font-size:13px;color:#555555">📍 '+localNombre+' · '+emps.length+' empleados</div>';
     html += '</div>';
 
     // Tarjeta por empleado — formato móvil
@@ -3017,12 +3019,12 @@ async function cargarVistaPublica(cuadId){
       var init  = (emp.nombre||'?').substring(0,2).toUpperCase();
       var totalDias = 0;
 
-      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px">';
+      html += '<div style="background:#ffffff;border:1px solid #cccccc;border-radius:12px;padding:12px 14px;margin-bottom:10px">';
       // Nombre empleado
       html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
       html += '<div style="width:30px;height:30px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0">'+init+'</div>';
-      html += '<div style="font-weight:700;font-size:14px;color:var(--text)">'+emp.nombre+'</div>';
-      html += '<div style="font-size:10px;color:var(--muted);margin-left:auto">'+emp.rol+'</div>';
+      html += '<div style="font-weight:700;font-size:14px;color:#111111">'+emp.nombre+'</div>';
+      html += '<div style="font-size:10px;color:#666666;margin-left:auto">'+emp.rol+'</div>';
       html += '</div>';
 
       // Grid días
@@ -3037,7 +3039,7 @@ async function cargarVistaPublica(cuadId){
         // Para turno partido, mostrar en dos líneas
         var lines = hr.split(' / ');
         html += '<div style="text-align:center;padding:4px 2px;border-radius:6px;background:'+st.bg+';border:1px solid '+st.border+'">';
-        html += '<div style="font-size:8px;font-weight:700;color:var(--muted);margin-bottom:2px">'+DIAS_C[d]+'</div>';
+        html += '<div style="font-size:8px;font-weight:700;color:#555555;margin-bottom:2px">'+DIAS_C[d]+'</div>';
         if(isF){
           html += '<div style="font-size:11px">🏖</div>';
         } else {
@@ -3050,24 +3052,24 @@ async function cargarVistaPublica(cuadId){
       html += '</div>';
 
       // Total días trabajados
-      html += '<div style="margin-top:8px;font-size:10px;color:var(--muted);text-align:right">'+totalDias+' días trabajados</div>';
+      html += '<div style="margin-top:8px;font-size:10px;color:#666666;text-align:right">'+totalDias+' días trabajados</div>';
       html += '</div>';
     });
 
     // Leyenda
-    html += '<div style="margin-top:6px;padding:12px;background:var(--darker);border-radius:10px;border:1px solid var(--border)">';
-    html += '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Leyenda</div>';
+    html += '<div style="margin-top:6px;padding:12px;background:#f0f4f0;border-radius:10px;border:1px solid #cccccc">';
+    html += '<div style="font-size:10px;font-weight:700;color:#555555;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Leyenda</div>';
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
     var leg=[
-      {t:'Mañana',c:'#2ecc71',b:'#0d2e12'},
-      {t:'Tarde',c:'#f39c12',b:'#2e1e00'},
-      {t:'Noche',c:'#5b9bd5',b:'#0d0d2e'},
-      {t:'Intermedio',c:'#9b59b6',b:'#1e0d2e'},
-      {t:'Partido',c:'#ffa040',b:'#2e1e00'},
-      {t:'🏖 Fiesta',c:'#e74c3c',b:'#2e0d0d'}
+      {t:'Mañana',    c:'#145214',b:'#d4f5d4'},
+      {t:'Tarde',     c:'#7a4500',b:'#fff0d4'},
+      {t:'Noche',     c:'#1a3d6a',b:'#d4e8f8'},
+      {t:'Intermedio',c:'#541a7a',b:'#ead4f5'},
+      {t:'Partido',   c:'#7a3800',b:'#ffe8c8'},
+      {t:'🏖 Fiesta', c:'#7a1a1a',b:'#f5d4d4'}
     ];
     leg.forEach(function(x){
-      html+='<span style="font-size:10px;padding:3px 9px;border-radius:12px;background:'+x.b+';color:'+x.c+'">'+x.t+'</span>';
+      html+='<span style="font-size:10px;padding:3px 9px;border-radius:12px;background:'+x.b+';color:'+x.c+';border:1px solid '+x.c+'40">'+x.t+'</span>';
     });
     html += '</div></div>';
 
@@ -4086,11 +4088,11 @@ function cargarIdiomaGuardado(){
     var hdr = document.querySelector('header'); if(hdr) hdr.style.display='none';
     var cnt = document.querySelector('.container'); if(cnt) cnt.style.display='none';
     var pe  = document.getElementById('portal-empleado'); if(pe) pe.style.display='none';
-    document.body.style.background='#0f1117';
+    document.body.style.background='#ffffff';
     document.body.style.margin='0';
     document.body.style.minHeight='100vh';
     var vp = document.getElementById('vista-publica');
-    if(vp){ vp.style.background='#0f1117'; vp.style.color='#e0e0e0'; }
+    if(vp){ vp.style.background='#ffffff'; vp.style.color='#111111'; }
     cargarPersonalizacionGuardada();
     cargarVistaPublica(parseInt(cuadParam));
     return;
@@ -5284,6 +5286,7 @@ async function abrirCuadrante(){
     var cuadId = await cargarCuadrantePrevio();
     if(cuadId && empleados.length > 0){
       sugerirYRenderizar();
+      generarCuadrante();
       goStep(6);
       showToast('Cuadrante cargado desde BD', 'green');
     } else {
