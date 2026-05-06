@@ -489,18 +489,18 @@ async function guardarCuadranteEnBD(){
     }
     currentCuadranteId = cuadranteId;
 
-    // 2. Guardar/actualizar empleados en BD
+    // 2. Vincular empleados a sus registros en BD (sin crear nuevos)
+    var empsFaltantes = [];
     for(var i=0;i<empleados.length;i++){
       var emp = empleados[i];
-      // Buscar si ya existe por nombre+local
       var existing = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(emp.nombre));
       var empBdId;
-      if(existing.length){
+      if(existing && existing.length){
         empBdId = existing[0].id;
-        await sbPatch('empleados', empBdId, {rol:emp.rol, turno_habitual:emp.turno, telefono:emp.telefono||null, email:emp.email||null});
+        await sbPatch('empleados', empBdId, {rol:emp.rol, turno_habitual:emp.turno, telefono:emp.telefono||null});
       } else {
-        var newEmp = await sbPost('empleados',{local_id:localId, nombre:emp.nombre, rol:emp.rol, turno_habitual:emp.turno, telefono:emp.telefono||null, email:emp.email||null});
-        empBdId = newEmp[0].id;
+        empsFaltantes.push(emp.nombre);
+        continue; // saltar — no crear empleados desde el cuadrante
       }
       empIdMap[emp.id] = empBdId;
 
@@ -542,6 +542,9 @@ async function guardarCuadranteEnBD(){
       }
     }
 
+    if(empsFaltantes.length){
+      showToast('⚠ Sin BD: '+empsFaltantes.join(', ')+'. Créalos en Gestión Usuarios primero.','orange');
+    }
     if(btn){ btn.textContent='✓ Guardado'; btn.style.background='var(--green)'; btn.style.color='var(--darker)'; btn.disabled=false; }
     showToast(t('toast_cuad_guardado'),'green');
   }catch(e){
@@ -2564,9 +2567,40 @@ function abrirPersonalizacion(){
 
 // Muestra botón Ajustes para director/a
 // ========== GESTIÓN USUARIOS ==========
+async function crearEmpleadoSinAcceso(){
+  var nombre  = (document.getElementById('ea-nombre').value||'').trim();
+  var local   = parseInt(document.getElementById('ea-local').value);
+  var turno   = document.getElementById('ea-turno').value||'manana';
+  var tel     = (document.getElementById('ea-telefono').value||'').trim();
+  var errEl   = document.getElementById('ea-error');
+  var okEl    = document.getElementById('ea-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  if(!nombre){ errEl.textContent='El nombre es obligatorio'; errEl.style.display='block'; return; }
+  try{
+    var ex = await sbGet('empleados','local_id=eq.'+local+'&nombre=eq.'+encodeURIComponent(nombre));
+    if(ex && ex.length){ errEl.textContent='Ya existe un empleado con ese nombre en este local'; errEl.style.display='block'; return; }
+    await sbPost('empleados',{ nombre:nombre, local_id:local, activo:true, rol:'Cam. Mañana', turno_habitual:turno, telefono:tel||null });
+    okEl.textContent='✓ Empleado '+nombre+' añadido';
+    okEl.style.display='block';
+    ['ea-nombre','ea-telefono'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    setTimeout(function(){ okEl.style.display='none'; cargarUsuarios(); }, 1200);
+  }catch(e){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
+}
+
+function _poblarSelectTurnos(selectId){
+  var sel = document.getElementById(selectId);
+  if(!sel || !turnosConfig.length) return;
+  var current = sel.value;
+  sel.innerHTML = turnosConfig.map(function(tc){
+    return '<option value="'+tc.id+'"'+(tc.id===current?' selected':'')+'>'+tc.emoji+' '+tc.nome+' '+tc.ini+'–'+tc.fin+'</option>';
+  }).join('');
+}
+
 async function cargarUsuarios(){
   var lista = document.getElementById('usuarios-lista');
   if(!lista) return;
+  _poblarSelectTurnos('nu-turno');
+  _poblarSelectTurnos('ea-turno');
   lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">⏳ Cargando...</div>';
   var ROLES = {empleado:'Empleado', directora:'Director/a', directora_general:'Dirección General', admin:'Admin'};
   var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
@@ -2668,41 +2702,27 @@ async function crearUsuario(){
     if(existing && existing.length){ errEl.textContent=t('err_dni_existe'); errEl.style.display='block'; return; }
 
   var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
-  var telefono  = (document.getElementById('nu-telefono')||{}).value||'';
-  var email     = (document.getElementById('nu-email')||{}).value||'';
-  var direccion = (document.getElementById('nu-direccion')||{}).value||'';
+  var telefono = (document.getElementById('nu-telefono')||{}).value||'';
+  var turno    = (document.getElementById('nu-turno')||{}).value||'manana';
   var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
   await sbPost('usuarios', nuevo);
   logAccion('CREAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
-  // Insertar/actualizar también en tabla empleados para que aparezca en Gestión Equipo
+  // Insertar/actualizar también en tabla empleados
   if(localId){
     try{
       var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(nombre));
       var rolEmpleado = rol === 'directora' ? 'Encargado' : 'Cam. Mañana';
       if(empEx && empEx.length){
-        await sbPatch('empleados', empEx[0].id, {
-          activo: true,
-          rol: rolEmpleado,
-          telefono: telefono||null,
-          email: email||null
-        });
+        await sbPatch('empleados', empEx[0].id, { activo:true, rol:rolEmpleado, turno_habitual:turno, telefono:telefono||null });
       } else {
-        await sbPost('empleados', {
-          nombre: nombre,
-          local_id: localId,
-          activo: true,
-          rol: rolEmpleado,
-          turno_habitual: 'manana',
-          telefono: telefono||null,
-          email: email||null
-        });
+        await sbPost('empleados', { nombre:nombre, local_id:localId, activo:true, rol:rolEmpleado, turno_habitual:turno, telefono:telefono||null });
       }
     }catch(e2){ console.warn('empleados insert/update:', e2); }
   }
     okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
     okEl.style.display = 'block';
     // Limpiar form
-    ['nu-nombre','nu-dni','nu-ss','nu-telefono','nu-email','nu-direccion'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    ['nu-nombre','nu-dni','nu-ss','nu-telefono'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     cargarUsuarios();
   }catch(e){
     errEl.textContent = t('err_crear_usuario')+e.message;
