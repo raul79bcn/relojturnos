@@ -97,7 +97,11 @@ async function sbPatch(table, id, data){
     headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify(data)
   });
-  if(!r.ok) throw new Error('PATCH '+table+' error '+r.status);
+  if(!r.ok){
+    var errBody = await r.json().catch(function(){ return {}; });
+    console.error('[sbPatch] Error', r.status, table, errBody);
+    throw new Error('PATCH '+table+' error '+r.status+': '+(errBody.message||errBody.hint||JSON.stringify(errBody)));
+  }
   return r.json();
 }
 
@@ -2721,9 +2725,9 @@ function aplicarColor(hex){
 }
 
 function aplicarTema(tema){
-  var t = TEMAS[tema];
-  if(!t) return;
-  Object.keys(t).forEach(function(k){ document.documentElement.style.setProperty('--'+k, t[k]); });
+  var temaData = TEMAS[tema];
+  if(!temaData) return;
+  Object.keys(temaData).forEach(function(k){ document.documentElement.style.setProperty('--'+k, temaData[k]); });
   localStorage.setItem('rt_tema', tema);
   ['dark','light','navy'].forEach(function(n){
     var btn = document.getElementById('btn-tema-'+n);
@@ -2991,8 +2995,10 @@ async function guardarEditarUsuario(){
   if(!nombre||!dni){ errEl.textContent='Nombre y DNI son obligatorios'; errEl.style.display='block'; return; }
   var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo, nss:ss, telefono:tel, email:email, direccion:dir };
   if(pass){ datos.password_hash = await hashPass(pass); }
+  console.log('[PATCH usuarios] id:', id, '| datos:', JSON.stringify(datos));
   try{
-    await sbPatch('usuarios', id, datos);
+    var patchRes = await sbPatch('usuarios', id, datos);
+    console.log('[PATCH usuarios] respuesta Supabase:', patchRes);
     logAccion('EDITAR_USUARIO', nombre+' · DNI: '+dni, localId||null);
     okEl.textContent = '✓ Cambios guardados';
     okEl.style.display = 'block';
@@ -4503,8 +4509,9 @@ function initAsistenteIA(){
 }
 
 function iaSelCat(catKey){
+  console.log('[IA] iaSelCat:', catKey, '| IA_CATS:', typeof IA_CATS, IA_CATS ? Object.keys(IA_CATS) : 'undefined');
+  if(!IA_CATS || !IA_CATS[catKey]){ console.warn('[IA] Categoría no encontrada:', catKey); return; }
   var cat = IA_CATS[catKey];
-  if(!cat) return;
   iaEstado.catKey = catKey;
   iaEstado.cat = cat;
   iaEstado.canal = null;
@@ -4810,6 +4817,10 @@ async function avGenerarAviso(){
   if(!avEstado.empleadoNombre || !avEstado.tipo || !avEstado.nivel){
     showToast('Completa todos los pasos antes de generar', 'red'); return;
   }
+  var nivel = parseInt(avEstado.nivel) || 0;
+  if(!AV_NIVEL_LABELS || !AV_NIVEL_LABELS[nivel]){
+    showToast('Nivel de aviso no válido: ' + nivel, 'red'); return;
+  }
 
   var descripcion = (document.getElementById('av-descripcion').value || '').trim();
   var localNombre = '';
@@ -4819,8 +4830,8 @@ async function avGenerarAviso(){
     localNombre = 'el restaurante';
   }
 
-  var nivelLabel = AV_NIVEL_LABELS[avEstado.nivel];
-  var nivelDesc  = AV_NIVEL_DESCRIPCIONES[avEstado.nivel];
+  var nivelLabel = AV_NIVEL_LABELS[nivel] || 'Aviso';
+  var nivelDesc  = (AV_NIVEL_DESCRIPCIONES && AV_NIVEL_DESCRIPCIONES[nivel]) ? AV_NIVEL_DESCRIPCIONES[nivel] : nivelLabel;
   var fecha = new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'});
 
   var prompt = 'Redacta un aviso formal de ' + nivelLabel + ' para el empleado '
@@ -4912,7 +4923,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.36 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.38 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5118,7 +5129,8 @@ async function clCargarDia(){
   }
 
   try{
-    if(tareasGuardadas && tareasGuardadas.length){
+    if(!Array.isArray(CL_TAREAS_BASE)) CL_TAREAS_BASE = [];
+    if(tareasGuardadas && Array.isArray(tareasGuardadas) && tareasGuardadas.length){
       clTareasHoy = tareasGuardadas.map(function(r, i){
         var base = CL_TAREAS_BASE[r.posicion] || CL_TAREAS_BASE[i] || {};
         return {
@@ -5156,6 +5168,7 @@ async function clCargarDia(){
 function clRenderTareas(){
   var cont = document.getElementById('cl-tareas-lista');
   if(!cont) return;
+  if(!Array.isArray(clTareasHoy)) clTareasHoy = [];
 
   cont.innerHTML = '';
   var hechas = clTareasHoy.filter(function(t){ return t.hecha; }).length;
@@ -5409,6 +5422,7 @@ async function wclInit(fecha, empleado){
 function wclRender(){
   var cont = document.getElementById('wcl-tareas');
   if(!cont) return;
+  if(!Array.isArray(wclTareas)) wclTareas = [];
   cont.innerHTML = '';
   var hechas = wclTareas.filter(function(t){return t.hecha;}).length;
   var total  = wclTareas.length;
