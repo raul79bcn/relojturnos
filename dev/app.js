@@ -600,6 +600,14 @@ function getSemanaLabel(){
   return fmt(d)+' \u2013 '+fmt(fin);
 }
 
+function getSemanaLabelForDate(isoDate){
+  if(!isoDate) return '';
+  var d=new Date(isoDate+'T12:00:00');
+  var fin=new Date(d);fin.setDate(fin.getDate()+6);
+  var fmt=function(dt){return dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});};
+  return fmt(d)+' \u2013 '+fmt(fin);
+}
+
 function updateHeader(){
   var hl=document.getElementById('header-local'),hs=document.getElementById('header-semana');
   if(hl)hl.textContent=getLocal()||'\u2014';
@@ -1515,24 +1523,31 @@ function toggleHoras(){
 }
 
 async function cargarCuadrantePrevio(){
-  var local=getLocal();
-  var localId=localIdMap[local];
+  var localId = localActivoId;
   if(!localId) return null;
-  var semana=getSemanaLabel();
   try{
-    var cuads=await sbGet('cuadrantes','local_id=eq.'+localId+'&semana_label=eq.'+encodeURIComponent(semana)+'&order=id.desc&limit=1');
+    // Cargar el último cuadrante guardado para este local, sin filtrar por semana
+    var cuads=await sbGet('cuadrantes','local_id=eq.'+localId+'&order=id.desc&limit=1');
     if(!cuads.length) return null;
     var cuadId=cuads[0].id;
     currentCuadranteId=cuadId;
+    // Sincronizar la semana en el selector para que el header y los cálculos sean correctos
+    var fi=document.getElementById('fecha-inicio');
+    if(fi && cuads[0].semana_label){
+      for(var oi=0;oi<fi.options.length;oi++){
+        if(getSemanaLabelForDate(fi.options[oi].value)===cuads[0].semana_label){
+          fi.selectedIndex=oi; break;
+        }
+      }
+    }
+    updateHeader();
     // Cargar turnos
     var turnos=await sbGet('turnos_cuadrante','cuadrante_id=eq.'+cuadId+'&order=empleado_id.asc,dia.asc');
-    // Mapear por empleado bdId
     var turnoMap={};
     turnos.forEach(function(t){
       if(!turnoMap[t.empleado_id]) turnoMap[t.empleado_id]=Array(7).fill('fiesta');
       turnoMap[t.empleado_id][t.dia]=(t.turno||'fiesta').toLowerCase();
     });
-    // Aplicar a empleados
     empleados.forEach(function(emp){
       var bdId=empIdMap[emp.id];
       if(bdId && turnoMap[bdId]) emp.turnos=turnoMap[bdId];
@@ -1542,7 +1557,6 @@ async function cargarCuadrantePrevio(){
     extrasDia=[];extraCounter=0;
     extras.forEach(function(ex){
       extraCounter++;
-      // Buscar empId local desde bdId
       var localEmpId=null;
       Object.keys(empIdMap).forEach(function(k){if(empIdMap[k]===ex.empleado_id)localEmpId=parseInt(k);});
       extrasDia.push({id:extraCounter,empId:localEmpId||ex.empleado_id,dia:ex.dia,
@@ -4673,7 +4687,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.28 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.30 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5273,7 +5287,7 @@ async function abrirCuadrante(){
       showToast('Cuadrante cargado desde BD', 'green');
     } else {
       goStep(1);
-      showToast('No hay cuadrante guardado esta semana — empieza uno nuevo', 'orange');
+      showToast('No hay cuadrante guardado para este local — empieza uno nuevo', 'orange');
     }
   }catch(e){
     goStep(1);
