@@ -5092,51 +5092,61 @@ async function clCargarDia(){
   clFechaActual = fecha;
   clResponsableActual = clResponsableDelDia(fecha);
 
-  // Mostrar responsable
   var nomEl = document.getElementById('cl-responsable-nombre');
   if(nomEl) nomEl.textContent = clResponsableActual;
 
-  // Intentar cargar desde Supabase
+  // Intentar cargar desde Supabase; si falla, usar tareas por defecto sin bloquear
   var tareasGuardadas = null;
+  var sbError = null;
   try{
     var localId = currentUser ? currentUser.local_id : null;
     var filtros = 'fecha=eq.' + fecha + '&order=posicion.asc';
     if(localId) filtros = 'local_id=eq.' + localId + '&' + filtros;
     var rows = await sbGet('checklist_diario', filtros);
     if(rows && rows.length) tareasGuardadas = rows;
-  }catch(e){ /* sin conexión — modo local */ }
-
-  if(tareasGuardadas && tareasGuardadas.length){
-    // Reconstruir desde BD
-    clTareasHoy = tareasGuardadas.map(function(r, i){
-      var base = CL_TAREAS_BASE[r.posicion] || CL_TAREAS_BASE[i] || {};
-      return {
-        id:             r.id,
-        texto:          r.tarea,
-        grupo:          r.grupo || base.grupo || 'Sala',
-        tipo:           r.tipo  || base.tipo  || 'check',
-        hecha:          !!r.completada,
-        hora_completado:r.hora_completado || '',
-        valorExtra:     r.valor_extra || '',
-        extra:          !!r.extra,
-        posicion:       r.posicion || 0
-      };
-    });
-    // Cargar nota del día
-    var notaEl = document.getElementById('cl-nota-dia');
-    if(notaEl && tareasGuardadas[0] && tareasGuardadas[0].nota_dia){
-      notaEl.value = tareasGuardadas[0].nota_dia || '';
-    }
-  } else {
-    // Crear tareas base para hoy
-    clTareasHoy = CL_TAREAS_BASE.map(function(tarea, i){
-      return { id: null, texto: tarea.texto, grupo: tarea.grupo, tipo: tarea.tipo, hecha: false, hora_completado: '', valorExtra: '', extra: false, posicion: i };
-    });
-    var notaEl = document.getElementById('cl-nota-dia');
-    if(notaEl) notaEl.value = '';
+  }catch(e){
+    sbError = e;
+    console.warn('[Checklist] Supabase error:', e.message);
   }
 
-  clRenderTareas();
+  if(sbError){
+    showToast('Sin conexión con el servidor — cargando tareas locales', 'orange');
+  }
+
+  try{
+    if(tareasGuardadas && tareasGuardadas.length){
+      clTareasHoy = tareasGuardadas.map(function(r, i){
+        var base = CL_TAREAS_BASE[r.posicion] || CL_TAREAS_BASE[i] || {};
+        return {
+          id:             r.id,
+          texto:          r.tarea,
+          grupo:          r.grupo || base.grupo || 'Sala',
+          tipo:           r.tipo  || base.tipo  || 'check',
+          hecha:          !!r.completada,
+          hora_completado:r.hora_completado || '',
+          valorExtra:     r.valor_extra || '',
+          extra:          !!r.extra,
+          posicion:       r.posicion || 0
+        };
+      });
+      var notaEl = document.getElementById('cl-nota-dia');
+      if(notaEl && tareasGuardadas[0] && tareasGuardadas[0].nota_dia){
+        notaEl.value = tareasGuardadas[0].nota_dia || '';
+      }
+    } else {
+      clTareasHoy = CL_TAREAS_BASE.map(function(tarea, i){
+        return { id: null, texto: tarea.texto, grupo: tarea.grupo, tipo: tarea.tipo, hecha: false, hora_completado: '', valorExtra: '', extra: false, posicion: i };
+      });
+      var notaEl = document.getElementById('cl-nota-dia');
+      if(notaEl) notaEl.value = '';
+    }
+
+    clRenderTareas();
+  }catch(e){
+    console.error('[Checklist] Error al cargar tareas:', e);
+    var cont = document.getElementById('cl-tareas-lista');
+    if(cont) cont.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center">⚠️ Error al cargar el checklist: ' + e.message + '</div>';
+  }
 }
 
 function clRenderTareas(){
