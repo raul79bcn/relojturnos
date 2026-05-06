@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.40 – Grupo El Reloj</title>
+<title>RelojTurnos v7.41 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.40</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.41</span></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.40 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.41 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -1183,18 +1183,14 @@
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin:0">✅ Checklist Diario</div>
-        <span style="font-size:9px;background:#2ecc7120;color:#2ecc71;padding:3px 9px;border-radius:12px;font-weight:700">ROTATIVO</span>
+        <span style="font-size:9px;background:#2ecc7120;color:#2ecc71;padding:3px 9px;border-radius:12px;font-weight:700">DIARIO</span>
       </div>
-      <div class="card-sub">Tareas diarias con asignación rotatoria por empleado</div>
+      <div class="card-sub">Tareas diarias por sección con responsable independiente</div>
 
       <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div>
           <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Fecha</div>
           <input type="date" id="cl-fecha" onchange="clCargarDia()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text);font-size:14px;outline:none">
-        </div>
-        <div id="cl-responsable-display" style="text-align:right">
-          <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Responsable hoy</div>
-          <div id="cl-responsable-nombre" style="font-size:18px;font-weight:700;color:var(--accent)">—</div>
         </div>
       </div>
 
@@ -1209,14 +1205,6 @@
       </div>
 
       <div id="cl-tareas-lista" style="margin-bottom:14px"></div>
-
-      <div style="background:var(--darker);border:1px dashed var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">+ Tarea adicional para hoy</div>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="cl-tarea-nueva" placeholder="Escribe una tarea extra..." style="flex:1">
-          <button class="btn btn-ghost btn-sm" onclick="clAnadirTarea()">Añadir</button>
-        </div>
-      </div>
 
       <div style="margin-bottom:14px">
         <label>Nota del día (incidencias, observaciones...)</label>
@@ -1674,7 +1662,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.40 &middot; Grupo El Reloj
+      RelojTurnos v7.41 &middot; Grupo El Reloj
     </div>
   </div>
 </div>

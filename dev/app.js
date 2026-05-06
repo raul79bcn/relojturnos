@@ -4949,7 +4949,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.40 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.41 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5070,36 +5070,59 @@ async function avCargarHistorico(){
 
 var CL_TAREAS_BASE = [
   // BARRA
-  { texto: 'Limpiar la barra y zona de trabajo',          grupo: 'Barra', tipo: 'check' },
-  { texto: 'Revisar stock de bebidas y comunicar roturas', grupo: 'Barra', tipo: 'check' },
-  { texto: 'Temperatura cámara frigorífica de barra',      grupo: 'Barra', tipo: 'temperatura' },
-  { texto: 'Estado del equipo de barra (cafetera, etc.)',  grupo: 'Barra', tipo: 'equipo' },
+  { texto: 'Limpiar la barra y zona de trabajo',            grupo: 'Barra',   tipo: 'check' },
+  { texto: 'Revisar stock de bebidas y comunicar roturas',  grupo: 'Barra',   tipo: 'check' },
+  { texto: 'Temperatura cámara frigorífica de barra',       grupo: 'Barra',   tipo: 'temperatura' },
+  { texto: 'Estado del equipo de barra (cafetera, etc.)',   grupo: 'Barra',   tipo: 'equipo' },
   // SALA
-  { texto: 'Revisar y limpiar todas las mesas y sillas',   grupo: 'Sala', tipo: 'check' },
-  { texto: 'Reponer servilletas, palilleros y salsas',     grupo: 'Sala', tipo: 'check' },
-  { texto: 'Barrer y fregar el suelo de sala y terraza',   grupo: 'Sala', tipo: 'check' },
-  { texto: 'Limpiar cristales y espejos de la entrada',    grupo: 'Sala', tipo: 'check' },
-  { texto: 'Comprobar y limpiar baños (papel, jabón)',     grupo: 'Sala', tipo: 'check' },
-  { texto: 'Montar mise en place para el servicio',        grupo: 'Sala', tipo: 'check' },
-  { texto: 'Comprobar funcionamiento de TPV y caja',       grupo: 'Sala', tipo: 'check' },
+  { texto: 'Revisar y limpiar todas las mesas y sillas',    grupo: 'Sala',    tipo: 'check' },
+  { texto: 'Reponer servilletas, palilleros y salsas',      grupo: 'Sala',    tipo: 'check' },
+  { texto: 'Barrer y fregar el suelo de sala y terraza',    grupo: 'Sala',    tipo: 'check' },
+  { texto: 'Limpiar cristales y espejos de la entrada',     grupo: 'Sala',    tipo: 'check' },
+  { texto: 'Comprobar y limpiar baños (papel, jabón)',      grupo: 'Sala',    tipo: 'check' },
+  { texto: 'Montar mise en place para el servicio',         grupo: 'Sala',    tipo: 'check' },
+  { texto: 'Comprobar funcionamiento de TPV y caja',        grupo: 'Sala',    tipo: 'check' },
   // COCINA
-  { texto: 'Temperatura cámara frigorífica de cocina',     grupo: 'Cocina', tipo: 'temperatura' },
-  { texto: 'Estado del equipo de cocina (horno, freidora)', grupo: 'Cocina', tipo: 'equipo' },
-  { texto: 'Vaciar papeleras y gestionar residuos',        grupo: 'Cocina', tipo: 'check' }
+  { texto: 'Temperatura cámara frigorífica de cocina',      grupo: 'Cocina',  tipo: 'temperatura' },
+  { texto: 'Estado del equipo de cocina (horno, freidora)', grupo: 'Cocina',  tipo: 'equipo' },
+  { texto: 'Vaciar papeleras y gestionar residuos',         grupo: 'Cocina',  tipo: 'check' },
+  // ALMACÉN
+  { texto: 'Revisar stock y anotar roturas de almacén',     grupo: 'Almacen', tipo: 'check' },
+  { texto: 'Orden y limpieza del almacén',                  grupo: 'Almacen', tipo: 'check' },
+  { texto: 'Verificar fechas de caducidad',                 grupo: 'Almacen', tipo: 'check' },
+  { texto: 'Recepción y ubicación de mercancía',            grupo: 'Almacen', tipo: 'check' }
 ];
 
-// Estado en memoria para el día actual
-var clTareasHoy = [];      // [{id, texto, hecha, hora_completado, extra}]
+// Estado en memoria
+var clTareasHoy = [];
 var clFechaActual = '';
-var clResponsableActual = '';
+var clResponsablesGrupo = { Barra:'', Sala:'', Cocina:'', Almacen:'' };
+var clListaEmpleados = [];
 var clGuardandoNota = false;
+
+async function clCargarEmpleados(){
+  clListaEmpleados = [];
+  try{
+    var localId = currentUser ? currentUser.local_id : null;
+    if(localId){
+      var rows = await sbGet('empleados','local_id=eq.'+localId+'&activo=eq.true&order=nombre.asc');
+      clListaEmpleados = rows.map(function(e){ return e.nombre; });
+    }
+  }catch(e){}
+  if(!clListaEmpleados.length && empleados.length){
+    clListaEmpleados = empleados.map(function(e){ return e.nombre; });
+  }
+  if(!clListaEmpleados.length){
+    clListaEmpleados = ['MARILYN','SONNY','ALEX','IRENE','ZEUS','CONNY','SANTIAGO','LENY'];
+  }
+}
 
 function initChecklist(){
   var fechaEl = document.getElementById('cl-fecha');
   if(fechaEl && !fechaEl.value){
     fechaEl.value = new Date().toISOString().split('T')[0];
   }
-  clCargarDia();
+  clCargarEmpleados().then(function(){ clCargarDia(); });
 }
 
 function clFechaISO(){
@@ -5107,42 +5130,27 @@ function clFechaISO(){
   return el ? el.value : new Date().toISOString().split('T')[0];
 }
 
-// Determina qué empleado toca hoy por rotación (índice del día desde epoch % nEmpleados)
-function clResponsableDelDia(fecha){
-  var listaEmps = [];
-
-  // Usar empleados en memoria si hay
-  if(empleados.length){
-    listaEmps = empleados.map(function(e){ return e.nombre; });
-  } else {
-    listaEmps = ['MARILYN','SONNY','ALEX','IRENE','ZEUS','CONNY','SANTIAGO','LENY'];
-  }
-
-  if(!listaEmps.length) return '—';
-
-  // Calcular número de día desde una fecha base fija (01/01/2024)
-  var base = new Date('2024-01-01');
-  var d    = new Date(fecha + 'T12:00:00');
-  var diff = Math.round((d - base) / 86400000);
-  var idx  = ((diff % listaEmps.length) + listaEmps.length) % listaEmps.length;
-  return listaEmps[idx];
+function clSetResponsableGrupo(grupo, nombre){
+  clResponsablesGrupo[grupo] = nombre;
+  clTareasHoy.forEach(function(t){
+    if(t.grupo === grupo){
+      t.responsable = nombre;
+      if(t.id) sbPatch('checklist_diario', t.id, {responsable: nombre}).catch(function(){});
+    }
+  });
 }
 
 async function clCargarDia(){
   var fecha = clFechaISO();
   clFechaActual = fecha;
-  clResponsableActual = clResponsableDelDia(fecha);
+  clResponsablesGrupo = { Barra:'', Sala:'', Cocina:'', Almacen:'' };
 
-  var nomEl = document.getElementById('cl-responsable-nombre');
-  if(nomEl) nomEl.textContent = clResponsableActual;
-
-  // Intentar cargar desde Supabase; si falla, usar tareas por defecto sin bloquear
   var tareasGuardadas = null;
   var sbError = null;
   try{
     var localId = currentUser ? currentUser.local_id : null;
-    var filtros = 'fecha=eq.' + fecha + '&order=posicion.asc';
-    if(localId) filtros = 'local_id=eq.' + localId + '&' + filtros;
+    var filtros = 'fecha=eq.'+fecha+'&order=posicion.asc';
+    if(localId) filtros = 'local_id=eq.'+localId+'&'+filtros;
     var rows = await sbGet('checklist_diario', filtros);
     if(rows && rows.length) tareasGuardadas = rows;
   }catch(e){
@@ -5150,9 +5158,7 @@ async function clCargarDia(){
     console.warn('[Checklist] Supabase error:', e.message);
   }
 
-  if(sbError){
-    showToast('Sin conexión con el servidor — cargando tareas locales', 'orange');
-  }
+  if(sbError) showToast('Sin conexión con el servidor — cargando tareas locales', 'orange');
 
   try{
     if(!Array.isArray(CL_TAREAS_BASE)) CL_TAREAS_BASE = [];
@@ -5167,9 +5173,17 @@ async function clCargarDia(){
           hecha:          !!r.completada,
           hora_completado:r.hora_completado || '',
           valorExtra:     r.valor_extra || '',
+          notaIncidencia: r.nota_incidencia || '',
           extra:          !!r.extra,
-          posicion:       r.posicion || 0
+          posicion:       r.posicion || 0,
+          responsable:    r.responsable || ''
         };
+      });
+      // Restaurar responsable por grupo desde las tareas guardadas
+      clTareasHoy.forEach(function(t){
+        if(t.responsable && clResponsablesGrupo.hasOwnProperty(t.grupo) && !clResponsablesGrupo[t.grupo]){
+          clResponsablesGrupo[t.grupo] = t.responsable;
+        }
       });
       var notaEl = document.getElementById('cl-nota-dia');
       if(notaEl && tareasGuardadas[0] && tareasGuardadas[0].nota_dia){
@@ -5177,17 +5191,18 @@ async function clCargarDia(){
       }
     } else {
       clTareasHoy = CL_TAREAS_BASE.map(function(tarea, i){
-        return { id: null, texto: tarea.texto, grupo: tarea.grupo, tipo: tarea.tipo, hecha: false, hora_completado: '', valorExtra: '', extra: false, posicion: i };
+        return { id:null, texto:tarea.texto, grupo:tarea.grupo, tipo:tarea.tipo,
+                 hecha:false, hora_completado:'', valorExtra:'', notaIncidencia:'',
+                 extra:false, posicion:i, responsable:'' };
       });
       var notaEl = document.getElementById('cl-nota-dia');
       if(notaEl) notaEl.value = '';
     }
-
     clRenderTareas();
   }catch(e){
     console.error('[Checklist] Error al cargar tareas:', e);
     var cont = document.getElementById('cl-tareas-lista');
-    if(cont) cont.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center">⚠️ Error al cargar el checklist: ' + e.message + '</div>';
+    if(cont) cont.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center">⚠️ Error al cargar el checklist: '+e.message+'</div>';
   }
 }
 
@@ -5200,77 +5215,82 @@ function clRenderTareas(){
   var hechas = clTareasHoy.filter(function(t){ return t.hecha; }).length;
   var total  = clTareasHoy.length;
 
-  var GRUPOS = ['Barra', 'Sala', 'Cocina'];
-  var GRUPO_ICONS = { Barra: '🍹', Sala: '🪑', Cocina: '👨‍🍳' };
+  var GRUPOS       = ['Barra', 'Sala', 'Cocina', 'Almacen'];
+  var GRUPO_ICONS  = { Barra:'🍹', Sala:'🪑', Cocina:'👨‍🍳', Almacen:'📦' };
+  var GRUPO_LABELS = { Barra:'Barra', Sala:'Sala', Cocina:'Cocina', Almacen:'Almacén' };
 
   GRUPOS.forEach(function(grupo){
     var grupoTareas = clTareasHoy.filter(function(t){ return t.grupo === grupo || (!t.grupo && grupo === 'Sala'); });
-    if(!grupoTareas.length) return;
 
-    // Header de grupo
+    var section = document.createElement('div');
+    section.style.cssText = 'background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px';
+
+    // Header con selector de responsable
+    var optsHtml = '<option value="">— Sin asignar —</option>';
+    clListaEmpleados.forEach(function(n){
+      optsHtml += '<option value="'+n+'"'+(clResponsablesGrupo[grupo]===n?' selected':'')+'>'+n+'</option>';
+    });
     var header = document.createElement('div');
-    header.style.cssText = 'font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px 0;margin-top:8px;border-bottom:1px solid var(--border)';
-    header.textContent = (GRUPO_ICONS[grupo] || '') + ' ' + grupo;
-    cont.appendChild(header);
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)';
+    header.innerHTML =
+      '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">'+(GRUPO_ICONS[grupo]||'')+' '+(GRUPO_LABELS[grupo]||grupo)+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px">'
+      +'<span style="font-size:11px;color:var(--muted)">Responsable:</span>'
+      +'<select style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none" onchange="clSetResponsableGrupo(\''+grupo+'\',this.value)">'
+      +optsHtml+'</select></div>';
+    section.appendChild(header);
 
+    // Tareas
     grupoTareas.forEach(function(tarea){
       var idx = clTareasHoy.indexOf(tarea);
       var div = document.createElement('div');
-      div.className = 'cl-tarea-item' + (tarea.hecha ? ' done' : '');
+      div.className = 'cl-tarea-item'+(tarea.hecha?' done':'');
 
       if(tarea.tipo === 'temperatura'){
         div.innerHTML =
-          '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">' + (tarea.hecha ? '✓' : '') + '</div>'
-          + '<div class="cl-tarea-texto" style="flex:1">' + tarea.texto + '</div>'
-          + '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">'
-          + '<input type="number" step="0.1" placeholder="°C" value="' + (tarea.valorExtra || '') + '" style="width:64px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:13px;outline:none" onchange="clSetValorExtra(' + idx + ',this.value)">'
-          + '<span style="font-size:11px;color:var(--muted)">°C</span>'
-          + '</div>'
-          + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
+          '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="clToggleTarea('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
+          +'<div class="cl-tarea-texto" style="flex:1">'+tarea.texto+'</div>'
+          +'<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">'
+          +'<input type="number" step="0.1" placeholder="°C" value="'+(tarea.valorExtra||'')+'" style="width:64px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:13px;outline:none" onchange="clSetValorExtra('+idx+',this.value)">'
+          +'<span style="font-size:11px;color:var(--muted)">°C</span></div>'
+          +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>';
       } else if(tarea.tipo === 'equipo'){
         var esIncidencia = tarea.valorExtra && tarea.valorExtra !== 'ok';
         div.innerHTML =
-          '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">' + (tarea.hecha ? '✓' : '') + '</div>'
-          + '<div style="flex:1">'
-          + '<div class="cl-tarea-texto">' + tarea.texto + '</div>'
-          + '<div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap">'
-          + '<select style="background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none" onchange="clSetEquipoEstado(' + idx + ',this.value)">'
-          + '<option value="ok"' + (!tarea.valorExtra || tarea.valorExtra === 'ok' ? ' selected' : '') + '>✅ Todo OK</option>'
-          + '<option value="incidencia"' + (esIncidencia ? ' selected' : '') + '>⚠ Hay incidencia</option>'
-          + '</select>'
-          + (esIncidencia ? '<input type="text" placeholder="Describe la incidencia..." value="' + (tarea.notaIncidencia || '').replace(/"/g, '&quot;') + '" style="flex:1;min-width:120px;background:var(--darker);border:1px solid var(--red);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none" onchange="clSetNotaIncidencia(' + idx + ',this.value)">' : '')
-          + '</div>'
-          + '</div>'
-          + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
+          '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="clToggleTarea('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
+          +'<div style="flex:1"><div class="cl-tarea-texto">'+tarea.texto+'</div>'
+          +'<div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap">'
+          +'<select style="background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none" onchange="clSetEquipoEstado('+idx+',this.value)">'
+          +'<option value="ok"'+(!tarea.valorExtra||tarea.valorExtra==='ok'?' selected':'')+'>✅ Todo OK</option>'
+          +'<option value="incidencia"'+(esIncidencia?' selected':'')+'>⚠ Hay incidencia</option>'
+          +'</select>'
+          +(esIncidencia?'<input type="text" placeholder="Describe la incidencia..." value="'+(tarea.notaIncidencia||'').replace(/"/g,'&quot;')+'" style="flex:1;min-width:120px;background:var(--darker);border:1px solid var(--red);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none" onchange="clSetNotaIncidencia('+idx+',this.value)">':'')
+          +'</div></div>'
+          +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>';
       } else {
         div.innerHTML =
-          '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">' + (tarea.hecha ? '✓' : '') + '</div>'
-          + '<div class="cl-tarea-texto">' + tarea.texto + (tarea.extra ? ' <span style="font-size:10px;color:var(--accent);font-weight:700">EXTRA</span>' : '') + '</div>'
-          + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
+          '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="clToggleTarea('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
+          +'<div class="cl-tarea-texto">'+tarea.texto+(tarea.extra?' <span style="font-size:10px;color:var(--accent);font-weight:700">EXTRA</span>':'')+'</div>'
+          +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>';
       }
-      cont.appendChild(div);
+      section.appendChild(div);
     });
+
+    // Fila añadir tarea
+    var addRow = document.createElement('div');
+    addRow.style.cssText = 'display:flex;gap:8px;margin-top:10px;align-items:center';
+    addRow.innerHTML =
+      '<input type="text" id="cl-nueva-'+grupo+'" placeholder="+ Tarea adicional..." style="flex:1;font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);outline:none">'
+      +'<button class="btn btn-ghost btn-sm" style="font-size:11px;flex-shrink:0" onclick="clAnadirTareaGrupo(\''+grupo+'\')">+ Añadir</button>';
+    section.appendChild(addRow);
+    cont.appendChild(section);
   });
 
-  // Tareas extra sin grupo
-  var sinGrupo = clTareasHoy.filter(function(t){ return t.extra && !GRUPOS.includes(t.grupo); });
-  sinGrupo.forEach(function(tarea){
-    var idx = clTareasHoy.indexOf(tarea);
-    var div = document.createElement('div');
-    div.className = 'cl-tarea-item' + (tarea.hecha ? ' done' : '');
-    div.innerHTML =
-      '<div class="cl-tarea-check ' + (tarea.hecha ? 'checked' : '') + '" onclick="clToggleTarea(' + idx + ')">' + (tarea.hecha ? '✓' : '') + '</div>'
-      + '<div class="cl-tarea-texto">' + tarea.texto + ' <span style="font-size:10px;color:var(--accent);font-weight:700">EXTRA</span></div>'
-      + '<div class="cl-tarea-hora">' + (tarea.hora_completado || '') + '</div>';
-    cont.appendChild(div);
-  });
-
-  // Actualizar barra de progreso
-  var pct = total > 0 ? Math.round((hechas / total) * 100) : 0;
+  var pct = total > 0 ? Math.round((hechas/total)*100) : 0;
   var bar = document.getElementById('cl-progreso-bar');
   var txt = document.getElementById('cl-progreso-txt');
-  if(bar) bar.style.width = pct + '%';
-  if(txt) txt.textContent = hechas + ' / ' + total;
+  if(bar) bar.style.width = pct+'%';
+  if(txt) txt.textContent = hechas+' / '+total;
 }
 
 function clSetValorExtra(idx, val){
@@ -5320,7 +5340,7 @@ async function clGuardarTarea(idx){
     tarea:           tarea.texto,
     completada:      tarea.hecha,
     hora_completado: tarea.hora_completado || null,
-    responsable:     clResponsableActual,
+    responsable:     clResponsablesGrupo[tarea.grupo] || '',
     posicion:        tarea.posicion,
     extra:           tarea.extra,
     local_id:        localId,
@@ -5350,8 +5370,8 @@ async function clGuardarTarea(idx){
   }
 }
 
-async function clAnadirTarea(){
-  var inp = document.getElementById('cl-tarea-nueva');
+async function clAnadirTareaGrupo(grupo){
+  var inp = document.getElementById('cl-nueva-'+grupo);
   if(!inp) return;
   var txt = (inp.value || '').trim();
   if(!txt){ showToast('Escribe el nombre de la tarea', 'orange'); return; }
@@ -5362,13 +5382,14 @@ async function clAnadirTarea(){
     hecha:          false,
     hora_completado:'',
     extra:          true,
+    grupo:          grupo,
+    tipo:           'check',
     posicion:       clTareasHoy.length
   };
   clTareasHoy.push(nueva);
   inp.value = '';
   clRenderTareas();
 
-  // Guardar en BD
   var idx = clTareasHoy.length - 1;
   await clGuardarTarea(idx);
   showToast('Tarea añadida', 'green');
@@ -5498,8 +5519,8 @@ async function wclToggle(idx){
 
 function clEnviarWA(){
   var fecha = clFechaISO();
-  var emp   = clResponsableActual || '';
-  if(!emp || emp === '—'){ showToast('Carga primero el checklist del día', 'orange'); return; }
+  var emp = Object.values(clResponsablesGrupo).find(function(v){ return v; }) || '';
+  if(!emp){ showToast('Carga primero el checklist del día', 'orange'); return; }
 
   var url = location.origin + location.pathname + '?cl=' + fecha + '&emp=' + encodeURIComponent(emp);
   var msg = 'Hola ' + emp + '! 👋 Aquí tienes tu checklist de hoy:\n' + url;
