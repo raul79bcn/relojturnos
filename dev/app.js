@@ -39,9 +39,11 @@ function precargarTurnos(){
       {id:'noche',     nome:'Noche',           emoji:'🌙', ini:'18:00',fin:'03:00',badge:'badge-noche',     color:'#3498db',active:true},
       {id:'intermedio',nome:'Intermedio',      emoji:'🔄', ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
       {id:'intermedio2',nome:'Intermedio 2',   emoji:'🔁', ini:'13:00',fin:'22:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
-      {id:'seguido1',  nome:'Seguido 1',       emoji:'⏩',       ini:'09:00',fin:'18:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
-      {id:'seguido2',  nome:'Seguido 2',       emoji:'⏭',       ini:'10:00',fin:'19:00',badge:'badge-seguido2',  color:'#10c080',active:false},
-      {id:'partido',   nome:'Partido',         emoji:'✂️', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'23:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
+      {id:'seguido1',   nome:'Seguido 1',    emoji:'⏩', ini:'09:00',fin:'18:00',badge:'badge-seguido1',   color:'#20b0a0',active:false},
+      {id:'seguido2',   nome:'Seguido 2',    emoji:'⏭', ini:'10:00',fin:'19:00',badge:'badge-seguido2',   color:'#10c080',active:false},
+      {id:'seguido3',   nome:'Seguido 3',    emoji:'⏫', ini:'11:00',fin:'20:00',badge:'badge-seguido3',   color:'#00d4b0',active:false},
+      {id:'intermedio3',nome:'Intermedio 3', emoji:'🔃', ini:'14:00',fin:'23:00',badge:'badge-intermedio3',color:'#8050d0',active:false},
+      {id:'partido',   nome:'Partido',        emoji:'✂️', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'23:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   } else {
     turnosConfig=[
@@ -50,9 +52,11 @@ function precargarTurnos(){
       {id:'tarde2',    nome:'Tarde 2',         emoji:'🌆', ini:'15:00',fin:'00:00',badge:'badge-tarde2',    color:'#ff9040',active:false},
       {id:'noche',     nome:'Noche',           emoji:'🌙', ini:'16:00',fin:'00:00',badge:'badge-noche',     color:'#3498db',active:true},
       {id:'intermedio',nome:'Intermedio',      emoji:'🔄', ini:'12:00',fin:'20:00',badge:'badge-intermedio',color:'#9b59b6',active:false},
-      {id:'intermedio2',nome:'Intermedio 2',   emoji:'🔁', ini:'13:00',fin:'21:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
-      {id:'seguido1',  nome:'Seguido 1',       emoji:'⏩',       ini:'11:00',fin:'19:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
-      {id:'seguido2',  nome:'Seguido 2',       emoji:'⏭',       ini:'12:00',fin:'20:00',badge:'badge-seguido2',  color:'#10c080',active:false},
+      {id:'seguido1',  nome:'Seguido 1',       emoji:'⏩', ini:'11:00',fin:'19:00',badge:'badge-seguido1',   color:'#20b0a0',active:false},
+      {id:'seguido2',  nome:'Seguido 2',       emoji:'⏭', ini:'12:00',fin:'20:00',badge:'badge-seguido2',   color:'#10c080',active:false},
+      {id:'seguido3',  nome:'Seguido 3',       emoji:'⏫', ini:'13:00',fin:'21:00',badge:'badge-seguido3',   color:'#00d4b0',active:false},
+      {id:'intermedio2',nome:'Intermedio 2',  emoji:'🔁', ini:'13:00',fin:'21:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
+      {id:'intermedio3',nome:'Intermedio 3',  emoji:'🔃', ini:'14:00',fin:'22:00',badge:'badge-intermedio3',color:'#8050d0',active:false},
       {id:'partido',   nome:'Partido',         emoji:'✂️', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'00:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   }
@@ -340,8 +344,8 @@ async function cargarPortalCuadrante(user){
 
 function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
   var DIAS_S = ['L','M','X','J','V','S','D'];
-  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',tarde2:'T2',intermedio:'I',intermedio2:'I2',seguido1:'S1',seguido2:'S2',fiesta:'🏖',mediafiesta:'½'};
-  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',tarde2:'#ff9040',intermedio:'#c080ff',intermedio2:'#a070e0',seguido1:'#20b0a0',seguido2:'#10c080',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
+  var TURNO_LABEL = {manana:'M',noche:'N',tarde:'T',tarde2:'T2',intermedio:'I',intermedio2:'I2',intermedio3:'I3',seguido1:'S1',seguido2:'S2',seguido3:'S3',fiesta:'🏖',mediafiesta:'½'};
+  var TURNO_COLOR = {manana:'var(--green)',noche:'#6b8fff',tarde:'#ffa040',tarde2:'#ff9040',intermedio:'#c080ff',intermedio2:'#a070e0',intermedio3:'#8050d0',seguido1:'#20b0a0',seguido2:'#10c080',seguido3:'#00d4b0',fiesta:'#ff6b6b',mediafiesta:'#ffaa40'};
 
   var html = '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-align:center">'+cuad.semana_label+'</div>';
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">';
@@ -365,7 +369,7 @@ function renderPortalCuadrante(el, cuad, emps, turnos, miEmpId){
   });
   html += '</tbody></table></div>';
   html += '<div style="margin-top:10px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">';
-  [{l:'M',c:'var(--green)',tk:'turno_m_label'},{l:'N',c:'#6b8fff',tk:'turno_n_label'},{l:'T',c:'#ffa040',tk:'turno_t_label'},{l:'T2',c:'#ff9040',tk:'turno_t2_label'},{l:'I',c:'#c080ff',tk:'turno_i_label'},{l:'I2',c:'#a070e0',tk:'turno_i2_label'},{l:'S1',c:'#20b0a0',tk:'turno_s1_label'},{l:'S2',c:'#10c080',tk:'turno_s2_label'},{l:'🏖',c:'#ff6b6b',tk:'turno_fiesta'},{l:'½',c:'#ffaa40',tk:'turno_mediafiesta'}]
+  [{l:'M',c:'var(--green)',tk:'turno_m_label'},{l:'N',c:'#6b8fff',tk:'turno_n_label'},{l:'T',c:'#ffa040',tk:'turno_t_label'},{l:'T2',c:'#ff9040',tk:'turno_t2_label'},{l:'I',c:'#c080ff',tk:'turno_i_label'},{l:'I2',c:'#a070e0',tk:'turno_i2_label'},{l:'I3',c:'#8050d0',tk:'turno_i3_label'},{l:'S1',c:'#20b0a0',tk:'turno_s1_label'},{l:'S2',c:'#10c080',tk:'turno_s2_label'},{l:'S3',c:'#00d4b0',tk:'turno_s3_label'},{l:'🏖',c:'#ff6b6b',tk:'turno_fiesta'},{l:'½',c:'#ffaa40',tk:'turno_mediafiesta'}]
     .forEach(function(x){ html += '<span><strong style="color:'+x.c+'">'+x.l+'</strong> '+t(x.tk)+'</span>'; });
   html += '</div>';
   el.innerHTML = html;
@@ -707,7 +711,7 @@ async function empEliminar(bdId, nombre){
 }
 
 function nextStep(from){
-  if(from===1){if(!getLocal()){alert(t('alert_selecciona_local'));return;}updateHeader();buildTurnosConfig();renderTurnosConfigGrid();goStep(2);}
+  if(from===1){if(!getLocal()){alert(t('alert_selecciona_local'));return;}updateHeader();buildTurnosConfig();cargarConfigTurnosGuardada();renderTurnosConfigGrid();goStep(2);}
   else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
   else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();sugerirYRenderizar();goStep(4);}
   else if(from===4){initPaso5();goStep(5);}
@@ -801,8 +805,10 @@ function buildTurnosConfig(){
       {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'18:00',fin:'03:00',badge:'badge-noche',     color:'#3498db',active:true},
       {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:'12:00',fin:'21:00',badge:'badge-intermedio',color:'#9b59b6',active:true},
       {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:'13:00',fin:'22:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
-      {id:'seguido1', nome:'Seguido 1',      emoji:'\u23e9',       ini:'09:00',fin:'18:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
-      {id:'seguido2', nome:'Seguido 2',      emoji:'\u23ed',       ini:'10:00',fin:'19:00',badge:'badge-seguido2',  color:'#10c080',active:false},
+      {id:'seguido1',   nome:'Seguido 1',    emoji:'\u23e9', ini:'09:00',fin:'18:00',badge:'badge-seguido1',   color:'#20b0a0',active:false},
+      {id:'seguido2',   nome:'Seguido 2',    emoji:'\u23ed', ini:'10:00',fin:'19:00',badge:'badge-seguido2',   color:'#10c080',active:false},
+      {id:'seguido3',   nome:'Seguido 3',    emoji:'\u23eb', ini:'11:00',fin:'20:00',badge:'badge-seguido3',   color:'#00d4b0',active:false},
+      {id:'intermedio3',nome:'Intermedio 3', emoji:'\ud83d\udd03', ini:'14:00',fin:'23:00',badge:'badge-intermedio3',color:'#8050d0',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'23:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   } else if(local==="Roto's Burguer"){
@@ -811,10 +817,12 @@ function buildTurnosConfig(){
       {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:'14:00',fin:'23:00',badge:'badge-tarde',     color:'#e67e22',active:true},
       {id:'tarde2',   nome:'Tarde 2',        emoji:'\ud83c\udf06', ini:'15:00',fin:'00:00',badge:'badge-tarde2',    color:'#ff9040',active:false},
       {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:'16:00',fin:'00:00',badge:'badge-noche',     color:'#3498db',active:true},
-      {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:'12:00',fin:'20:00',badge:'badge-intermedio',color:'#9b59b6',active:false},
-      {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:'13:00',fin:'21:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
-      {id:'seguido1', nome:'Seguido 1',      emoji:'\u23e9',       ini:'11:00',fin:'19:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
-      {id:'seguido2', nome:'Seguido 2',      emoji:'\u23ed',       ini:'12:00',fin:'20:00',badge:'badge-seguido2',  color:'#10c080',active:false},
+      {id:'intermedio',  nome:'Intermedio',   emoji:'\ud83d\udd04', ini:'12:00',fin:'20:00',badge:'badge-intermedio', color:'#9b59b6',active:false},
+      {id:'intermedio2', nome:'Intermedio 2',emoji:'\ud83d\udd01', ini:'13:00',fin:'21:00',badge:'badge-intermedio2',color:'#a070e0',active:false},
+      {id:'intermedio3', nome:'Intermedio 3',emoji:'\ud83d\udd03', ini:'14:00',fin:'22:00',badge:'badge-intermedio3',color:'#8050d0',active:false},
+      {id:'seguido1',  nome:'Seguido 1',     emoji:'\u23e9',       ini:'11:00',fin:'19:00',badge:'badge-seguido1',  color:'#20b0a0',active:false},
+      {id:'seguido2',  nome:'Seguido 2',     emoji:'\u23ed',       ini:'12:00',fin:'20:00',badge:'badge-seguido2',  color:'#10c080',active:false},
+      {id:'seguido3',  nome:'Seguido 3',     emoji:'\u23eb',       ini:'13:00',fin:'21:00',badge:'badge-seguido3',  color:'#00d4b0',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:'11:00',fin:'16:00',ini2:'20:00',fin2:'00:00',badge:'badge-partido',color:'#ffa040',active:true,esPartido:true},
     ];
   } else {
@@ -827,10 +835,12 @@ function buildTurnosConfig(){
       {id:'tarde',    nome:'Tarde',          emoji:'\ud83c\udf05', ini:mid1, fin:mid2,badge:'badge-tarde',      color:'#e67e22',active:false},
       {id:'tarde2',   nome:'Tarde 2',        emoji:'\ud83c\udf06', ini:mid1, fin:mid2,badge:'badge-tarde2',     color:'#ff9040',active:false},
       {id:'noche',    nome:'Noche',          emoji:'\ud83c\udf19', ini:mid2, fin:ci,  badge:'badge-noche',      color:'#3498db',active:true},
-      {id:'intermedio', nome:'Intermedio',   emoji:'\ud83d\udd04', ini:iS,   fin:iE,  badge:'badge-intermedio', color:'#9b59b6',active:false},
-      {id:'intermedio2',nome:'Intermedio 2', emoji:'\ud83d\udd01', ini:iS,   fin:iE,  badge:'badge-intermedio2',color:'#a070e0',active:false},
-      {id:'seguido1', nome:'Seguido 1',      emoji:'\u23e9',       ini:ap,   fin:mid2,badge:'badge-seguido1',  color:'#20b0a0',active:false},
-      {id:'seguido2', nome:'Seguido 2',      emoji:'\u23ed',       ini:mid1, fin:ci,  badge:'badge-seguido2',  color:'#10c080',active:false},
+      {id:'intermedio',  nome:'Intermedio',   emoji:'\ud83d\udd04', ini:iS,   fin:iE,  badge:'badge-intermedio', color:'#9b59b6',active:false},
+      {id:'intermedio2', nome:'Intermedio 2',emoji:'\ud83d\udd01', ini:iS,   fin:iE,  badge:'badge-intermedio2',color:'#a070e0',active:false},
+      {id:'intermedio3', nome:'Intermedio 3',emoji:'\ud83d\udd03', ini:iS,   fin:iE,  badge:'badge-intermedio3',color:'#8050d0',active:false},
+      {id:'seguido1',  nome:'Seguido 1',     emoji:'\u23e9',       ini:ap,   fin:mid2,badge:'badge-seguido1',  color:'#20b0a0',active:false},
+      {id:'seguido2',  nome:'Seguido 2',     emoji:'\u23ed',       ini:mid1, fin:ci,  badge:'badge-seguido2',  color:'#10c080',active:false},
+      {id:'seguido3',  nome:'Seguido 3',     emoji:'\u23eb',       ini:ap,   fin:ci,  badge:'badge-seguido3',  color:'#00d4b0',active:false},
       {id:'partido',  nome:'Partido',        emoji:'\u2702\ufe0f', ini:ap,   fin:mid1,ini2:mid2,fin2:ci,badge:'badge-partido',color:'#ffa040',active:false,esPartido:true},
     ];
   }
@@ -875,6 +885,35 @@ function renderTurnosConfigGrid(){
 }
 
 function updTC(id,f,v){var t=turnosConfig.find(function(x){return x.id===id;});if(t)t[f]=v;}
+
+function guardarConfigTurnos(){
+  var key='rt_turnos_config_'+localActivoId;
+  var data=turnosConfig.map(function(tc){
+    var obj={id:tc.id,ini:tc.ini,fin:tc.fin,active:tc.active};
+    if(tc.ini2) obj.ini2=tc.ini2;
+    if(tc.fin2) obj.fin2=tc.fin2;
+    return obj;
+  });
+  localStorage.setItem(key,JSON.stringify(data));
+  showToast('✅ Configuración de turnos guardada','green');
+}
+
+function cargarConfigTurnosGuardada(){
+  var key='rt_turnos_config_'+localActivoId;
+  var saved=localStorage.getItem(key);
+  if(!saved) return false;
+  try{
+    var data=JSON.parse(saved);
+    data.forEach(function(s){
+      var tc=turnosConfig.find(function(x){return x.id===s.id;});
+      if(!tc) return;
+      tc.ini=s.ini; tc.fin=s.fin; tc.active=s.active;
+      if(s.ini2) tc.ini2=s.ini2;
+      if(s.fin2) tc.fin2=s.fin2;
+    });
+    return true;
+  }catch(e){ return false; }
+}
 
 function initDef(local){
   empleados=[];
@@ -1126,7 +1165,7 @@ function getDiasFlojos(){return Array.from(document.getElementById('dias-flojos'
 // ========== LÓGICA FIESTAS v6.4 ==========
 var DIAS_PRIORITARIOS_FIESTA = [0,1,2,3]; // L,M,X,J — primero intentar dar fiesta aquí
 var DIAS_EVITAR_FIESTA = [4,5,6];          // V,S,D — evitar si es posible
-var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, tarde2:1, intermedio:1, intermedio2:1, seguido1:1, seguido2:1};
+var MINIMOS_TURNO = {manana:2, noche:2, tarde:1, tarde2:1, intermedio:1, intermedio2:1, intermedio3:1, seguido1:1, seguido2:1, seguido3:1};
 
 function toMinTurno(str){
   if(!str) return 0;
@@ -1807,6 +1846,8 @@ function guardarImagen(){
     +'.badge-tarde2{background:#2d1e0a;color:#ff9040}'
     +'.badge-seguido1{background:#0a2520;color:#20b0a0}'
     +'.badge-seguido2{background:#0a2018;color:#10c080}'
+    +'.badge-seguido3{background:#002a28;color:#00d4b0}'
+    +'.badge-intermedio3{background:#180d30;color:#8050d0}'
     +'.cob-ok{color:#2ecc71;font-weight:700;font-size:12px}'
     +'.cob-warn{color:#e67e22;font-weight:700;font-size:12px}'
     +'.cob-low{color:#e74c3c;font-weight:700;font-size:12px}'
@@ -1863,6 +1904,8 @@ function imprimirCuadrante(){
     +'.badge-tarde2{background:#ffe8d0;color:#960}'
     +'.badge-seguido1{background:#d0f0ec;color:#0a6050}'
     +'.badge-seguido2{background:#c0f0d8;color:#0a5030}'
+    +'.badge-seguido3{background:#a0ffe8;color:#005040}'
+    +'.badge-intermedio3{background:#e0d0ff;color:#401060}'
     +'.cob-ok{color:#050;font-weight:700;font-size:11px}'
     +'.cob-warn{color:#840;font-weight:700;font-size:11px}'
     +'.cob-low{color:#c00;font-weight:700;font-size:11px}'
@@ -3033,6 +3076,8 @@ async function cargarVistaPublica(cuadId){
       partido:    {bg:'#ffe8c8', color:'#7a3800', border:'#d4905a'},
       seguido1:   {bg:'#c8f5ee', color:'#0a5a50', border:'#5abfb0'},
       seguido2:   {bg:'#c8f5e0', color:'#0a5a30', border:'#5abf80'},
+      seguido3:   {bg:'#b0ffe8', color:'#004838', border:'#30a880'},
+      intermedio3:{bg:'#ddd4f5', color:'#3a1060', border:'#8060c0'},
       fiesta:     {bg:'#f5d4d4', color:'#7a1a1a', border:'#d47a7a'},
       mediafiesta:{bg:'#f5d4d4', color:'#7a1a1a', border:'#d47a7a'}
     };
@@ -3429,7 +3474,7 @@ var I18N = {
     // Misc
     cobertura:'COBERTURA', personas:'pers.',
     turno_m_label:'Mañana', turno_n_label:'Noche', turno_t_label:'Tarde', turno_t2_label:'Tarde 2',
-    turno_i_label:'Intermedio', turno_i2_label:'Intermedio 2', turno_s1_label:'Seguido 1', turno_s2_label:'Seguido 2', turno_p_label:'Partido', turno_mf_label:'½ Media fiesta',
+    turno_i_label:'Intermedio', turno_i2_label:'Intermedio 2', turno_i3_label:'Intermedio 3', turno_s1_label:'Seguido 1', turno_s2_label:'Seguido 2', turno_s3_label:'Seguido 3', turno_p_label:'Partido', turno_mf_label:'½ Media fiesta',
     apoyo_operativo:'Apoyo operativo · No computa en cobertura',
     generado_por:'Generado por', todos_derechos:'Todos los derechos reservados',
     wa_confirm_prefix:'¿Enviar turno individual por WhatsApp a ',
@@ -3693,7 +3738,7 @@ var I18N = {
     err_cambiar_pass:'Error en canviar la contrasenya. Torna-ho a intentar.',
     cobertura:'COBERTURA', personas:'pers.',
     turno_m_label:'Matí', turno_n_label:'Nit', turno_t_label:'Tarda', turno_t2_label:'Tarda 2',
-    turno_i_label:'Intermedi', turno_i2_label:'Intermedi 2', turno_s1_label:'Seguit 1', turno_s2_label:'Seguit 2', turno_p_label:'Partit', turno_mf_label:'½ Mitja festa',
+    turno_i_label:'Intermedi', turno_i2_label:'Intermedi 2', turno_i3_label:'Intermedi 3', turno_s1_label:'Seguit 1', turno_s2_label:'Seguit 2', turno_s3_label:'Seguit 3', turno_p_label:'Partit', turno_mf_label:'½ Mitja festa',
     apoyo_operativo:'Horari orientatiu · No computa en cobertura',
     generado_por:'Generat per', todos_derechos:'Tots els drets reservats',
     wa_confirm_prefix:'Enviar torn individual per WhatsApp a ',
@@ -3946,7 +3991,7 @@ var I18N = {
     err_cambiar_pass:'Error changing password. Please try again.',
     cobertura:'COVERAGE', personas:'staff',
     turno_m_label:'Morning', turno_n_label:'Night', turno_t_label:'Afternoon', turno_t2_label:'Afternoon 2',
-    turno_i_label:'Split', turno_i2_label:'Split 2', turno_s1_label:'Straight 1', turno_s2_label:'Straight 2', turno_p_label:'Split shift', turno_mf_label:'½ Half day off',
+    turno_i_label:'Split', turno_i2_label:'Split 2', turno_i3_label:'Split 3', turno_s1_label:'Straight 1', turno_s2_label:'Straight 2', turno_s3_label:'Straight 3', turno_p_label:'Split shift', turno_mf_label:'½ Half day off',
     apoyo_operativo:'Guide schedule · Not counted in floor coverage',
     generado_por:'Generated by', todos_derechos:'All rights reserved',
     wa_confirm_prefix:'Send individual WhatsApp to ',
@@ -4731,7 +4776,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.32 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.34 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
