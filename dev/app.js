@@ -667,7 +667,7 @@ function goStep(n){
 }
 
 async function initEquipo17(){
-  if(!empleados.length) await cargarEmpleadosBD();
+  await cargarEmpleadosBD();
   if(!turnosConfig.length) buildTurnosConfig();
   renderEmpleados();
   renderLorenaHorario();
@@ -4673,7 +4673,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.27 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.28 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
