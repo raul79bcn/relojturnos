@@ -4495,10 +4495,10 @@ var IA_CATS = {
   }
 };
 
-var iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '', canal: null };
+var iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '', canal: null, imagen: null };
 
 function initAsistenteIA(){
-  iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '', canal: null };
+  iaEstado = { cat: null, opcionIdx: null, promtBase: '', catKey: '', canal: null, imagen: null };
   document.getElementById('ia-paso1').style.display = '';
   var canalEl = document.getElementById('ia-paso-canal');
   if(canalEl) canalEl.style.display = 'none';
@@ -4506,6 +4506,10 @@ function initAsistenteIA(){
   document.getElementById('ia-paso3').style.display = 'none';
   document.getElementById('ia-respuesta').style.display = 'none';
   document.getElementById('ia-loading').style.display = 'none';
+  var preview = document.getElementById('ia-imagen-preview');
+  if(preview) preview.style.display = 'none';
+  var fi = document.getElementById('ia-file-input');
+  if(fi) fi.value = '';
 }
 
 function iaSelCat(catKey){
@@ -4651,7 +4655,9 @@ async function iaEnviar(){
         model: CLAUDE_MODEL,
         max_tokens: 1024,
         system: systemPrompt,
-        messages: [{ role: 'user', content: msgFinal }]
+        messages: [{ role: 'user', content: iaEstado.imagen
+          ? [{ type:'image', source:{ type:'base64', media_type:iaEstado.imagen.mediaType, data:iaEstado.imagen.base64 }}, { type:'text', text:msgFinal }]
+          : msgFinal }]
       })
     });
 
@@ -4678,6 +4684,36 @@ async function iaEnviar(){
 
 function iaNuevaConsulta(){
   initAsistenteIA();
+}
+
+function iaAdjuntarImagen(){
+  var fi = document.getElementById('ia-file-input');
+  if(fi) fi.click();
+}
+
+function iaImagenSeleccionada(event){
+  var file = event.target.files && event.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ showToast('Solo se permiten imágenes', 'red'); return; }
+  if(file.size > 10 * 1024 * 1024){ showToast('La imagen no puede superar 10MB', 'red'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var base64 = e.target.result.split(',')[1];
+    iaEstado.imagen = { base64: base64, mediaType: file.type };
+    var thumb = document.getElementById('ia-imagen-thumb');
+    var preview = document.getElementById('ia-imagen-preview');
+    if(thumb) thumb.src = e.target.result;
+    if(preview) preview.style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function iaQuitarImagen(){
+  iaEstado.imagen = null;
+  var preview = document.getElementById('ia-imagen-preview');
+  if(preview) preview.style.display = 'none';
+  var fi = document.getElementById('ia-file-input');
+  if(fi) fi.value = '';
 }
 
 function iaCopiar(){
@@ -4949,7 +4985,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.41 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.43 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5234,10 +5270,12 @@ function clRenderTareas(){
     header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)';
     header.innerHTML =
       '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">'+(GRUPO_ICONS[grupo]||'')+' '+(GRUPO_LABELS[grupo]||grupo)+'</div>'
-      +'<div style="display:flex;align-items:center;gap:6px">'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
       +'<span style="font-size:11px;color:var(--muted)">Responsable:</span>'
       +'<select style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none" onchange="clSetResponsableGrupo(\''+grupo+'\',this.value)">'
-      +optsHtml+'</select></div>';
+      +optsHtml+'</select>'
+      +'<button onclick="clEnviarWAGrupo(\''+grupo+'\')" title="Enviar checklist de esta sección por WhatsApp" style="background:none;border:1px solid #25d366;border-radius:6px;color:#25d366;font-size:11px;padding:2px 7px;cursor:pointer;flex-shrink:0">💬 WA</button>'
+      +'</div>';
     section.appendChild(header);
 
     // Tareas
@@ -5421,25 +5459,45 @@ var wclEmpleado = '';
 
 function checkWorkerChecklistUrl(){
   var params = new URLSearchParams(window.location.search);
+  // New format: ?checklist=FECHA&empleado=EMP&seccion=GRUPO
+  var checklist = params.get('checklist');
+  var empleado  = params.get('empleado');
+  var seccion   = params.get('seccion');
+  // Legacy format: ?cl=FECHA&emp=EMP
   var cl  = params.get('cl');
   var emp = params.get('emp');
-  if(!cl || !emp) return;
-  emp = decodeURIComponent(emp);
+
+  var fecha, nombre, sec;
+  if(checklist && empleado){
+    fecha  = checklist;
+    nombre = decodeURIComponent(empleado);
+    sec    = seccion ? decodeURIComponent(seccion) : null;
+  } else if(cl && emp){
+    fecha  = cl;
+    nombre = decodeURIComponent(emp);
+    sec    = null;
+  } else {
+    return;
+  }
+
   var loginEl = document.getElementById('login-screen');
   if(loginEl) loginEl.style.display = 'none';
   var view = document.getElementById('worker-cl-view');
   if(view) view.style.display = '';
-  wclInit(cl, emp);
+  wclInit(fecha, nombre, sec);
 }
 
-async function wclInit(fecha, empleado){
+async function wclInit(fecha, empleado, seccion){
   wclFecha    = fecha;
   wclEmpleado = empleado;
+  var GRUPO_LABELS = { barra:'Barra', sala:'Sala', cocina:'Cocina', almacen:'Almacén' };
+  var seccionLabel = seccion ? (GRUPO_LABELS[seccion.toLowerCase()] || seccion) : null;
+
   var tEl = document.getElementById('wcl-titulo');
   var eEl = document.getElementById('wcl-empleado-txt');
   var fEl = document.getElementById('wcl-fecha-txt');
-  if(tEl) tEl.textContent = '✅ Checklist de ' + empleado;
-  if(eEl) eEl.textContent = '👤 ' + empleado;
+  if(tEl) tEl.textContent = '✅ Checklist de ' + empleado + (seccionLabel ? ' — ' + seccionLabel : '');
+  if(eEl) eEl.textContent = '👤 ' + empleado + (seccionLabel ? ' · ' + seccionLabel : '');
   if(fEl){
     var d = new Date(fecha + 'T12:00:00');
     fEl.textContent = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -5448,18 +5506,27 @@ async function wclInit(fecha, empleado){
     var rows = await sbGet('checklist_diario',
       'fecha=eq.'+fecha+'&responsable=eq.'+encodeURIComponent(empleado)+'&order=posicion.asc');
     if(rows && rows.length){
-      wclTareas = rows.map(function(r,i){
+      var filtered = seccion
+        ? rows.filter(function(r){ return (r.grupo||'').toLowerCase() === seccion.toLowerCase(); })
+        : rows;
+      wclTareas = filtered.map(function(r,i){
         var base = CL_TAREAS_BASE[r.posicion] || CL_TAREAS_BASE[i] || {};
         return {id:r.id, texto:r.tarea, grupo:r.grupo||base.grupo||'Sala', tipo:r.tipo||base.tipo||'check',
                 hecha:!!r.completada, hora:r.hora_completado||'', posicion:r.posicion||0};
       });
     } else {
-      wclTareas = CL_TAREAS_BASE.map(function(tarea,i){
+      var baseTasks = seccion
+        ? CL_TAREAS_BASE.filter(function(t){ return t.grupo.toLowerCase() === seccion.toLowerCase(); })
+        : CL_TAREAS_BASE;
+      wclTareas = baseTasks.map(function(tarea,i){
         return {id:null, texto:tarea.texto, grupo:tarea.grupo, tipo:tarea.tipo, hecha:false, hora:'', posicion:i};
       });
     }
   }catch(e){
-    wclTareas = CL_TAREAS_BASE.map(function(tarea,i){
+    var baseTasks = seccion
+      ? CL_TAREAS_BASE.filter(function(t){ return t.grupo.toLowerCase() === seccion.toLowerCase(); })
+      : CL_TAREAS_BASE;
+    wclTareas = baseTasks.map(function(tarea,i){
       return {id:null, texto:tarea.texto, grupo:tarea.grupo, tipo:tarea.tipo, hecha:false, hora:'', posicion:i};
     });
   }
@@ -5517,20 +5584,23 @@ async function wclToggle(idx){
   }catch(e){ console.warn('wcl save:', e); }
 }
 
-function clEnviarWA(){
+function clEnviarWAGrupo(grupo){
   var fecha = clFechaISO();
-  var emp = Object.values(clResponsablesGrupo).find(function(v){ return v; }) || '';
-  if(!emp){ showToast('Carga primero el checklist del día', 'orange'); return; }
+  var emp = clResponsablesGrupo[grupo] || '';
+  if(!emp){ showToast('Asigna primero un responsable a esta sección', 'orange'); return; }
 
-  var url = location.origin + location.pathname + '?cl=' + fecha + '&emp=' + encodeURIComponent(emp);
-  var msg = 'Hola ' + emp + '! 👋 Aquí tienes tu checklist de hoy:\n' + url;
+  var GRUPO_LABELS = { Barra:'Barra', Sala:'Sala', Cocina:'Cocina', Almacen:'Almacén' };
+  var seccion = grupo.toLowerCase();
+  var url = location.origin + location.pathname
+    + '?checklist=' + fecha
+    + '&empleado=' + encodeURIComponent(emp)
+    + '&seccion=' + encodeURIComponent(seccion);
+  var msg = 'Hola ' + emp + '! 👋 Aquí tienes tu checklist de ' + (GRUPO_LABELS[grupo]||grupo) + ' para hoy:\n' + url;
 
-  // Obtener teléfono del empleado desde BD
   var telefono = '';
   if(window._empleadosBDDatos && window._empleadosBDDatos[emp]){
     telefono = (window._empleadosBDDatos[emp].telefono || '').replace(/[\s\-()]/g, '');
   }
-  // Normalizar: añadir +34 si es número español sin prefijo (9 dígitos empezando por 6/7)
   if(telefono && !telefono.startsWith('+') && /^[67]\d{8}$/.test(telefono)){
     telefono = '34' + telefono;
   }
@@ -5539,7 +5609,7 @@ function clEnviarWA(){
     : 'https://wa.me/?text=' + encodeURIComponent(msg);
 
   window.open(waUrl, '_blank');
-  showToast('Abriendo WhatsApp para ' + emp, 'green');
+  showToast('Abriendo WhatsApp para ' + emp + ' (' + (GRUPO_LABELS[grupo]||grupo) + ')', 'green');
 }
 
 // ========== CUADRANTE AUTO-LOAD v7.11 ==========

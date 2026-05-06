@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.41 – Grupo El Reloj</title>
+<title>RelojTurnos v7.43 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.41</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.43</span></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.41 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.43 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -1031,6 +1031,14 @@
           <label>Añade contexto o detalles (opcional)</label>
           <textarea id="ia-contexto" rows="4" placeholder="Describe tu situación con más detalle..." style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:Arial,sans-serif;font-size:14px;outline:none;resize:vertical"></textarea>
         </div>
+        <div style="margin-bottom:14px">
+          <input type="file" id="ia-file-input" accept="image/*" style="display:none" onchange="iaImagenSeleccionada(event)">
+          <button class="btn btn-ghost btn-sm" type="button" onclick="iaAdjuntarImagen()" style="font-size:12px">📎 Adjuntar imagen</button>
+          <div id="ia-imagen-preview" style="display:none;margin-top:10px;align-items:center;gap:12px">
+            <img id="ia-imagen-thumb" style="max-width:120px;max-height:90px;border-radius:6px;object-fit:contain;border:1px solid var(--border)">
+            <button class="btn btn-ghost btn-sm" type="button" onclick="iaQuitarImagen()" style="font-size:11px;color:var(--red);border-color:var(--red)">✕ Quitar</button>
+          </div>
+        </div>
         <button class="btn btn-primary" onclick="iaEnviar()" id="ia-btn-enviar">🤖 Consultar a Claude</button>
       </div>
 
@@ -1213,7 +1221,6 @@
 
       <div class="btn-row space">
         <button class="btn btn-secondary" onclick="goStep(0)">← Dashboard</button>
-        <button class="btn btn-ghost btn-sm" onclick="clEnviarWA()" style="border-color:#25d366;color:#25d366" title="Envía el enlace del checklist al trabajador por WhatsApp">&#128172; Enviar por WhatsApp</button>
         <button class="btn btn-ghost btn-sm" onclick="clCargarDia()" style="border-color:var(--green);color:var(--green)">&#128260; Actualizar</button>
       </div>
     </div>
@@ -1662,7 +1669,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.41 &middot; Grupo El Reloj
+      RelojTurnos v7.43 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
