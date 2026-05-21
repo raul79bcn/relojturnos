@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.48 – Grupo El Reloj</title>
+<title>RelojTurnos v7.49 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.48</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.49</span></div>
   </div>
 </div>
 
@@ -102,7 +102,6 @@
     <div class="snav-item" id="snav-14" onclick="goStep(14);closeSidebar()">&#129302; Asistente IA</div>
     <div class="snav-item" id="snav-15" onclick="goStep(15);closeSidebar()">&#9888;&#65039; Avisos</div>
     <div class="snav-item" id="snav-16" onclick="goStep(16);closeSidebar()">&#9989; Checklist</div>
-    <div class="snav-item" id="snav-13" onclick="goStep(13);closeSidebar()">&#129482; Inventario cocina</div>
     <div class="snav-sep"></div>
     <div class="snav-label">Administración</div>
     <div class="snav-item" id="snav-7" onclick="goStep(7);closeSidebar()">&#128176; Costes</div>
@@ -113,7 +112,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.48 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.49 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -938,11 +937,6 @@
         <div class="dash-btn-label">Asistente IA</div>
         <div class="dash-btn-sub">Claude te ayuda</div>
       </div>
-      <div class="dash-btn" onclick="goStep(13)" title="Inventario cocina al cierre" id="dash-btn-inv">
-        <div class="dash-btn-icon">🧊</div>
-        <div class="dash-btn-label">Inventario</div>
-        <div class="dash-btn-sub">Stock al cierre</div>
-      </div>
       <div class="dash-btn" onclick="goStep(12)" title="Gestión de compras">
         <div class="dash-btn-icon">🛒</div>
         <div class="dash-btn-label">Compras</div>
@@ -963,35 +957,6 @@
         <div class="dash-btn-icon">⚙️</div>
         <div class="dash-btn-label">Ajustes</div>
         <div class="dash-btn-sub">Personalización</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SCREEN 13: INVENTARIO COCINA -->
-  <div class="screen" id="screen13">
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0">🧊 Inventario Cocina</div>
-        <span style="font-size:9px;background:#3498db20;color:#3498db;padding:3px 9px;border-radius:12px;font-weight:700">COCINA</span>
-      </div>
-      <div class="card-sub">Stock al cierre · alerta automática si baja del mínimo</div>
-
-      <div id="inv-familias" style="display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 12px"></div>
-
-      <div id="inv-setup" style="display:none"></div>
-      <div id="inv-cargando" style="display:none;text-align:center;padding:24px;color:var(--muted);font-size:13px">⏳ Cargando...</div>
-      <div id="inv-productos"></div>
-
-      <div id="inv-alerta-btn" style="display:none;margin-top:14px">
-        <button onclick="invAvisarWA()" style="width:100%;background:#e74c3c;color:#fff;border:none;border-radius:10px;padding:14px 20px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.3px">
-          📲 Avisar a Lorena y Domingo — productos bajo mínimo
-        </button>
-      </div>
-
-      <div class="btn-row space" style="margin-top:16px">
-        <button class="btn btn-secondary" onclick="goStep(0)">← Dashboard</button>
-        <button class="btn btn-ghost btn-sm" onclick="initInventario()" style="border-color:var(--green);color:var(--green)">🔄 Actualizar</button>
-        <button class="btn btn-primary" onclick="invGuardar()" id="inv-btn-guardar">💾 Guardar</button>
       </div>
     </div>
   </div>
@@ -1726,7 +1691,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.48 &middot; Grupo El Reloj
+      RelojTurnos v7.49 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
