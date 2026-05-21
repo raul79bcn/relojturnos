@@ -4992,7 +4992,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.45 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.46 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5188,6 +5188,9 @@ async function clCargarDia(){
   clFechaActual = fecha;
   clResponsablesGrupo = { Barra:'', Sala:'', Cocina:'', Almacen:'' };
 
+  var loadEl = document.getElementById('cl-cargando');
+  if(loadEl) loadEl.style.display = '';
+
   var tareasGuardadas = null;
   var sbError = null;
   try{
@@ -5229,6 +5232,7 @@ async function clCargarDia(){
         +'<pre style="background:var(--dark);border-radius:6px;padding:10px;font-size:11px;color:#2ecc71;overflow-x:auto;white-space:pre-wrap">'+crearSQL+'</pre>'
         +'<div style="font-size:11px;color:var(--muted);margin-top:8px">Error exacto: '+errMsg+'</div>'
         +'</div>';
+      if(loadEl) loadEl.style.display = 'none';
       return;
     }
     showToast('Error BD: ' + errMsg, 'red');
@@ -5273,10 +5277,13 @@ async function clCargarDia(){
       if(notaEl) notaEl.value = '';
     }
     clRenderTareas();
+    if(loadEl) loadEl.style.display = 'none';
+    showToast('✓ Actualizado', 'green');
   }catch(e){
     console.error('[Checklist] Error al cargar tareas:', e);
     var cont = document.getElementById('cl-tareas-lista');
     if(cont) cont.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center">⚠️ Error al cargar el checklist: '+e.message+'</div>';
+    if(loadEl) loadEl.style.display = 'none';
   }
 }
 
@@ -5662,7 +5669,18 @@ function wclConfirmarYEnviar(){
   var btn = document.getElementById('wcl-btn-confirmar');
   if(btn){ btn.disabled = true; btn.textContent = '✅ Enviado'; }
 
-  var lorena = localStorage.getItem('rt_wa_lorena') || '';
+  var lorena = (localStorage.getItem('rt_wa_lorena') || '').trim();
+  console.log('[WA Lorena] rt_wa_lorena:', lorena || '(vacío)');
+  if(!lorena){
+    lorena = (localStorage.getItem('cfg-wa-lorena') || '').trim(); // fallback clave incorrecta
+    if(lorena) console.log('[WA Lorena] encontrado en clave alternativa cfg-wa-lorena:', lorena);
+  }
+  if(!lorena){
+    var inputLor = document.getElementById('cfg-wa-lorena');
+    lorena = inputLor ? (inputLor.value || '').replace(/\s+/g,'') : '';
+    if(lorena) console.log('[WA Lorena] encontrado en input DOM:', lorena);
+  }
+  console.log('[WA Lorena] número final:', lorena || '(no configurado)');
   var GRUPO_LABELS = { barra:'Barra', sala:'Sala', cocina:'Cocina', almacen:'Almacén' };
   var secLabel = wclSeccion ? (GRUPO_LABELS[wclSeccion] || wclSeccion) : 'su sección';
   var d = new Date(wclFecha + 'T12:00:00');
