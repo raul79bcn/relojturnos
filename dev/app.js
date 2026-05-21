@@ -4999,7 +4999,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.47 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.48 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5811,7 +5811,7 @@ async function abrirCuadrante(){
 
 
 
-// ========== INVENTARIO COCINA v7.47 (screen13) ==========
+// ========== INVENTARIO COCINA v7.48 (screen13) ==========
 
 var INV_FAMILIAS_DEFAULT = [
   {id:1, nombre:'Carnes',      emoji:'🥩'},
@@ -6181,6 +6181,8 @@ function cmpRenderArticulos(){
     + '<th style="padding:8px 6px;text-align:right">Coste</th>'
     + '<th style="padding:8px 6px;text-align:right">PVP</th>'
     + '<th style="padding:8px 6px;text-align:right">Margen</th>'
+    + '<th style="padding:8px 6px;text-align:right">Stock mín.</th>'
+    + '<th style="padding:8px 6px;text-align:right">Stock actual</th>'
     + '<th style="padding:8px 6px;text-align:center">Acciones</th>'
     + '</tr></thead><tbody>'
     + lista.map(function(a){
@@ -6188,6 +6190,9 @@ function cmpRenderArticulos(){
         var pvp    = parseFloat(a.pvp)           || 0;
         var margen = pvp > 0 ? Math.round(((pvp - coste) / pvp) * 100) : null;
         var mColor = margen === null ? 'var(--muted)' : (margen >= 60 ? '#2ecc71' : margen >= 40 ? '#f39c12' : '#e74c3c');
+        var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+        var sAct = a.stock_actual  != null ? parseFloat(a.stock_actual)  : null;
+        var sColor = (sMin !== null && sAct !== null) ? (sAct <= sMin ? '#e74c3c' : '#2ecc71') : 'inherit';
         return '<tr style="border-top:1px solid var(--border)">'
           + '<td style="padding:8px 6px;font-weight:600">'+a.nombre+'</td>'
           + '<td style="padding:8px 6px;color:var(--muted)">'+cmpNombreFamilia(a.familia_id)+'</td>'
@@ -6195,6 +6200,8 @@ function cmpRenderArticulos(){
           + '<td style="padding:8px 6px;text-align:right;color:var(--red)">'+(coste ? coste.toFixed(2)+' €' : '—')+'</td>'
           + '<td style="padding:8px 6px;text-align:right">'+(pvp ? pvp.toFixed(2)+' €' : '—')+'</td>'
           + '<td style="padding:8px 6px;text-align:right;font-weight:700;color:'+mColor+'">'+(margen !== null ? margen+'%' : '—')+'</td>'
+          + '<td style="padding:8px 6px;text-align:right;color:var(--muted)">'+(sMin !== null ? sMin : '—')+'</td>'
+          + '<td style="padding:8px 6px;text-align:right;font-weight:700;color:'+sColor+'">'+(sAct !== null ? sAct : '—')+'</td>'
           + '<td style="padding:8px 6px;text-align:center;white-space:nowrap">'
           + '<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="cmpAbrirModalArticulo('+a.id+')">✏️</button> '
           + '<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px;color:var(--red);border-color:var(--red)" onclick="cmpEliminarArticulo('+a.id+')">🗑</button>'
@@ -6565,6 +6572,8 @@ function cmpAbrirModalArticulo(id){
   document.getElementById('cmp-art-local').value          = a ? (a.local_id||'1') : (currentUser ? currentUser.local_id||'1' : '1');
   document.getElementById('cmp-art-pvp').value            = a ? a.pvp             : '';
   document.getElementById('cmp-art-ventas').value         = a ? a.ventas_semana   : '';
+  document.getElementById('cmp-art-stock-minimo').value   = a && a.stock_minimo != null ? a.stock_minimo : '';
+  document.getElementById('cmp-art-stock-actual').value   = a && a.stock_actual  != null ? a.stock_actual  : '';
   document.getElementById('cmp-art-desc').value           = a ? a.desc            : '';
   document.getElementById('cmp-modal-art-titulo').textContent = a ? '📦 Editar Artículo' : '📦 Nuevo Artículo';
   document.getElementById('cmp-art-margen-preview').style.display = 'none';
@@ -6606,6 +6615,8 @@ function cmpGuardarArticulo(){
     local_id:     parseInt(document.getElementById('cmp-art-local').value)||1,
     pvp:          (document.getElementById('cmp-art-pvp').value||'').trim(),
     ventas_semana:(document.getElementById('cmp-art-ventas').value||'').trim(),
+    stock_minimo: document.getElementById('cmp-art-stock-minimo').value !== '' ? parseFloat(document.getElementById('cmp-art-stock-minimo').value) : null,
+    stock_actual: document.getElementById('cmp-art-stock-actual').value  !== '' ? parseFloat(document.getElementById('cmp-art-stock-actual').value)  : null,
     desc:         (document.getElementById('cmp-art-desc').value||'').trim()
   };
   if(idVal){
