@@ -672,8 +672,8 @@ function goStep(n){
   var stepsBar=document.getElementById('steps-bar');
   if(stepsBar) stepsBar.style.display=(n>=1&&n<=6)?'flex':'none';
   // Marcar item activo en sidebar
-  var snavMap={0:0,1:1,2:1,3:1,4:1,5:1,6:1,7:7,8:8,9:9,10:10,12:12,14:14,15:15,16:16,17:17};
-  [0,1,7,8,9,10,12,14,15,16,17].forEach(function(i){
+  var snavMap={0:0,1:1,2:1,3:1,4:1,5:1,6:1,7:7,8:8,9:9,10:10,12:12,13:13,14:14,15:15,16:16,17:17};
+  [0,1,7,8,9,10,12,13,14,15,16,17].forEach(function(i){
     var el=document.getElementById('snav-'+i);
     if(el) el.classList.toggle('active', snavMap[n]===i);
   });
@@ -682,6 +682,7 @@ function goStep(n){
   if(n===9) cargarUsuarios();
   if(n===10){ renderPersonalizacion(); cargarParamsCosteGuardados(); var sl=localStorage.getItem('rt_logo'); aplicarLogoGuardado(sl||null); }
   if(n===12){ initCompras(); }
+  if(n===13){ initInventario(); }
   if(n===14){ initAsistenteIA(); }
   if(n===15){ initAvisos(); }
   if(n===16){ initChecklist(); }
@@ -3107,6 +3108,12 @@ function checkMostrarBtnUsuarios(){
     var el = document.getElementById(id);
     if(el) el.style.display = esDir ? '' : 'none';
   });
+  // snav-13 visible para directora + cocinero
+  var sn13 = document.getElementById('snav-13');
+  if(sn13) sn13.style.display = (esDir || u.rol==='cocinero') ? '' : 'none';
+  // dashboard tile inventario
+  var dbi = document.getElementById('dash-btn-inv');
+  if(dbi) dbi.style.display = (esDir || u.rol==='cocinero') ? '' : 'none';
   // snav-8 (Dirección Gral.) solo para directora_general y admin
   var sn8 = document.getElementById('snav-8');
   if(sn8) sn8.style.display = (u.rol==='directora_general'||u.rol==='admin') ? '' : 'none';
@@ -4992,7 +4999,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.46 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.47 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5803,6 +5810,286 @@ async function abrirCuadrante(){
 }
 
 
+
+// ========== INVENTARIO COCINA v7.47 (screen13) ==========
+
+var INV_FAMILIAS_DEFAULT = [
+  {id:1, nombre:'Carnes',      emoji:'🥩'},
+  {id:2, nombre:'Pescados',    emoji:'🐟'},
+  {id:3, nombre:'Verduras',    emoji:'🥦'},
+  {id:4, nombre:'Frutas',      emoji:'🍎'},
+  {id:5, nombre:'Lácteos',     emoji:'🥛'},
+  {id:6, nombre:'Secos',       emoji:'🌾'},
+  {id:7, nombre:'Congelados',  emoji:'🧊'},
+  {id:8, nombre:'Condimentos', emoji:'🧂'}
+];
+var INV_LORENA_TEL = '34625282869';
+
+var invFamilias      = [];
+var invArticulos     = [];
+var invFamiliaActual = null;
+var invBajoMinimo    = [];
+
+function invEsDir(){
+  var u = currentUser;
+  return u && (u.rol==='directora'||u.rol==='directora_general'||u.rol==='admin');
+}
+function invPuedeAcceder(){
+  var u = currentUser;
+  return u && ['directora','directora_general','admin','cocinero'].indexOf(u.rol) >= 0;
+}
+
+async function initInventario(){
+  if(!invPuedeAcceder()){
+    var pc = document.getElementById('inv-productos');
+    if(pc) pc.innerHTML = '<div style="color:var(--muted);text-align:center;padding:24px">Sin permisos para este módulo</div>';
+    return;
+  }
+  var loadEl  = document.getElementById('inv-cargando');
+  var setupEl = document.getElementById('inv-setup');
+  var alertBtn = document.getElementById('inv-alerta-btn');
+  if(loadEl)  loadEl.style.display  = '';
+  if(setupEl) setupEl.style.display = 'none';
+  if(alertBtn) alertBtn.style.display = 'none';
+
+  try{
+    var fRows = await sbGet('cmp_familias', 'order=id.asc');
+    invFamilias = (fRows && fRows.length) ? fRows : INV_FAMILIAS_DEFAULT;
+  }catch(e){ invFamilias = INV_FAMILIAS_DEFAULT; }
+
+  invRenderFamilias();
+
+  var fid = invFamiliaActual || (invFamilias[0] && invFamilias[0].id);
+  if(fid) await invSelFamilia(fid);
+  if(loadEl) loadEl.style.display = 'none';
+}
+
+function invRenderFamilias(){
+  var cont = document.getElementById('inv-familias');
+  if(!cont) return;
+  cont.innerHTML = invFamilias.map(function(f){
+    var active = f.id === invFamiliaActual;
+    return '<button onclick="invSelFamilia('+f.id+')" style="padding:6px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;'
+      +(active
+        ? 'background:var(--accent);color:var(--darker);border:1px solid var(--accent)'
+        : 'background:var(--darker);color:var(--text);border:1px solid var(--border)')
+      +'">'+(f.emoji||'')+' '+(f.nombre||'')+'</button>';
+  }).join('');
+}
+
+async function invSelFamilia(familiaId){
+  invFamiliaActual = familiaId;
+  invRenderFamilias();
+  var loadEl = document.getElementById('inv-cargando');
+  if(loadEl) loadEl.style.display = '';
+
+  var localId = currentUser ? currentUser.local_id : null;
+  var filtros = 'familia_id=eq.'+familiaId+'&order=nombre.asc';
+  if(localId) filtros += '&local_id=eq.'+localId;
+
+  try{
+    var rows = await sbGet('cmp_articulos', filtros);
+    invArticulos = rows || [];
+    invRenderProductos();
+  }catch(e){
+    var msg = e.message || '';
+    if(msg.includes('does not exist') || msg.includes('42P01') || msg.includes('relation')){
+      invMostrarSetupSQL();
+      invArticulos = [];
+    } else {
+      var cont = document.getElementById('inv-productos');
+      if(cont) cont.innerHTML = '<div style="color:var(--red);padding:12px;border-radius:8px;background:var(--darker)">Error: '+msg+'</div>';
+      invArticulos = [];
+    }
+  }
+  if(loadEl) loadEl.style.display = 'none';
+}
+
+function invRenderProductos(){
+  var cont = document.getElementById('inv-productos');
+  if(!cont) return;
+  var esDir = invEsDir();
+
+  if(!invArticulos.length){
+    cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:28px;font-size:13px">'
+      +'Sin productos en esta familia.<br><span style="font-size:11px">Añádelos en 🛒 Compras → Artículos.</span></div>';
+    invCheckMinimo();
+    return;
+  }
+
+  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+    +'<thead><tr style="border-bottom:2px solid var(--border);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px">'
+    +'<th style="text-align:left;padding:8px 6px">Producto</th>'
+    +'<th style="text-align:center;padding:8px 6px">Unidad</th>'
+    +'<th style="text-align:center;padding:8px 6px">Mínimo'+(esDir?' ✏':'')+'</th>'
+    +'<th style="text-align:center;padding:8px 6px;color:var(--accent)">Queda ahora ↓</th>'
+    +'<th style="text-align:center;padding:8px 6px">Estado</th>'
+    +'</tr></thead><tbody>';
+
+  invArticulos.forEach(function(art){
+    var stockMin = art.stock_minimo != null ? art.stock_minimo : '';
+    var stockAct = art.stock_actual  != null ? art.stock_actual  : '';
+    var bajMin   = stockMin !== '' && stockAct !== '' && parseFloat(stockAct) <= parseFloat(stockMin);
+    var rowBg    = bajMin ? 'background:rgba(231,76,60,.12)' : '';
+    html +=
+      '<tr style="border-bottom:1px solid var(--border);'+rowBg+'">'
+      +'<td style="padding:8px 6px;font-weight:600">'+art.nombre+'</td>'
+      +'<td style="text-align:center;padding:8px 6px;color:var(--muted);font-size:12px">'+(art.unidad||'—')+'</td>'
+      +'<td style="text-align:center;padding:8px 6px">'
+      +(esDir
+        ? '<input type="number" min="0" step="0.1" value="'+(stockMin)+'" id="inv-min-'+art.id+'" oninput="invCheckMinimo()" '
+          +'style="width:64px;text-align:center;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 2px;color:var(--text);font-size:12px;outline:none">'
+        : '<span style="font-size:12px">'+(stockMin !== '' ? stockMin : '—')+'</span>')
+      +'</td>'
+      +'<td style="text-align:center;padding:8px 6px">'
+      +'<input type="number" min="0" step="0.1" value="'+stockAct+'" id="inv-act-'+art.id+'" oninput="invCheckMinimo()" '
+      +'style="width:76px;text-align:center;background:var(--card);border:2px solid '+(bajMin?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 2px;color:var(--text);font-size:14px;font-weight:700;outline:none">'
+      +'</td>'
+      +'<td style="text-align:center;padding:8px 6px">'
+      +(bajMin
+        ? '<span style="color:var(--red);font-weight:700;font-size:11px">⚠ BAJO</span>'
+        : (stockAct !== ''
+          ? '<span style="color:var(--green);font-size:13px">✓</span>'
+          : '<span style="color:var(--muted);font-size:10px">—</span>'))
+      +'</td></tr>';
+  });
+  html += '</tbody></table>';
+
+  var conFecha = invArticulos.filter(function(a){ return a.ultima_actualizacion; });
+  if(conFecha.length){
+    var ult = conFecha.sort(function(a,b){ return b.ultima_actualizacion.localeCompare(a.ultima_actualizacion); })[0];
+    var dt = new Date(ult.ultima_actualizacion);
+    html += '<div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:right">'
+      +'Último registro: '+dt.toLocaleDateString('es-ES')+' '+dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+      +(ult.ultima_actualizacion_por ? ' · '+ult.ultima_actualizacion_por : '')+'</div>';
+  }
+  html += '</div>';
+  cont.innerHTML = html;
+  invCheckMinimo();
+}
+
+function invCheckMinimo(){
+  invBajoMinimo = invArticulos.filter(function(art){
+    var actEl  = document.getElementById('inv-act-'+art.id);
+    var minEl  = document.getElementById('inv-min-'+art.id);
+    var actVal = actEl && actEl.value !== '' ? parseFloat(actEl.value) : (art.stock_actual  != null ? parseFloat(art.stock_actual)  : NaN);
+    var minVal = minEl && minEl.value !== '' ? parseFloat(minEl.value) : (art.stock_minimo != null ? parseFloat(art.stock_minimo) : NaN);
+    return !isNaN(actVal) && !isNaN(minVal) && actVal <= minVal;
+  });
+  var alertBtn = document.getElementById('inv-alerta-btn');
+  if(alertBtn) alertBtn.style.display = invBajoMinimo.length ? '' : 'none';
+}
+
+async function invGuardar(){
+  var btn = document.getElementById('inv-btn-guardar');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+
+  var esDir  = invEsDir();
+  var ahora  = new Date().toISOString();
+  var quien  = currentUser ? currentUser.nombre : '';
+  var errores = [];
+
+  for(var i = 0; i < invArticulos.length; i++){
+    var art    = invArticulos[i];
+    var actEl  = document.getElementById('inv-act-'+art.id);
+    var minEl  = document.getElementById('inv-min-'+art.id);
+    var actVal = actEl && actEl.value !== '' ? parseFloat(actEl.value) : null;
+    var minVal = esDir && minEl && minEl.value !== '' ? parseFloat(minEl.value) : null;
+    if(actVal === null && minVal === null) continue;
+
+    var patch = { ultima_actualizacion: ahora, ultima_actualizacion_por: quien };
+    if(actVal !== null) patch.stock_actual  = actVal;
+    if(minVal !== null) patch.stock_minimo  = minVal;
+    if(actVal !== null) art.stock_actual    = actVal;
+    if(minVal !== null) art.stock_minimo    = minVal;
+    art.ultima_actualizacion     = ahora;
+    art.ultima_actualizacion_por = quien;
+
+    if(art.id){
+      try{ await sbPatch('cmp_articulos', art.id, patch); }
+      catch(e){ errores.push(art.nombre+': '+e.message); console.error('[INV]', art.nombre, e.message); }
+    }
+  }
+
+  invRenderProductos();
+
+  if(btn){ btn.disabled = false; btn.textContent = '💾 Guardar'; }
+
+  if(errores.length){
+    var e0 = errores[0];
+    if(e0.includes('column') || e0.includes('42703') || e0.includes('does not exist')){
+      invMostrarSetupSQL();
+    } else {
+      showToast('Error: '+e0, 'red');
+    }
+  } else {
+    showToast('✓ Inventario guardado', 'green');
+    if(invBajoMinimo.length) showToast('⚠ '+invBajoMinimo.length+' producto(s) bajo mínimo', 'orange');
+  }
+}
+
+function invAvisarWA(){
+  if(!invBajoMinimo.length){ showToast('No hay productos bajo mínimo', 'green'); return; }
+
+  var fam      = invFamilias.find(function(f){ return f.id === invFamiliaActual; });
+  var famLabel = fam ? (fam.emoji||'')+' '+fam.nombre : 'Cocina';
+  var fecha    = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
+  var hora     = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  var local    = (currentUser && currentUser.local_id===2) ? "Roto's Burguer" : 'La Cala';
+  var quien    = currentUser ? currentUser.nombre : '';
+
+  var lineas = invBajoMinimo.map(function(art){
+    var actEl  = document.getElementById('inv-act-'+art.id);
+    var actVal = actEl && actEl.value !== '' ? actEl.value : (art.stock_actual != null ? art.stock_actual : '?');
+    var minVal = art.stock_minimo != null ? art.stock_minimo : '?';
+    var u      = art.unidad ? ' '+art.unidad : '';
+    return '• '+art.nombre+': quedan '+actVal+u+' (mínimo '+minVal+u+')';
+  }).join('\n');
+
+  var msg = '🧊 INVENTARIO COCINA — '+local+'\n'
+    +famLabel+' · '+fecha+' '+hora+(quien ? ' · '+quien : '')+'\n\n'
+    +'📦 Bajo mínimo:\n'+lineas;
+
+  window.open('https://wa.me/'+INV_LORENA_TEL+'?text='+encodeURIComponent(msg), '_blank');
+
+  var domingo = (typeof empleados !== 'undefined' ? empleados : []).find(function(e){
+    return e.nombre && e.nombre.toUpperCase().includes('DOMINGO') && (e.telefono||'').replace(/\s+/g,'').length >= 9;
+  });
+  if(domingo){
+    var td = (domingo.telefono||'').replace(/[\s\-()]/g,'');
+    if(!td.startsWith('+') && /^[67]\d{8}$/.test(td)) td = '34'+td;
+    setTimeout(function(){ window.open('https://wa.me/'+td+'?text='+encodeURIComponent(msg), '_blank'); }, 700);
+  }
+}
+
+function invMostrarSetupSQL(){
+  var setupEl = document.getElementById('inv-setup');
+  if(!setupEl) return;
+  var sql =
+    '-- 1. Nuevas familias de inventario\n'
+    +'DELETE FROM cmp_familias;\n'
+    +"INSERT INTO cmp_familias (id, nombre, emoji, local_id) VALUES\n"
+    +"  (1,'Carnes','🥩',NULL), (2,'Pescados','🐟',NULL),\n"
+    +"  (3,'Verduras','🥦',NULL), (4,'Frutas','🍎',NULL),\n"
+    +"  (5,'Lácteos','🥛',NULL), (6,'Secos','🌾',NULL),\n"
+    +"  (7,'Congelados','🧊',NULL), (8,'Condimentos','🧂',NULL);\n\n"
+    +'-- 2. Columnas de stock en cmp_articulos\n'
+    +'ALTER TABLE cmp_articulos\n'
+    +'  ADD COLUMN IF NOT EXISTS stock_actual NUMERIC,\n'
+    +'  ADD COLUMN IF NOT EXISTS stock_minimo NUMERIC,\n'
+    +'  ADD COLUMN IF NOT EXISTS ultima_actualizacion TIMESTAMPTZ,\n'
+    +'  ADD COLUMN IF NOT EXISTS ultima_actualizacion_por TEXT;\n\n'
+    +'-- 3. Teléfono de compras en locales\n'
+    +'ALTER TABLE locales ADD COLUMN IF NOT EXISTS telefono_compras TEXT;\n'
+    +"UPDATE locales SET telefono_compras = '+34625282869' WHERE nombre ILIKE '%Cala%';";
+  setupEl.style.display = '';
+  setupEl.innerHTML =
+    '<div style="background:var(--darker);border:1px solid var(--red);border-radius:10px;padding:16px;margin-bottom:14px">'
+    +'<div style="color:var(--red);font-weight:700;margin-bottom:8px">⚙️ Migración BD requerida</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Ejecuta este SQL en <strong>Supabase → SQL Editor → New query</strong>:</div>'
+    +'<pre style="background:var(--dark);border-radius:6px;padding:12px;font-size:11px;color:#2ecc71;overflow-x:auto;white-space:pre-wrap">'+sql+'</pre>'
+    +'</div>';
+}
 
 function cmpCargarDatos(){
   try{ cmpFamilias    = JSON.parse(localStorage.getItem('rt_cmp_familias')    || '[]'); }catch(e){ cmpFamilias=[]; }
