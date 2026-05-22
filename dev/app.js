@@ -5367,12 +5367,23 @@ function clRenderTareas(){
           +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>';
       } else if(tarea.tipo === 'inventario'){
         var artCountInv = 0;
-        try{ artCountInv = tarea.valorExtra ? JSON.parse(tarea.valorExtra).length : 0; }catch(e){}
+        try{ artCountInv = tarea.valorExtra ? Object.keys(JSON.parse(tarea.valorExtra)).length : 0; }catch(e){}
+        var invResp = tarea.responsableInventario || '';
+        var invOptsHtml = '<option value="">— Responsable —</option>';
+        clListaEmpleados.forEach(function(n){
+          invOptsHtml += '<option value="'+n+'"'+(invResp===n?' selected':'')+'>'+n+'</option>';
+        });
+        div.style.flexWrap = 'wrap';
         div.innerHTML =
           '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="clToggleTarea('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
           +'<div class="cl-tarea-texto" style="flex:1">'+tarea.texto+(artCountInv?' <span style="font-size:10px;color:var(--green);font-weight:700">'+artCountInv+' artículos</span>':'')+'</div>'
-          +'<button onclick="clAbrirModalInventario('+idx+')" style="background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;cursor:pointer;flex-shrink:0">📋 Abrir inventario</button>'
-          +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>';
+          +'<button onclick="clAbrirModalInventario('+idx+')" style="background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;cursor:pointer;flex-shrink:0">📋 Inventario</button>'
+          +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>'
+          +'<div style="width:100%;display:flex;align-items:center;gap:8px;margin-top:6px;padding-left:32px">'
+          +'<span style="font-size:11px;color:var(--muted)">Enviar a:</span>'
+          +'<select id="inv-resp-'+idx+'" onchange="clInvSetResponsable('+idx+',this.value)" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none">'+invOptsHtml+'</select>'
+          +'<button onclick="clInvEnviarWA('+idx+')" style="background:none;border:1px solid #25d366;border-radius:6px;color:#25d366;font-size:11px;padding:2px 8px;cursor:pointer;white-space:nowrap">💬 WA</button>'
+          +'</div>';
       } else {
         div.innerHTML =
           '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="clToggleTarea('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
@@ -5574,92 +5585,83 @@ function clCerrarModalInventario(){
   if(m) m.remove();
 }
 
+function clCerrarModalInventario(){
+  var m = document.getElementById('modal-inventario-cierre');
+  if(m) m.remove();
+}
+
 function clAbrirModalInventario(tareaIdx){
-  // Retirar modal previo si existe
   var prev = document.getElementById('modal-inventario-cierre');
   if(prev) prev.remove();
 
   var localId = currentUser ? (currentUser.local_id || 1) : 1;
 
-  // Si cmpArticulos no está en memoria, cargar localStorage; si sigue vacío, ir a Supabase
+  // Cargar artículos y familias si están vacíos
   if(!cmpArticulos || !cmpArticulos.length){
     try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
   }
-  if(!cmpArticulos || !cmpArticulos.length){
-    showToast('Cargando artículos desde base de datos...', 'green');
-    sbGet('cmp_articulos','order=nombre.asc').then(function(rows){
-      if(rows && rows.length){
-        cmpArticulos = rows;
-        try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(rows)); }catch(e){}
-      }
+  if(!cmpFamilias || !cmpFamilias.length){
+    try{ cmpFamilias = JSON.parse(localStorage.getItem('rt_cmp_familias') || '[]'); }catch(e){ cmpFamilias=[]; }
+  }
+  if(!cmpArticulos.length || !cmpFamilias.length){
+    showToast('Cargando datos...', 'green');
+    Promise.all([
+      sbGet('cmp_articulos','order=nombre.asc'),
+      sbGet('cmp_familias','order=nombre.asc')
+    ]).then(function(res){
+      if(res[0] && res[0].length){ cmpArticulos = res[0]; try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(res[0])); }catch(e){} }
+      if(res[1] && res[1].length){ cmpFamilias  = res[1]; try{ localStorage.setItem('rt_cmp_familias',  JSON.stringify(res[1])); }catch(e){} }
       clAbrirModalInventario(tareaIdx);
-    }).catch(function(){ showToast('Error cargando artículos.','red'); });
+    }).catch(function(){ showToast('Error cargando datos.','red'); });
     return;
   }
 
-  // Filtrar artículos del local actual
   var arts = (cmpArticulos || []).filter(function(a){
-    return !a.local_id || String(a.local_id) === String(localId);
+    if(!a.local_id) return true;
+    return String(a.local_id) === String(localId);
   });
+  if(!arts.length) arts = cmpArticulos || [];
+  if(!arts.length){ showToast('No hay artículos en Compras. Añádelos primero.', 'red'); return; }
 
-  if(!arts.length){
-    showToast('No hay artículos en Compras para este local. Añádelos primero.', 'red');
-    return;
-  }
-
-  // Leer valores ya guardados en la tarea
   var savedData = {};
   try{ if(clTareasHoy[tareaIdx] && clTareasHoy[tareaIdx].valorExtra) savedData = JSON.parse(clTareasHoy[tareaIdx].valorExtra); }catch(e){}
 
-  // Construir filas de artículos
-  var rowsHtml = arts.map(function(a){
-    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-    var saved = savedData[a.id] != null ? savedData[a.id] : '';
-    var bajoPct = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
-    return '<tr style="border-top:1px solid var(--border)" id="inv-row-'+a.id+'">'
-      +'<td style="padding:8px 6px;font-weight:600;color:var(--text)">'+a.nombre+'</td>'
-      +'<td style="padding:8px 6px;color:var(--muted);font-size:12px">'+(a.unidad||'—')+'</td>'
-      +'<td style="padding:8px 6px;text-align:right;color:var(--muted)">'+(sMin !== null ? sMin : '—')+'</td>'
-      +'<td style="padding:8px 6px;text-align:right">'
-      +'<input type="number" min="0" step="0.1" placeholder="Stock" value="'+saved+'" '
-      +'id="inv-stock-'+a.id+'" '
-      +'onchange="clInvCheckMin('+a.id+','+sMin+')" '
-      +'style="width:80px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
-      +'</td>'
-      +'<td style="padding:8px 6px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajoPct?'🔴':'')+'</td>'
-      +'</tr>';
+  var famMap = {};
+  arts.forEach(function(a){
+    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
+    var key = fam ? fam.nombre : 'Sin familia';
+    var emoji = fam ? (fam.emoji||'📦') : '📦';
+    if(!famMap[key]) famMap[key] = { emoji: emoji, arts: [] };
+    famMap[key].arts.push(a);
+  });
+
+  var famGrid = Object.keys(famMap).sort().map(function(fn){
+    var f = famMap[fn];
+    var count = f.arts.length;
+    var hecho = f.arts.filter(function(a){ return savedData[a.id] != null; }).length;
+    var badge = hecho > 0
+      ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px">'+hecho+'/'+count+'</span>'
+      : '<span style="font-size:10px;color:var(--muted)">('+count+')</span>';
+    return '<div data-fam="'+encodeURIComponent(fn)+'" onclick="clInvClickFamilia(this,'+tareaIdx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
   }).join('');
 
   var modal = document.createElement('div');
   modal.id = 'modal-inventario-cierre';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
   modal.innerHTML =
-    '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">'
-    // Header
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">'
     +'<div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
-    +'<div>'
-    +'<div style="font-size:15px;font-weight:700;color:var(--text)">📦 Inventario al cierre</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</div>'
-    +'</div>'
+    +'<div><div style="font-size:15px;font-weight:700;color:var(--text)">📦 Inventario al cierre</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</div></div>'
     +'<button onclick="clCerrarModalInventario()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 11px;color:var(--muted);cursor:pointer;font-size:13px">✕</button>'
     +'</div>'
-    // Info
-    +'<div style="padding:10px 18px;background:var(--darker);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)">'
-    +'🔴 Rojo = por debajo del stock mínimo → aviso automático a Lorena y cocina'
+    +'<div style="padding:12px 18px;border-bottom:1px solid var(--border)">'
+    +'<input type="text" id="inv-buscar" placeholder="🔍 Buscar artículo..." oninput="clInvFiltrarBusqueda('+tareaIdx+')" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none">'
     +'</div>'
-    // Tabla
-    +'<div style="overflow-y:auto;flex:1;padding:0 18px">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
-    +'<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
-    +'<th style="padding:10px 6px;text-align:left">Artículo</th>'
-    +'<th style="padding:10px 6px;text-align:left">Unidad</th>'
-    +'<th style="padding:10px 6px;text-align:right">Mínimo</th>'
-    +'<th style="padding:10px 6px;text-align:right">Stock actual</th>'
-    +'<th style="padding:10px 6px;text-align:center">⚠</th>'
-    +'</tr></thead>'
-    +'<tbody>'+rowsHtml+'</tbody>'
-    +'</table></div>'
-    // Footer
+    +'<div id="inv-contenido" style="overflow-y:auto;flex:1;padding:14px 18px">'
+    +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div>'
+    +'<div style="display:grid;gap:8px">'+famGrid+'</div>'
+    +'</div>'
     +'<div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">'
     +'<button onclick="clCerrarModalInventario()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:8px 16px;color:var(--muted);cursor:pointer;font-size:13px">Cancelar</button>'
     +'<button onclick="clGuardarInventarioCierre('+tareaIdx+')" style="background:var(--accent);border:none;border-radius:8px;padding:8px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 Guardar y cerrar</button>'
@@ -5667,6 +5669,153 @@ function clAbrirModalInventario(tareaIdx){
     +'</div>';
 
   document.body.appendChild(modal);
+  modal._tareaIdx = tareaIdx;
+  modal._arts = arts;
+  modal._savedData = savedData;
+}
+
+function clInvClickFamilia(el, tareaIdx){
+  var famNombre = decodeURIComponent(el.getAttribute('data-fam') || '');
+  clInvMostrarFamilia(famNombre, tareaIdx);
+}
+
+function clInvMostrarFamilia(famNombre, tareaIdx){
+  var modal = document.getElementById('modal-inventario-cierre');
+  if(!modal) return;
+  var arts = modal._arts || [];
+  var savedData = modal._savedData || {};
+
+  var famArts = arts.filter(function(a){
+    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
+    var key = fam ? fam.nombre : 'Sin familia';
+    return key === famNombre;
+  });
+
+  var cont = document.getElementById('inv-contenido');
+  if(!cont) return;
+
+  var rowsHtml = famArts.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    var saved = savedData[a.id] != null ? savedData[a.id] : '';
+    var bajo = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'mín '+sMin : '')+'</div>'
+      +'<input type="number" min="0" step="0.1" placeholder="0" value="'+saved+'" id="inv-stock-'+a.id+'" onchange="clInvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid '+(bajo?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<span style="width:20px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajo?'🔴':(saved!==''?'🟢':''))+'</span>'
+      +'</div>';
+  }).join('');
+
+  cont.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
+    +'<button onclick="clInvVolverFamilias('+tareaIdx+')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);cursor:pointer;font-size:12px">← Volver</button>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+famNombre+'</div>'
+    +'<div style="font-size:11px;color:var(--muted)">('+famArts.length+' artículos)</div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔴 Por debajo del mínimo → aviso a Lorena</div>'
+    +rowsHtml;
+}
+
+function clInvVolverFamilias(tareaIdx){
+  var modal = document.getElementById('modal-inventario-cierre');
+  if(!modal) return;
+  var arts = modal._arts || [];
+  arts.forEach(function(a){
+    var input = document.getElementById('inv-stock-'+a.id);
+    if(input && input.value !== '') modal._savedData[a.id] = parseFloat(input.value);
+  });
+  // limpiar buscador y redibujar
+  clAbrirModalInventario(tareaIdx);
+}
+
+function clInvFiltrarBusqueda(tareaIdx){
+  var modal = document.getElementById('modal-inventario-cierre');
+  if(!modal) return;
+  var q = (document.getElementById('inv-buscar')||{}).value || '';
+  q = q.trim().toLowerCase();
+  var arts = modal._arts || [];
+  var savedData = modal._savedData || {};
+  var cont = document.getElementById('inv-contenido');
+  if(!cont) return;
+
+  if(!q){
+    // reconstruir grid familias sin reabrir modal
+    var famMap = {};
+    arts.forEach(function(a){
+      var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
+      var key = fam ? fam.nombre : 'Sin familia';
+      var emoji = fam ? (fam.emoji||'📦') : '📦';
+      if(!famMap[key]) famMap[key] = { emoji: emoji, arts: [] };
+      famMap[key].arts.push(a);
+    });
+    var famGrid = Object.keys(famMap).sort().map(function(fn){
+      var f = famMap[fn];
+      var count = f.arts.length;
+      var hecho = f.arts.filter(function(a){ return savedData[a.id] != null; }).length;
+      var badge = hecho > 0
+        ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px">'+hecho+'/'+count+'</span>'
+        : '<span style="font-size:10px;color:var(--muted)">('+count+')</span>';
+    return '<div data-fam="'+encodeURIComponent(fn)+'" onclick="clInvClickFamilia(this,'+tareaIdx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
+    }).join('');
+    cont.innerHTML = '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div><div style="display:grid;gap:8px">'+famGrid+'</div>';
+    return;
+  }
+
+  var filtrados = arts.filter(function(a){ return a.nombre.toLowerCase().indexOf(q) >= 0; });
+  if(!filtrados.length){
+    cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px">Sin resultados para "'+q+'"</div>';
+    return;
+  }
+
+  var rowsHtml = filtrados.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    var saved = savedData[a.id] != null ? savedData[a.id] : '';
+    var bajo = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'mín '+sMin : '')+'</div>'
+      +'<input type="number" min="0" step="0.1" placeholder="0" value="'+saved+'" id="inv-stock-'+a.id+'" onchange="clInvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid '+(bajo?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<span style="width:20px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajo?'🔴':(saved!==''?'🟢':''))+'</span>'
+      +'</div>';
+  }).join('');
+
+  cont.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+filtrados.length+' resultado(s)</div>'+rowsHtml;
+}
+
+function clInvSetResponsable(idx, nombre){
+  if(clTareasHoy[idx]) clTareasHoy[idx].responsableInventario = nombre;
+}
+
+function clInvEnviarWA(idx){
+  var tarea = clTareasHoy[idx];
+  if(!tarea){ showToast('Error: tarea no encontrada','red'); return; }
+  var resp = tarea.responsableInventario || '';
+  if(!resp){ showToast('Selecciona un responsable primero','red'); return; }
+
+  // Buscar teléfono del empleado en la BD
+  var fecha = clFechaISO();
+  var localId = currentUser ? (currentUser.local_id||1) : 1;
+  var url = window.location.origin + window.location.pathname
+    + '?checklist='+fecha+'&empleado='+encodeURIComponent(resp)+'&seccion=Cocina&local='+localId+'&solo=inventario';
+
+  // Buscar número del empleado
+  sbGet('empleados','nombre=eq.'+encodeURIComponent(resp)+'&local_id=eq.'+localId+'&select=telefono').then(function(rows){
+    var tel = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
+    var fechaFmt = new Date(fecha+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long'});
+    var msg = '\u{1F4E6} Inventario al cierre '+fechaFmt+'\n\nHola '+resp+', por favor realiza el inventario de stock al cierre:\n\n'+url;
+    if(tel){
+      window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
+    } else {
+      navigator.clipboard.writeText(msg).catch(function(){});
+      showToast(resp+' no tiene teléfono configurado. Enlace copiado.','orange');
+    }
+  }).catch(function(){
+    var msg = '\u{1F4E6} Inventario al cierre\n\n'+url;
+    navigator.clipboard.writeText(msg).catch(function(){});
+    showToast('Enlace copiado al portapapeles','green');
+  });
 }
 
 function clInvCheckMin(artId, sMin){
@@ -5754,6 +5903,7 @@ async function clGuardarInventarioCierre(tareaIdx){
 
   clRenderTareas();
 }
+
 
 // ========== WORKER CHECKLIST v7.2 — acceso sin login via URL ==========
 var wclTareas = [];
