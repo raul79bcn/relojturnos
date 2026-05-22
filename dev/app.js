@@ -5940,13 +5940,24 @@ function wclRender(){
   wclTareas.forEach(function(tarea, idx){
     var div = document.createElement('div');
     div.className = 'cl-tarea-item' + (tarea.hecha ? ' done' : '');
-    div.style.cursor = 'pointer';
     div.style.marginBottom = '8px';
-    div.addEventListener('click', function(){ wclToggle(idx); });
-    div.innerHTML =
-      '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'">'+( tarea.hecha?'✓':'')+'</div>'
-      +'<div class="cl-tarea-texto">'+tarea.texto+'</div>'
-      +'<div class="cl-tarea-hora">'+(tarea.hora||'')+'</div>';
+
+    if(tarea.tipo === 'inventario'){
+      var artCount = 0;
+      try{ artCount = tarea.valorExtra ? Object.keys(JSON.parse(tarea.valorExtra)).length : 0; }catch(e){}
+      div.innerHTML =
+        '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="wclToggle('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
+        +'<div class="cl-tarea-texto" style="flex:1">'+tarea.texto+(artCount?' <span style="font-size:10px;color:var(--green);font-weight:700">'+artCount+' artículos</span>':'')+'</div>'
+        +'<button onclick="wclAbrirInventario('+idx+')" style="background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;cursor:pointer;flex-shrink:0">📋 Inventario</button>'
+        +'<div class="cl-tarea-hora">'+(tarea.hora||'')+'</div>';
+    } else {
+      div.style.cursor = 'pointer';
+      div.addEventListener('click', function(){ wclToggle(idx); });
+      div.innerHTML =
+        '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'">'+(tarea.hecha?'✓':'')+'</div>'
+        +'<div class="cl-tarea-texto">'+tarea.texto+'</div>'
+        +'<div class="cl-tarea-hora">'+(tarea.hora||'')+'</div>';
+    }
     cont.appendChild(div);
   });
   var pct = total > 0 ? Math.round((hechas/total)*100) : 0;
@@ -5959,6 +5970,194 @@ function wclRender(){
   if(ok) ok.style.display = allDone ? '' : 'none';
   var btnConf = document.getElementById('wcl-btn-confirmar');
   if(btnConf) btnConf.style.display = allDone ? '' : 'none';
+}
+
+function wclAbrirInventario(tareaIdx){
+  // Reutiliza el modal de inventario pero con wclTareas en lugar de clTareasHoy
+  // Carga artículos y familias si hace falta
+  if(!cmpArticulos || !cmpArticulos.length){
+    try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
+  }
+  if(!cmpFamilias || !cmpFamilias.length){
+    try{ cmpFamilias = JSON.parse(localStorage.getItem('rt_cmp_familias') || '[]'); }catch(e){ cmpFamilias=[]; }
+  }
+  if(!cmpArticulos.length || !cmpFamilias.length){
+    showToast('Cargando artículos...', 'green');
+    Promise.all([
+      sbGet('cmp_articulos','order=nombre.asc'),
+      sbGet('cmp_familias','order=nombre.asc')
+    ]).then(function(res){
+      if(res[0] && res[0].length){ cmpArticulos = res[0]; try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(res[0])); }catch(e){} }
+      if(res[1] && res[1].length){ cmpFamilias  = res[1]; try{ localStorage.setItem('rt_cmp_familias',  JSON.stringify(res[1])); }catch(e){} }
+      wclAbrirInventario(tareaIdx);
+    }).catch(function(){ showToast('Error cargando artículos.','red'); });
+    return;
+  }
+
+  // Usar clAbrirModalInventario pero apuntando a wclTareas
+  var prev = document.getElementById('modal-inventario-cierre');
+  if(prev) prev.remove();
+
+  var localId = wclLocalId || 1;
+  var arts = (cmpArticulos || []).filter(function(a){
+    if(!a.local_id) return true;
+    return String(a.local_id) === String(localId);
+  });
+  if(!arts.length) arts = cmpArticulos || [];
+  if(!arts.length){ showToast('No hay artículos configurados.', 'red'); return; }
+
+  var savedData = {};
+  try{ if(wclTareas[tareaIdx] && wclTareas[tareaIdx].valorExtra) savedData = JSON.parse(wclTareas[tareaIdx].valorExtra); }catch(e){}
+
+  var famMap = {};
+  arts.forEach(function(a){
+    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
+    var key = fam ? fam.nombre : 'Sin familia';
+    var emoji = fam ? (fam.emoji||'📦') : '📦';
+    if(!famMap[key]) famMap[key] = { emoji: emoji, arts: [] };
+    famMap[key].arts.push(a);
+  });
+
+  var famGrid = Object.keys(famMap).sort().map(function(fn){
+    var f = famMap[fn];
+    var count = f.arts.length;
+    var hecho = f.arts.filter(function(a){ return savedData[a.id] != null; }).length;
+    var badge = hecho > 0
+      ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px">'+hecho+'/'+count+'</span>'
+      : '<span style="font-size:10px;color:var(--muted)">('+count+')</span>';
+    return '<div data-fam="'+encodeURIComponent(fn)+'" onclick="wclInvClickFamilia(this,'+tareaIdx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px" ><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
+  }).join('');
+
+  var modal = document.createElement('div');
+  modal.id = 'modal-inventario-cierre';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML =
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">'
+    +'<div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
+    +'<div><div style="font-size:15px;font-weight:700;color:var(--text)">📦 Inventario al cierre</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</div></div>'
+    +'<button onclick="clCerrarModalInventario()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 11px;color:var(--muted);cursor:pointer;font-size:13px">✕</button>'
+    +'</div>'
+    +'<div style="padding:12px 18px;border-bottom:1px solid var(--border)">'
+    +'<input type="text" id="inv-buscar" placeholder="🔍 Buscar artículo..." oninput="wclInvFiltrar('+tareaIdx+')" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none">'
+    +'</div>'
+    +'<div id="inv-contenido" style="overflow-y:auto;flex:1;padding:14px 18px">'
+    +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div>'
+    +'<div style="display:grid;gap:8px">'+famGrid+'</div>'
+    +'</div>'
+    +'<div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">'
+    +'<button onclick="clCerrarModalInventario()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:8px 16px;color:var(--muted);cursor:pointer;font-size:13px">Cancelar</button>'
+    +'<button onclick="wclGuardarInventario('+tareaIdx+')" style="background:var(--accent);border:none;border-radius:8px;padding:8px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 Guardar y cerrar</button>'
+    +'</div>'
+    +'</div>';
+
+  document.body.appendChild(modal);
+  modal._tareaIdx = tareaIdx;
+  modal._arts = arts;
+  modal._savedData = savedData;
+  modal._isWcl = true;
+}
+
+function wclInvClickFamilia(el, tareaIdx){
+  var famNombre = decodeURIComponent(el.getAttribute('data-fam') || '');
+  var modal = document.getElementById('modal-inventario-cierre');
+  if(!modal) return;
+  var arts = modal._arts || [];
+  var savedData = modal._savedData || {};
+  var famArts = arts.filter(function(a){
+    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
+    return (fam ? fam.nombre : 'Sin familia') === famNombre;
+  });
+  var cont = document.getElementById('inv-contenido');
+  if(!cont) return;
+  var rowsHtml = famArts.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    var saved = savedData[a.id] != null ? savedData[a.id] : '';
+    var bajo = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'mín '+sMin : '')+'</div>'
+      +'<input type="number" min="0" step="0.1" placeholder="0" value="'+saved+'" id="inv-stock-'+a.id+'" onchange="clInvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid '+(bajo?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<span style="width:20px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajo?'🔴':(saved!==''?'🟢':''))+'</span>'
+      +'</div>';
+  }).join('');
+  cont.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
+    +'<button onclick="wclAbrirInventario('+tareaIdx+')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);cursor:pointer;font-size:12px">← Volver</button>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+famNombre+'</div>'
+    +'<div style="font-size:11px;color:var(--muted)">('+famArts.length+' artículos)</div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔴 Por debajo del mínimo → aviso a Lorena</div>'
+    +rowsHtml;
+}
+
+function wclInvFiltrar(tareaIdx){
+  var modal = document.getElementById('modal-inventario-cierre');
+  if(!modal) return;
+  var q = ((document.getElementById('inv-buscar')||{}).value||'').trim().toLowerCase();
+  var arts = modal._arts || [];
+  var savedData = modal._savedData || {};
+  var cont = document.getElementById('inv-contenido');
+  if(!cont) return;
+  if(!q){ wclAbrirInventario(tareaIdx); return; }
+  var filtrados = arts.filter(function(a){ return a.nombre.toLowerCase().indexOf(q) >= 0; });
+  if(!filtrados.length){ cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px">Sin resultados</div>'; return; }
+  var rowsHtml = filtrados.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    var saved = savedData[a.id] != null ? savedData[a.id] : '';
+    var bajo = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
+      +'<input type="number" min="0" step="0.1" placeholder="0" value="'+saved+'" id="inv-stock-'+a.id+'" onchange="clInvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid '+(bajo?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<span style="width:20px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajo?'🔴':(saved!==''?'🟢':''))+'</span>'
+      +'</div>';
+  }).join('');
+  cont.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+filtrados.length+' resultado(s)</div>'+rowsHtml;
+}
+
+async function wclGuardarInventario(tareaIdx){
+  var tarea = wclTareas[tareaIdx];
+  if(!tarea) return;
+  var modal = document.getElementById('modal-inventario-cierre');
+  var arts = (modal ? modal._arts : null) || cmpArticulos || [];
+  var datos = {};
+  var bajosDeMinimo = [];
+  arts.forEach(function(a){
+    var input = document.getElementById('inv-stock-'+a.id);
+    if(input && input.value !== ''){
+      var val = parseFloat(input.value);
+      datos[a.id] = val;
+      var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+      if(sMin !== null && val <= sMin) bajosDeMinimo.push({nombre:a.nombre, unidad:a.unidad||'', actual:val, minimo:sMin});
+    }
+  });
+  tarea.valorExtra = JSON.stringify(datos);
+  tarea.hecha = true;
+  tarea.hora = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  // Guardar en Supabase
+  var promesas = Object.keys(datos).map(function(id){
+    var artId = parseInt(id);
+    var artIdx = cmpArticulos.findIndex(function(a){ return a.id === artId; });
+    if(artIdx >= 0) cmpArticulos[artIdx].stock_actual = datos[id];
+    return sbPatch('cmp_articulos', artId, {stock_actual: datos[id], ultima_actualizacion: new Date().toISOString(), ultima_actualizacion_por: wclEmpleado||'Cocinero'});
+  });
+  try{ await Promise.all(promesas); }catch(e){ console.warn('[wcl inventario] Error Supabase:', e); }
+  if(tarea.id) await sbPatch('checklist_diario', tarea.id, {completada: true, hora_completado: tarea.hora, valor_extra: tarea.valorExtra});
+  if(modal) modal.remove();
+  // Aviso WA si hay bajos de mínimo
+  if(bajosDeMinimo.length){
+    var lorena = (localStorage.getItem('rt_wa_lorena')||'').trim();
+    var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
+    var lineas = bajosDeMinimo.map(function(x){ return '• '+x.nombre+': '+x.actual+' '+x.unidad+' (mín. '+x.minimo+')'; }).join('\n');
+    var msg = '\u26a0\ufe0f STOCK BAJO \u2014 Inventario cierre '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del próximo servicio.';
+    if(lorena) window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+    showToast('⚠ '+bajosDeMinimo.length+' artículo(s) bajo mínimo. Aviso enviado.','red');
+  } else {
+    showToast('✅ Inventario guardado.','green');
+  }
+  wclRender();
 }
 
 function wclConfirmarYEnviar(){
