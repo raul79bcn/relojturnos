@@ -2949,22 +2949,32 @@ async function crearUsuario(){
 
 // ===== EDITAR USUARIO REGISTRADO =====
 var _euUsuarios = [];
+var _euEmpleadoId = null;
 async function abrirEditarUsuario(id){
   try{
     var rows = await sbGet('usuarios','id=eq.'+id);
     if(!rows||!rows.length){ showToast('Usuario no encontrado','red'); return; }
     var u = rows[0];
-    document.getElementById('eu-id').value = u.id;
-    document.getElementById('eu-nombre').value = u.nombre||'';
-    document.getElementById('eu-dni').value = u.dni||'';
-    document.getElementById('eu-rol').value = u.rol||'empleado';
-    document.getElementById('eu-local').value = u.local_id||1;
-    document.getElementById('eu-activo').value = u.activo ? '1' : '0';
-    document.getElementById('eu-pass').value = '';
-    document.getElementById('eu-ss').value = u.ss||'';
-    document.getElementById('eu-telefono').value = u.telefono||'';
-    document.getElementById('eu-email').value = u.email||'';
-    document.getElementById('eu-direccion').value = u.direccion||'';
+    _euEmpleadoId = u.empleado_id || null;
+    // Cargar datos personales desde empleados (fuente de verdad) si existe FK
+    var emp = null;
+    if(_euEmpleadoId){
+      try{
+        var eRows = await sbGet('empleados','id=eq.'+_euEmpleadoId);
+        emp = (eRows && eRows.length) ? eRows[0] : null;
+      }catch(_){}
+    }
+    document.getElementById('eu-id').value       = u.id;
+    document.getElementById('eu-nombre').value   = u.nombre||'';
+    document.getElementById('eu-dni').value      = u.dni||'';
+    document.getElementById('eu-rol').value      = u.rol||'empleado';
+    document.getElementById('eu-local').value    = u.local_id||1;
+    document.getElementById('eu-activo').value   = u.activo ? '1' : '0';
+    document.getElementById('eu-pass').value     = '';
+    document.getElementById('eu-ss').value       = (emp&&emp.nss)       || u.nss       || '';
+    document.getElementById('eu-telefono').value = (emp&&emp.telefono)  || u.telefono  || '';
+    document.getElementById('eu-email').value    = (emp&&emp.email)     || u.email     || '';
+    document.getElementById('eu-direccion').value= (emp&&emp.direccion) || u.direccion || '';
     euRolChange();
     document.getElementById('eu-error').style.display='none';
     document.getElementById('eu-ok').style.display='none';
@@ -2998,10 +3008,14 @@ async function guardarEditarUsuario(){
   if(!nombre||!dni){ errEl.textContent='Nombre y DNI son obligatorios'; errEl.style.display='block'; return; }
   var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo, nss:ss, telefono:tel, email:email, direccion:dir };
   if(pass){ datos.password_hash = await hashPass(pass); }
-  console.log('[PATCH usuarios] id:', id, '| datos:', JSON.stringify(datos));
   try{
-    var patchRes = await sbPatch('usuarios', id, datos);
-    console.log('[PATCH usuarios] respuesta Supabase:', patchRes);
+    await sbPatch('usuarios', id, datos);
+    // Dual-write: también actualizar empleados mientras completamos la migración
+    if(_euEmpleadoId){
+      var empPatch = { nombre:nombre, telefono:tel||null, email:email||null, direccion:dir||null, nss:ss||null };
+      if(pass){ empPatch.password_hash = datos.password_hash; empPatch.dni = dni; }
+      try{ await sbPatch('empleados', _euEmpleadoId, empPatch); }catch(e2){ console.warn('[dual-write empleados]', e2.message); }
+    }
     logAccion('EDITAR_USUARIO', nombre+' · DNI: '+dni, localId||null);
     okEl.textContent = '✓ Cambios guardados';
     okEl.style.display = 'block';
@@ -4992,7 +5006,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.49 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.51 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5353,23 +5367,12 @@ function clRenderTareas(){
           +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>';
       } else if(tarea.tipo === 'inventario'){
         var artCountInv = 0;
-        try{ artCountInv = tarea.valorExtra ? Object.keys(JSON.parse(tarea.valorExtra)).length : 0; }catch(e){}
-        var invResp = tarea.responsableInventario || '';
-        var invOptsHtml = '<option value="">— Responsable —</option>';
-        clListaEmpleados.forEach(function(n){
-          invOptsHtml += '<option value="'+n+'"'+(invResp===n?' selected':'')+'>'+n+'</option>';
-        });
-        div.style.flexWrap = 'wrap';
+        try{ artCountInv = tarea.valorExtra ? JSON.parse(tarea.valorExtra).length : 0; }catch(e){}
         div.innerHTML =
           '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="clToggleTarea('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
           +'<div class="cl-tarea-texto" style="flex:1">'+tarea.texto+(artCountInv?' <span style="font-size:10px;color:var(--green);font-weight:700">'+artCountInv+' artículos</span>':'')+'</div>'
-          +'<button onclick="clAbrirModalInventario('+idx+')" style="background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;cursor:pointer;flex-shrink:0">📋 Inventario</button>'
-          +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>'
-          +'<div style="width:100%;display:flex;align-items:center;gap:8px;margin-top:6px;padding-left:32px">'
-          +'<span style="font-size:11px;color:var(--muted)">Enviar a:</span>'
-          +'<select id="inv-resp-'+idx+'" onchange="clInvSetResponsable('+idx+',this.value)" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-size:12px;outline:none">'+invOptsHtml+'</select>'
-          +'<button onclick="clInvEnviarWA('+idx+')" style="background:none;border:1px solid #25d366;border-radius:6px;color:#25d366;font-size:11px;padding:2px 8px;cursor:pointer;white-space:nowrap">💬 WA</button>'
-          +'</div>';
+          +'<button onclick="clAbrirModalInventario('+idx+')" style="background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;cursor:pointer;flex-shrink:0">📋 Abrir inventario</button>'
+          +'<div class="cl-tarea-hora">'+(tarea.hora_completado||'')+'</div>';
       } else {
         div.innerHTML =
           '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="clToggleTarea('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
@@ -5572,77 +5575,91 @@ function clCerrarModalInventario(){
 }
 
 function clAbrirModalInventario(tareaIdx){
+  // Retirar modal previo si existe
   var prev = document.getElementById('modal-inventario-cierre');
   if(prev) prev.remove();
 
   var localId = currentUser ? (currentUser.local_id || 1) : 1;
 
-  // Cargar artículos y familias si están vacíos
+  // Si cmpArticulos no está en memoria, cargar localStorage; si sigue vacío, ir a Supabase
   if(!cmpArticulos || !cmpArticulos.length){
     try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
   }
-  if(!cmpFamilias || !cmpFamilias.length){
-    try{ cmpFamilias = JSON.parse(localStorage.getItem('rt_cmp_familias') || '[]'); }catch(e){ cmpFamilias=[]; }
-  }
-  if(!cmpArticulos.length || !cmpFamilias.length){
-    showToast('Cargando datos...', 'green');
-    Promise.all([
-      sbGet('cmp_articulos','order=nombre.asc'),
-      sbGet('cmp_familias','order=nombre.asc')
-    ]).then(function(res){
-      if(res[0] && res[0].length){ cmpArticulos = res[0]; try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(res[0])); }catch(e){} }
-      if(res[1] && res[1].length){ cmpFamilias  = res[1]; try{ localStorage.setItem('rt_cmp_familias',  JSON.stringify(res[1])); }catch(e){} }
+  if(!cmpArticulos || !cmpArticulos.length){
+    showToast('Cargando artículos desde base de datos...', 'green');
+    sbGet('cmp_articulos','order=nombre.asc').then(function(rows){
+      if(rows && rows.length){
+        cmpArticulos = rows;
+        try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(rows)); }catch(e){}
+      }
       clAbrirModalInventario(tareaIdx);
-    }).catch(function(){ showToast('Error cargando datos.','red'); });
+    }).catch(function(){ showToast('Error cargando artículos.','red'); });
     return;
   }
 
+  // Filtrar artículos del local actual
   var arts = (cmpArticulos || []).filter(function(a){
-    if(!a.local_id) return true;
-    return String(a.local_id) === String(localId);
+    return !a.local_id || String(a.local_id) === String(localId);
   });
-  if(!arts.length) arts = cmpArticulos || [];
-  if(!arts.length){ showToast('No hay artículos en Compras. Añádelos primero.', 'red'); return; }
 
+  if(!arts.length){
+    showToast('No hay artículos en Compras para este local. Añádelos primero.', 'red');
+    return;
+  }
+
+  // Leer valores ya guardados en la tarea
   var savedData = {};
   try{ if(clTareasHoy[tareaIdx] && clTareasHoy[tareaIdx].valorExtra) savedData = JSON.parse(clTareasHoy[tareaIdx].valorExtra); }catch(e){}
 
-  var famMap = {};
-  arts.forEach(function(a){
-    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
-    var key = fam ? fam.nombre : 'Sin familia';
-    var emoji = fam ? (fam.emoji||'📦') : '📦';
-    if(!famMap[key]) famMap[key] = { emoji: emoji, arts: [] };
-    famMap[key].arts.push(a);
-  });
-
-  var famGrid = Object.keys(famMap).sort().map(function(fn){
-    var f = famMap[fn];
-    var count = f.arts.length;
-    var hecho = f.arts.filter(function(a){ return savedData[a.id] != null; }).length;
-    var badge = hecho > 0
-      ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px">'+hecho+'/'+count+'</span>'
-      : '<span style="font-size:10px;color:var(--muted)">('+count+')</span>';
-    return '<div data-fam="'+encodeURIComponent(fn)+'" onclick="clInvClickFamilia(this,'+tareaIdx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
+  // Construir filas de artículos
+  var rowsHtml = arts.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    var saved = savedData[a.id] != null ? savedData[a.id] : '';
+    var bajoPct = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
+    return '<tr style="border-top:1px solid var(--border)" id="inv-row-'+a.id+'">'
+      +'<td style="padding:8px 6px;font-weight:600;color:var(--text)">'+a.nombre+'</td>'
+      +'<td style="padding:8px 6px;color:var(--muted);font-size:12px">'+(a.unidad||'—')+'</td>'
+      +'<td style="padding:8px 6px;text-align:right;color:var(--muted)">'+(sMin !== null ? sMin : '—')+'</td>'
+      +'<td style="padding:8px 6px;text-align:right">'
+      +'<input type="number" min="0" step="0.1" placeholder="Stock" value="'+saved+'" '
+      +'id="inv-stock-'+a.id+'" '
+      +'onchange="clInvCheckMin('+a.id+','+sMin+')" '
+      +'style="width:80px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'</td>'
+      +'<td style="padding:8px 6px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajoPct?'🔴':'')+'</td>'
+      +'</tr>';
   }).join('');
 
   var modal = document.createElement('div');
   modal.id = 'modal-inventario-cierre';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
   modal.innerHTML =
-    '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">'
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">'
+    // Header
     +'<div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
-    +'<div><div style="font-size:15px;font-weight:700;color:var(--text)">📦 Inventario al cierre</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</div></div>'
+    +'<div>'
+    +'<div style="font-size:15px;font-weight:700;color:var(--text)">📦 Inventario al cierre</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</div>'
+    +'</div>'
     +'<button onclick="clCerrarModalInventario()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 11px;color:var(--muted);cursor:pointer;font-size:13px">✕</button>'
     +'</div>'
-    +'<div style="padding:12px 18px;border-bottom:1px solid var(--border)">'
-    +'<input type="text" id="inv-buscar" placeholder="🔍 Buscar artículo..." oninput="clInvFiltrarBusqueda('+tareaIdx+')" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none">'
+    // Info
+    +'<div style="padding:10px 18px;background:var(--darker);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)">'
+    +'🔴 Rojo = por debajo del stock mínimo → aviso automático a Lorena y cocina'
     +'</div>'
-    +'<div id="inv-contenido" style="overflow-y:auto;flex:1;padding:14px 18px">'
-    +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div>'
-    +'<div style="display:grid;gap:8px">'+famGrid+'</div>'
-    +'</div>'
+    // Tabla
+    +'<div style="overflow-y:auto;flex:1;padding:0 18px">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+    +'<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
+    +'<th style="padding:10px 6px;text-align:left">Artículo</th>'
+    +'<th style="padding:10px 6px;text-align:left">Unidad</th>'
+    +'<th style="padding:10px 6px;text-align:right">Mínimo</th>'
+    +'<th style="padding:10px 6px;text-align:right">Stock actual</th>'
+    +'<th style="padding:10px 6px;text-align:center">⚠</th>'
+    +'</tr></thead>'
+    +'<tbody>'+rowsHtml+'</tbody>'
+    +'</table></div>'
+    // Footer
     +'<div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">'
     +'<button onclick="clCerrarModalInventario()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:8px 16px;color:var(--muted);cursor:pointer;font-size:13px">Cancelar</button>'
     +'<button onclick="clGuardarInventarioCierre('+tareaIdx+')" style="background:var(--accent);border:none;border-radius:8px;padding:8px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 Guardar y cerrar</button>'
@@ -5650,153 +5667,6 @@ function clAbrirModalInventario(tareaIdx){
     +'</div>';
 
   document.body.appendChild(modal);
-  modal._tareaIdx = tareaIdx;
-  modal._arts = arts;
-  modal._savedData = savedData;
-}
-
-function clInvClickFamilia(el, tareaIdx){
-  var famNombre = decodeURIComponent(el.getAttribute('data-fam') || '');
-  clInvMostrarFamilia(famNombre, tareaIdx);
-}
-
-function clInvMostrarFamilia(famNombre, tareaIdx){
-  var modal = document.getElementById('modal-inventario-cierre');
-  if(!modal) return;
-  var arts = modal._arts || [];
-  var savedData = modal._savedData || {};
-
-  var famArts = arts.filter(function(a){
-    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
-    var key = fam ? fam.nombre : 'Sin familia';
-    return key === famNombre;
-  });
-
-  var cont = document.getElementById('inv-contenido');
-  if(!cont) return;
-
-  var rowsHtml = famArts.map(function(a){
-    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-    var saved = savedData[a.id] != null ? savedData[a.id] : '';
-    var bajo = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
-      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'mín '+sMin : '')+'</div>'
-      +'<input type="number" min="0" step="0.1" placeholder="0" value="'+saved+'" id="inv-stock-'+a.id+'" onchange="clInvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid '+(bajo?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
-      +'<span style="width:20px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajo?'🔴':(saved!==''?'🟢':''))+'</span>'
-      +'</div>';
-  }).join('');
-
-  cont.innerHTML =
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
-    +'<button onclick="clInvVolverFamilias('+tareaIdx+')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);cursor:pointer;font-size:12px">← Volver</button>'
-    +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+famNombre+'</div>'
-    +'<div style="font-size:11px;color:var(--muted)">('+famArts.length+' artículos)</div>'
-    +'</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔴 Por debajo del mínimo → aviso a Lorena</div>'
-    +rowsHtml;
-}
-
-function clInvVolverFamilias(tareaIdx){
-  var modal = document.getElementById('modal-inventario-cierre');
-  if(!modal) return;
-  var arts = modal._arts || [];
-  arts.forEach(function(a){
-    var input = document.getElementById('inv-stock-'+a.id);
-    if(input && input.value !== '') modal._savedData[a.id] = parseFloat(input.value);
-  });
-  // limpiar buscador y redibujar
-  clAbrirModalInventario(tareaIdx);
-}
-
-function clInvFiltrarBusqueda(tareaIdx){
-  var modal = document.getElementById('modal-inventario-cierre');
-  if(!modal) return;
-  var q = (document.getElementById('inv-buscar')||{}).value || '';
-  q = q.trim().toLowerCase();
-  var arts = modal._arts || [];
-  var savedData = modal._savedData || {};
-  var cont = document.getElementById('inv-contenido');
-  if(!cont) return;
-
-  if(!q){
-    // reconstruir grid familias sin reabrir modal
-    var famMap = {};
-    arts.forEach(function(a){
-      var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
-      var key = fam ? fam.nombre : 'Sin familia';
-      var emoji = fam ? (fam.emoji||'📦') : '📦';
-      if(!famMap[key]) famMap[key] = { emoji: emoji, arts: [] };
-      famMap[key].arts.push(a);
-    });
-    var famGrid = Object.keys(famMap).sort().map(function(fn){
-      var f = famMap[fn];
-      var count = f.arts.length;
-      var hecho = f.arts.filter(function(a){ return savedData[a.id] != null; }).length;
-      var badge = hecho > 0
-        ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px">'+hecho+'/'+count+'</span>'
-        : '<span style="font-size:10px;color:var(--muted)">('+count+')</span>';
-    return '<div data-fam="'+encodeURIComponent(fn)+'" onclick="clInvClickFamilia(this,'+tareaIdx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
-    }).join('');
-    cont.innerHTML = '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div><div style="display:grid;gap:8px">'+famGrid+'</div>';
-    return;
-  }
-
-  var filtrados = arts.filter(function(a){ return a.nombre.toLowerCase().indexOf(q) >= 0; });
-  if(!filtrados.length){
-    cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px">Sin resultados para "'+q+'"</div>';
-    return;
-  }
-
-  var rowsHtml = filtrados.map(function(a){
-    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-    var saved = savedData[a.id] != null ? savedData[a.id] : '';
-    var bajo = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
-      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'mín '+sMin : '')+'</div>'
-      +'<input type="number" min="0" step="0.1" placeholder="0" value="'+saved+'" id="inv-stock-'+a.id+'" onchange="clInvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid '+(bajo?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
-      +'<span style="width:20px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajo?'🔴':(saved!==''?'🟢':''))+'</span>'
-      +'</div>';
-  }).join('');
-
-  cont.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+filtrados.length+' resultado(s)</div>'+rowsHtml;
-}
-
-function clInvSetResponsable(idx, nombre){
-  if(clTareasHoy[idx]) clTareasHoy[idx].responsableInventario = nombre;
-}
-
-function clInvEnviarWA(idx){
-  var tarea = clTareasHoy[idx];
-  if(!tarea){ showToast('Error: tarea no encontrada','red'); return; }
-  var resp = tarea.responsableInventario || '';
-  if(!resp){ showToast('Selecciona un responsable primero','red'); return; }
-
-  // Buscar teléfono del empleado en la BD
-  var fecha = clFechaISO();
-  var localId = currentUser ? (currentUser.local_id||1) : 1;
-  var url = window.location.origin + window.location.pathname
-    + '?checklist='+fecha+'&empleado='+encodeURIComponent(resp)+'&seccion=Cocina&local='+localId+'&solo=inventario';
-
-  // Buscar número del empleado
-  sbGet('empleados','nombre=eq.'+encodeURIComponent(resp)+'&local_id=eq.'+localId+'&select=telefono').then(function(rows){
-    var tel = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
-    var fechaFmt = new Date(fecha+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long'});
-    var msg = '\u{1F4E6} Inventario al cierre '+fechaFmt+'\n\nHola '+resp+', por favor realiza el inventario de stock al cierre:\n\n'+url;
-    if(tel){
-      window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
-    } else {
-      navigator.clipboard.writeText(msg).catch(function(){});
-      showToast(resp+' no tiene teléfono configurado. Enlace copiado.','orange');
-    }
-  }).catch(function(){
-    var msg = '\u{1F4E6} Inventario al cierre\n\n'+url;
-    navigator.clipboard.writeText(msg).catch(function(){});
-    showToast('Enlace copiado al portapapeles','green');
-  });
 }
 
 function clInvCheckMin(artId, sMin){
@@ -5985,24 +5855,13 @@ function wclRender(){
   wclTareas.forEach(function(tarea, idx){
     var div = document.createElement('div');
     div.className = 'cl-tarea-item' + (tarea.hecha ? ' done' : '');
+    div.style.cursor = 'pointer';
     div.style.marginBottom = '8px';
-
-    if(tarea.tipo === 'inventario'){
-      var artCount = 0;
-      try{ artCount = tarea.valorExtra ? Object.keys(JSON.parse(tarea.valorExtra)).length : 0; }catch(e){}
-      div.innerHTML =
-        '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'" onclick="wclToggle('+idx+')">'+(tarea.hecha?'✓':'')+'</div>'
-        +'<div class="cl-tarea-texto" style="flex:1">'+tarea.texto+(artCount?' <span style="font-size:10px;color:var(--green);font-weight:700">'+artCount+' artículos</span>':'')+'</div>'
-        +'<button onclick="wclAbrirInventario('+idx+')" style="background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;cursor:pointer;flex-shrink:0">📋 Inventario</button>'
-        +'<div class="cl-tarea-hora">'+(tarea.hora||'')+'</div>';
-    } else {
-      div.style.cursor = 'pointer';
-      div.addEventListener('click', function(){ wclToggle(idx); });
-      div.innerHTML =
-        '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'">'+(tarea.hecha?'✓':'')+'</div>'
-        +'<div class="cl-tarea-texto">'+tarea.texto+'</div>'
-        +'<div class="cl-tarea-hora">'+(tarea.hora||'')+'</div>';
-    }
+    div.addEventListener('click', function(){ wclToggle(idx); });
+    div.innerHTML =
+      '<div class="cl-tarea-check '+(tarea.hecha?'checked':'')+'">'+( tarea.hecha?'✓':'')+'</div>'
+      +'<div class="cl-tarea-texto">'+tarea.texto+'</div>'
+      +'<div class="cl-tarea-hora">'+(tarea.hora||'')+'</div>';
     cont.appendChild(div);
   });
   var pct = total > 0 ? Math.round((hechas/total)*100) : 0;
@@ -6015,194 +5874,6 @@ function wclRender(){
   if(ok) ok.style.display = allDone ? '' : 'none';
   var btnConf = document.getElementById('wcl-btn-confirmar');
   if(btnConf) btnConf.style.display = allDone ? '' : 'none';
-}
-
-function wclAbrirInventario(tareaIdx){
-  // Reutiliza el modal de inventario pero con wclTareas en lugar de clTareasHoy
-  // Carga artículos y familias si hace falta
-  if(!cmpArticulos || !cmpArticulos.length){
-    try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
-  }
-  if(!cmpFamilias || !cmpFamilias.length){
-    try{ cmpFamilias = JSON.parse(localStorage.getItem('rt_cmp_familias') || '[]'); }catch(e){ cmpFamilias=[]; }
-  }
-  if(!cmpArticulos.length || !cmpFamilias.length){
-    showToast('Cargando artículos...', 'green');
-    Promise.all([
-      sbGet('cmp_articulos','order=nombre.asc'),
-      sbGet('cmp_familias','order=nombre.asc')
-    ]).then(function(res){
-      if(res[0] && res[0].length){ cmpArticulos = res[0]; try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(res[0])); }catch(e){} }
-      if(res[1] && res[1].length){ cmpFamilias  = res[1]; try{ localStorage.setItem('rt_cmp_familias',  JSON.stringify(res[1])); }catch(e){} }
-      wclAbrirInventario(tareaIdx);
-    }).catch(function(){ showToast('Error cargando artículos.','red'); });
-    return;
-  }
-
-  // Usar clAbrirModalInventario pero apuntando a wclTareas
-  var prev = document.getElementById('modal-inventario-cierre');
-  if(prev) prev.remove();
-
-  var localId = wclLocalId || 1;
-  var arts = (cmpArticulos || []).filter(function(a){
-    if(!a.local_id) return true;
-    return String(a.local_id) === String(localId);
-  });
-  if(!arts.length) arts = cmpArticulos || [];
-  if(!arts.length){ showToast('No hay artículos configurados.', 'red'); return; }
-
-  var savedData = {};
-  try{ if(wclTareas[tareaIdx] && wclTareas[tareaIdx].valorExtra) savedData = JSON.parse(wclTareas[tareaIdx].valorExtra); }catch(e){}
-
-  var famMap = {};
-  arts.forEach(function(a){
-    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
-    var key = fam ? fam.nombre : 'Sin familia';
-    var emoji = fam ? (fam.emoji||'📦') : '📦';
-    if(!famMap[key]) famMap[key] = { emoji: emoji, arts: [] };
-    famMap[key].arts.push(a);
-  });
-
-  var famGrid = Object.keys(famMap).sort().map(function(fn){
-    var f = famMap[fn];
-    var count = f.arts.length;
-    var hecho = f.arts.filter(function(a){ return savedData[a.id] != null; }).length;
-    var badge = hecho > 0
-      ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px">'+hecho+'/'+count+'</span>'
-      : '<span style="font-size:10px;color:var(--muted)">('+count+')</span>';
-    return '<div data-fam="'+encodeURIComponent(fn)+'" onclick="wclInvClickFamilia(this,'+tareaIdx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px" ><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
-  }).join('');
-
-  var modal = document.createElement('div');
-  modal.id = 'modal-inventario-cierre';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
-  modal.innerHTML =
-    '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">'
-    +'<div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
-    +'<div><div style="font-size:15px;font-weight:700;color:var(--text)">📦 Inventario al cierre</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</div></div>'
-    +'<button onclick="clCerrarModalInventario()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 11px;color:var(--muted);cursor:pointer;font-size:13px">✕</button>'
-    +'</div>'
-    +'<div style="padding:12px 18px;border-bottom:1px solid var(--border)">'
-    +'<input type="text" id="inv-buscar" placeholder="🔍 Buscar artículo..." oninput="wclInvFiltrar('+tareaIdx+')" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none">'
-    +'</div>'
-    +'<div id="inv-contenido" style="overflow-y:auto;flex:1;padding:14px 18px">'
-    +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div>'
-    +'<div style="display:grid;gap:8px">'+famGrid+'</div>'
-    +'</div>'
-    +'<div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">'
-    +'<button onclick="clCerrarModalInventario()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:8px 16px;color:var(--muted);cursor:pointer;font-size:13px">Cancelar</button>'
-    +'<button onclick="wclGuardarInventario('+tareaIdx+')" style="background:var(--accent);border:none;border-radius:8px;padding:8px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 Guardar y cerrar</button>'
-    +'</div>'
-    +'</div>';
-
-  document.body.appendChild(modal);
-  modal._tareaIdx = tareaIdx;
-  modal._arts = arts;
-  modal._savedData = savedData;
-  modal._isWcl = true;
-}
-
-function wclInvClickFamilia(el, tareaIdx){
-  var famNombre = decodeURIComponent(el.getAttribute('data-fam') || '');
-  var modal = document.getElementById('modal-inventario-cierre');
-  if(!modal) return;
-  var arts = modal._arts || [];
-  var savedData = modal._savedData || {};
-  var famArts = arts.filter(function(a){
-    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
-    return (fam ? fam.nombre : 'Sin familia') === famNombre;
-  });
-  var cont = document.getElementById('inv-contenido');
-  if(!cont) return;
-  var rowsHtml = famArts.map(function(a){
-    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-    var saved = savedData[a.id] != null ? savedData[a.id] : '';
-    var bajo = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
-      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'mín '+sMin : '')+'</div>'
-      +'<input type="number" min="0" step="0.1" placeholder="0" value="'+saved+'" id="inv-stock-'+a.id+'" onchange="clInvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid '+(bajo?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
-      +'<span style="width:20px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajo?'🔴':(saved!==''?'🟢':''))+'</span>'
-      +'</div>';
-  }).join('');
-  cont.innerHTML =
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
-    +'<button onclick="wclAbrirInventario('+tareaIdx+')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);cursor:pointer;font-size:12px">← Volver</button>'
-    +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+famNombre+'</div>'
-    +'<div style="font-size:11px;color:var(--muted)">('+famArts.length+' artículos)</div>'
-    +'</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔴 Por debajo del mínimo → aviso a Lorena</div>'
-    +rowsHtml;
-}
-
-function wclInvFiltrar(tareaIdx){
-  var modal = document.getElementById('modal-inventario-cierre');
-  if(!modal) return;
-  var q = ((document.getElementById('inv-buscar')||{}).value||'').trim().toLowerCase();
-  var arts = modal._arts || [];
-  var savedData = modal._savedData || {};
-  var cont = document.getElementById('inv-contenido');
-  if(!cont) return;
-  if(!q){ wclAbrirInventario(tareaIdx); return; }
-  var filtrados = arts.filter(function(a){ return a.nombre.toLowerCase().indexOf(q) >= 0; });
-  if(!filtrados.length){ cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px">Sin resultados</div>'; return; }
-  var rowsHtml = filtrados.map(function(a){
-    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-    var saved = savedData[a.id] != null ? savedData[a.id] : '';
-    var bajo = (sMin !== null && saved !== '' && parseFloat(saved) <= sMin);
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
-      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
-      +'<input type="number" min="0" step="0.1" placeholder="0" value="'+saved+'" id="inv-stock-'+a.id+'" onchange="clInvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid '+(bajo?'var(--red)':'var(--border)')+';border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
-      +'<span style="width:20px;text-align:center;font-size:14px" id="inv-flag-'+a.id+'">'+(bajo?'🔴':(saved!==''?'🟢':''))+'</span>'
-      +'</div>';
-  }).join('');
-  cont.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+filtrados.length+' resultado(s)</div>'+rowsHtml;
-}
-
-async function wclGuardarInventario(tareaIdx){
-  var tarea = wclTareas[tareaIdx];
-  if(!tarea) return;
-  var modal = document.getElementById('modal-inventario-cierre');
-  var arts = (modal ? modal._arts : null) || cmpArticulos || [];
-  var datos = {};
-  var bajosDeMinimo = [];
-  arts.forEach(function(a){
-    var input = document.getElementById('inv-stock-'+a.id);
-    if(input && input.value !== ''){
-      var val = parseFloat(input.value);
-      datos[a.id] = val;
-      var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-      if(sMin !== null && val <= sMin) bajosDeMinimo.push({nombre:a.nombre, unidad:a.unidad||'', actual:val, minimo:sMin});
-    }
-  });
-  tarea.valorExtra = JSON.stringify(datos);
-  tarea.hecha = true;
-  tarea.hora = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-  // Guardar en Supabase
-  var promesas = Object.keys(datos).map(function(id){
-    var artId = parseInt(id);
-    var artIdx = cmpArticulos.findIndex(function(a){ return a.id === artId; });
-    if(artIdx >= 0) cmpArticulos[artIdx].stock_actual = datos[id];
-    return sbPatch('cmp_articulos', artId, {stock_actual: datos[id], ultima_actualizacion: new Date().toISOString(), ultima_actualizacion_por: wclEmpleado||'Cocinero'});
-  });
-  try{ await Promise.all(promesas); }catch(e){ console.warn('[wcl inventario] Error Supabase:', e); }
-  if(tarea.id) await sbPatch('checklist_diario', tarea.id, {completada: true, hora_completado: tarea.hora, valor_extra: tarea.valorExtra});
-  if(modal) modal.remove();
-  // Aviso WA si hay bajos de mínimo
-  if(bajosDeMinimo.length){
-    var lorena = (localStorage.getItem('rt_wa_lorena')||'').trim();
-    var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
-    var lineas = bajosDeMinimo.map(function(x){ return '• '+x.nombre+': '+x.actual+' '+x.unidad+' (mín. '+x.minimo+')'; }).join('\n');
-    var msg = '\u26a0\ufe0f STOCK BAJO \u2014 Inventario cierre '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del próximo servicio.';
-    if(lorena) window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
-    showToast('⚠ '+bajosDeMinimo.length+' artículo(s) bajo mínimo. Aviso enviado.','red');
-  } else {
-    showToast('✅ Inventario guardado.','green');
-  }
-  wclRender();
 }
 
 function wclConfirmarYEnviar(){
@@ -6393,27 +6064,9 @@ async function cmpSincronizarDesdeSupabase(){
     var arts  = await sbGet('cmp_articulos',  'order=nombre.asc');
     var provs = await sbGet('cmp_proveedores','order=nombre.asc');
     var fams  = await sbGet('cmp_familias',   'order=nombre.asc');
-    if(arts  && arts.length){
-      cmpArticulos = arts;
-      localStorage.setItem('rt_cmp_articulos', JSON.stringify(arts));
-    } else if(cmpArticulos.length){
-      // Supabase vacío pero localStorage tiene datos → subir a Supabase
-      console.log('[Compras] Supabase vacío, subiendo '+cmpArticulos.length+' artículos desde localStorage...');
-      for(var i=0; i<cmpArticulos.length; i++){
-        var a = cmpArticulos[i];
-        var sbObj = { nombre:a.nombre, familia_id:a.familia_id||null, proveedor_id:a.proveedor_id||null,
-          precio_compra:a.precio_compra?parseFloat(a.precio_compra):null, unidad:a.unidad||null,
-          local_id:a.local_id||1, pvp:a.pvp?parseFloat(a.pvp):null,
-          ventas_semana:a.ventas_semana?parseInt(a.ventas_semana):null,
-          stock_minimo:a.stock_minimo!=null?a.stock_minimo:null,
-          stock_actual:a.stock_actual!=null?a.stock_actual:null,
-          desc:a.desc||null };
-        try{ await sbPost('cmp_articulos', sbObj); }catch(e2){}
-      }
-      showToast('Artículos sincronizados con la base de datos ✓', 'green');
-    }
-    if(provs && provs.length){ cmpProveedores = provs; localStorage.setItem('rt_cmp_proveedores', JSON.stringify(provs)); }
-    if(fams  && fams.length) { cmpFamilias    = fams;  localStorage.setItem('rt_cmp_familias',    JSON.stringify(fams)); }
+    if(arts  && arts.length)  { cmpArticulos   = arts;  localStorage.setItem('rt_cmp_articulos',   JSON.stringify(arts)); }
+    if(provs && provs.length) { cmpProveedores = provs; localStorage.setItem('rt_cmp_proveedores', JSON.stringify(provs)); }
+    if(fams  && fams.length)  { cmpFamilias    = fams;  localStorage.setItem('rt_cmp_familias',    JSON.stringify(fams)); }
     cmpRenderArticulos();
     cmpRenderProveedores();
   }catch(e){ console.warn('[Compras] Error sincronizando Supabase:', e); }
@@ -6489,7 +6142,7 @@ function cmpRenderArticulos(){
     + '</tr></thead><tbody>'
     + lista.map(function(a){
         var coste  = parseFloat(a.precio_compra) || 0;
-        var pvp    = parseFloat(a.pvp)           || 0;
+        var pvp    = parseFloat(a.precio_venta)  || 0;
         var margen = pvp > 0 ? Math.round(((pvp - coste) / pvp) * 100) : null;
         var mColor = margen === null ? 'var(--muted)' : (margen >= 60 ? '#2ecc71' : margen >= 40 ? '#f39c12' : '#e74c3c');
         var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
@@ -6540,7 +6193,7 @@ function cmpRenderProveedores(){
         return '<tr style="border-top:1px solid var(--border)">'
           + '<td style="padding:8px 6px;font-weight:600">'+p.nombre+'</td>'
           + '<td style="padding:8px 6px;color:var(--muted)">'+(p.cif||'—')+'</td>'
-          + '<td style="padding:8px 6px">'+(p.tel ? '<a href="tel:'+p.tel+'" style="color:var(--accent)">'+p.tel+'</a>' : '—')+'</td>'
+          + '<td style="padding:8px 6px">'+(p.telefono ? '<a href="tel:'+p.telefono+'" style="color:var(--accent)">'+p.telefono+'</a>' : '—')+'</td>'
           + '<td style="padding:8px 6px">'+(p.email ? '<a href="mailto:'+p.email+'" style="color:var(--accent)">'+p.email+'</a>' : '—')+'</td>'
           + '<td style="padding:8px 6px;color:var(--muted)">'+(p.contacto||'—')+'</td>'
           + '<td style="padding:8px 6px;text-align:center;white-space:nowrap">'
@@ -6590,7 +6243,7 @@ function cmpRenderPrecios(){
     + '</tr></thead><tbody>'
     + lista.map(function(pr){
         var art    = cmpArticulos.find(function(a){ return a.id === pr.articulo_id; });
-        var pvp    = art ? (parseFloat(art.pvp) || 0) : 0;
+        var pvp    = art ? (parseFloat(art.precio_venta) || 0) : 0;
         var coste  = parseFloat(pr.precio) || 0;
         var margen = pvp > 0 ? Math.round(((pvp - coste) / pvp) * 100) : null;
         var mColor = margen === null ? 'var(--muted)' : (margen >= 60 ? '#2ecc71' : margen >= 40 ? '#f39c12' : '#e74c3c');
@@ -6618,10 +6271,10 @@ function cmpRenderKpis(){
   if(!cont) return;
   var totalArts  = cmpArticulos.length;
   var totalProvs = cmpProveedores.length;
-  var artsConPvp = cmpArticulos.filter(function(a){ return parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0; });
+  var artsConPvp = cmpArticulos.filter(function(a){ return parseFloat(a.precio_venta) > 0 && parseFloat(a.precio_compra) > 0; });
   var margenMedio = artsConPvp.length
     ? Math.round(artsConPvp.reduce(function(s,a){
-        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+        var pvp = parseFloat(a.precio_venta), c = parseFloat(a.precio_compra);
         return s + ((pvp - c) / pvp) * 100;
       }, 0) / artsConPvp.length)
     : null;
@@ -6650,9 +6303,9 @@ function cmpAnTab(tab){
   if(!cont) return;
 
   if(tab === 'margen'){
-    var arts = cmpArticulos.filter(function(a){ return parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0; })
+    var arts = cmpArticulos.filter(function(a){ return parseFloat(a.precio_venta) > 0 && parseFloat(a.precio_compra) > 0; })
       .map(function(a){
-        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+        var pvp = parseFloat(a.precio_venta), c = parseFloat(a.precio_compra);
         return { nombre: a.nombre, margen: Math.round(((pvp-c)/pvp)*100), pvp: pvp, coste: c };
       }).sort(function(a,b){ return b.margen - a.margen; });
     if(!arts.length){ cont.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px">Añade artículos con precio compra y PVP para ver el análisis.</div>'; return; }
@@ -6672,8 +6325,8 @@ function cmpAnTab(tab){
       var fam = cmpNombreFamilia(a.familia_id);
       if(!grupos[fam]) grupos[fam] = { count: 0, margens: [] };
       grupos[fam].count++;
-      if(parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0){
-        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+      if(parseFloat(a.precio_venta) > 0 && parseFloat(a.precio_compra) > 0){
+        var pvp = parseFloat(a.precio_venta), c = parseFloat(a.precio_compra);
         grupos[fam].margens.push(((pvp-c)/pvp)*100);
       }
     });
@@ -6748,11 +6401,11 @@ function cmpAnTab(tab){
     }).join('');
 
   } else if(tab === 'top'){
-    var arts = cmpArticulos.filter(function(a){ return parseInt(a.ventas_semana) > 0; })
-      .sort(function(a,b){ return parseInt(b.ventas_semana) - parseInt(a.ventas_semana); });
+    var arts = cmpArticulos.filter(function(a){ return parseInt(a.unidades_semana) > 0; })
+      .sort(function(a,b){ return parseInt(b.unidades_semana) - parseInt(a.unidades_semana); });
     if(!arts.length){ cont.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px">Añade unidades vendidas/semana a los artículos para ver el ranking.</div>'; return; }
     cont.innerHTML = arts.map(function(a, i){
-      var pvp = parseFloat(a.pvp)||0, v = parseInt(a.ventas_semana)||0;
+      var pvp = parseFloat(a.precio_venta)||0, v = parseInt(a.unidades_semana)||0;
       var ingSem = (pvp * v).toFixed(2);
       return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'
         + '<div style="width:24px;text-align:center;font-weight:700;color:var(--muted)">'+(i+1)+'</div>'
@@ -6800,9 +6453,9 @@ function cmpAbrirModalProveedor(id){
   var p = id ? cmpProveedores.find(function(x){ return x.id===id; }) : null;
   document.getElementById('cmp-prov-id').value       = p ? p.id : '';
   document.getElementById('cmp-prov-nombre').value   = p ? p.nombre    : '';
-  document.getElementById('cmp-prov-razon').value    = p ? p.razon     : '';
-  document.getElementById('cmp-prov-cif').value      = p ? p.cif       : '';
-  document.getElementById('cmp-prov-tel').value      = p ? p.tel       : '';
+  document.getElementById('cmp-prov-razon').value    = p ? p.razon_social : '';
+  document.getElementById('cmp-prov-cif').value      = p ? p.cif          : '';
+  document.getElementById('cmp-prov-tel').value      = p ? p.telefono     : '';
   document.getElementById('cmp-prov-email').value    = p ? p.email     : '';
   document.getElementById('cmp-prov-contacto').value = p ? p.contacto  : '';
   document.getElementById('cmp-prov-direccion').value= p ? p.direccion : '';
@@ -6818,9 +6471,9 @@ function cmpGuardarProveedor(){
   var obj = {
     id:        idVal ? parseInt(idVal) : cmpSiguienteId(cmpProveedores),
     nombre:    nombre,
-    razon:     (document.getElementById('cmp-prov-razon').value||'').trim(),
-    cif:       (document.getElementById('cmp-prov-cif').value||'').trim(),
-    tel:       (document.getElementById('cmp-prov-tel').value||'').trim(),
+    razon_social: (document.getElementById('cmp-prov-razon').value||'').trim(),
+    cif:          (document.getElementById('cmp-prov-cif').value||'').trim(),
+    telefono:     (document.getElementById('cmp-prov-tel').value||'').trim(),
     email:     (document.getElementById('cmp-prov-email').value||'').trim(),
     contacto:  (document.getElementById('cmp-prov-contacto').value||'').trim(),
     direccion: (document.getElementById('cmp-prov-direccion').value||'').trim(),
@@ -6872,11 +6525,11 @@ function cmpAbrirModalArticulo(id){
   document.getElementById('cmp-art-precio-compra').value  = a ? a.precio_compra   : '';
   document.getElementById('cmp-art-unidad').value         = a ? (a.unidad||'ud')  : 'ud';
   document.getElementById('cmp-art-local').value          = a ? (a.local_id||'1') : (currentUser ? currentUser.local_id||'1' : '1');
-  document.getElementById('cmp-art-pvp').value            = a ? a.pvp             : '';
-  document.getElementById('cmp-art-ventas').value         = a ? a.ventas_semana   : '';
+  document.getElementById('cmp-art-pvp').value            = a ? a.precio_venta    : '';
+  document.getElementById('cmp-art-ventas').value         = a ? a.unidades_semana : '';
   document.getElementById('cmp-art-stock-minimo').value   = a && a.stock_minimo != null ? a.stock_minimo : '';
   document.getElementById('cmp-art-stock-actual').value   = a && a.stock_actual  != null ? a.stock_actual  : '';
-  document.getElementById('cmp-art-desc').value           = a ? a.desc            : '';
+  document.getElementById('cmp-art-desc').value           = a ? a.descripcion     : '';
   document.getElementById('cmp-modal-art-titulo').textContent = a ? '📦 Editar Artículo' : '📦 Nuevo Artículo';
   document.getElementById('cmp-art-margen-preview').style.display = 'none';
   el.style.display = 'flex';
@@ -6915,11 +6568,11 @@ function cmpGuardarArticulo(){
     precio_compra:(document.getElementById('cmp-art-precio-compra').value||'').trim(),
     unidad:       document.getElementById('cmp-art-unidad').value,
     local_id:     parseInt(document.getElementById('cmp-art-local').value)||1,
-    pvp:          (document.getElementById('cmp-art-pvp').value||'').trim(),
-    ventas_semana:(document.getElementById('cmp-art-ventas').value||'').trim(),
-    stock_minimo: document.getElementById('cmp-art-stock-minimo').value !== '' ? parseFloat(document.getElementById('cmp-art-stock-minimo').value) : null,
-    stock_actual: document.getElementById('cmp-art-stock-actual').value  !== '' ? parseFloat(document.getElementById('cmp-art-stock-actual').value)  : null,
-    desc:         (document.getElementById('cmp-art-desc').value||'').trim()
+    precio_venta:   (document.getElementById('cmp-art-pvp').value||'').trim(),
+    unidades_semana:(document.getElementById('cmp-art-ventas').value||'').trim(),
+    stock_minimo:   document.getElementById('cmp-art-stock-minimo').value !== '' ? parseFloat(document.getElementById('cmp-art-stock-minimo').value) : null,
+    stock_actual:   document.getElementById('cmp-art-stock-actual').value  !== '' ? parseFloat(document.getElementById('cmp-art-stock-actual').value)  : null,
+    descripcion:    (document.getElementById('cmp-art-desc').value||'').trim()
   };
   if(idVal){
     var idx = cmpArticulos.findIndex(function(x){ return x.id===parseInt(idVal); });
@@ -6931,43 +6584,14 @@ function cmpGuardarArticulo(){
   cmpCerrarModales();
   cmpRenderArticulos();
   showToast('Artículo guardado', 'green');
-  // Sincronizar con Supabase
-  var sbObj = {
-    nombre: obj.nombre,
-    familia_id: obj.familia_id,
-    proveedor_id: obj.proveedor_id,
-    precio_compra: obj.precio_compra ? parseFloat(obj.precio_compra) : null,
-    unidad: obj.unidad || null,
-    local_id: obj.local_id || 1,
-    pvp: obj.pvp ? parseFloat(obj.pvp) : null,
-    ventas_semana: obj.ventas_semana ? parseInt(obj.ventas_semana) : null,
-    stock_minimo: obj.stock_minimo,
-    stock_actual: obj.stock_actual,
-    desc: obj.desc || null,
-    ultima_actualizacion: new Date().toISOString(),
-    ultima_actualizacion_por: currentUser ? currentUser.nombre : 'Admin'
-  };
-  if(idVal){
-    sbPatch('cmp_articulos', parseInt(idVal), sbObj).catch(function(e){ console.warn('[Compras] Error sync Supabase:', e); });
-  } else {
-    sbPost('cmp_articulos', sbObj).then(function(rows){
-      if(rows && rows[0] && rows[0].id){
-        // Actualizar id local con el id real de Supabase
-        var localIdx = cmpArticulos.findIndex(function(x){ return x.id === obj.id; });
-        if(localIdx >= 0){ cmpArticulos[localIdx].id = rows[0].id; }
-        cmpGuardarDatos();
-      }
-    }).catch(function(e){ console.warn('[Compras] Error sync Supabase:', e); });
-  }
 }
 
-async function cmpEliminarArticulo(id){
+function cmpEliminarArticulo(id){
   if(!confirm('¿Eliminar este artículo?')) return;
   cmpArticulos = cmpArticulos.filter(function(x){ return x.id!==id; });
   cmpGuardarDatos();
   cmpRenderArticulos();
   showToast('Artículo eliminado', 'orange');
-  try{ await sbPatch('cmp_articulos', id, {activo: false}); }catch(e){}
 }
 
 // ---- PRECIO ----
@@ -7001,7 +6625,7 @@ function cmpCalcMargen(){
   var artId = document.getElementById('cmp-precio-art-sel').value;
   var coste = parseFloat(document.getElementById('cmp-precio-compra').value) || 0;
   var art   = artId ? cmpArticulos.find(function(a){ return a.id===parseInt(artId); }) : null;
-  var pvp   = art ? (parseFloat(art.pvp)||0) : 0;
+  var pvp   = art ? (parseFloat(art.precio_venta)||0) : 0;
   var prev  = document.getElementById('cmp-precio-margen-preview');
   if(!prev) return;
   if(pvp > 0 && coste > 0){
@@ -7055,15 +6679,15 @@ function cmpEliminarPrecio(id){
 function cmpExportar(tipo){
   var rows, cols;
   if(tipo==='articulos'){
-    cols = ['id','nombre','familia','proveedor','precio_compra','pvp','unidad','local_id','ventas_semana','desc'];
+    cols = ['id','nombre','familia','proveedor','precio_compra','precio_venta','unidad','local_id','unidades_semana','descripcion'];
     rows = cmpArticulos.map(function(a){
       return [a.id, a.nombre, cmpNombreFamilia(a.familia_id), cmpNombreProveedor(a.proveedor_id),
-              a.precio_compra, a.pvp, a.unidad, a.local_id, a.ventas_semana, a.desc].join(',');
+              a.precio_compra, a.precio_venta, a.unidad, a.local_id, a.unidades_semana, a.descripcion].join(',');
     });
   } else {
-    cols = ['id','nombre','cif','tel','email','contacto','direccion','notas'];
+    cols = ['id','nombre','cif','telefono','email','contacto','direccion','notas'];
     rows = cmpProveedores.map(function(p){
-      return [p.id, p.nombre, p.cif, p.tel, p.email, p.contacto, p.direccion, p.notas].join(',');
+      return [p.id, p.nombre, p.cif, p.telefono, p.email, p.contacto, p.direccion, p.notas].join(',');
     });
   }
   var csv = cols.join(',') + '\n' + rows.join('\n');
@@ -7144,13 +6768,13 @@ function cmpEjecutarImport(){
   if(!datos.length) return;
   datos.forEach(function(d){
     if(tipo === 'proveedores'){
-      cmpProveedores.push({ id: cmpSiguienteId(cmpProveedores), nombre: d.nombre, tel: d.tel||'',
+      cmpProveedores.push({ id: cmpSiguienteId(cmpProveedores), nombre: d.nombre, telefono: d.telefono||'',
         email: d.email||'', cif: d.cif||'', contacto: d.contacto||'', direccion: d.direccion||'', notas: d.notas||'' });
     } else {
       cmpArticulos.push({ id: cmpSiguienteId(cmpArticulos), nombre: d.nombre, familia_id: null,
-        proveedor_id: null, precio_compra: d.precio_compra||'', pvp: d.pvp||'',
+        proveedor_id: null, precio_compra: d.precio_compra||'', precio_venta: d.precio_venta||'',
         unidad: d.unidad||'ud', local_id: currentUser ? currentUser.local_id||1 : 1,
-        ventas_semana: d.ventas_semana||'', desc: '' });
+        unidades_semana: d.unidades_semana||'', descripcion: '' });
     }
   });
   cmpGuardarDatos();
