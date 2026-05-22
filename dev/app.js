@@ -5938,27 +5938,30 @@ function checkWorkerChecklistUrl(){
     return;
   }
 
+  var soloParam = params.get('solo') || null;
+
   var loginEl = document.getElementById('login-screen');
   if(loginEl) loginEl.style.display = 'none';
   var view = document.getElementById('worker-cl-view');
   if(view) view.style.display = '';
-  wclInit(fecha, nombre, sec, lid);
+  wclInit(fecha, nombre, sec, lid, soloParam);
 }
 
-async function wclInit(fecha, empleado, seccion, localId){
+async function wclInit(fecha, empleado, seccion, localId, solo){
   wclFecha      = fecha;
   wclEmpleado   = empleado;
   wclSeccion    = seccion ? seccion.toLowerCase() : null;
   wclLocalId    = localId || null;
   wclNotificado = false;
+  var soloInv   = (solo === 'inventario');
   var GRUPO_LABELS = { barra:'Barra', sala:'Sala', cocina:'Cocina', almacen:'Almacén' };
-  var seccionLabel = seccion ? (GRUPO_LABELS[seccion.toLowerCase()] || seccion) : null;
+  var seccionLabel = soloInv ? 'Inventario' : (seccion ? (GRUPO_LABELS[seccion.toLowerCase()] || seccion) : null);
 
   var tEl = document.getElementById('wcl-titulo');
   var eEl = document.getElementById('wcl-empleado-txt');
   var fEl = document.getElementById('wcl-fecha-txt');
-  if(tEl) tEl.textContent = '✅ Checklist de ' + empleado + (seccionLabel ? ' — ' + seccionLabel : '');
-  if(eEl) eEl.textContent = '👤 ' + empleado + (seccionLabel ? ' · ' + seccionLabel : '');
+  if(tEl) tEl.textContent = (soloInv ? '📦 Inventario al cierre de ' : '✅ Checklist de ') + empleado + (seccionLabel && !soloInv ? ' — ' + seccionLabel : '');
+  if(eEl) eEl.textContent = '👤 ' + empleado + ' · ' + (soloInv ? 'Inventario' : (seccionLabel||''));
   if(fEl){
     var d = new Date(fecha + 'T12:00:00');
     fEl.textContent = d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -5984,6 +5987,8 @@ async function wclInit(fecha, empleado, seccion, localId){
         return {id:null, texto:tarea.texto, grupo:tarea.grupo, tipo:tarea.tipo, hecha:false, hora:'', posicion:i};
       });
     }
+    // Si solo=inventario, filtrar únicamente esa tarea
+    if(soloInv) wclTareas = wclTareas.filter(function(t){ return t.tipo === 'inventario'; });
   }catch(e){
     var baseTasks = seccion
       ? CL_TAREAS_BASE.filter(function(t){ return t.grupo.toLowerCase() === seccion.toLowerCase(); })
@@ -5991,6 +5996,7 @@ async function wclInit(fecha, empleado, seccion, localId){
     wclTareas = baseTasks.map(function(tarea,i){
       return {id:null, texto:tarea.texto, grupo:tarea.grupo, tipo:tarea.tipo, hecha:false, hora:'', posicion:i};
     });
+    if(soloInv) wclTareas = wclTareas.filter(function(t){ return t.tipo === 'inventario'; });
   }
   wclRender();
 }
