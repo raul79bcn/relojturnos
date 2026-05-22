@@ -5567,9 +5567,20 @@ function clAbrirModalInventario(tareaIdx){
 
   var localId = currentUser ? (currentUser.local_id || 1) : 1;
 
-  // Si cmpArticulos no está en memoria, intentar cargarlo desde localStorage
+  // Si cmpArticulos no está en memoria, cargar localStorage; si sigue vacío, ir a Supabase
   if(!cmpArticulos || !cmpArticulos.length){
     try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
+  }
+  if(!cmpArticulos || !cmpArticulos.length){
+    showToast('Cargando artículos desde base de datos...', 'green');
+    sbGet('cmp_articulos','order=nombre.asc').then(function(rows){
+      if(rows && rows.length){
+        cmpArticulos = rows;
+        try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(rows)); }catch(e){}
+      }
+      clAbrirModalInventario(tareaIdx);
+    }).catch(function(){ showToast('Error cargando artículos.','red'); });
+    return;
   }
 
   // Filtrar artículos del local actual
@@ -6021,7 +6032,7 @@ function cmpGuardarDatos(){
 }
 
 function initCompras(){
-  cmpCargarDatos();
+  cmpCargarDatos(); // carga localStorage como caché inicial
   cmpTabActual = 'articulos';
   document.querySelectorAll('.cmp-tab').forEach(function(b){ b.classList.remove('active'); });
   var tabBtn = document.getElementById('cmp-tab-articulos');
@@ -6030,6 +6041,21 @@ function initCompras(){
   var panel = document.getElementById('cmp-panel-articulos');
   if(panel) panel.classList.add('active');
   cmpRenderArticulos();
+  // Sincronizar desde Supabase en segundo plano
+  cmpSincronizarDesdeSupabase();
+}
+
+async function cmpSincronizarDesdeSupabase(){
+  try{
+    var arts  = await sbGet('cmp_articulos',  'order=nombre.asc');
+    var provs = await sbGet('cmp_proveedores','order=nombre.asc');
+    var fams  = await sbGet('cmp_familias',   'order=nombre.asc');
+    if(arts  && arts.length)  { cmpArticulos   = arts;  localStorage.setItem('rt_cmp_articulos',   JSON.stringify(arts)); }
+    if(provs && provs.length) { cmpProveedores = provs; localStorage.setItem('rt_cmp_proveedores', JSON.stringify(provs)); }
+    if(fams  && fams.length)  { cmpFamilias    = fams;  localStorage.setItem('rt_cmp_familias',    JSON.stringify(fams)); }
+    cmpRenderArticulos();
+    cmpRenderProveedores();
+  }catch(e){ console.warn('[Compras] Error sincronizando Supabase:', e); }
 }
 
 function cmpTab(tab){
