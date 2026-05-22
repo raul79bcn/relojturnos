@@ -5566,15 +5566,23 @@ function clAbrirModalInventario(tareaIdx){
 
   var localId = currentUser ? (currentUser.local_id || 1) : 1;
 
+  // Cargar artículos y familias si están vacíos
   if(!cmpArticulos || !cmpArticulos.length){
     try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
   }
-  if(!cmpArticulos || !cmpArticulos.length){
-    showToast('Cargando artículos...', 'green');
-    sbGet('cmp_articulos','order=nombre.asc').then(function(rows){
-      if(rows && rows.length){ cmpArticulos = rows; try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(rows)); }catch(e){} }
+  if(!cmpFamilias || !cmpFamilias.length){
+    try{ cmpFamilias = JSON.parse(localStorage.getItem('rt_cmp_familias') || '[]'); }catch(e){ cmpFamilias=[]; }
+  }
+  if(!cmpArticulos.length || !cmpFamilias.length){
+    showToast('Cargando datos...', 'green');
+    Promise.all([
+      sbGet('cmp_articulos','order=nombre.asc'),
+      sbGet('cmp_familias','order=nombre.asc')
+    ]).then(function(res){
+      if(res[0] && res[0].length){ cmpArticulos = res[0]; try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(res[0])); }catch(e){} }
+      if(res[1] && res[1].length){ cmpFamilias  = res[1]; try{ localStorage.setItem('rt_cmp_familias',  JSON.stringify(res[1])); }catch(e){} }
       clAbrirModalInventario(tareaIdx);
-    }).catch(function(){ showToast('Error cargando artículos.','red'); });
+    }).catch(function(){ showToast('Error cargando datos.','red'); });
     return;
   }
 
@@ -5604,7 +5612,7 @@ function clAbrirModalInventario(tareaIdx){
     var badge = hecho > 0
       ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px">'+hecho+'/'+count+'</span>'
       : '<span style="font-size:10px;color:var(--muted)">('+count+')</span>';
-    return '<div onclick="clInvMostrarFamilia(\'' + fn + '\',' + tareaIdx + ')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
+    return '<div data-fam="'+encodeURIComponent(fn)+'" onclick="clInvClickFamilia(this,'+tareaIdx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
   }).join('');
 
   var modal = document.createElement('div');
@@ -5634,6 +5642,11 @@ function clAbrirModalInventario(tareaIdx){
   modal._tareaIdx = tareaIdx;
   modal._arts = arts;
   modal._savedData = savedData;
+}
+
+function clInvClickFamilia(el, tareaIdx){
+  var famNombre = decodeURIComponent(el.getAttribute('data-fam') || '');
+  clInvMostrarFamilia(famNombre, tareaIdx);
 }
 
 function clInvMostrarFamilia(famNombre, tareaIdx){
@@ -5713,7 +5726,7 @@ function clInvFiltrarBusqueda(tareaIdx){
       var badge = hecho > 0
         ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px">'+hecho+'/'+count+'</span>'
         : '<span style="font-size:10px;color:var(--muted)">('+count+')</span>';
-      return '<div onclick="clInvMostrarFamilia(\'' + fn + '\',' + tareaIdx + ')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
+    return '<div data-fam="'+encodeURIComponent(fn)+'" onclick="clInvClickFamilia(this,'+tareaIdx+')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;margin-top:2px">'+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
     }).join('');
     cont.innerHTML = '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div><div style="display:grid;gap:8px">'+famGrid+'</div>';
     return;
