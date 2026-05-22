@@ -4992,7 +4992,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.49 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.50 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5583,16 +5583,13 @@ function clAbrirModalInventario(tareaIdx){
     return;
   }
 
-  // Filtrar artículos del local actual (si tienen local_id asignado)
+  // Filtrar artículos del local actual
   var arts = (cmpArticulos || []).filter(function(a){
-    if(!a.local_id) return true; // sin local_id → visible en todos los locales
-    return String(a.local_id) === String(localId);
+    return !a.local_id || String(a.local_id) === String(localId);
   });
-  // Si no hay artículos filtrados, mostrar todos
-  if(!arts.length) arts = cmpArticulos || [];
 
   if(!arts.length){
-    showToast('No hay artículos en Compras. Añádelos primero.', 'red');
+    showToast('No hay artículos en Compras para este local. Añádelos primero.', 'red');
     return;
   }
 
@@ -6053,27 +6050,9 @@ async function cmpSincronizarDesdeSupabase(){
     var arts  = await sbGet('cmp_articulos',  'order=nombre.asc');
     var provs = await sbGet('cmp_proveedores','order=nombre.asc');
     var fams  = await sbGet('cmp_familias',   'order=nombre.asc');
-    if(arts  && arts.length){
-      cmpArticulos = arts;
-      localStorage.setItem('rt_cmp_articulos', JSON.stringify(arts));
-    } else if(cmpArticulos.length){
-      // Supabase vacío pero localStorage tiene datos → subir a Supabase
-      console.log('[Compras] Supabase vacío, subiendo '+cmpArticulos.length+' artículos desde localStorage...');
-      for(var i=0; i<cmpArticulos.length; i++){
-        var a = cmpArticulos[i];
-        var sbObj = { nombre:a.nombre, familia_id:a.familia_id||null, proveedor_id:a.proveedor_id||null,
-          precio_compra:a.precio_compra?parseFloat(a.precio_compra):null, unidad:a.unidad||null,
-          local_id:a.local_id||1, pvp:a.pvp?parseFloat(a.pvp):null,
-          ventas_semana:a.ventas_semana?parseInt(a.ventas_semana):null,
-          stock_minimo:a.stock_minimo!=null?a.stock_minimo:null,
-          stock_actual:a.stock_actual!=null?a.stock_actual:null,
-          desc:a.desc||null };
-        try{ await sbPost('cmp_articulos', sbObj); }catch(e2){}
-      }
-      showToast('Artículos sincronizados con la base de datos ✓', 'green');
-    }
-    if(provs && provs.length){ cmpProveedores = provs; localStorage.setItem('rt_cmp_proveedores', JSON.stringify(provs)); }
-    if(fams  && fams.length) { cmpFamilias    = fams;  localStorage.setItem('rt_cmp_familias',    JSON.stringify(fams)); }
+    if(arts  && arts.length)  { cmpArticulos   = arts;  localStorage.setItem('rt_cmp_articulos',   JSON.stringify(arts)); }
+    if(provs && provs.length) { cmpProveedores = provs; localStorage.setItem('rt_cmp_proveedores', JSON.stringify(provs)); }
+    if(fams  && fams.length)  { cmpFamilias    = fams;  localStorage.setItem('rt_cmp_familias',    JSON.stringify(fams)); }
     cmpRenderArticulos();
     cmpRenderProveedores();
   }catch(e){ console.warn('[Compras] Error sincronizando Supabase:', e); }
@@ -6149,7 +6128,7 @@ function cmpRenderArticulos(){
     + '</tr></thead><tbody>'
     + lista.map(function(a){
         var coste  = parseFloat(a.precio_compra) || 0;
-        var pvp    = parseFloat(a.pvp)           || 0;
+        var pvp    = parseFloat(a.precio_venta)  || 0;
         var margen = pvp > 0 ? Math.round(((pvp - coste) / pvp) * 100) : null;
         var mColor = margen === null ? 'var(--muted)' : (margen >= 60 ? '#2ecc71' : margen >= 40 ? '#f39c12' : '#e74c3c');
         var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
@@ -6200,7 +6179,7 @@ function cmpRenderProveedores(){
         return '<tr style="border-top:1px solid var(--border)">'
           + '<td style="padding:8px 6px;font-weight:600">'+p.nombre+'</td>'
           + '<td style="padding:8px 6px;color:var(--muted)">'+(p.cif||'—')+'</td>'
-          + '<td style="padding:8px 6px">'+(p.tel ? '<a href="tel:'+p.tel+'" style="color:var(--accent)">'+p.tel+'</a>' : '—')+'</td>'
+          + '<td style="padding:8px 6px">'+(p.telefono ? '<a href="tel:'+p.telefono+'" style="color:var(--accent)">'+p.telefono+'</a>' : '—')+'</td>'
           + '<td style="padding:8px 6px">'+(p.email ? '<a href="mailto:'+p.email+'" style="color:var(--accent)">'+p.email+'</a>' : '—')+'</td>'
           + '<td style="padding:8px 6px;color:var(--muted)">'+(p.contacto||'—')+'</td>'
           + '<td style="padding:8px 6px;text-align:center;white-space:nowrap">'
@@ -6250,7 +6229,7 @@ function cmpRenderPrecios(){
     + '</tr></thead><tbody>'
     + lista.map(function(pr){
         var art    = cmpArticulos.find(function(a){ return a.id === pr.articulo_id; });
-        var pvp    = art ? (parseFloat(art.pvp) || 0) : 0;
+        var pvp    = art ? (parseFloat(art.precio_venta) || 0) : 0;
         var coste  = parseFloat(pr.precio) || 0;
         var margen = pvp > 0 ? Math.round(((pvp - coste) / pvp) * 100) : null;
         var mColor = margen === null ? 'var(--muted)' : (margen >= 60 ? '#2ecc71' : margen >= 40 ? '#f39c12' : '#e74c3c');
@@ -6278,10 +6257,10 @@ function cmpRenderKpis(){
   if(!cont) return;
   var totalArts  = cmpArticulos.length;
   var totalProvs = cmpProveedores.length;
-  var artsConPvp = cmpArticulos.filter(function(a){ return parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0; });
+  var artsConPvp = cmpArticulos.filter(function(a){ return parseFloat(a.precio_venta) > 0 && parseFloat(a.precio_compra) > 0; });
   var margenMedio = artsConPvp.length
     ? Math.round(artsConPvp.reduce(function(s,a){
-        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+        var pvp = parseFloat(a.precio_venta), c = parseFloat(a.precio_compra);
         return s + ((pvp - c) / pvp) * 100;
       }, 0) / artsConPvp.length)
     : null;
@@ -6310,9 +6289,9 @@ function cmpAnTab(tab){
   if(!cont) return;
 
   if(tab === 'margen'){
-    var arts = cmpArticulos.filter(function(a){ return parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0; })
+    var arts = cmpArticulos.filter(function(a){ return parseFloat(a.precio_venta) > 0 && parseFloat(a.precio_compra) > 0; })
       .map(function(a){
-        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+        var pvp = parseFloat(a.precio_venta), c = parseFloat(a.precio_compra);
         return { nombre: a.nombre, margen: Math.round(((pvp-c)/pvp)*100), pvp: pvp, coste: c };
       }).sort(function(a,b){ return b.margen - a.margen; });
     if(!arts.length){ cont.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px">Añade artículos con precio compra y PVP para ver el análisis.</div>'; return; }
@@ -6332,8 +6311,8 @@ function cmpAnTab(tab){
       var fam = cmpNombreFamilia(a.familia_id);
       if(!grupos[fam]) grupos[fam] = { count: 0, margens: [] };
       grupos[fam].count++;
-      if(parseFloat(a.pvp) > 0 && parseFloat(a.precio_compra) > 0){
-        var pvp = parseFloat(a.pvp), c = parseFloat(a.precio_compra);
+      if(parseFloat(a.precio_venta) > 0 && parseFloat(a.precio_compra) > 0){
+        var pvp = parseFloat(a.precio_venta), c = parseFloat(a.precio_compra);
         grupos[fam].margens.push(((pvp-c)/pvp)*100);
       }
     });
@@ -6408,11 +6387,11 @@ function cmpAnTab(tab){
     }).join('');
 
   } else if(tab === 'top'){
-    var arts = cmpArticulos.filter(function(a){ return parseInt(a.ventas_semana) > 0; })
-      .sort(function(a,b){ return parseInt(b.ventas_semana) - parseInt(a.ventas_semana); });
+    var arts = cmpArticulos.filter(function(a){ return parseInt(a.unidades_semana) > 0; })
+      .sort(function(a,b){ return parseInt(b.unidades_semana) - parseInt(a.unidades_semana); });
     if(!arts.length){ cont.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px">Añade unidades vendidas/semana a los artículos para ver el ranking.</div>'; return; }
     cont.innerHTML = arts.map(function(a, i){
-      var pvp = parseFloat(a.pvp)||0, v = parseInt(a.ventas_semana)||0;
+      var pvp = parseFloat(a.precio_venta)||0, v = parseInt(a.unidades_semana)||0;
       var ingSem = (pvp * v).toFixed(2);
       return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'
         + '<div style="width:24px;text-align:center;font-weight:700;color:var(--muted)">'+(i+1)+'</div>'
@@ -6460,9 +6439,9 @@ function cmpAbrirModalProveedor(id){
   var p = id ? cmpProveedores.find(function(x){ return x.id===id; }) : null;
   document.getElementById('cmp-prov-id').value       = p ? p.id : '';
   document.getElementById('cmp-prov-nombre').value   = p ? p.nombre    : '';
-  document.getElementById('cmp-prov-razon').value    = p ? p.razon     : '';
-  document.getElementById('cmp-prov-cif').value      = p ? p.cif       : '';
-  document.getElementById('cmp-prov-tel').value      = p ? p.tel       : '';
+  document.getElementById('cmp-prov-razon').value    = p ? p.razon_social : '';
+  document.getElementById('cmp-prov-cif').value      = p ? p.cif          : '';
+  document.getElementById('cmp-prov-tel').value      = p ? p.telefono     : '';
   document.getElementById('cmp-prov-email').value    = p ? p.email     : '';
   document.getElementById('cmp-prov-contacto').value = p ? p.contacto  : '';
   document.getElementById('cmp-prov-direccion').value= p ? p.direccion : '';
@@ -6478,9 +6457,9 @@ function cmpGuardarProveedor(){
   var obj = {
     id:        idVal ? parseInt(idVal) : cmpSiguienteId(cmpProveedores),
     nombre:    nombre,
-    razon:     (document.getElementById('cmp-prov-razon').value||'').trim(),
-    cif:       (document.getElementById('cmp-prov-cif').value||'').trim(),
-    tel:       (document.getElementById('cmp-prov-tel').value||'').trim(),
+    razon_social: (document.getElementById('cmp-prov-razon').value||'').trim(),
+    cif:          (document.getElementById('cmp-prov-cif').value||'').trim(),
+    telefono:     (document.getElementById('cmp-prov-tel').value||'').trim(),
     email:     (document.getElementById('cmp-prov-email').value||'').trim(),
     contacto:  (document.getElementById('cmp-prov-contacto').value||'').trim(),
     direccion: (document.getElementById('cmp-prov-direccion').value||'').trim(),
@@ -6532,11 +6511,11 @@ function cmpAbrirModalArticulo(id){
   document.getElementById('cmp-art-precio-compra').value  = a ? a.precio_compra   : '';
   document.getElementById('cmp-art-unidad').value         = a ? (a.unidad||'ud')  : 'ud';
   document.getElementById('cmp-art-local').value          = a ? (a.local_id||'1') : (currentUser ? currentUser.local_id||'1' : '1');
-  document.getElementById('cmp-art-pvp').value            = a ? a.pvp             : '';
-  document.getElementById('cmp-art-ventas').value         = a ? a.ventas_semana   : '';
+  document.getElementById('cmp-art-pvp').value            = a ? a.precio_venta    : '';
+  document.getElementById('cmp-art-ventas').value         = a ? a.unidades_semana : '';
   document.getElementById('cmp-art-stock-minimo').value   = a && a.stock_minimo != null ? a.stock_minimo : '';
   document.getElementById('cmp-art-stock-actual').value   = a && a.stock_actual  != null ? a.stock_actual  : '';
-  document.getElementById('cmp-art-desc').value           = a ? a.desc            : '';
+  document.getElementById('cmp-art-desc').value           = a ? a.descripcion     : '';
   document.getElementById('cmp-modal-art-titulo').textContent = a ? '📦 Editar Artículo' : '📦 Nuevo Artículo';
   document.getElementById('cmp-art-margen-preview').style.display = 'none';
   el.style.display = 'flex';
@@ -6575,11 +6554,11 @@ function cmpGuardarArticulo(){
     precio_compra:(document.getElementById('cmp-art-precio-compra').value||'').trim(),
     unidad:       document.getElementById('cmp-art-unidad').value,
     local_id:     parseInt(document.getElementById('cmp-art-local').value)||1,
-    pvp:          (document.getElementById('cmp-art-pvp').value||'').trim(),
-    ventas_semana:(document.getElementById('cmp-art-ventas').value||'').trim(),
-    stock_minimo: document.getElementById('cmp-art-stock-minimo').value !== '' ? parseFloat(document.getElementById('cmp-art-stock-minimo').value) : null,
-    stock_actual: document.getElementById('cmp-art-stock-actual').value  !== '' ? parseFloat(document.getElementById('cmp-art-stock-actual').value)  : null,
-    desc:         (document.getElementById('cmp-art-desc').value||'').trim()
+    precio_venta:   (document.getElementById('cmp-art-pvp').value||'').trim(),
+    unidades_semana:(document.getElementById('cmp-art-ventas').value||'').trim(),
+    stock_minimo:   document.getElementById('cmp-art-stock-minimo').value !== '' ? parseFloat(document.getElementById('cmp-art-stock-minimo').value) : null,
+    stock_actual:   document.getElementById('cmp-art-stock-actual').value  !== '' ? parseFloat(document.getElementById('cmp-art-stock-actual').value)  : null,
+    descripcion:    (document.getElementById('cmp-art-desc').value||'').trim()
   };
   if(idVal){
     var idx = cmpArticulos.findIndex(function(x){ return x.id===parseInt(idVal); });
@@ -6591,43 +6570,14 @@ function cmpGuardarArticulo(){
   cmpCerrarModales();
   cmpRenderArticulos();
   showToast('Artículo guardado', 'green');
-  // Sincronizar con Supabase
-  var sbObj = {
-    nombre: obj.nombre,
-    familia_id: obj.familia_id,
-    proveedor_id: obj.proveedor_id,
-    precio_compra: obj.precio_compra ? parseFloat(obj.precio_compra) : null,
-    unidad: obj.unidad || null,
-    local_id: obj.local_id || 1,
-    pvp: obj.pvp ? parseFloat(obj.pvp) : null,
-    ventas_semana: obj.ventas_semana ? parseInt(obj.ventas_semana) : null,
-    stock_minimo: obj.stock_minimo,
-    stock_actual: obj.stock_actual,
-    desc: obj.desc || null,
-    ultima_actualizacion: new Date().toISOString(),
-    ultima_actualizacion_por: currentUser ? currentUser.nombre : 'Admin'
-  };
-  if(idVal){
-    sbPatch('cmp_articulos', parseInt(idVal), sbObj).catch(function(e){ console.warn('[Compras] Error sync Supabase:', e); });
-  } else {
-    sbPost('cmp_articulos', sbObj).then(function(rows){
-      if(rows && rows[0] && rows[0].id){
-        // Actualizar id local con el id real de Supabase
-        var localIdx = cmpArticulos.findIndex(function(x){ return x.id === obj.id; });
-        if(localIdx >= 0){ cmpArticulos[localIdx].id = rows[0].id; }
-        cmpGuardarDatos();
-      }
-    }).catch(function(e){ console.warn('[Compras] Error sync Supabase:', e); });
-  }
 }
 
-async function cmpEliminarArticulo(id){
+function cmpEliminarArticulo(id){
   if(!confirm('¿Eliminar este artículo?')) return;
   cmpArticulos = cmpArticulos.filter(function(x){ return x.id!==id; });
   cmpGuardarDatos();
   cmpRenderArticulos();
   showToast('Artículo eliminado', 'orange');
-  try{ await sbPatch('cmp_articulos', id, {activo: false}); }catch(e){}
 }
 
 // ---- PRECIO ----
@@ -6661,7 +6611,7 @@ function cmpCalcMargen(){
   var artId = document.getElementById('cmp-precio-art-sel').value;
   var coste = parseFloat(document.getElementById('cmp-precio-compra').value) || 0;
   var art   = artId ? cmpArticulos.find(function(a){ return a.id===parseInt(artId); }) : null;
-  var pvp   = art ? (parseFloat(art.pvp)||0) : 0;
+  var pvp   = art ? (parseFloat(art.precio_venta)||0) : 0;
   var prev  = document.getElementById('cmp-precio-margen-preview');
   if(!prev) return;
   if(pvp > 0 && coste > 0){
@@ -6715,15 +6665,15 @@ function cmpEliminarPrecio(id){
 function cmpExportar(tipo){
   var rows, cols;
   if(tipo==='articulos'){
-    cols = ['id','nombre','familia','proveedor','precio_compra','pvp','unidad','local_id','ventas_semana','desc'];
+    cols = ['id','nombre','familia','proveedor','precio_compra','precio_venta','unidad','local_id','unidades_semana','descripcion'];
     rows = cmpArticulos.map(function(a){
       return [a.id, a.nombre, cmpNombreFamilia(a.familia_id), cmpNombreProveedor(a.proveedor_id),
-              a.precio_compra, a.pvp, a.unidad, a.local_id, a.ventas_semana, a.desc].join(',');
+              a.precio_compra, a.precio_venta, a.unidad, a.local_id, a.unidades_semana, a.descripcion].join(',');
     });
   } else {
-    cols = ['id','nombre','cif','tel','email','contacto','direccion','notas'];
+    cols = ['id','nombre','cif','telefono','email','contacto','direccion','notas'];
     rows = cmpProveedores.map(function(p){
-      return [p.id, p.nombre, p.cif, p.tel, p.email, p.contacto, p.direccion, p.notas].join(',');
+      return [p.id, p.nombre, p.cif, p.telefono, p.email, p.contacto, p.direccion, p.notas].join(',');
     });
   }
   var csv = cols.join(',') + '\n' + rows.join('\n');
@@ -6804,13 +6754,13 @@ function cmpEjecutarImport(){
   if(!datos.length) return;
   datos.forEach(function(d){
     if(tipo === 'proveedores'){
-      cmpProveedores.push({ id: cmpSiguienteId(cmpProveedores), nombre: d.nombre, tel: d.tel||'',
+      cmpProveedores.push({ id: cmpSiguienteId(cmpProveedores), nombre: d.nombre, telefono: d.telefono||'',
         email: d.email||'', cif: d.cif||'', contacto: d.contacto||'', direccion: d.direccion||'', notas: d.notas||'' });
     } else {
       cmpArticulos.push({ id: cmpSiguienteId(cmpArticulos), nombre: d.nombre, familia_id: null,
-        proveedor_id: null, precio_compra: d.precio_compra||'', pvp: d.pvp||'',
+        proveedor_id: null, precio_compra: d.precio_compra||'', precio_venta: d.precio_venta||'',
         unidad: d.unidad||'ud', local_id: currentUser ? currentUser.local_id||1 : 1,
-        ventas_semana: d.ventas_semana||'', desc: '' });
+        unidades_semana: d.unidades_semana||'', descripcion: '' });
     }
   });
   cmpGuardarDatos();
