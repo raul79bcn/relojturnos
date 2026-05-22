@@ -5583,13 +5583,16 @@ function clAbrirModalInventario(tareaIdx){
     return;
   }
 
-  // Filtrar artículos del local actual
+  // Filtrar artículos del local actual (si tienen local_id asignado)
   var arts = (cmpArticulos || []).filter(function(a){
-    return !a.local_id || String(a.local_id) === String(localId);
+    if(!a.local_id) return true; // sin local_id → visible en todos los locales
+    return String(a.local_id) === String(localId);
   });
+  // Si no hay artículos filtrados, mostrar todos
+  if(!arts.length) arts = cmpArticulos || [];
 
   if(!arts.length){
-    showToast('No hay artículos en Compras para este local. Añádelos primero.', 'red');
+    showToast('No hay artículos en Compras. Añádelos primero.', 'red');
     return;
   }
 
@@ -6050,9 +6053,27 @@ async function cmpSincronizarDesdeSupabase(){
     var arts  = await sbGet('cmp_articulos',  'order=nombre.asc');
     var provs = await sbGet('cmp_proveedores','order=nombre.asc');
     var fams  = await sbGet('cmp_familias',   'order=nombre.asc');
-    if(arts  && arts.length)  { cmpArticulos   = arts;  localStorage.setItem('rt_cmp_articulos',   JSON.stringify(arts)); }
-    if(provs && provs.length) { cmpProveedores = provs; localStorage.setItem('rt_cmp_proveedores', JSON.stringify(provs)); }
-    if(fams  && fams.length)  { cmpFamilias    = fams;  localStorage.setItem('rt_cmp_familias',    JSON.stringify(fams)); }
+    if(arts  && arts.length){
+      cmpArticulos = arts;
+      localStorage.setItem('rt_cmp_articulos', JSON.stringify(arts));
+    } else if(cmpArticulos.length){
+      // Supabase vacío pero localStorage tiene datos → subir a Supabase
+      console.log('[Compras] Supabase vacío, subiendo '+cmpArticulos.length+' artículos desde localStorage...');
+      for(var i=0; i<cmpArticulos.length; i++){
+        var a = cmpArticulos[i];
+        var sbObj = { nombre:a.nombre, familia_id:a.familia_id||null, proveedor_id:a.proveedor_id||null,
+          precio_compra:a.precio_compra?parseFloat(a.precio_compra):null, unidad:a.unidad||null,
+          local_id:a.local_id||1, pvp:a.pvp?parseFloat(a.pvp):null,
+          ventas_semana:a.ventas_semana?parseInt(a.ventas_semana):null,
+          stock_minimo:a.stock_minimo!=null?a.stock_minimo:null,
+          stock_actual:a.stock_actual!=null?a.stock_actual:null,
+          desc:a.desc||null };
+        try{ await sbPost('cmp_articulos', sbObj); }catch(e2){}
+      }
+      showToast('Artículos sincronizados con la base de datos ✓', 'green');
+    }
+    if(provs && provs.length){ cmpProveedores = provs; localStorage.setItem('rt_cmp_proveedores', JSON.stringify(provs)); }
+    if(fams  && fams.length) { cmpFamilias    = fams;  localStorage.setItem('rt_cmp_familias',    JSON.stringify(fams)); }
     cmpRenderArticulos();
     cmpRenderProveedores();
   }catch(e){ console.warn('[Compras] Error sincronizando Supabase:', e); }
@@ -6570,14 +6591,43 @@ function cmpGuardarArticulo(){
   cmpCerrarModales();
   cmpRenderArticulos();
   showToast('Artículo guardado', 'green');
+  // Sincronizar con Supabase
+  var sbObj = {
+    nombre: obj.nombre,
+    familia_id: obj.familia_id,
+    proveedor_id: obj.proveedor_id,
+    precio_compra: obj.precio_compra ? parseFloat(obj.precio_compra) : null,
+    unidad: obj.unidad || null,
+    local_id: obj.local_id || 1,
+    pvp: obj.pvp ? parseFloat(obj.pvp) : null,
+    ventas_semana: obj.ventas_semana ? parseInt(obj.ventas_semana) : null,
+    stock_minimo: obj.stock_minimo,
+    stock_actual: obj.stock_actual,
+    desc: obj.desc || null,
+    ultima_actualizacion: new Date().toISOString(),
+    ultima_actualizacion_por: currentUser ? currentUser.nombre : 'Admin'
+  };
+  if(idVal){
+    sbPatch('cmp_articulos', parseInt(idVal), sbObj).catch(function(e){ console.warn('[Compras] Error sync Supabase:', e); });
+  } else {
+    sbPost('cmp_articulos', sbObj).then(function(rows){
+      if(rows && rows[0] && rows[0].id){
+        // Actualizar id local con el id real de Supabase
+        var localIdx = cmpArticulos.findIndex(function(x){ return x.id === obj.id; });
+        if(localIdx >= 0){ cmpArticulos[localIdx].id = rows[0].id; }
+        cmpGuardarDatos();
+      }
+    }).catch(function(e){ console.warn('[Compras] Error sync Supabase:', e); });
+  }
 }
 
-function cmpEliminarArticulo(id){
+async function cmpEliminarArticulo(id){
   if(!confirm('¿Eliminar este artículo?')) return;
   cmpArticulos = cmpArticulos.filter(function(x){ return x.id!==id; });
   cmpGuardarDatos();
   cmpRenderArticulos();
   showToast('Artículo eliminado', 'orange');
+  try{ await sbPatch('cmp_articulos', id, {activo: false}); }catch(e){}
 }
 
 // ---- PRECIO ----
