@@ -5567,17 +5567,9 @@ function clAbrirModalInventario(tareaIdx){
 
   var localId = currentUser ? (currentUser.local_id || 1) : 1;
 
-  // Si cmpArticulos no está cargado, cargarlo desde Supabase primero
+  // Si cmpArticulos no está en memoria, intentar cargarlo desde localStorage
   if(!cmpArticulos || !cmpArticulos.length){
-    showToast('Cargando artículos...', 'green');
-    sbGet('cmp_articulos', 'order=nombre.asc').then(function(rows){
-      cmpArticulos = rows || [];
-      try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(cmpArticulos)); }catch(e){}
-      clAbrirModalInventario(tareaIdx);
-    }).catch(function(){
-      showToast('Error al cargar artículos. Entra a Compras primero.', 'red');
-    });
-    return;
+    try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
   }
 
   // Filtrar artículos del local actual
