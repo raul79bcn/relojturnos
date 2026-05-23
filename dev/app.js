@@ -5758,8 +5758,9 @@ function invCocinaEnviarWA(){
   if(!resp){ showToast('Selecciona un responsable primero','red'); return; }
   var localId = currentUser ? (currentUser.local_id||1) : 1;
   var fecha = new Date().toISOString().split('T')[0];
-  // Enlace directo a la app — el cocinero hace login y va a Inventario Cocina
-  var url = window.location.origin + window.location.pathname + '?inv=cocina';
+  var fecha = new Date().toISOString().split('T')[0];
+  var url = window.location.origin + window.location.pathname
+    + '?inv=cocina&empleado='+encodeURIComponent(resp)+'&local='+localId;
   sbGet('empleados','nombre=eq.'+encodeURIComponent(resp)+'&local_id=eq.'+localId+'&select=telefono').then(function(rows){
     var tel = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
     var fechaFmt = new Date(fecha+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long'});
@@ -6104,6 +6105,182 @@ async function clGuardarInventarioCierre(tareaIdx){
 }
 
 
+// ========== VISTA PÚBLICA INVENTARIO (sin login) ==========
+
+async function winvInit(tipo, empleado, localId){
+  var tEl = document.getElementById('winv-titulo');
+  var eEl = document.getElementById('winv-empleado-txt');
+  var fEl = document.getElementById('winv-fecha-txt');
+  var cont = document.getElementById('winv-contenido');
+
+  if(tEl) tEl.textContent = 'Inventario Cocina al cierre';
+  if(eEl) eEl.textContent = '👤 ' + empleado;
+  if(fEl) fEl.textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  if(!cont) return;
+  cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px">Cargando artículos...</div>';
+
+  try{
+    var arts  = await sbGet('cmp_articulos', 'order=nombre.asc');
+    var fams  = await sbGet('cmp_familias',  'order=nombre.asc');
+    arts = (arts||[]).filter(function(a){ return !a.local_id || String(a.local_id) === String(localId); });
+    if(!arts.length) arts = arts.length ? arts : (await sbGet('cmp_articulos','order=nombre.asc')||[]);
+
+    var famMap = {};
+    arts.forEach(function(a){
+      var fam = (fams||[]).find(function(f){ return f.id === a.familia_id; });
+      var key = fam ? fam.nombre : 'Sin familia';
+      var emoji = fam ? (fam.emoji||'📦') : '📦';
+      if(!famMap[key]) famMap[key] = { emoji: emoji, arts: [] };
+      famMap[key].arts.push(a);
+    });
+
+    var famGrid = Object.keys(famMap).sort().map(function(fn){
+      var f = famMap[fn];
+      return '<div onclick="winvMostrarFamilia(this,\''+encodeURIComponent(fn)+'\')" data-arts="'+encodeURIComponent(JSON.stringify(f.arts))+'" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;color:var(--muted)">('+f.arts.length+' articulos)</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
+    }).join('');
+
+    cont.innerHTML =
+      '<div style="margin-bottom:12px"><input type="text" id="winv-buscar" placeholder="Buscar articulo..." oninput="winvFiltrar()" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none"></div>'
+      +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div>'
+      +'<div id="winv-grid">'+famGrid+'</div>';
+
+    cont._arts = arts;
+    cont._fams = fams;
+    cont._empleado = empleado;
+    cont._localId = localId;
+
+  }catch(e){
+    cont.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center">Error cargando articulos. Comprueba tu conexion.</div>';
+  }
+}
+
+function winvMostrarFamilia(el, famEnc){
+  var famNombre = decodeURIComponent(famEnc);
+  var cont = document.getElementById('winv-contenido');
+  var arts = [];
+  try{ arts = JSON.parse(decodeURIComponent(el.getAttribute('data-arts')||'[]')); }catch(e){}
+  var grid = document.getElementById('winv-grid');
+  if(!grid) return;
+
+  var rowsHtml = arts.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'min '+sMin : '')+'</div>'
+      +'<input type="number" min="0" step="0.1" placeholder="0" id="winv-stock-'+a.id+'" onchange="winvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<span style="width:20px;text-align:center;font-size:14px" id="winv-flag-'+a.id+'"></span>'
+      +'</div>';
+  }).join('');
+
+  grid.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+    +'<button onclick="winvVolverFamilias()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);cursor:pointer;font-size:12px">← Volver</button>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+famNombre+'</div>'
+    +'<div style="font-size:11px;color:var(--muted)">('+arts.length+' art.)</div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Rojo = por debajo del minimo</div>'
+    +rowsHtml
+    +'<button onclick="winvGuardar('+JSON.stringify(arts).replace(/"/g,"'")+')" style="display:block;width:100%;margin-top:16px;background:var(--accent);border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Guardar stock</button>';
+
+  // Guardar arts para el botón guardar
+  grid._famArts = arts;
+}
+
+function winvCheckMin(artId, sMin){
+  var input = document.getElementById('winv-stock-'+artId);
+  var flag  = document.getElementById('winv-flag-'+artId);
+  if(!input || !flag) return;
+  var val = parseFloat(input.value);
+  var bajo = sMin !== null && !isNaN(val) && val <= sMin;
+  flag.textContent = bajo ? '🔴' : (input.value !== '' ? '🟢' : '');
+  input.style.borderColor = bajo ? 'var(--red)' : 'var(--border)';
+}
+
+function winvVolverFamilias(){
+  var cont = document.getElementById('winv-contenido');
+  if(!cont) return;
+  winvInit('cocina', cont._empleado||'', cont._localId||1);
+}
+
+function winvFiltrar(){
+  var q = ((document.getElementById('winv-buscar')||{}).value||'').trim().toLowerCase();
+  var cont = document.getElementById('winv-contenido');
+  var grid = document.getElementById('winv-grid');
+  if(!cont || !grid) return;
+  if(!q){ winvInit('cocina', cont._empleado||'', cont._localId||1); return; }
+  var arts = (cont._arts||[]).filter(function(a){ return a.nombre.toLowerCase().indexOf(q) >= 0; });
+  if(!arts.length){ grid.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px">Sin resultados</div>'; return; }
+  var rowsHtml = arts.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'')+'</div>'
+      +'<input type="number" min="0" step="0.1" placeholder="0" id="winv-stock-'+a.id+'" onchange="winvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<span style="width:20px;text-align:center;font-size:14px" id="winv-flag-'+a.id+'"></span>'
+      +'</div>';
+  }).join('');
+  grid.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+arts.length+' resultado(s)</div>'+rowsHtml
+    +'<button onclick="winvGuardarFiltrados()" style="display:block;width:100%;margin-top:16px;background:var(--accent);border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Guardar stock</button>';
+  grid._famArts = arts;
+}
+
+async function winvGuardarFiltrados(){
+  var grid = document.getElementById('winv-grid');
+  var arts = grid ? (grid._famArts||[]) : [];
+  await winvGuardarArts(arts);
+}
+
+async function winvGuardar(arts){
+  if(typeof arts === 'string') try{ arts = JSON.parse(arts); }catch(e){ arts=[]; }
+  var grid = document.getElementById('winv-grid');
+  if(grid && grid._famArts) arts = grid._famArts;
+  await winvGuardarArts(arts);
+}
+
+async function winvGuardarArts(arts){
+  var cont = document.getElementById('winv-contenido');
+  var empleado = cont ? (cont._empleado||'Cocinero') : 'Cocinero';
+  var bajosDeMinimo = [];
+  var promesas = [];
+
+  arts.forEach(function(a){
+    var input = document.getElementById('winv-stock-'+a.id);
+    if(input && input.value !== ''){
+      var val = parseFloat(input.value);
+      var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+      if(sMin !== null && val <= sMin) bajosDeMinimo.push({nombre:a.nombre, unidad:a.unidad||'', actual:val, minimo:sMin});
+      promesas.push(sbPatch('cmp_articulos', a.id, {
+        stock_actual: val,
+        ultima_actualizacion: new Date().toISOString(),
+        ultima_actualizacion_por: empleado
+      }));
+    }
+  });
+
+  if(!promesas.length){ showToast('No has introducido ningun valor.','orange'); return; }
+
+  try{
+    await Promise.all(promesas);
+    showToast('Stock guardado correctamente.','green');
+  }catch(e){
+    showToast('Error guardando. Comprueba tu conexion.','red');
+    return;
+  }
+
+  if(bajosDeMinimo.length){
+    var lorena = (localStorage.getItem('rt_wa_lorena')||'').trim();
+    var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
+    var lineas = bajosDeMinimo.map(function(x){ return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (min. '+x.minimo+')'; }).join('\n');
+    var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del proximo servicio.';
+    if(lorena){
+      window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+    }
+  }
+}
+
+
 // ========== WORKER CHECKLIST v7.2 — acceso sin login via URL ==========
 var wclTareas = [];
 var wclFecha  = '';
@@ -6114,6 +6291,20 @@ var wclNotificado = false;
 
 function checkWorkerChecklistUrl(){
   var params = new URLSearchParams(window.location.search);
+
+  // Vista pública inventario: ?inv=cocina&empleado=BENITO&local=1
+  var invType = params.get('inv');
+  if(invType){
+    var empInv  = decodeURIComponent(params.get('empleado') || '');
+    var lidInv  = params.get('local') ? parseInt(params.get('local')) : 1;
+    var loginEl = document.getElementById('login-screen');
+    if(loginEl) loginEl.style.display = 'none';
+    var view = document.getElementById('worker-inv-view');
+    if(view) view.style.display = '';
+    winvInit(invType, empInv, lidInv);
+    return;
+  }
+
   // New format: ?checklist=FECHA&empleado=EMP&seccion=GRUPO
   var checklist = params.get('checklist');
   var empleado  = params.get('empleado');
