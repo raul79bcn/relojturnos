@@ -685,6 +685,9 @@ function goStep(n){
   if(n===14){ initAsistenteIA(); }
   if(n===15){ initAvisos(); }
   if(n===16){ initChecklist(); }
+  if(n===18){ initInventarioCocina(); }
+  if(n===19){ /* próximamente */ }
+  if(n===20){ /* próximamente */ }
   if(n===17){ initEquipo17(); }
   window.scrollTo(0,0);
 }
@@ -5143,7 +5146,7 @@ var CL_TAREAS_BASE = [
   { texto: 'Temperatura cámara frigorífica de cocina',      grupo: 'Cocina',  tipo: 'temperatura' },
   { texto: 'Estado del equipo de cocina (horno, freidora)', grupo: 'Cocina',  tipo: 'equipo' },
   { texto: 'Vaciar papeleras y gestionar residuos',         grupo: 'Cocina',  tipo: 'check' },
-  { texto: 'Inventario al cierre',                          grupo: 'Cocina',  tipo: 'inventario' },
+
   // ALMACÉN
   { texto: 'Revisar stock y anotar roturas de almacén',     grupo: 'Almacen', tipo: 'check' },
   { texto: 'Orden y limpieza del almacén',                  grupo: 'Almacen', tipo: 'check' },
@@ -5577,6 +5580,185 @@ function clGuardarNota(){
     }
   }, 1500);
 }
+
+// ========== INVENTARIO COCINA (screen18) ==========
+
+function initInventarioCocina(){
+  var cont = document.getElementById('inv-cocina-content');
+  if(!cont) return;
+
+  if(!cmpArticulos || !cmpArticulos.length){
+    try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
+  }
+  if(!cmpFamilias || !cmpFamilias.length){
+    try{ cmpFamilias = JSON.parse(localStorage.getItem('rt_cmp_familias') || '[]'); }catch(e){ cmpFamilias=[]; }
+  }
+  if(!cmpArticulos.length || !cmpFamilias.length){
+    cont.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">Cargando artículos...</div>';
+    Promise.all([
+      sbGet('cmp_articulos','order=nombre.asc'),
+      sbGet('cmp_familias','order=nombre.asc')
+    ]).then(function(res){
+      if(res[0] && res[0].length){ cmpArticulos = res[0]; try{ localStorage.setItem('rt_cmp_articulos', JSON.stringify(res[0])); }catch(e){} }
+      if(res[1] && res[1].length){ cmpFamilias  = res[1]; try{ localStorage.setItem('rt_cmp_familias',  JSON.stringify(res[1])); }catch(e){} }
+      initInventarioCocina();
+    }).catch(function(){ cont.innerHTML = '<div style="color:var(--red);padding:16px">Error cargando artículos.</div>'; });
+    return;
+  }
+
+  var localId = currentUser ? (currentUser.local_id||1) : 1;
+  var arts = cmpArticulos.filter(function(a){ return !a.local_id || String(a.local_id) === String(localId); });
+  if(!arts.length) arts = cmpArticulos;
+
+  var empleados = clListaEmpleados || [];
+  var optsHtml = '<option value="">— Selecciona responsable —</option>';
+  empleados.forEach(function(n){ optsHtml += '<option value="'+n+'">'+n+'</option>'; });
+
+  var famMap = {};
+  arts.forEach(function(a){
+    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
+    var key = fam ? fam.nombre : 'Sin familia';
+    var emoji = fam ? (fam.emoji||'📦') : '📦';
+    if(!famMap[key]) famMap[key] = { emoji: emoji, count: 0 };
+    famMap[key].count++;
+  });
+
+  var famGrid = Object.keys(famMap).sort().map(function(fn){
+    var f = famMap[fn];
+    return '<div onclick="invCocinaMostrarFamilia(\''+encodeURIComponent(fn)+'\')" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;color:var(--muted)">('+f.count+' artículos)</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
+  }).join('');
+
+  cont.innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">'
+    +'<span style="font-size:12px;color:var(--muted)">Responsable:</span>'
+    +'<select id="inv-cocina-resp" style="flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px;outline:none">'+optsHtml+'</select>'
+    +'<button onclick="invCocinaEnviarWA()" style="background:none;border:1px solid #25d366;border-radius:8px;color:#25d366;font-size:12px;font-weight:600;padding:6px 14px;cursor:pointer;white-space:nowrap">💬 Enviar por WA</button>'
+    +'</div>'
+    +'<div style="margin-bottom:12px"><input type="text" id="inv-cocina-buscar" placeholder="🔍 Buscar artículo..." oninput="invCocinaFiltrar()" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div>'
+    +'<div id="inv-cocina-grid" style="display:grid;gap:8px">'+famGrid+'</div>';
+}
+
+function invCocinaMostrarFamilia(famEnc){
+  var famNombre = decodeURIComponent(famEnc);
+  var localId = currentUser ? (currentUser.local_id||1) : 1;
+  var arts = (cmpArticulos||[]).filter(function(a){
+    if(a.local_id && String(a.local_id) !== String(localId)) return false;
+    var fam = cmpFamilias.find(function(f){ return f.id === a.familia_id; });
+    return (fam ? fam.nombre : 'Sin familia') === famNombre;
+  });
+  var grid = document.getElementById('inv-cocina-grid');
+  if(!grid) return;
+
+  var rowsHtml = arts.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'min '+sMin : '')+'</div>'
+      +'<input type="number" min="0" step="0.1" placeholder="0" id="inv18-stock-'+a.id+'" onchange="inv18CheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<span style="width:20px;text-align:center;font-size:14px" id="inv18-flag-'+a.id+'"></span>'
+      +'</div>';
+  }).join('');
+
+  grid.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+    +'<button onclick="initInventarioCocina()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);cursor:pointer;font-size:12px">← Volver</button>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+famNombre+'</div>'
+    +'<div style="font-size:11px;color:var(--muted)">('+arts.length+' articulos)</div>'
+    +'</div>'
+    +'<button onclick="inv18Guardar()" style="background:var(--accent);border:none;border-radius:8px;padding:8px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">Guardar stock</button>'
+    +rowsHtml;
+}
+
+function inv18CheckMin(artId, sMin){
+  var input = document.getElementById('inv18-stock-'+artId);
+  var flag  = document.getElementById('inv18-flag-'+artId);
+  if(!input || !flag) return;
+  var val = parseFloat(input.value);
+  var bajo = sMin !== null && !isNaN(val) && val <= sMin;
+  flag.textContent = bajo ? '\u{1F534}' : (input.value !== '' ? '\u{1F7E2}' : '');
+  input.style.borderColor = bajo ? 'var(--red)' : 'var(--border)';
+}
+
+async function inv18Guardar(){
+  var localId = currentUser ? (currentUser.local_id||1) : 1;
+  var arts = (cmpArticulos||[]).filter(function(a){ return !a.local_id || String(a.local_id) === String(localId); });
+  var bajosDeMinimo = [];
+  var promesas = [];
+  arts.forEach(function(a){
+    var input = document.getElementById('inv18-stock-'+a.id);
+    if(input && input.value !== ''){
+      var val = parseFloat(input.value);
+      var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+      if(sMin !== null && val <= sMin) bajosDeMinimo.push({nombre:a.nombre, unidad:a.unidad||'', actual:val, minimo:sMin});
+      var artIdx = cmpArticulos.findIndex(function(x){ return x.id === a.id; });
+      if(artIdx >= 0) cmpArticulos[artIdx].stock_actual = val;
+      promesas.push(sbPatch('cmp_articulos', a.id, {stock_actual: val, ultima_actualizacion: new Date().toISOString(), ultima_actualizacion_por: currentUser ? currentUser.nombre : 'Inventario'}));
+    }
+  });
+  try{
+    await Promise.all(promesas);
+    localStorage.setItem('rt_cmp_articulos', JSON.stringify(cmpArticulos));
+    showToast('Stock guardado correctamente.', 'green');
+  }catch(e){ showToast('Error guardando stock.', 'red'); }
+  if(bajosDeMinimo.length){
+    var lorena = (localStorage.getItem('rt_wa_lorena')||'').trim();
+    var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
+    var lineas = bajosDeMinimo.map(function(x){ return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (min. '+x.minimo+')'; }).join('\n');
+    var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del proximo servicio.';
+    if(lorena) window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+    showToast(bajosDeMinimo.length+' articulo(s) bajo minimo. Aviso a Lorena.', 'red');
+  }
+}
+
+function invCocinaFiltrar(){
+  var q = ((document.getElementById('inv-cocina-buscar')||{}).value||'').trim().toLowerCase();
+  var grid = document.getElementById('inv-cocina-grid');
+  if(!grid) return;
+  if(!q){ initInventarioCocina(); return; }
+  var localId = currentUser ? (currentUser.local_id||1) : 1;
+  var arts = (cmpArticulos||[]).filter(function(a){
+    if(a.local_id && String(a.local_id) !== String(localId)) return false;
+    return a.nombre.toLowerCase().indexOf(q) >= 0;
+  });
+  if(!arts.length){ grid.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px">Sin resultados</div>'; return; }
+  var rowsHtml = arts.map(function(a){
+    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
+      +'<input type="number" min="0" step="0.1" placeholder="0" id="inv18-stock-'+a.id+'" onchange="inv18CheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<span style="width:20px;text-align:center;font-size:14px" id="inv18-flag-'+a.id+'"></span>'
+      +'</div>';
+  }).join('');
+  grid.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+arts.length+' resultado(s)</div>'+rowsHtml
+    +'<button onclick="inv18Guardar()" style="background:var(--accent);border:none;border-radius:8px;padding:8px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-top:14px">Guardar stock</button>';
+}
+
+function invCocinaEnviarWA(){
+  var resp = (document.getElementById('inv-cocina-resp')||{}).value || '';
+  if(!resp){ showToast('Selecciona un responsable primero','red'); return; }
+  var localId = currentUser ? (currentUser.local_id||1) : 1;
+  var fecha = new Date().toISOString().split('T')[0];
+  var url = window.location.origin + window.location.pathname
+    + '?checklist='+fecha+'&empleado='+encodeURIComponent(resp)+'&seccion=Cocina&local='+localId+'&solo=inventario';
+  sbGet('empleados','nombre=eq.'+encodeURIComponent(resp)+'&local_id=eq.'+localId+'&select=telefono').then(function(rows){
+    var tel = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
+    var fechaFmt = new Date(fecha+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long'});
+    var msg = 'Inventario Cocina '+fechaFmt+'\n\nHola '+resp+', por favor registra el stock al cierre:\n\n'+url;
+    if(tel){
+      window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
+    } else {
+      navigator.clipboard.writeText(url).catch(function(){});
+      showToast(resp+' no tiene telefono. Enlace copiado.','orange');
+    }
+  }).catch(function(){
+    navigator.clipboard.writeText(url).catch(function(){});
+    showToast('Enlace copiado al portapapeles','green');
+  });
+}
+
 
 // ========== MODAL INVENTARIO AL CIERRE (Checklist Cocina) ==========
 

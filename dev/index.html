@@ -101,7 +101,7 @@
     <div class="snav-label">Herramientas IA</div>
     <div class="snav-item" id="snav-14" onclick="goStep(14);closeSidebar()">&#129302; Asistente IA</div>
     <div class="snav-item" id="snav-15" onclick="goStep(15);closeSidebar()">&#9888;&#65039; Avisos</div>
-    <div class="snav-item" id="snav-16" onclick="goStep(16);closeSidebar()">&#9989; Checklist</div>
+    <div class="snav-item" id="snav-16" onclick="goStep(16);closeSidebar()">&#9989; Tareas</div>
     <div class="snav-sep"></div>
     <div class="snav-label">Administración</div>
     <div class="snav-item" id="snav-7" onclick="goStep(7);closeSidebar()">&#128176; Costes</div>
@@ -927,10 +927,10 @@
         <div class="dash-btn-sub">Nóminas y SS</div>
       </div>
       <!-- Fila 2 -->
-      <div class="dash-btn" onclick="goStep(16)" title="Checklist diario">
+      <div class="dash-btn" onclick="goStep(16)" title="Tareas del día">
         <div class="dash-btn-icon">✅</div>
-        <div class="dash-btn-label">Checklist</div>
-        <div class="dash-btn-sub">Tareas del día</div>
+        <div class="dash-btn-label">Tareas</div>
+        <div class="dash-btn-sub">Checklist diario</div>
       </div>
       <div class="dash-btn dash-btn-ia" onclick="goStep(14)" title="Asistente IA">
         <div class="dash-btn-icon">🤖</div>
@@ -957,6 +957,63 @@
         <div class="dash-btn-icon">⚙️</div>
         <div class="dash-btn-label">Ajustes</div>
         <div class="dash-btn-sub">Personalización</div>
+      </div>
+      <!-- Fila 4 — Inventarios -->
+      <div class="dash-btn" onclick="goStep(18)" title="Inventario Cocina">
+        <div class="dash-btn-icon">🍳</div>
+        <div class="dash-btn-label">Inv. Cocina</div>
+        <div class="dash-btn-sub">Stock al cierre</div>
+      </div>
+      <div class="dash-btn" onclick="goStep(19)" title="Inventario Almacén">
+        <div class="dash-btn-icon">📦</div>
+        <div class="dash-btn-label">Inv. Almacén</div>
+        <div class="dash-btn-sub">Próximamente</div>
+      </div>
+      <div class="dash-btn" onclick="goStep(20)" title="Inventario Barra">
+        <div class="dash-btn-icon">🍸</div>
+        <div class="dash-btn-label">Inv. Barra</div>
+        <div class="dash-btn-sub">Próximamente</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 18: INVENTARIO COCINA -->
+  <div class="screen" id="screen18">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">🍳 Inventario Cocina</div>
+        <button onclick="goStep(0)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 14px;color:var(--muted);cursor:pointer;font-size:12px">🏠 Dashboard</button>
+      </div>
+      <div id="inv-cocina-content"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN 19: INVENTARIO ALMACÉN -->
+  <div class="screen" id="screen19">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">📦 Inventario Almacén</div>
+        <button onclick="goStep(0)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 14px;color:var(--muted);cursor:pointer;font-size:12px">🏠 Dashboard</button>
+      </div>
+      <div style="text-align:center;padding:48px 24px">
+        <div style="font-size:48px;margin-bottom:16px">🚧</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Próximamente</div>
+        <div style="font-size:13px;color:var(--muted)">El inventario de almacén estará disponible en una próxima actualización.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 20: INVENTARIO BARRA -->
+  <div class="screen" id="screen20">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">🍸 Inventario Barra</div>
+        <button onclick="goStep(0)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 14px;color:var(--muted);cursor:pointer;font-size:12px">🏠 Dashboard</button>
+      </div>
+      <div style="text-align:center;padding:48px 24px">
+        <div style="font-size:48px;margin-bottom:16px">🚧</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Próximamente</div>
+        <div style="font-size:13px;color:var(--muted)">El inventario de barra estará disponible en una próxima actualización.</div>
       </div>
     </div>
   </div>
@@ -1196,7 +1253,7 @@
   <div class="screen" id="screen16">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0">✅ Checklist Diario</div>
+        <div class="card-title" style="margin:0">✅ Tareas del día</div>
         <span style="font-size:9px;background:#2ecc7120;color:#2ecc71;padding:3px 9px;border-radius:12px;font-weight:700">DIARIO</span>
       </div>
       <div class="card-sub">Tareas diarias por sección con responsable independiente</div>
