@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.53 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.54 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.53 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.54 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -6114,6 +6114,9 @@ async function clGuardarInventarioCierre(tareaIdx){
 
 // ========== VISTA PÚBLICA INVENTARIO (sin login) ==========
 
+// Memoria global de stocks introducidos por el cocinero
+var winvStockData = {};
+
 async function winvInit(tipo, empleado, localId){
   var tEl = document.getElementById('winv-titulo');
   var eEl = document.getElementById('winv-empleado-txt');
@@ -6131,7 +6134,7 @@ async function winvInit(tipo, empleado, localId){
     var arts  = await sbGet('cmp_articulos', 'order=nombre.asc');
     var fams  = await sbGet('cmp_familias',  'order=nombre.asc');
     arts = (arts||[]).filter(function(a){ return !a.local_id || String(a.local_id) === String(localId); });
-    if(!arts.length) arts = arts.length ? arts : (await sbGet('cmp_articulos','order=nombre.asc')||[]);
+    if(!arts.length) arts = (await sbGet('cmp_articulos','order=nombre.asc')||[]);
 
     var famMap = {};
     arts.forEach(function(a){
@@ -6144,13 +6147,23 @@ async function winvInit(tipo, empleado, localId){
 
     var famGrid = Object.keys(famMap).sort().map(function(fn){
       var f = famMap[fn];
-      return '<div onclick="winvMostrarFamilia(this,\''+encodeURIComponent(fn)+'\')" data-arts="'+encodeURIComponent(JSON.stringify(f.arts))+'" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+'</div><div style="font-size:11px;color:var(--muted)">('+f.arts.length+' articulos)</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
+      var rellenados = f.arts.filter(function(a){ return winvStockData[a.id] != null; }).length;
+      var badge = rellenados > 0
+        ? '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:6px">'+rellenados+'/'+f.arts.length+'</span>'
+        : '<span style="font-size:11px;color:var(--muted)"> ('+f.arts.length+' art.)</span>';
+      return '<div data-fn="'+encodeURIComponent(fn)+'" onclick="winvClickFamilia(this)" data-arts="'+encodeURIComponent(JSON.stringify(f.arts))+'" style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:22px">'+f.emoji+'</span><div><div style="font-size:13px;font-weight:700;color:var(--text)">'+fn+badge+'</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>';
     }).join('');
+
+    var totalRellenados = Object.keys(winvStockData).length;
+    var btnEnviar = totalRellenados > 0
+      ? '<button onclick="winvEnviarTodo()" style="display:block;width:100%;margin-top:16px;background:var(--green);border:none;border-radius:8px;padding:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">📤 Enviar inventario ('+totalRellenados+' artículos)</button>'
+      : '<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:16px;padding:12px;border:1px dashed var(--border);border-radius:8px">Entra en cada familia, introduce el stock y pulsa Guardar. Luego aparecerá el botón de enviar.</div>';
 
     cont.innerHTML =
       '<div style="margin-bottom:12px"><input type="text" id="winv-buscar" placeholder="Buscar articulo..." oninput="winvFiltrar()" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none"></div>'
       +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Selecciona una familia</div>'
-      +'<div id="winv-grid">'+famGrid+'</div>';
+      +'<div id="winv-grid">'+famGrid+'</div>'
+      +btnEnviar;
 
     cont._arts = arts;
     cont._fams = fams;
@@ -6160,6 +6173,11 @@ async function winvInit(tipo, empleado, localId){
   }catch(e){
     cont.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center">Error cargando articulos. Comprueba tu conexion.</div>';
   }
+}
+
+function winvClickFamilia(el){
+  var famEnc = el.getAttribute('data-fn') || el.getAttribute('data-fam') || '';
+  winvMostrarFamilia(el, famEnc);
 }
 
 function winvMostrarFamilia(el, famEnc){
@@ -6249,30 +6267,52 @@ async function winvGuardar(arts){
 async function winvGuardarArts(arts){
   var cont = document.getElementById('winv-contenido');
   var empleado = cont ? (cont._empleado||'Cocinero') : 'Cocinero';
-  var bajosDeMinimo = [];
-  var promesas = [];
+  var guardados = 0;
 
+  // Guardar en memoria global (no enviar aún a Supabase)
   arts.forEach(function(a){
     var input = document.getElementById('winv-stock-'+a.id);
     if(input && input.value !== ''){
-      var val = parseFloat(input.value);
-      var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-      if(sMin !== null && val <= sMin) bajosDeMinimo.push({nombre:a.nombre, unidad:a.unidad||'', actual:val, minimo:sMin});
-      promesas.push(sbPatch('cmp_articulos', a.id, {
-        stock_actual: val,
-        ultima_actualizacion: new Date().toISOString(),
-        ultima_actualizacion_por: empleado
-      }));
+      winvStockData[a.id] = { val: parseFloat(input.value), nombre: a.nombre, unidad: a.unidad||'', stock_minimo: a.stock_minimo };
+      guardados++;
     }
   });
 
-  if(!promesas.length){ showToast('No has introducido ningun valor.','orange'); return; }
+  if(!guardados){ showToast('No has introducido ningún valor.','orange'); return; }
+  showToast(guardados+' artículo(s) guardados en memoria. Pulsa Enviar cuando acabes.','green');
+
+  // Volver al grid de familias para que vea el botón Enviar
+  var tipo = 'cocina';
+  winvInit(tipo, empleado, cont ? (cont._localId||1) : 1);
+}
+
+async function winvEnviarTodo(){
+  var cont = document.getElementById('winv-contenido');
+  var empleado = cont ? (cont._empleado||'Cocinero') : 'Cocinero';
+  var localId = cont ? (cont._localId||1) : 1;
+
+  var ids = Object.keys(winvStockData);
+  if(!ids.length){ showToast('No hay datos que enviar.','orange'); return; }
+
+  var bajosDeMinimo = [];
+  var promesas = ids.map(function(id){
+    var d = winvStockData[id];
+    var sMin = d.stock_minimo != null ? parseFloat(d.stock_minimo) : null;
+    if(sMin !== null && d.val <= sMin) bajosDeMinimo.push({nombre:d.nombre, unidad:d.unidad, actual:d.val, minimo:sMin});
+    return sbPatch('cmp_articulos', parseInt(id), {
+      stock_actual: d.val,
+      ultima_actualizacion: new Date().toISOString(),
+      ultima_actualizacion_por: empleado
+    });
+  });
 
   try{
     await Promise.all(promesas);
-    showToast('Stock guardado correctamente.','green');
+    showToast('✅ Inventario enviado correctamente.','green');
+    winvStockData = {}; // limpiar memoria
+    winvInit('cocina', empleado, localId);
   }catch(e){
-    showToast('Error guardando. Comprueba tu conexion.','red');
+    showToast('Error enviando. Comprueba tu conexión.','red');
     return;
   }
 
