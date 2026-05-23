@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.52 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.53 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.52 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.53 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5720,12 +5720,18 @@ async function inv18Guardar(){
     showToast('Stock guardado correctamente.', 'green');
   }catch(e){ showToast('Error guardando stock.', 'red'); }
   if(bajosDeMinimo.length){
-    var lorena = (localStorage.getItem('rt_wa_lorena')||'').trim();
     var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
     var lineas = bajosDeMinimo.map(function(x){ return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (min. '+x.minimo+')'; }).join('\n');
     var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del proximo servicio.';
-    if(lorena) window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
-    showToast(bajosDeMinimo.length+' articulo(s) bajo minimo. Aviso a Lorena.', 'red');
+    var lorena  = (localStorage.getItem('rt_wa_lorena')||'').trim();
+    sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
+      var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
+      if(lorena)  window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+      if(domingo) setTimeout(function(){ window.open('https://wa.me/'+domingo+'?text='+encodeURIComponent(msg),'_blank'); }, 800);
+    }).catch(function(){
+      if(lorena) window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+    });
+    showToast(bajosDeMinimo.length+' articulo(s) bajo minimo. Aviso a Lorena y Domingo.', 'red');
   }
 }
 
@@ -6089,14 +6095,15 @@ async function clGuardarInventarioCierre(tareaIdx){
       return '• '+x.nombre+': '+x.actual+' '+x.unidad+' (mín. '+x.minimo+')';
     }).join('\n');
     var msg = '⚠️ STOCK BAJO — Inventario cierre '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del próximo servicio.';
-
-    if(lorena){
-      window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg), '_blank');
-    } else {
-      navigator.clipboard.writeText(msg).catch(function(){});
-      showToast('Stock bajo detectado. Número Lorena no configurado — mensaje copiado.', 'red');
-    }
-    showToast('⚠ '+bajosDeMinimo.length+' artículo(s) bajo mínimo. Aviso enviado.', 'red');
+    sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
+      var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
+      if(lorena)  window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+      if(domingo) setTimeout(function(){ window.open('https://wa.me/'+domingo+'?text='+encodeURIComponent(msg),'_blank'); }, 800);
+      if(!lorena && !domingo){ navigator.clipboard.writeText(msg).catch(function(){}); showToast('Números no configurados. Mensaje copiado.','red'); }
+    }).catch(function(){
+      if(lorena) window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+    });
+    showToast('⚠ '+bajosDeMinimo.length+' artículo(s) bajo mínimo. Aviso a Lorena y Domingo.', 'red');
   } else {
     showToast('✅ Inventario guardado correctamente.', 'green');
   }
@@ -6274,9 +6281,13 @@ async function winvGuardarArts(arts){
     var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
     var lineas = bajosDeMinimo.map(function(x){ return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (min. '+x.minimo+')'; }).join('\n');
     var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del proximo servicio.';
-    if(lorena){
-      window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
-    }
+    sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
+      var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
+      if(lorena)  window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+      if(domingo) setTimeout(function(){ window.open('https://wa.me/'+domingo+'?text='+encodeURIComponent(msg),'_blank'); }, 800);
+    }).catch(function(){
+      if(lorena) window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
+    });
   }
 }
 
