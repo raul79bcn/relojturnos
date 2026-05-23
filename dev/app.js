@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.55 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.56 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.55 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.56 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5721,8 +5721,8 @@ async function inv18Guardar(){
   }catch(e){ showToast('Error guardando stock.', 'red'); }
   if(bajosDeMinimo.length){
     var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
-    var lineas = bajosDeMinimo.map(function(x){ return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (min. '+x.minimo+')'; }).join('\n');
-    var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del proximo servicio.';
+    var lineas = bajosDeMinimo.map(function(x){ return '⚠️ '+x.nombre+': '+x.actual+' '+x.unidad+' — stock mínimo '+x.minimo+' '+x.unidad+' en cámara'; }).join('\n');
+    var msg = '🚨 STOCK BAJO — Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor, reponer antes del próximo servicio.';
     var lorena  = (localStorage.getItem('rt_wa_lorena')||'').trim();
     sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
       var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
@@ -6092,9 +6092,9 @@ async function clGuardarInventarioCierre(tareaIdx){
     var lorena = (localStorage.getItem('rt_wa_lorena') || '').trim();
     var fecha  = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
     var lineas = bajosDeMinimo.map(function(x){
-      return '• '+x.nombre+': '+x.actual+' '+x.unidad+' (mín. '+x.minimo+')';
+      return '⚠️ '+x.nombre+': '+x.actual+' '+x.unidad+' — stock mínimo '+x.minimo+' '+x.unidad+' en cámara';
     }).join('\n');
-    var msg = '⚠️ STOCK BAJO — Inventario cierre '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del próximo servicio.';
+    var msg = '🚨 STOCK BAJO — Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor, reponer antes del próximo servicio.';
     sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
       var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
       if(lorena)  window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
@@ -6319,8 +6319,8 @@ async function winvEnviarTodo(){
   if(bajosDeMinimo.length){
     var lorena = (localStorage.getItem('rt_wa_lorena')||'').trim();
     var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
-    var lineas = bajosDeMinimo.map(function(x){ return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (min. '+x.minimo+')'; }).join('\n');
-    var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nFavor reponer antes del proximo servicio.';
+    var lineas = bajosDeMinimo.map(function(x){ return '⚠️ '+x.nombre+': '+x.actual+' '+x.unidad+' — stock mínimo '+x.minimo+' '+x.unidad+' en cámara'; }).join('\n');
+    var msg = '🚨 STOCK BAJO — Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor, reponer antes del próximo servicio.';
     sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
       var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
       if(lorena)  window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
