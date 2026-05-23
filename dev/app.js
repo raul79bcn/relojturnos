@@ -663,7 +663,7 @@ function closeNavMenu(){ closeSidebar(); }
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSidebar(); });
 
 function goStep(n){
-  for(var i=0;i<=17;i++){
+  for(var i=0;i<=20;i++){
     var sc=document.getElementById('screen'+i),st=document.getElementById('step'+i);
     if(sc)sc.className='screen'+(i===n?' active':'');
     if(st){st.className='step'+(i===n?' active':i<n?' done':'');}
@@ -5586,6 +5586,16 @@ function clGuardarNota(){
 function initInventarioCocina(){
   var cont = document.getElementById('inv-cocina-content');
   if(!cont) return;
+
+  // Cargar empleados si no están disponibles
+  if(!clListaEmpleados || !clListaEmpleados.length){
+    var localId = currentUser ? (currentUser.local_id||1) : 1;
+    sbGet('empleados','activo=eq.true&local_id=eq.'+localId+'&order=nombre.asc&select=nombre').then(function(rows){
+      if(rows && rows.length) clListaEmpleados = rows.map(function(e){ return e.nombre; });
+      initInventarioCocina();
+    }).catch(function(){ initInventarioCocina(); });
+    return;
+  }
 
   if(!cmpArticulos || !cmpArticulos.length){
     try{ cmpArticulos = JSON.parse(localStorage.getItem('rt_cmp_articulos') || '[]'); }catch(e){ cmpArticulos=[]; }
