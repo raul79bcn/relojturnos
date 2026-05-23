@@ -4355,6 +4355,13 @@ function cargarIdiomaGuardado(){
 
 // ========== DASHBOARD v7.0 ==========
 function abrirDashboard(){
+  // Si la URL tiene ?inv=cocina, ir directo a Inventario Cocina
+  var urlParams = new URLSearchParams(window.location.search);
+  var invParam = urlParams.get('inv');
+  if(invParam === 'cocina'){
+    goStep(18);
+    return;
+  }
   goStep(0);
   initDashboard();
   if(!apiKeyValida(getClaudeApiKey())) mostrarModalApiKey();
@@ -5751,8 +5758,8 @@ function invCocinaEnviarWA(){
   if(!resp){ showToast('Selecciona un responsable primero','red'); return; }
   var localId = currentUser ? (currentUser.local_id||1) : 1;
   var fecha = new Date().toISOString().split('T')[0];
-  var url = window.location.origin + window.location.pathname
-    + '?checklist='+fecha+'&empleado='+encodeURIComponent(resp)+'&seccion=Cocina&local='+localId+'&solo=inventario';
+  // Enlace directo a la app — el cocinero hace login y va a Inventario Cocina
+  var url = window.location.origin + window.location.pathname + '?inv=cocina';
   sbGet('empleados','nombre=eq.'+encodeURIComponent(resp)+'&local_id=eq.'+localId+'&select=telefono').then(function(rows){
     var tel = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
     var fechaFmt = new Date(fecha+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'long'});
