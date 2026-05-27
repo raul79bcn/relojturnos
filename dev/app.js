@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.64 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.65 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.64 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.65 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5742,6 +5742,8 @@ async function cmpAceptarFactura(datos, provNombre){
     return cb ? cb.checked : true;
   });
 
+  console.log('[cmpAceptarFactura] artículos seleccionados:', seleccionados.length, seleccionados.map(function(a){ return a.nombre; }));
+
   if(!seleccionados.length){ showToast('No hay artículos seleccionados.','orange'); return; }
 
   cont.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">Guardando cambios...</div>';
@@ -5766,17 +5768,22 @@ async function cmpAceptarFactura(datos, provNombre){
       return x.nombre.toLowerCase().indexOf(a.nombre.toLowerCase().substring(0,8)) >= 0;
     });
 
+    console.log('[cmpAceptarFactura] artículo['+i+']:', a.nombre, '| match:', artMatch ? ('id='+artMatch.id+' nombre='+artMatch.nombre) : 'NO ENCONTRADO');
+
     try{
       if(artMatch){
         // Actualizar precio y stock mínimo
         var stockMinNuevo = Math.floor(cantidad * 0.8); // 80% de la cantidad pedida
-        await sbPatch('cmp_articulos', artMatch.id, {
+        var patchData = {
           precio_compra: precio,
           stock_minimo: stockMinNuevo,
           stock_actual: (artMatch.stock_actual||0) + cantidad,
           ultima_actualizacion: new Date().toISOString(),
           ultima_actualizacion_por: currentUser ? currentUser.nombre : 'Lorena'
-        });
+        };
+        console.log('[cmpAceptarFactura] sbPatch id='+artMatch.id, patchData);
+        var patchResult = await sbPatch('cmp_articulos', artMatch.id, patchData);
+        console.log('[cmpAceptarFactura] sbPatch resultado:', patchResult);
         var idx = cmpArticulos.findIndex(function(x){ return x.id === artMatch.id; });
         if(idx >= 0){
           cmpArticulos[idx].precio_compra = precio;
@@ -5797,13 +5804,15 @@ async function cmpAceptarFactura(datos, provNombre){
           ultima_actualizacion: new Date().toISOString(),
           ultima_actualizacion_por: currentUser ? currentUser.nombre : 'Lorena'
         };
+        console.log('[cmpAceptarFactura] sbPost nuevo artículo:', nuevoArt);
         var rows = await sbPost('cmp_articulos', nuevoArt);
+        console.log('[cmpAceptarFactura] sbPost resultado:', rows);
         if(rows && rows[0]) cmpArticulos.push(rows[0]);
         nuevos++;
       }
     }catch(e){
       errores++;
-      console.warn('[Facturas] Error procesando artículo:', a.nombre, e);
+      console.error('[cmpAceptarFactura] ERROR procesando "'+a.nombre+'":', e.message, e);
     }
   }
 
