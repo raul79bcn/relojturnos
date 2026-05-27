@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.68 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.69 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.68 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.69 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5617,10 +5617,11 @@ async function cmpAnalizarFactura(base64, mediaType){
 
   var systemPrompt = 'Eres un asistente que analiza facturas de proveedores de restaurantes. ' +
     'Extrae TODOS los artículos de la factura con: nombre exacto, cantidad, unidad (KG/CAJA/ud/etc), precio unitario sin IVA. ' +
-    'También extrae el nombre del proveedor. ' +
+    'Extrae también los datos del proveedor: nombre, CIF/NIF, teléfono, email, dirección y persona de contacto. ' +
     'Responde SOLO con JSON válido, sin texto adicional, sin markdown. ' +
     'Tu respuesta debe comenzar con { y terminar con }. No incluyas ningún texto antes ni después. ' +
-    'Formato exacto: {"proveedor":"nombre","articulos":[{"nombre":"...","cantidad":0,"unidad":"...","precio_unitario":0}]}';
+    'Formato exacto: {"proveedor":{"nombre":"...","cif":"...","telefono":"...","email":"...","direccion":"...","contacto":"..."},' +
+    '"articulos":[{"nombre":"...","cantidad":0,"unidad":"...","precio_unitario":0}]}';
 
   try{
     var response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -5679,10 +5680,25 @@ function cmpMostrarPreviaFactura(datos){
     return;
   }
 
-  var provNombre = datos.proveedor || 'Desconocido';
+  // Compatibilidad: proveedor puede ser string (formato antiguo) u objeto (nuevo)
+  var provData = datos.proveedor || {};
+  if(typeof provData === 'string') provData = {nombre: provData};
+  var provNombre = provData.nombre || 'Desconocido';
+
   var provMatch = (cmpProveedores||[]).find(function(p){
     return p.nombre.toLowerCase().indexOf(provNombre.toLowerCase().substring(0,6)) >= 0;
   });
+
+  // Líneas de detalle del proveedor (solo las que tienen valor)
+  var provInfoParts = [];
+  if(provData.cif)       provInfoParts.push('CIF: <strong>'+provData.cif+'</strong>');
+  if(provData.telefono)  provInfoParts.push('📞 '+provData.telefono);
+  if(provData.email)     provInfoParts.push('✉ '+provData.email);
+  if(provData.direccion) provInfoParts.push('📍 '+provData.direccion);
+  if(provData.contacto)  provInfoParts.push('👤 '+provData.contacto);
+  var provInfoHtml = provInfoParts.length
+    ? '<div style="font-size:11px;color:var(--muted);margin-top:4px;display:flex;flex-wrap:wrap;gap:10px">'+provInfoParts.join(' &nbsp;·&nbsp; ')+'</div>'
+    : '';
 
   var familiaOptions = '<option value="">Sin familia</option>'
     + (cmpFamilias||[]).map(function(f){
@@ -5722,10 +5738,15 @@ function cmpMostrarPreviaFactura(datos){
       +'</tr>';
   }).join('');
 
+  // Guardar datos en referencias estables antes de renderizar
+  cont._facturaData = datos;
+  window._cmpFacturaDatos = datos;
+
   cont.innerHTML =
     '<div style="margin-bottom:16px">'
     +'<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">🧾 Factura analizada</div>'
-    +'<div style="font-size:12px;color:var(--muted)">Proveedor detectado: <strong style="color:var(--text)">'+provNombre+'</strong>'+(provMatch?' ✓':' <span style="color:var(--accent)">(se creará nuevo proveedor)</span>')+'</div>'
+    +'<div style="font-size:12px;color:var(--muted)">Proveedor: <strong style="color:var(--text)">'+provNombre+'</strong>'+(provMatch?' ✓':' <span style="color:var(--accent)">(se creará nuevo proveedor)</span>')+'</div>'
+    +provInfoHtml
     +'</div>'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">'
     +'<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
@@ -5741,15 +5762,22 @@ function cmpMostrarPreviaFactura(datos){
     +'<div style="font-size:11px;color:var(--muted);margin-bottom:12px">Desmarca los artículos que no quieras actualizar. Los marcados como NUEVO se añadirán a la BD.</div>'
     +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
     +'<button onclick="cmpTab(\'facturas\')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:10px 18px;color:var(--muted);cursor:pointer;font-size:13px">Cancelar</button>'
-    +'<button onclick="cmpAceptarFactura('+JSON.stringify(datos).replace(/"/g,"'")+',\''+provNombre+'\')" style="background:var(--accent);border:none;border-radius:8px;padding:10px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">✅ Aceptar y guardar</button>'
+    +'<button onclick="cmpAceptarFactura()" style="background:var(--accent);border:none;border-radius:8px;padding:10px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">✅ Aceptar y guardar</button>'
     +'</div>';
-
-  cont._facturaData = datos;
 }
 
-async function cmpAceptarFactura(datos, provNombre){
-  if(typeof datos === 'string') try{ datos = JSON.parse(datos.replace(/'/g,'"')); }catch(e){}
+async function cmpAceptarFactura(datosArg, provNombreArg){
   var cont = document.getElementById('cmp-facturas-content');
+  // Lee de argumentos (formato antiguo inline) o de referencia estable (nuevo formato)
+  var datos = datosArg || cont._facturaData || window._cmpFacturaDatos || null;
+  if(typeof datos === 'string') try{ datos = JSON.parse(datos.replace(/'/g,'"')); }catch(e){}
+  if(!datos || !datos.articulos){ showToast('Error: no hay datos de factura', 'red'); return; }
+
+  // Compatibilidad: proveedor puede ser string u objeto
+  var provData = datos.proveedor || {};
+  if(typeof provData === 'string') provData = {nombre: provData};
+  var provNombre = (typeof provNombreArg === 'string' && provNombreArg) ? provNombreArg : (provData.nombre || 'Desconocido');
+
   var articulosDatos = datos.articulos || [];
 
   // Leer checkboxes y familia selects ANTES de sobreescribir el DOM
@@ -5784,7 +5812,16 @@ async function cmpAceptarFactura(datos, provNombre){
     console.log('[Facturas] Creando proveedor:', provNombre);
     console.log('[cmpAceptarFactura] proveedor NO encontrado, intentando insertar en Supabase:', provNombre);
     try{
-      var provRows = await sbPost('cmp_proveedores', { nombre: provNombre, razon_social: provNombre, local_id: localId });
+      var provRows = await sbPost('cmp_proveedores', {
+        nombre:      provNombre,
+        razon_social: provNombre,
+        cif:         provData.cif      || null,
+        telefono:    provData.telefono || null,
+        email:       provData.email    || null,
+        contacto:    provData.contacto || null,
+        direccion:   provData.direccion|| null,
+        local_id:    localId
+      });
       console.log('[Facturas] Proveedor creado:', provRows);
       console.log('[cmpAceptarFactura] sbPost proveedor resultado:', provRows);
       var newProv = Array.isArray(provRows) ? provRows[0] : provRows;
