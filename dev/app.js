@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.71 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.72 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.71 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.72 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5620,7 +5620,8 @@ async function cmpAnalizarFactura(base64, mediaType){
     'Busca el CIF/NIF del proveedor en toda la imagen, incluyendo el pie de página y el texto en letra pequeña. Suele aparecer como "C.I.F.", "NIF", "CIF" seguido de la letra y números.\n' +
     '2. Los artículos/productos con nombre, cantidad, unidad y precio unitario sin IVA.\n' +
     'Extrae ÚNICAMENTE los artículos que tienen un precio unitario numérico explícito en la factura. Ignora descripciones, notas, observaciones y líneas sin precio. Cada artículo debe tener cantidad y precio numérico visible.\n' +
-    'Para la unidad usa: KG, L, ud, CAJA, CA, h, m u otras unidades que aparezcan en la factura. Si no está clara, usa "ud".\n\n' +
+    'Las unidades deben estar en español y mayúsculas. Traduce: caixa→CAJA, bossa→BOLSA, safata→BANDEJA, unitat→ud, kg→KG, litre→L, hora→h, caja→CAJA, unidad→ud, bolsa→BOLSA. Devuelve siempre la unidad normalizada.\n' +
+    'Para la unidad usa: KG, G, L, ML, ud, CAJA, CA, BOLSA, BANDEJA, SACO, MANOJO, BRIK, LATA, BOTE, ROLLO, h, m. Si no está clara, usa "ud".\n\n' +
     'Responde SOLO con este JSON, comenzando con { y terminando con }:\n' +
     '{"proveedor":{"nombre":"...","cif":"...","telefono":"...","email":"...","direccion":"...","contacto":"..."},' +
     '"articulos":[{"nombre":"...","cantidad":0,"unidad":"...","precio_unitario":0}]}\n' +
@@ -5729,13 +5730,22 @@ function cmpMostrarPreviaFactura(datos){
       familiaCell = '<span style="font-size:12px;color:var(--muted)">'+(famName||'—')+'</span>';
     }
 
-    var unidadVal = a.unidad || 'ud';
+    var _ULIST = ['KG','G','L','ML','ud','CAJA','CA','BOLSA','BANDEJA','SACO','MANOJO','BRIK','LATA','BOTE','ROLLO','h','m'];
+    var _UALIAS = {'KGS':'KG','KILOS':'KG','KILO':'KG','GRAMOS':'G','LITROS':'L','LITRE':'L','LITRO':'L','MILILITROS':'ML','UDS':'ud','UNIDAD':'ud','UNIDADES':'ud','UNITAT':'ud','CAIXA':'CAJA','CAJAS':'CAJA','BOLSAS':'BOLSA','BOSSA':'BOLSA','BANDEJAS':'BANDEJA','SAFATA':'BANDEJA','MANOJOS':'MANOJO','HORA':'h','HORAS':'h','METRO':'m','METROS':'m'};
+    var unidadRaw = (a.unidad || 'ud').trim();
+    var unidadUp  = unidadRaw.toUpperCase();
+    var unidadMatch = _ULIST.find(function(x){ return x.toUpperCase() === unidadUp; }) || _UALIAS[unidadUp] || null;
+    var esOtra = !unidadMatch;
+    var unidadOpts = _ULIST.map(function(u){
+      return '<option value="'+u+'"'+(u===unidadMatch?' selected':'')+'>'+u+'</option>';
+    }).join('') + '<option value="__OTRA__"'+(esOtra?' selected':'')+'>OTRA...</option>';
+    var unidadCell =
+      '<select id="fac-unidad-'+i+'" data-idx="'+i+'" style="font-size:11px;padding:3px 4px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text)" onchange="var t=document.getElementById(\'fac-unidad-text-\'+this.dataset.idx);if(t)t.style.display=this.value===\'__OTRA__\'?\'inline-block\':\'none\'">'+unidadOpts+'</select>'
+      +'<input id="fac-unidad-text-'+i+'" type="text" placeholder="unidad" value="'+(esOtra?unidadRaw:'')+'" style="width:48px;font-size:11px;padding:3px 4px;border:1px solid var(--border);border-radius:5px;background:var(--card);color:var(--text);margin-left:4px;display:'+(esOtra?'inline-block':'none')+'">';
     return '<tr style="border-top:1px solid var(--border)">'
       +'<td style="padding:8px 6px;font-size:13px;color:var(--text)">'+a.nombre+badge+'</td>'
       +'<td style="padding:8px 6px;text-align:center;font-size:13px;color:var(--muted)">'+a.cantidad+'</td>'
-      +'<td style="padding:6px 4px;text-align:center">'
-      +'<input id="fac-unidad-'+i+'" type="text" value="'+unidadVal+'" style="width:54px;font-size:12px;padding:3px 5px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);text-align:center">'
-      +'</td>'
+      +'<td style="padding:6px 4px;white-space:nowrap">'+unidadCell+'</td>'
       +'<td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:700;color:var(--accent)">'+parseFloat(a.precio_unitario).toFixed(2)+' €</td>'
       +'<td style="padding:8px 6px">'+familiaCell+'</td>'
       +'<td style="padding:8px 6px;text-align:center">'
@@ -5790,12 +5800,21 @@ async function cmpAceptarFactura(datosArg, provNombreArg){
   var seleccionados = articulosDatos.reduce(function(acc, a, i){
     var cb = document.getElementById('fac-check-'+i);
     if(cb ? cb.checked : true){
-      var famSel    = document.getElementById('fac-familia-'+i);
-      var unidadInp = document.getElementById('fac-unidad-'+i);
+      var famSel       = document.getElementById('fac-familia-'+i);
+      var unidadSel    = document.getElementById('fac-unidad-'+i);
+      var unidadTxtInp = document.getElementById('fac-unidad-text-'+i);
+      var _u;
+      if(unidadSel){
+        _u = unidadSel.value === '__OTRA__'
+          ? (unidadTxtInp ? (unidadTxtInp.value.trim() || 'ud') : 'ud')
+          : (unidadSel.value || 'ud');
+      } else {
+        _u = a.unidad || 'ud';
+      }
       acc.push(Object.assign({}, a, {
         _origIdx:   i,
-        _familiaId: famSel    ? (parseInt(famSel.value)||null)              : null,
-        _unidad:    unidadInp ? (unidadInp.value.trim() || a.unidad || 'ud') : (a.unidad || 'ud')
+        _familiaId: famSel ? (parseInt(famSel.value)||null) : null,
+        _unidad:    _u
       }));
     }
     return acc;
