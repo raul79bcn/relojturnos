@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.61 – Grupo El Reloj</title>
+<title>RelojTurnos v7.62 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.61</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.62</span></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.61 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.62 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -402,16 +402,6 @@
           &#128274; Datos salariales introducidos por la dirección o responsable del local. En el futuro vendrán automáticamente del módulo de contratos/nóminas.
         </div>
         <div id="costes-editor"></div>
-      </div>
-
-      <div class="cmp-panel" id="cmp-panel-facturas">
-        <div id="cmp-facturas-content" style="margin-top:14px;padding:32px 16px;text-align:center">
-          <div style="font-size:40px;margin-bottom:12px">🧾</div>
-          <div style="font-size:15px;font-weight:700;margin-bottom:8px">Subir factura</div>
-          <div style="font-size:13px;opacity:0.6;margin-bottom:20px">Haz una foto o sube una imagen de la factura.<br>La IA extraerá los artículos y actualizará precios y stock automáticamente.</div>
-          <label for="cmp-factura-input" style="display:inline-block;background:#e8a020;color:#fff;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">📷 Seleccionar factura</label>
-          <input type="file" id="cmp-factura-input" accept="image/*" capture="environment" style="display:none" onchange="cmpFacturaSeleccionada(this)">
-        </div>
       </div>
 
       <div class="btn-row space" style="margin-top:18px">
@@ -1383,6 +1373,17 @@
         </div>
       </div>
 
+      <!-- PANEL FACTURAS -->
+      <div class="cmp-panel" id="cmp-panel-facturas">
+        <div id="cmp-facturas-content" style="margin-top:14px;padding:32px 16px;text-align:center">
+          <div style="font-size:40px;margin-bottom:12px">🧾</div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:8px">Subir factura</div>
+          <div style="font-size:13px;opacity:0.6;margin-bottom:20px">Haz una foto o sube una imagen de la factura.<br>La IA extraerá los artículos y actualizará precios y stock automáticamente.</div>
+          <label for="cmp-factura-input" style="display:inline-block;background:#e8a020;color:#fff;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">📷 Seleccionar factura</label>
+          <input type="file" id="cmp-factura-input" accept="image/*" capture="environment" style="display:none" onchange="cmpFacturaSeleccionada(this)">
+        </div>
+      </div>
+
       <div class="btn-row space" style="margin-top:18px">
         <button class="btn btn-secondary" onclick="goStep(0)">🏠 Dashboard</button>
       </div>
@@ -1741,7 +1742,7 @@
       <div style="text-align:center;color:var(--muted);padding:24px">Cargando artículos...</div>
     </div>
     <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--muted)">
-      RelojTurnos v7.61 &middot; Grupo El Reloj
+      RelojTurnos v7.62 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
@@ -1776,7 +1777,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.61 &middot; Grupo El Reloj
+      RelojTurnos v7.62 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
