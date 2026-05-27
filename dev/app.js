@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.75 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.77 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.75 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.77 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -7402,6 +7402,8 @@ function cmpSiguienteId(arr){
 }
 
 // ---- FAMILIA ----
+var _CMP_FAM_EMOJIS = ['🥩','🐟','🥦','🍎','🥛','🌾','🧊','🧂','🍳','🥚','🧅','🧄','🍋','🍊','🍅','🥕','🌽','🥑','🍄','🧀','🥓','🍗','🦐','🦑','🦞','🍖','🫙','🛢','🍺','🍷','🥤','☕','🧃','🫒','🌰','🍞','🥐','🧆','🫕','🍱'];
+
 function cmpAbrirModalFamilia(id){
   var el = document.getElementById('cmp-modal-familia');
   if(!el) return;
@@ -7410,6 +7412,14 @@ function cmpAbrirModalFamilia(id){
   document.getElementById('cmp-fam-nombre').value  = fam ? fam.nombre : '';
   document.getElementById('cmp-fam-emoji').value   = fam ? (fam.emoji||'') : '';
   document.getElementById('cmp-fam-titulo').textContent = fam ? '✏️ Editar Familia' : '🗂 Nueva Familia';
+  var grid = document.getElementById('cmp-fam-emoji-grid');
+  if(grid){
+    grid.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;padding:8px;background:var(--darker);border-radius:8px;max-height:130px;overflow-y:auto">'
+      + _CMP_FAM_EMOJIS.map(function(e){
+          return '<button type="button" onclick="document.getElementById(\'cmp-fam-emoji\').value=\''+e+'\'" style="font-size:22px;padding:3px 4px;background:none;border:1px solid transparent;border-radius:6px;cursor:pointer;line-height:1" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'transparent\'">'+e+'</button>';
+        }).join('')
+      + '</div>';
+  }
   el.style.display = 'flex';
 }
 
