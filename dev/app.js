@@ -508,14 +508,42 @@ async function cargarPortalDatos(user){
   try{
     var rows = await sbGet('empleados','id=eq.'+user.empleado_id);
     var e = (rows&&rows.length) ? rows[0] : {};
+    var ROLES_MAP = {empleado:'Empleado',directora:'Director/a',directora_general:'Dirección General',admin:'Admin',encargado:'Encargado'};
+    var LOCALES_MAP = {1:'La Cala', 2:"Roto's Burguer"};
+    var turnoLabel = e.turno_habitual || '—';
+    if(turnosConfig.length){
+      var tc = turnosConfig.find(function(x){ return x.id===e.turno_habitual; });
+      if(tc) turnoLabel = tc.emoji+' '+tc.nome+' '+tc.ini+'–'+tc.fin;
+    }
+    var ro = 'background:var(--bg,#1a1a2e);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text);font-weight:600';
+    var lbl = 'font-size:10px;color:var(--muted);margin-bottom:2px;display:block;text-transform:uppercase;letter-spacing:.4px';
+    function roField(label, val){
+      return '<div style="margin-bottom:10px"><span style="'+lbl+'">'+label+'</span><div style="'+ro+'">'+(val||'—')+'</div></div>';
+    }
     var inp = 'width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;margin-bottom:2px';
-    var lbl = 'font-size:11px;color:var(--muted);margin-bottom:3px;display:block';
+    var lbl2 = 'font-size:11px;color:var(--muted);margin-bottom:3px;display:block';
     function field(id, label, val, type){
-      return '<div style="margin-bottom:10px"><label style="'+lbl+'">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+(val||'')+'" style="'+inp+'"></div>';
+      return '<div style="margin-bottom:10px"><label style="'+lbl2+'">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+(val||'')+'" style="'+inp+'"></div>';
     }
     el.innerHTML =
-      '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px">'
-      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">👤 Mis datos personales</div>'
+      // ── Sección solo lectura ──
+      '<div style="background:#1e1e30;border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px;margin-bottom:12px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--text)">🏢 Mis datos laborales</div>'
+      +'<span style="font-size:9px;background:#6b8fff20;color:#6b8fff;padding:2px 8px;border-radius:10px;font-weight:700">Gestionado por Dirección</span>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">'
+      +roField('Nombre completo', e.nombre||user.nombre)
+      +roField('DNI / NIE',       user.dni)
+      +roField('Nº Seg. Social',  e.nss)
+      +roField('Rol',             ROLES_MAP[user.rol]||user.rol)
+      +roField('Turno habitual',  turnoLabel)
+      +roField('Local',           LOCALES_MAP[user.local_id]||('Local '+user.local_id))
+      +'</div>'
+      +'</div>'
+      // ── Sección editable ──
+      +'<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">📝 Mis datos de contacto</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">'
       +field('pd-email',    '✉ Email',              e.email,         'email')
       +field('pd-telefono', '📱 Teléfono / WhatsApp', e.telefono,    'tel')
