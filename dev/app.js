@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.69 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.70 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.69 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.70 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5615,13 +5615,13 @@ async function cmpAnalizarFactura(base64, mediaType){
     return;
   }
 
-  var systemPrompt = 'Eres un asistente que analiza facturas de proveedores de restaurantes. ' +
-    'Extrae TODOS los artículos de la factura con: nombre exacto, cantidad, unidad (KG/CAJA/ud/etc), precio unitario sin IVA. ' +
-    'Extrae también los datos del proveedor: nombre, CIF/NIF, teléfono, email, dirección y persona de contacto. ' +
-    'Responde SOLO con JSON válido, sin texto adicional, sin markdown. ' +
-    'Tu respuesta debe comenzar con { y terminar con }. No incluyas ningún texto antes ni después. ' +
-    'Formato exacto: {"proveedor":{"nombre":"...","cif":"...","telefono":"...","email":"...","direccion":"...","contacto":"..."},' +
-    '"articulos":[{"nombre":"...","cantidad":0,"unidad":"...","precio_unitario":0}]}';
+  var systemPrompt = 'Analiza la factura y extrae:\n' +
+    '1. Del proveedor (quien emite la factura, no el cliente): nombre comercial, CIF/NIF, teléfono, email, dirección completa, persona de contacto. Busca estos datos en el membrete o cabecera de la factura.\n' +
+    '2. Los artículos/productos con nombre, cantidad, unidad y precio unitario sin IVA.\n\n' +
+    'Responde SOLO con este JSON, comenzando con { y terminando con }:\n' +
+    '{"proveedor":{"nombre":"...","cif":"...","telefono":"...","email":"...","direccion":"...","contacto":"..."},' +
+    '"articulos":[{"nombre":"...","cantidad":0,"unidad":"...","precio_unitario":0}]}\n' +
+    'Si un campo no aparece en la factura, pon null.';
 
   try{
     var response = await fetch('https://api.anthropic.com/v1/messages', {
