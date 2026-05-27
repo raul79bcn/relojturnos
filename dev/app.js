@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.62 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.63 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.62 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.63 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5619,6 +5619,7 @@ async function cmpAnalizarFactura(base64, mediaType){
     'Extrae TODOS los artículos de la factura con: nombre exacto, cantidad, unidad (KG/CAJA/ud/etc), precio unitario sin IVA. ' +
     'También extrae el nombre del proveedor. ' +
     'Responde SOLO con JSON válido, sin texto adicional, sin markdown. ' +
+    'Tu respuesta debe comenzar con { y terminar con }. No incluyas ningún texto antes ni después. ' +
     'Formato exacto: {"proveedor":"nombre","articulos":[{"nombre":"...","cantidad":0,"unidad":"...","precio_unitario":0}]}';
 
   try{
@@ -5631,7 +5632,7 @@ async function cmpAnalizarFactura(base64, mediaType){
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2000,
         messages: [{
           role: 'user',
@@ -5645,9 +5646,25 @@ async function cmpAnalizarFactura(base64, mediaType){
     });
 
     var data = await response.json();
+    if(!response.ok){
+      var errMsg = (data.error && data.error.message) ? data.error.message : ('HTTP ' + response.status);
+      throw new Error(errMsg);
+    }
     var text = data.content && data.content[0] ? data.content[0].text : '';
-    var clean = text.replace(/```json|```/g,'').trim();
-    var parsed = JSON.parse(clean);
+    if(!text) throw new Error('La IA no devolvió contenido');
+    var first = text.indexOf('{');
+    var last  = text.lastIndexOf('}');
+    if(first === -1 || last === -1){
+      console.warn('[cmpAnalizarFactura] texto raw sin JSON:', text);
+      throw new Error('La IA no devolvió JSON válido');
+    }
+    var clean = text.slice(first, last + 1);
+    var parsed;
+    try{ parsed = JSON.parse(clean); }
+    catch(jsonErr){
+      console.warn('[cmpAnalizarFactura] fallo JSON.parse. texto raw:', text, '| clean:', clean);
+      throw new Error('No se pudo parsear el JSON: ' + jsonErr.message);
+    }
     cmpMostrarPreviaFactura(parsed);
 
   }catch(e){
