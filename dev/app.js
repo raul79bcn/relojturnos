@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.58 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.59 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.58 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.59 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -6894,6 +6894,21 @@ function cmpTab(tab){
   if(tab === 'proveedores') cmpRenderProveedores();
   if(tab === 'precios')     cmpRenderPrecios();
   if(tab === 'analisis')    cmpRenderAnalisis();
+  if(tab === 'facturas')    cmpRenderFacturas();
+  if(tab === 'facturas')    cmpRenderFacturas();
+}
+
+function cmpRenderFacturas(){
+  var cont = document.getElementById('cmp-facturas-content');
+  if(!cont) return;
+  cont.innerHTML =
+    '<div style="text-align:center;padding:32px 16px">'
+    +'<div style="font-size:40px;margin-bottom:12px">🧾</div>'
+    +'<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">Subir factura</div>'
+    +'<div style="font-size:13px;color:var(--muted);margin-bottom:20px">Haz una foto o sube una imagen de la factura.<br>La IA extraerá los artículos y actualizará precios y stock automáticamente.</div>'
+    +'<label for="cmp-factura-input" style="display:inline-block;background:var(--accent);color:#fff;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">📷 Seleccionar factura</label>'
+    +'<input type="file" id="cmp-factura-input" accept="image/*" capture="environment" style="display:none" onchange="cmpFacturaSeleccionada(this)">'
+    +'</div>';
 }
 
 function cmpNombreFamilia(id){
