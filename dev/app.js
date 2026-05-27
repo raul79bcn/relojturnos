@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.74 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.75 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.74 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.75 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -7086,6 +7086,17 @@ function cmpRenderArticulos(){
         }).join('');
   }
 
+  // Chips de familias con botón editar
+  var chipsEl = document.getElementById('cmp-familias-chips');
+  if(chipsEl){
+    chipsEl.innerHTML = (cmpFamilias||[]).map(function(f){
+      return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--darker);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default">'
+        +(f.emoji||'')+(f.emoji?' ':'')+f.nombre
+        +'<button onclick="cmpAbrirModalFamilia('+f.id+')" style="background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px;color:var(--muted)" title="Editar familia">✏️</button>'
+        +'</span>';
+    }).join('');
+  }
+
   if(!lista.length){
     cont.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:32px">'+
       (cmpArticulos.length ? 'Sin resultados para esa búsqueda' : 'No hay artículos. Pulsa <b>+ Artículo</b> para añadir el primero.')+'</div>';
@@ -7391,23 +7402,32 @@ function cmpSiguienteId(arr){
 }
 
 // ---- FAMILIA ----
-function cmpAbrirModalFamilia(){
+function cmpAbrirModalFamilia(id){
   var el = document.getElementById('cmp-modal-familia');
   if(!el) return;
-  document.getElementById('cmp-fam-nombre').value = '';
-  document.getElementById('cmp-fam-emoji').value  = '';
+  var fam = id ? cmpFamilias.find(function(x){ return x.id===id; }) : null;
+  document.getElementById('cmp-fam-id').value     = fam ? fam.id : '';
+  document.getElementById('cmp-fam-nombre').value  = fam ? fam.nombre : '';
+  document.getElementById('cmp-fam-emoji').value   = fam ? (fam.emoji||'') : '';
+  document.getElementById('cmp-fam-titulo').textContent = fam ? '✏️ Editar Familia' : '🗂 Nueva Familia';
   el.style.display = 'flex';
 }
 
 function cmpGuardarFamilia(){
   var nombre = (document.getElementById('cmp-fam-nombre').value||'').trim();
   if(!nombre){ showToast('Escribe el nombre de la familia', 'red'); return; }
-  cmpFamilias.push({ id: cmpSiguienteId(cmpFamilias), nombre: nombre,
-    emoji: (document.getElementById('cmp-fam-emoji').value||'').trim() });
+  var emoji  = (document.getElementById('cmp-fam-emoji').value||'').trim();
+  var idVal  = document.getElementById('cmp-fam-id').value;
+  if(idVal){
+    var idx = cmpFamilias.findIndex(function(x){ return x.id===parseInt(idVal); });
+    if(idx >= 0){ cmpFamilias[idx].nombre = nombre; cmpFamilias[idx].emoji = emoji; }
+  } else {
+    cmpFamilias.push({ id: cmpSiguienteId(cmpFamilias), nombre: nombre, emoji: emoji });
+  }
   cmpGuardarDatos();
   cmpCerrarModales();
   cmpRenderArticulos();
-  showToast('Familia guardada', 'green');
+  showToast(idVal ? 'Familia actualizada' : 'Familia guardada', 'green');
 }
 
 // ---- PROVEEDOR ----

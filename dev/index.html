@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.74 – Grupo El Reloj</title>
+<title>RelojTurnos v7.75 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.74</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.75</span></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.74 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.75 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -1331,6 +1331,7 @@
           <button class="btn btn-ghost btn-sm" onclick="cmpAbrirImport('articulos')" style="border-color:var(--muted);color:var(--muted)">📥 Importar</button>
           <button class="btn btn-ghost btn-sm" onclick="cmpExportar('articulos')" style="border-color:#2ecc71;color:#2ecc71">📤 Exportar</button>
         </div>
+        <div id="cmp-familias-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px"></div>
         <div id="cmp-articulos-list"></div>
       </div>
 
@@ -1622,14 +1623,15 @@
 <!-- MODAL FAMILIA -->
 <div id="cmp-modal-familia" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(360px,95vw)">
-    <div style="font-size:14px;font-weight:700;margin-bottom:16px">🗂 Nueva Familia</div>
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px" id="cmp-fam-titulo">🗂 Nueva Familia</div>
+    <input type="hidden" id="cmp-fam-id">
     <div class="form-group">
       <label>Nombre familia *</label>
       <input type="text" id="cmp-fam-nombre" placeholder="Ej: Bebidas alcohólicas">
     </div>
     <div class="form-group">
       <label>Emoji / icono</label>
-      <input type="text" id="cmp-fam-emoji" placeholder="🍺" maxlength="4" style="width:80px">
+      <input type="text" id="cmp-fam-emoji" placeholder="🍺" style="width:80px;font-size:22px">
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
       <button class="btn btn-ghost btn-sm" onclick="cmpCerrarModales()">Cancelar</button>
@@ -1750,7 +1752,7 @@
       <div style="text-align:center;color:var(--muted);padding:24px">Cargando artículos...</div>
     </div>
     <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--muted)">
-      RelojTurnos v7.74 &middot; Grupo El Reloj
+      RelojTurnos v7.75 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
@@ -1785,7 +1787,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.74 &middot; Grupo El Reloj
+      RelojTurnos v7.75 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
