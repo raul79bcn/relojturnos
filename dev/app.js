@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.80 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.81 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.80 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.81 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -6020,13 +6020,19 @@ function invCocinaMostrarFamilia(famEnc){
   var grid = document.getElementById('inv-cocina-grid');
   if(!grid) return;
 
+  var s18 = 'width:60px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:13px;outline:none;text-align:right';
   var rowsHtml = arts.map(function(a){
     var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    var sMinStr = sMin !== null ? sMin : 'null';
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
       +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'min '+sMin : '')+'</div>'
-      +'<input type="number" min="0" step="0.5" placeholder="0" id="inv18-stock-'+a.id+'" onchange="inv18CheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">'
+      +'<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;color:var(--muted)">Und. enteras</span>'
+      +'<input type="number" min="0" step="1" placeholder="0" id="inv18-ent-'+a.id+'" onchange="inv18CheckDual('+a.id+','+sMinStr+')" style="'+s18+'"></div>'
+      +'<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;color:var(--muted)">Suelto</span>'
+      +'<input type="number" min="0" step="0.5" placeholder="0" id="inv18-fra-'+a.id+'" onchange="inv18CheckDual('+a.id+','+sMinStr+')" style="'+s18+'">'
+      +'<span style="font-size:11px;color:var(--muted);min-width:28px">'+(a.unidad||'')+'</span></div>'
+      +'</div>'
       +'<span style="width:20px;text-align:center;font-size:14px" id="inv18-flag-'+a.id+'"></span>'
       +'</div>';
   }).join('');
@@ -6041,14 +6047,18 @@ function invCocinaMostrarFamilia(famEnc){
     +rowsHtml;
 }
 
-function inv18CheckMin(artId, sMin){
-  var input = document.getElementById('inv18-stock-'+artId);
-  var flag  = document.getElementById('inv18-flag-'+artId);
-  if(!input || !flag) return;
-  var val = parseFloat(input.value);
-  var bajo = sMin !== null && !isNaN(val) && val <= sMin;
-  flag.textContent = bajo ? '\u{1F534}' : (input.value !== '' ? '\u{1F7E2}' : '');
-  input.style.borderColor = bajo ? 'var(--red)' : 'var(--border)';
+function inv18CheckDual(artId, sMin){
+  var entInput = document.getElementById('inv18-ent-'+artId);
+  var fraInput = document.getElementById('inv18-fra-'+artId);
+  var flag     = document.getElementById('inv18-flag-'+artId);
+  if(!flag) return;
+  var empty = (!entInput||entInput.value==='') && (!fraInput||fraInput.value==='');
+  if(empty){ flag.textContent=''; return; }
+  var total = (parseInt((entInput&&entInput.value)||0)||0) + (parseFloat((fraInput&&fraInput.value)||0)||0);
+  var bajo = sMin !== null && total <= sMin;
+  flag.textContent = bajo ? '🔴' : '🟢';
+  if(entInput) entInput.style.borderColor = bajo ? 'var(--red)' : 'var(--border)';
+  if(fraInput) fraInput.style.borderColor = bajo ? 'var(--red)' : 'var(--border)';
 }
 
 async function inv18Guardar(){
@@ -6057,9 +6067,11 @@ async function inv18Guardar(){
   var bajosDeMinimo = [];
   var promesas = [];
   arts.forEach(function(a){
-    var input = document.getElementById('inv18-stock-'+a.id);
-    if(input && input.value !== ''){
-      var val = parseFloat(input.value);
+    var entInput = document.getElementById('inv18-ent-'+a.id);
+    var fraInput = document.getElementById('inv18-fra-'+a.id);
+    var hasValue = (entInput && entInput.value !== '') || (fraInput && fraInput.value !== '');
+    if(hasValue){
+      var val = (parseInt((entInput&&entInput.value)||0)||0) + (parseFloat((fraInput&&fraInput.value)||0)||0);
       var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
       if(sMin !== null && val <= sMin) bajosDeMinimo.push({nombre:a.nombre, unidad:a.unidad||'', actual:val, minimo:sMin});
       var artIdx = cmpArticulos.findIndex(function(x){ return x.id === a.id; });
@@ -6099,12 +6111,19 @@ function invCocinaFiltrar(){
     return a.nombre.toLowerCase().indexOf(q) >= 0;
   });
   if(!arts.length){ grid.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px">Sin resultados</div>'; return; }
+  var s18f = 'width:60px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:13px;outline:none;text-align:right';
   var rowsHtml = arts.map(function(a){
     var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+    var sMinStr = sMin !== null ? sMin : 'null';
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
       +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'—')+'</div>'
-      +'<input type="number" min="0" step="0.5" placeholder="0" id="inv18-stock-'+a.id+'" onchange="inv18CheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
+      +'<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">'
+      +'<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;color:var(--muted)">Und. enteras</span>'
+      +'<input type="number" min="0" step="1" placeholder="0" id="inv18-ent-'+a.id+'" onchange="inv18CheckDual('+a.id+','+sMinStr+')" style="'+s18f+'"></div>'
+      +'<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;color:var(--muted)">Suelto</span>'
+      +'<input type="number" min="0" step="0.5" placeholder="0" id="inv18-fra-'+a.id+'" onchange="inv18CheckDual('+a.id+','+sMinStr+')" style="'+s18f+'">'
+      +'<span style="font-size:11px;color:var(--muted);min-width:28px">'+(a.unidad||'')+'</span></div>'
+      +'</div>'
       +'<span style="width:20px;text-align:center;font-size:14px" id="inv18-flag-'+a.id+'"></span>'
       +'</div>';
   }).join('');
