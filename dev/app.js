@@ -325,18 +325,20 @@ async function abrirPortalEmpleado(user){
   await cargarPortalCuadrante(user);
   await cargarPortalContrato(user);
   await cargarPortalDocs(user);
+  await cargarPortalDatos(user);
 }
 
 function portalTab(tab){
-  ['cuadrante','contrato','actividad','password','docs'].forEach(function(t){
+  ['cuadrante','contrato','actividad','password','docs','datos'].forEach(function(t){
     var el = document.getElementById('portal-'+t);
     if(el) el.style.display = t===tab?'block':'none';
   });
   document.querySelectorAll('.portal-tab').forEach(function(btn, i){
-    btn.classList.toggle('active', ['cuadrante','contrato','actividad','password','docs'][i]===tab);
+    btn.classList.toggle('active', ['cuadrante','contrato','actividad','password','docs','datos'][i]===tab);
   });
   if(tab==='actividad') cargarMiActividad();
   if(tab==='docs') cargarPortalDocs(currentUser);
+  if(tab==='datos') cargarPortalDatos(currentUser);
 }
 
 async function cargarPortalCuadrante(user){
@@ -493,6 +495,60 @@ async function docSubir(empId, empNombre, localId, tipo){
     }catch(e){ showToast('Error subiendo: '+e.message,'red'); console.error('[docSubir]',e); }
   };
   input.click();
+}
+
+async function cargarPortalDatos(user){
+  var el = document.getElementById('portal-datos');
+  if(!el) return;
+  if(!user || !user.empleado_id){
+    el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay datos disponibles.</div>';
+    return;
+  }
+  el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">Cargando...</div>';
+  try{
+    var rows = await sbGet('empleados','id=eq.'+user.empleado_id);
+    var e = (rows&&rows.length) ? rows[0] : {};
+    var inp = 'width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;margin-bottom:2px';
+    var lbl = 'font-size:11px;color:var(--muted);margin-bottom:3px;display:block';
+    function field(id, label, val, type){
+      return '<div style="margin-bottom:10px"><label style="'+lbl+'">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+(val||'')+'" style="'+inp+'"></div>';
+    }
+    el.innerHTML =
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">👤 Mis datos personales</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">'
+      +field('pd-email',    '✉ Email',              e.email,         'email')
+      +field('pd-telefono', '📱 Teléfono / WhatsApp', e.telefono,    'tel')
+      +field('pd-direccion','📍 Dirección (calle y nº)', e.direccion, 'text')
+      +field('pd-piso',     'Piso / Puerta',         e.piso,          'text')
+      +field('pd-ciudad',   'Ciudad',                e.ciudad,        'text')
+      +field('pd-cp',       'Código Postal',         e.codigo_postal, 'text')
+      +'</div>'
+      +field('pd-provincia','Provincia',             e.provincia,     'text')
+      +'<div id="pd-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:8px;padding:8px 12px;font-size:12px;color:#5ddb5d;margin-bottom:8px">✓ Datos guardados correctamente</div>'
+      +'<button onclick="guardarPortalDatos()" style="background:var(--accent);border:none;border-radius:8px;padding:9px 22px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;width:100%;margin-top:4px">💾 Guardar mis datos</button>'
+      +'</div>';
+  }catch(e2){
+    el.innerHTML='<div style="color:var(--red);padding:20px">Error: '+e2.message+'</div>';
+  }
+}
+
+async function guardarPortalDatos(){
+  if(!currentUser || !currentUser.empleado_id){ showToast('Sin datos de empleado','red'); return; }
+  var patch = {
+    email:         (document.getElementById('pd-email').value||'').trim()||null,
+    telefono:      (document.getElementById('pd-telefono').value||'').trim()||null,
+    direccion:     (document.getElementById('pd-direccion').value||'').trim()||null,
+    piso:          (document.getElementById('pd-piso').value||'').trim()||null,
+    ciudad:        (document.getElementById('pd-ciudad').value||'').trim()||null,
+    codigo_postal: (document.getElementById('pd-cp').value||'').trim()||null,
+    provincia:     (document.getElementById('pd-provincia').value||'').trim()||null
+  };
+  try{
+    await sbPatch('empleados', currentUser.empleado_id, patch);
+    var ok = document.getElementById('pd-ok');
+    if(ok){ ok.style.display='block'; setTimeout(function(){ ok.style.display='none'; }, 2500); }
+  }catch(e){ showToast('Error guardando datos: '+e.message,'red'); }
 }
 
 async function cambiarPassword(){
@@ -3002,9 +3058,15 @@ async function crearUsuario(){
     var existing = await sbGet('usuarios','dni=eq.'+encodeURIComponent(dni));
     if(existing && existing.length){ errEl.textContent=t('err_dni_existe'); errEl.style.display='block'; return; }
 
-  var localId = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
+  var localId  = rol === 'directora_general' ? null : parseInt(document.getElementById('nu-local').value);
   var telefono = (document.getElementById('nu-telefono')||{}).value||'';
   var turno    = (document.getElementById('nu-turno')||{}).value||'manana';
+  var email    = (document.getElementById('nu-email')||{}).value||'';
+  var direccion= (document.getElementById('nu-direccion')||{}).value||'';
+  var piso     = (document.getElementById('nu-piso')||{}).value||'';
+  var ciudad   = (document.getElementById('nu-ciudad')||{}).value||'';
+  var cp       = (document.getElementById('nu-cp')||{}).value||'';
+  var provincia= (document.getElementById('nu-provincia')||{}).value||'';
   var nuevo = { nombre: nombre, dni: dni, password_hash: passHash, rol: rol, local_id: localId, activo: true };
   await sbPost('usuarios', nuevo);
   logAccion('CREAR_USUARIO', nombre+' · DNI: '+dni+' · Rol: '+rol, localId||null);
@@ -3013,17 +3075,18 @@ async function crearUsuario(){
     try{
       var empEx = await sbGet('empleados','local_id=eq.'+localId+'&nombre=eq.'+encodeURIComponent(nombre));
       var rolEmpleado = rol === 'directora' ? 'Encargado' : 'Cam. Mañana';
+      var empData = { activo:true, rol:rolEmpleado, turno_habitual:turno, telefono:telefono||null, email:email||null, direccion:direccion||null, piso:piso||null, ciudad:ciudad||null, codigo_postal:cp||null, provincia:provincia||null };
       if(empEx && empEx.length){
-        await sbPatch('empleados', empEx[0].id, { activo:true, rol:rolEmpleado, turno_habitual:turno, telefono:telefono||null });
+        await sbPatch('empleados', empEx[0].id, empData);
       } else {
-        await sbPost('empleados', { nombre:nombre, local_id:localId, activo:true, rol:rolEmpleado, turno_habitual:turno, telefono:telefono||null });
+        await sbPost('empleados', Object.assign({ nombre:nombre, local_id:localId }, empData));
       }
     }catch(e2){ console.warn('empleados insert/update:', e2); }
   }
     okEl.textContent = '✓ Usuario '+nombre+' creado · Contraseña inicial: '+pass;
     okEl.style.display = 'block';
     // Limpiar form
-    ['nu-nombre','nu-dni','nu-ss','nu-telefono'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    ['nu-nombre','nu-dni','nu-ss','nu-telefono','nu-email','nu-direccion','nu-piso','nu-ciudad','nu-cp','nu-provincia'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     cargarUsuarios();
   }catch(e){
     errEl.textContent = t('err_crear_usuario')+e.message;
@@ -3057,9 +3120,13 @@ async function abrirEditarUsuario(id){
     document.getElementById('eu-activo').value   = u.activo ? '1' : '0';
     document.getElementById('eu-pass').value     = '';
     document.getElementById('eu-ss').value       = (emp&&emp.nss)       || u.nss       || '';
-    document.getElementById('eu-telefono').value = (emp&&emp.telefono)  || u.telefono  || '';
-    document.getElementById('eu-email').value    = (emp&&emp.email)     || u.email     || '';
-    document.getElementById('eu-direccion').value= (emp&&emp.direccion) || u.direccion || '';
+    document.getElementById('eu-telefono').value  = (emp&&emp.telefono)      || u.telefono       || '';
+    document.getElementById('eu-email').value     = (emp&&emp.email)         || u.email          || '';
+    document.getElementById('eu-direccion').value = (emp&&emp.direccion)     || u.direccion      || '';
+    document.getElementById('eu-piso').value      = (emp&&emp.piso)          || u.piso           || '';
+    document.getElementById('eu-ciudad').value    = (emp&&emp.ciudad)        || u.ciudad         || '';
+    document.getElementById('eu-cp').value        = (emp&&emp.codigo_postal) || u.codigo_postal  || '';
+    document.getElementById('eu-provincia').value = (emp&&emp.provincia)     || u.provincia      || '';
     euRolChange();
     document.getElementById('eu-error').style.display='none';
     document.getElementById('eu-ok').style.display='none';
@@ -3083,21 +3150,25 @@ async function guardarEditarUsuario(){
   var localId = rol==='directora_general' ? null : parseInt(document.getElementById('eu-local').value);
   var activo  = document.getElementById('eu-activo').value==='1';
   var pass    = (document.getElementById('eu-pass').value||'').trim();
-  var ss      = (document.getElementById('eu-ss').value||'').trim();
-  var tel     = (document.getElementById('eu-telefono').value||'').trim();
-  var email   = (document.getElementById('eu-email').value||'').trim();
-  var dir     = (document.getElementById('eu-direccion').value||'').trim();
-  var errEl   = document.getElementById('eu-error');
-  var okEl    = document.getElementById('eu-ok');
+  var ss       = (document.getElementById('eu-ss').value||'').trim();
+  var tel      = (document.getElementById('eu-telefono').value||'').trim();
+  var email    = (document.getElementById('eu-email').value||'').trim();
+  var dir      = (document.getElementById('eu-direccion').value||'').trim();
+  var piso     = (document.getElementById('eu-piso').value||'').trim();
+  var ciudad   = (document.getElementById('eu-ciudad').value||'').trim();
+  var cp       = (document.getElementById('eu-cp').value||'').trim();
+  var provincia= (document.getElementById('eu-provincia').value||'').trim();
+  var errEl    = document.getElementById('eu-error');
+  var okEl     = document.getElementById('eu-ok');
   errEl.style.display='none'; okEl.style.display='none';
   if(!nombre||!dni){ errEl.textContent='Nombre y DNI son obligatorios'; errEl.style.display='block'; return; }
-  var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo, nss:ss, telefono:tel, email:email, direccion:dir };
+  var datos = { nombre:nombre, dni:dni, rol:rol, local_id:localId, activo:activo, nss:ss, telefono:tel, email:email, direccion:dir, piso:piso, ciudad:ciudad, codigo_postal:cp, provincia:provincia };
   if(pass){ datos.password_hash = await hashPass(pass); }
   try{
     await sbPatch('usuarios', id, datos);
     // Dual-write: también actualizar empleados mientras completamos la migración
     if(_euEmpleadoId){
-      var empPatch = { nombre:nombre, telefono:tel||null, email:email||null, direccion:dir||null, nss:ss||null };
+      var empPatch = { nombre:nombre, telefono:tel||null, email:email||null, direccion:dir||null, nss:ss||null, piso:piso||null, ciudad:ciudad||null, codigo_postal:cp||null, provincia:provincia||null };
       if(pass){ empPatch.password_hash = datos.password_hash; empPatch.dni = dni; }
       try{ await sbPatch('empleados', _euEmpleadoId, empPatch); }catch(e2){ console.warn('[dual-write empleados]', e2.message); }
     }

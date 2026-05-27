@@ -64,6 +64,7 @@
     <button class="portal-tab" onclick="portalTab('actividad')" data-i18n="portal_actividad">🗂 Mi actividad</button>
     <button class="portal-tab" onclick="portalTab('password')" data-i18n="portal_password">🔒 Contraseña</button>
     <button class="portal-tab" onclick="portalTab('docs')">📁 Mis docs</button>
+    <button class="portal-tab" onclick="portalTab('datos')">👤 Mis datos</button>
   </div>
   <div class="portal-content">
     <div id="portal-cuadrante"></div>
@@ -81,6 +82,7 @@
       </div>
     </div>
     <div id="portal-docs" style="display:none"></div>
+    <div id="portal-datos" style="display:none"></div>
   </div>
 </div>
 
@@ -534,6 +536,36 @@
             </select>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>✉ Email</label>
+            <input type="email" id="nu-email" placeholder="empleado@email.com" class="inp-sm">
+          </div>
+          <div class="form-group">
+            <label>📍 Dirección (calle y nº)</label>
+            <input type="text" id="nu-direccion" placeholder="Calle Mayor, 12" class="inp-sm">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Piso / Puerta</label>
+            <input type="text" id="nu-piso" placeholder="2º B" class="inp-sm">
+          </div>
+          <div class="form-group">
+            <label>Ciudad</label>
+            <input type="text" id="nu-ciudad" placeholder="Marbella" class="inp-sm">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Código Postal</label>
+            <input type="text" id="nu-cp" placeholder="29600" maxlength="5" class="inp-sm">
+          </div>
+          <div class="form-group">
+            <label>Provincia</label>
+            <input type="text" id="nu-provincia" placeholder="Málaga" class="inp-sm">
+          </div>
+        </div>
         <div id="nu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
         <div id="nu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
         <button class="btn btn-primary btn-sm" onclick="crearUsuario()" data-i18n="p9_crear">🔒 Crear usuario</button>
@@ -612,8 +644,28 @@
             <input type="email" id="eu-email" placeholder="empleado@email.com">
           </div>
           <div class="form-group">
-            <label>Dirección</label>
-            <input type="text" id="eu-direccion" placeholder="Calle, número, ciudad">
+            <label>Dirección (calle y nº)</label>
+            <input type="text" id="eu-direccion" placeholder="Calle Mayor, 12">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Piso / Puerta</label>
+            <input type="text" id="eu-piso" placeholder="2º B">
+          </div>
+          <div class="form-group">
+            <label>Ciudad</label>
+            <input type="text" id="eu-ciudad" placeholder="Marbella">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Código Postal</label>
+            <input type="text" id="eu-cp" placeholder="29600" maxlength="5">
+          </div>
+          <div class="form-group">
+            <label>Provincia</label>
+            <input type="text" id="eu-provincia" placeholder="Málaga">
           </div>
         </div>
         <div id="eu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:8px"></div>
