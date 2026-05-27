@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.84 – Grupo El Reloj</title>
+<title>RelojTurnos v7.85 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.84</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.85</span></div>
   </div>
 </div>
 
@@ -50,10 +50,10 @@
 <div id="portal-empleado">
   <div class="portal-header">
     <div style="display:flex;align-items:center;gap:10px">
-      <div style="width:36px;height:36px;border-radius:50%;background:var(--accent)20;color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px" id="portal-avatar">?</div>
+      <div style="width:42px;height:42px;border-radius:50%;background:var(--accent)20;color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px" id="portal-avatar">?</div>
       <div>
-        <div style="font-weight:700;font-size:14px;color:var(--text)" id="portal-nombre">Empleado</div>
-        <div style="font-size:10px;color:var(--muted)" id="portal-local">—</div>
+        <div style="font-weight:700;font-size:18px;color:var(--text)" id="portal-nombre">Empleado</div>
+        <div style="font-size:12px;color:var(--muted)" id="portal-local">—</div>
       </div>
     </div>
     <button onclick="doLogout()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-size:11px;cursor:pointer">Salir</button>
@@ -72,7 +72,7 @@
     <div id="portal-actividad" style="display:none"></div>
     <div id="portal-password" style="display:none">
       <div class="cambio-pass-form">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px" data-i18n="portal_cambiar_pass">🔒 Cambiar contraseña</div>
+        <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:14px" data-i18n="portal_cambiar_pass">🔒 Cambiar contraseña</div>
         <div class="login-field"><label data-i18n="portal_pass_actual">Contraseña actual</label><input type="password" id="pass-actual" placeholder="••••"></div>
         <div class="login-field"><label data-i18n="portal_pass_nueva">Nueva contraseña</label><input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres"></div>
         <div class="login-field"><label data-i18n="portal_pass_repite">Repetir nueva contraseña</label><input type="password" id="pass-repite" placeholder="Igual que la anterior"></div>
@@ -116,7 +116,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.84 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.85 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -492,10 +492,13 @@
       <!-- Formulario nuevo usuario -->
       <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
         <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px" data-i18n="p9_nuevo_usuario">+ Nuevo usuario</div>
+
+        <!-- Datos laborales -->
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">🏢 Datos laborales</div>
         <div class="form-row">
           <div class="form-group">
             <label data-i18n="p9_nombre">Nombre completo</label>
-            <input type="text" id="nu-nombre" data-i18n-placeholder="p9_nombre" placeholder="Ej: MARILYN" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
+            <input type="text" id="nu-nombre" placeholder="Ej: MARILYN" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
           </div>
           <div class="form-group">
             <label data-i18n="p9_dni">DNI / NIE</label>
@@ -536,36 +539,44 @@
             </select>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>✉ Email</label>
-            <input type="email" id="nu-email" placeholder="empleado@email.com" class="inp-sm">
+
+        <!-- Datos personales (solo empleado) -->
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)">
+          👤 Datos personales <span style="font-size:9px;font-weight:400;margin-left:4px">— el empleado lo rellena desde su portal</span>
+        </div>
+        <div style="opacity:0.45;pointer-events:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label>✉ Email</label>
+              <input type="email" id="nu-email" disabled placeholder="empleado@email.com" class="inp-sm">
+            </div>
+            <div class="form-group">
+              <label>📍 Dirección (calle y nº)</label>
+              <input type="text" id="nu-direccion" disabled placeholder="Calle Mayor, 12" class="inp-sm">
+            </div>
           </div>
-          <div class="form-group">
-            <label>📍 Dirección (calle y nº)</label>
-            <input type="text" id="nu-direccion" placeholder="Calle Mayor, 12" class="inp-sm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Piso / Puerta</label>
+              <input type="text" id="nu-piso" disabled placeholder="2º B" class="inp-sm">
+            </div>
+            <div class="form-group">
+              <label>Ciudad</label>
+              <input type="text" id="nu-ciudad" disabled placeholder="Marbella" class="inp-sm">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Código Postal</label>
+              <input type="text" id="nu-cp" disabled placeholder="29600" maxlength="5" class="inp-sm">
+            </div>
+            <div class="form-group">
+              <label>Provincia</label>
+              <input type="text" id="nu-provincia" disabled placeholder="Málaga" class="inp-sm">
+            </div>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Piso / Puerta</label>
-            <input type="text" id="nu-piso" placeholder="2º B" class="inp-sm">
-          </div>
-          <div class="form-group">
-            <label>Ciudad</label>
-            <input type="text" id="nu-ciudad" placeholder="Marbella" class="inp-sm">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Código Postal</label>
-            <input type="text" id="nu-cp" placeholder="29600" maxlength="5" class="inp-sm">
-          </div>
-          <div class="form-group">
-            <label>Provincia</label>
-            <input type="text" id="nu-provincia" placeholder="Málaga" class="inp-sm">
-          </div>
-        </div>
+
         <div id="nu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
         <div id="nu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
         <button class="btn btn-primary btn-sm" onclick="crearUsuario()" data-i18n="p9_crear">🔒 Crear usuario</button>
@@ -586,8 +597,9 @@
     <!-- MODAL EDITAR USUARIO -->
     <div id="modal-editar-usuario" style="display:none;position:fixed;inset:0;background:#00000090;z-index:200;align-items:center;justify-content:center">
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(440px,95vw);max-height:90vh;overflow-y:auto">
-        <div style="font-size:14px;font-weight:700;margin-bottom:16px">✏️ Editar Usuario</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px">✏️ Editar Usuario</div>
         <input type="hidden" id="eu-id">
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)">🏢 Datos laborales</div>
         <div class="form-row">
           <div class="form-group">
             <label>Nombre</label>
@@ -637,6 +649,9 @@
             <label>Teléfono</label>
             <input type="tel" id="eu-telefono" placeholder="6XX XXX XXX">
           </div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin:14px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)">
+          👤 Datos personales <span style="font-size:9px;font-weight:400;margin-left:4px">— gestionados por el empleado desde su portal</span>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -1757,7 +1772,7 @@
       <div style="text-align:center;color:var(--muted);padding:24px">Cargando artículos...</div>
     </div>
     <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--muted)">
-      RelojTurnos v7.84 &middot; Grupo El Reloj
+      RelojTurnos v7.85 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
@@ -1792,7 +1807,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.84 &middot; Grupo El Reloj
+      RelojTurnos v7.85 &middot; Grupo El Reloj
     </div>
   </div>
 </div>

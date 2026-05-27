@@ -174,7 +174,7 @@ async function cargarAuditLog(){
 async function cargarMiActividad(){
   var el = document.getElementById('portal-actividad');
   if(!el||!currentUser) return;
-  el.innerHTML = '<div style="padding:16px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">'+t('portal_mi_actividad')+'</div>'
+  el.innerHTML = '<div style="padding:16px"><div style="font-size:17px;font-weight:700;color:var(--accent);margin-bottom:12px">'+t('portal_mi_actividad')+'</div>'
     +'<div id="mi-actividad-list"><div style="color:var(--muted);font-size:11px;text-align:center;padding:14px">'+t('audit_cargando')+'</div></div></div>';
   try{
     var rows = await sbGet('audit_log','usuario_dni=eq.'+encodeURIComponent(currentUser.dni)+'&order=created_at.desc&limit=30');
@@ -399,7 +399,7 @@ async function cargarPortalContrato(user){
     var emp = emps.length ? emps[0] : null;
     if(!sal && !emp){ el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">'+t('portal_no_contrato')+'</div>'; return; }
     el.innerHTML = '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px">'
-      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">'+t('portal_mis_datos')+'</div>'
+      +'<div style="font-size:17px;font-weight:700;color:var(--accent);margin-bottom:14px">'+t('portal_mis_datos')+'</div>'
       +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_nombre')+'</span> <strong>'+emp.nombre+'</strong></div>':'')
       +(emp?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_rol_lbl')+'</span> <strong>'+emp.rol+'</strong></div>':'')
       +(sal?'<div style="margin-bottom:8px;font-size:12px"><span style="color:var(--muted)">'+t('portal_sal_bruto')+'</span> <strong style="color:var(--green)">'+sal.bruto_mes+' €</strong></div>':'')
@@ -529,7 +529,7 @@ async function cargarPortalDatos(user){
       // ── Sección solo lectura ──
       '<div style="background:#1e1e30;border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:4px;margin-bottom:12px">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-      +'<div style="font-size:13px;font-weight:700;color:var(--text)">🏢 Mis datos laborales</div>'
+      +'<div style="font-size:17px;font-weight:700;color:var(--text)">🏢 Mis datos laborales</div>'
       +'<span style="font-size:9px;background:#6b8fff20;color:#6b8fff;padding:2px 8px;border-radius:10px;font-weight:700">Gestionado por Dirección</span>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">'
@@ -543,7 +543,7 @@ async function cargarPortalDatos(user){
       +'</div>'
       // ── Sección editable ──
       +'<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">'
-      +'<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px">📝 Mis datos de contacto</div>'
+      +'<div style="font-size:17px;font-weight:700;color:var(--accent);margin-bottom:14px">📝 Mis datos de contacto</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">'
       +field('pd-email',    '✉ Email',              e.email,         'email')
       +field('pd-telefono', '📱 Teléfono / WhatsApp', e.telefono,    'tel')
@@ -2874,7 +2874,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.84 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.85 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5197,7 +5197,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.84 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.85 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
