@@ -5617,6 +5617,7 @@ async function cmpAnalizarFactura(base64, mediaType){
 
   var systemPrompt = 'Analiza la factura y extrae:\n' +
     '1. Del proveedor (quien emite la factura, no el cliente): nombre comercial, CIF/NIF, teléfono, email, dirección completa, persona de contacto. Busca estos datos en el membrete o cabecera de la factura.\n' +
+    'Busca el CIF/NIF del proveedor en toda la imagen, incluyendo el pie de página y el texto en letra pequeña. Suele aparecer como "C.I.F.", "NIF", "CIF" seguido de la letra y números.\n' +
     '2. Los artículos/productos con nombre, cantidad, unidad y precio unitario sin IVA.\n\n' +
     'Responde SOLO con este JSON, comenzando con { y terminando con }:\n' +
     '{"proveedor":{"nombre":"...","cif":"...","telefono":"...","email":"...","direccion":"...","contacto":"..."},' +
