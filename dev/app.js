@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.65 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.66 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.65 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.66 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5679,14 +5679,17 @@ function cmpMostrarPreviaFactura(datos){
     return;
   }
 
-  // Buscar proveedor existente
   var provNombre = datos.proveedor || 'Desconocido';
   var provMatch = (cmpProveedores||[]).find(function(p){
     return p.nombre.toLowerCase().indexOf(provNombre.toLowerCase().substring(0,6)) >= 0;
   });
 
+  var familiaOptions = '<option value="">Sin familia</option>'
+    + (cmpFamilias||[]).map(function(f){
+        return '<option value="'+f.id+'">'+f.emoji+' '+f.nombre+'</option>';
+      }).join('');
+
   var rowsHtml = datos.articulos.map(function(a, i){
-    // Buscar si el artículo ya existe
     var artMatch = (cmpArticulos||[]).find(function(x){
       return x.nombre.toLowerCase().indexOf(a.nombre.toLowerCase().substring(0,8)) >= 0;
     });
@@ -5695,11 +5698,24 @@ function cmpMostrarPreviaFactura(datos){
       ? '<span style="font-size:10px;background:var(--accent);color:#fff;border-radius:6px;padding:1px 6px;margin-left:6px">NUEVO</span>'
       : '<span style="font-size:10px;background:var(--green);color:#fff;border-radius:6px;padding:1px 6px;margin-left:6px">ACTUALIZAR</span>';
 
+    var familiaCell;
+    if(esNuevo){
+      familiaCell = '<select id="fac-familia-'+i+'" style="font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);max-width:120px">'+familiaOptions+'</select>';
+    } else {
+      var famName = '';
+      if(artMatch.familia_id){
+        var fam = (cmpFamilias||[]).find(function(f){ return f.id === artMatch.familia_id; });
+        if(fam) famName = fam.emoji+' '+fam.nombre;
+      }
+      familiaCell = '<span style="font-size:12px;color:var(--muted)">'+(famName||'—')+'</span>';
+    }
+
     return '<tr style="border-top:1px solid var(--border)">'
       +'<td style="padding:8px 6px;font-size:13px;color:var(--text)">'+a.nombre+badge+'</td>'
       +'<td style="padding:8px 6px;text-align:center;font-size:13px;color:var(--muted)">'+a.cantidad+'</td>'
       +'<td style="padding:8px 6px;text-align:center;font-size:13px;color:var(--muted)">'+a.unidad+'</td>'
       +'<td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:700;color:var(--accent)">'+parseFloat(a.precio_unitario).toFixed(2)+' €</td>'
+      +'<td style="padding:8px 6px">'+familiaCell+'</td>'
       +'<td style="padding:8px 6px;text-align:center">'
       +'<input type="checkbox" id="fac-check-'+i+'" checked style="width:16px;height:16px;cursor:pointer">'
       +'</td>'
@@ -5709,7 +5725,7 @@ function cmpMostrarPreviaFactura(datos){
   cont.innerHTML =
     '<div style="margin-bottom:16px">'
     +'<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">🧾 Factura analizada</div>'
-    +'<div style="font-size:12px;color:var(--muted)">Proveedor detectado: <strong style="color:var(--text)">'+provNombre+'</strong>'+(provMatch?' ✓':' (no encontrado en BD)')+'</div>'
+    +'<div style="font-size:12px;color:var(--muted)">Proveedor detectado: <strong style="color:var(--text)">'+provNombre+'</strong>'+(provMatch?' ✓':' <span style="color:var(--accent)">(se creará nuevo proveedor)</span>')+'</div>'
     +'</div>'
     +'<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">'
     +'<thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">'
@@ -5717,6 +5733,7 @@ function cmpMostrarPreviaFactura(datos){
     +'<th style="padding:8px 6px;text-align:center">Cantidad</th>'
     +'<th style="padding:8px 6px;text-align:center">Unidad</th>'
     +'<th style="padding:8px 6px;text-align:right">Precio</th>'
+    +'<th style="padding:8px 6px">Familia</th>'
     +'<th style="padding:8px 6px;text-align:center">✓</th>'
     +'</tr></thead>'
     +'<tbody>'+rowsHtml+'</tbody>'
@@ -5727,7 +5744,6 @@ function cmpMostrarPreviaFactura(datos){
     +'<button onclick="cmpAceptarFactura('+JSON.stringify(datos).replace(/"/g,"'")+',\''+provNombre+'\')" style="background:var(--accent);border:none;border-radius:8px;padding:10px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">✅ Aceptar y guardar</button>'
     +'</div>';
 
-  // Guardar datos para uso en aceptar
   cont._facturaData = datos;
 }
 
@@ -5736,11 +5752,18 @@ async function cmpAceptarFactura(datos, provNombre){
   var cont = document.getElementById('cmp-facturas-content');
   var articulosDatos = datos.articulos || [];
 
-  // Filtrar solo los marcados
-  var seleccionados = articulosDatos.filter(function(a, i){
+  // Leer checkboxes y familia selects ANTES de sobreescribir el DOM
+  var seleccionados = articulosDatos.reduce(function(acc, a, i){
     var cb = document.getElementById('fac-check-'+i);
-    return cb ? cb.checked : true;
-  });
+    if(cb ? cb.checked : true){
+      var famSel = document.getElementById('fac-familia-'+i);
+      acc.push(Object.assign({}, a, {
+        _origIdx: i,
+        _familiaId: famSel ? (parseInt(famSel.value)||null) : null
+      }));
+    }
+    return acc;
+  }, []);
 
   console.log('[cmpAceptarFactura] artículos seleccionados:', seleccionados.length, seleccionados.map(function(a){ return a.nombre; }));
 
@@ -5753,7 +5776,23 @@ async function cmpAceptarFactura(datos, provNombre){
   var provMatch = (cmpProveedores||[]).find(function(p){
     return p.nombre.toLowerCase().indexOf(provNombre.toLowerCase().substring(0,6)) >= 0;
   });
-  if(provMatch) provId = provMatch.id;
+  if(provMatch){
+    provId = provMatch.id;
+  } else if(provNombre && provNombre !== 'Desconocido'){
+    try{
+      console.log('[cmpAceptarFactura] proveedor no encontrado, insertando:', provNombre);
+      var provRows = await sbPost('cmp_proveedores', { nombre: provNombre, razon_social: provNombre, local_id: localId });
+      console.log('[cmpAceptarFactura] sbPost proveedor resultado:', provRows);
+      var newProv = Array.isArray(provRows) ? provRows[0] : provRows;
+      if(newProv && newProv.id){
+        provId = newProv.id;
+        cmpProveedores.push(newProv);
+        localStorage.setItem('rt_cmp_proveedores', JSON.stringify(cmpProveedores));
+      }
+    }catch(provErr){
+      console.warn('[cmpAceptarFactura] error insertando proveedor:', provErr.message);
+    }
+  }
 
   var errores = 0;
   var actualizados = 0;
@@ -5768,12 +5807,11 @@ async function cmpAceptarFactura(datos, provNombre){
       return x.nombre.toLowerCase().indexOf(a.nombre.toLowerCase().substring(0,8)) >= 0;
     });
 
-    console.log('[cmpAceptarFactura] artículo['+i+']:', a.nombre, '| match:', artMatch ? ('id='+artMatch.id+' nombre='+artMatch.nombre) : 'NO ENCONTRADO');
+    console.log('[cmpAceptarFactura] artículo['+i+']:', a.nombre, '| match:', artMatch ? ('id='+artMatch.id+' nombre='+artMatch.nombre) : 'NO ENCONTRADO', '| familia_id:', a._familiaId);
 
     try{
       if(artMatch){
-        // Actualizar precio y stock mínimo
-        var stockMinNuevo = Math.floor(cantidad * 0.8); // 80% de la cantidad pedida
+        var stockMinNuevo = Math.floor(cantidad * 0.8);
         var patchData = {
           precio_compra: precio,
           stock_minimo: stockMinNuevo,
@@ -5792,7 +5830,6 @@ async function cmpAceptarFactura(datos, provNombre){
         }
         actualizados++;
       } else {
-        // Artículo nuevo — insertar
         var nuevoArt = {
           nombre: a.nombre,
           unidad: a.unidad || 'ud',
@@ -5801,6 +5838,7 @@ async function cmpAceptarFactura(datos, provNombre){
           stock_actual: cantidad,
           local_id: localId,
           proveedor_id: provId,
+          familia_id: a._familiaId,
           ultima_actualizacion: new Date().toISOString(),
           ultima_actualizacion_por: currentUser ? currentUser.nombre : 'Lorena'
         };
@@ -5822,7 +5860,8 @@ async function cmpAceptarFactura(datos, provNombre){
   if(errores) resumen += ', '+errores+' errores';
   showToast(resumen, errores ? 'orange' : 'green');
 
-  // Volver al estado inicial
+  cmpSincronizarDesdeSupabase();
+
   setTimeout(function(){ cmpTab('facturas'); }, 1500);
 }
 
