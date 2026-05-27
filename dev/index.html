@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.83 – Grupo El Reloj</title>
+<title>RelojTurnos v7.84 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.83</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.84</span></div>
   </div>
 </div>
 
@@ -114,7 +114,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.83 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.84 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -537,40 +537,6 @@
         <div id="nu-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
         <div id="nu-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
         <button class="btn btn-primary btn-sm" onclick="crearUsuario()" data-i18n="p9_crear">🔒 Crear usuario</button>
-      </div>
-
-      <!-- Formulario empleado sin acceso -->
-      <div style="background:var(--darker);border:1px solid #ff980050;border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:#ff9800;margin-bottom:12px">👤 Añadir empleado sin acceso</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Para empleados que aparecen en cuadrantes pero no necesitan login.</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nombre completo</label>
-            <input type="text" id="ea-nombre" placeholder="Ej: CARLOS" oninput="this.value=this.value.toUpperCase()" class="inp-sm">
-          </div>
-          <div class="form-group">
-            <label>📱 Teléfono / WhatsApp</label>
-            <input type="tel" id="ea-telefono" placeholder="34612345678" maxlength="15" class="inp-sm">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Local</label>
-            <select id="ea-local" class="inp-sm">
-              <option value="1">🍽 La Cala</option>
-              <option value="2">🍔 Roto's Burguer</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>🕐 Turno habitual</label>
-            <select id="ea-turno" class="inp-sm">
-              <option value="manana">🌅 Mañana</option>
-            </select>
-          </div>
-        </div>
-        <div id="ea-error" style="display:none;background:#2d1515;border:1px solid #6b2020;border-radius:7px;padding:8px 12px;font-size:11px;color:#ff8080;margin-bottom:10px"></div>
-        <div id="ea-ok" style="display:none;background:#152d15;border:1px solid #2a5a2a;border-radius:7px;padding:8px 12px;font-size:11px;color:#5ddb5d;margin-bottom:10px"></div>
-        <button class="btn btn-sm" style="background:#ff980018;border:1px solid #ff980060;color:#ff9800" onclick="crearEmpleadoSinAcceso()">👤 Añadir empleado</button>
       </div>
 
       <!-- Lista de usuarios -->
@@ -1739,7 +1705,7 @@
       <div style="text-align:center;color:var(--muted);padding:24px">Cargando artículos...</div>
     </div>
     <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--muted)">
-      RelojTurnos v7.83 &middot; Grupo El Reloj
+      RelojTurnos v7.84 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
@@ -1774,7 +1740,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.83 &middot; Grupo El Reloj
+      RelojTurnos v7.84 &middot; Grupo El Reloj
     </div>
   </div>
 </div>

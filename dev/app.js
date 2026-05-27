@@ -2790,7 +2790,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.83 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.84 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -2890,29 +2890,21 @@ function abrirPersonalizacion(){
 
 // Muestra botón Ajustes para director/a
 // ========== GESTIÓN USUARIOS ==========
-async function crearEmpleadoSinAcceso(){
-  var nombre  = (document.getElementById('ea-nombre').value||'').trim();
-  var local   = parseInt(document.getElementById('ea-local').value);
-  var turno   = document.getElementById('ea-turno').value||'manana';
-  var tel     = (document.getElementById('ea-telefono').value||'').trim();
-  var errEl   = document.getElementById('ea-error');
-  var okEl    = document.getElementById('ea-ok');
-  errEl.style.display='none'; okEl.style.display='none';
-  if(!nombre){ errEl.textContent='El nombre es obligatorio'; errEl.style.display='block'; return; }
-  try{
-    var ex = await sbGet('empleados','local_id=eq.'+local+'&nombre=eq.'+encodeURIComponent(nombre));
-    if(ex && ex.length){ errEl.textContent='Ya existe un empleado con ese nombre en este local'; errEl.style.display='block'; return; }
-    await sbPost('empleados',{ nombre:nombre, local_id:local, activo:true, rol:'Cam. Mañana', turno_habitual:turno, telefono:tel||null });
-    okEl.textContent='✓ Empleado '+nombre+' añadido';
-    okEl.style.display='block';
-    ['ea-nombre','ea-telefono'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-    setTimeout(function(){ okEl.style.display='none'; cargarUsuarios(); }, 1200);
-  }catch(e){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
-}
 
 function _poblarSelectTurnos(selectId){
   var sel = document.getElementById(selectId);
-  if(!sel || !turnosConfig.length) return;
+  if(!sel) return;
+  if(!turnosConfig.length){
+    // Puede que estemos en screen9 sin haber pasado por el cuadrante —
+    // forzar build usando localActivoId del localStorage
+    var localSel = document.getElementById('local-select');
+    if(localSel && !localSel.value){
+      localSel.value = localActivoId === 2 ? "Roto's Burguer" : 'La Cala';
+    }
+    buildTurnosConfig();
+    cargarConfigTurnosGuardada();
+  }
+  if(!turnosConfig.length) return;
   var current = sel.value;
   sel.innerHTML = turnosConfig.map(function(tc){
     return '<option value="'+tc.id+'"'+(tc.id===current?' selected':'')+'>'+tc.emoji+' '+tc.nome+' '+tc.ini+'–'+tc.fin+'</option>';
@@ -2923,9 +2915,8 @@ async function cargarUsuarios(){
   var lista = document.getElementById('usuarios-lista');
   if(!lista) return;
   _poblarSelectTurnos('nu-turno');
-  _poblarSelectTurnos('ea-turno');
   lista.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">⏳ Cargando...</div>';
-  var ROLES = {empleado:'Empleado', directora:'Director/a', directora_general:'Dirección General', admin:'Admin'};
+  var ROLES = {empleado:'Empleado', directora:'Director/a', directora_general:'Dirección General', admin:'Admin', encargado:'Encargado'};
   var LOCALES = {1:'La Cala', 2:"Roto's Burguer"};
   var PROTEGIDOS = ['LORENA','MIRIAM','MIRYAM'];
 
@@ -5107,7 +5098,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.83 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.84 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
