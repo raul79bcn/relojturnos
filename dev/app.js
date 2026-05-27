@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.73 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.74 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.73 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.74 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5884,6 +5884,7 @@ async function cmpAceptarFactura(datosArg, provNombreArg){
     console.log('[cmpAceptarFactura] artículo['+i+']:', a.nombre, '| match:', artMatch ? ('id='+artMatch.id+' nombre='+artMatch.nombre) : 'NO ENCONTRADO', '| familia_id:', a._familiaId);
 
     try{
+      console.log('[Facturas] unidad a guardar:', a._unidad, '| raw a.unidad:', a.unidad);
       if(artMatch){
         var stockMinNuevo = Math.floor(cantidad * 0.8);
         var patchData = {
@@ -7489,7 +7490,7 @@ function cmpAbrirModalArticulo(id){
   document.getElementById('cmp-art-id').value             = a ? a.id : '';
   document.getElementById('cmp-art-nombre').value         = a ? a.nombre          : '';
   document.getElementById('cmp-art-precio-compra').value  = a ? a.precio_compra   : '';
-  document.getElementById('cmp-art-unidad').value         = a ? (a.unidad||'ud')  : 'ud';
+  document.getElementById('cmp-art-unidad').value         = a ? ((a.unidad||'UD').toUpperCase()) : 'UD';
   document.getElementById('cmp-art-local').value          = a ? (a.local_id||'1') : (currentUser ? currentUser.local_id||'1' : '1');
   document.getElementById('cmp-art-pvp').value            = a ? a.precio_venta    : '';
   document.getElementById('cmp-art-ventas').value         = a ? a.unidades_semana : '';
