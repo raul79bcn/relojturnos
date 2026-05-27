@@ -6086,8 +6086,8 @@ async function inv18Guardar(){
   }catch(e){ showToast('Error guardando stock.', 'red'); }
   if(bajosDeMinimo.length){
     var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
-    var lineas = bajosDeMinimo.map(function(x){ return '👉 '+x.nombre+': '+x.actual+' '+x.unidad+' — stock mínimo '+x.minimo+' '+x.unidad+' en cámara'; }).join('\n');
-    var msg = '🔴 STOCK BAJO — Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor, reponer antes del próximo servicio.';
+    var lineas = bajosDeMinimo.map(function(x){ return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (minimo '+x.minimo+' '+x.unidad+' en camara)'; }).join('\n');
+    var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor reponer antes del proximo servicio.';
     var lorena  = (localStorage.getItem('rt_wa_lorena')||'').trim();
     sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
       var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
@@ -6464,9 +6464,9 @@ async function clGuardarInventarioCierre(tareaIdx){
     var lorena = (localStorage.getItem('rt_wa_lorena') || '').trim();
     var fecha  = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
     var lineas = bajosDeMinimo.map(function(x){
-      return '👉 '+x.nombre+': '+x.actual+' '+x.unidad+' — stock mínimo '+x.minimo+' '+x.unidad+' en cámara';
+      return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (minimo '+x.minimo+' '+x.unidad+' en camara)';
     }).join('\n');
-    var msg = '🔴 STOCK BAJO — Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor, reponer antes del próximo servicio.';
+    var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor reponer antes del proximo servicio.';
     sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
       var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
       if(lorena)  window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
@@ -6710,8 +6710,8 @@ async function winvEnviarTodo(){
   if(bajosDeMinimo.length){
     var lorena = (localStorage.getItem('rt_wa_lorena')||'').trim();
     var fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'});
-    var lineas = bajosDeMinimo.map(function(x){ return '👉 '+x.nombre+': '+x.actual+' '+x.unidad+' — stock mínimo '+x.minimo+' '+x.unidad+' en cámara'; }).join('\n');
-    var msg = '🔴 STOCK BAJO — Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor, reponer antes del próximo servicio.';
+    var lineas = bajosDeMinimo.map(function(x){ return '- '+x.nombre+': '+x.actual+' '+x.unidad+' (minimo '+x.minimo+' '+x.unidad+' en camara)'; }).join('\n');
+    var msg = 'STOCK BAJO - Inventario Cocina '+fecha+'\n\n'+lineas+'\n\nPor favor reponer antes del proximo servicio.';
     sbGet('empleados','nombre=eq.DOMINGO&local_id=eq.1&select=telefono').then(function(rows){
       var domingo = rows && rows[0] && rows[0].telefono ? rows[0].telefono.replace(/\s+/g,'') : '';
       if(lorena)  window.open('https://wa.me/'+lorena+'?text='+encodeURIComponent(msg),'_blank');
