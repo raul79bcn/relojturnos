@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.79 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.80 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.79 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.80 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -6556,11 +6556,11 @@ function _winvRowHtml(a){
     +'<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;color:var(--muted)">Und. enteras</span>'
     +'<input type="number" min="0" step="1" placeholder="0" id="winv-ent-'+a.id+'" onchange="winvCheckDual('+a.id+','+sMinStr+')" style="'+s+'"></div>'
     +'<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;color:var(--muted)">Suelto</span>'
-    +'<input type="number" min="0" step="0.5" placeholder="0" id="winv-fra-'+a.id+'" onchange="winvCheckDual('+a.id+','+sMinStr+')" style="'+s+'"></div>'
+    +'<input type="number" min="0" step="0.5" placeholder="0" id="winv-fra-'+a.id+'" onchange="winvCheckDual('+a.id+','+sMinStr+')" style="'+s+'">'
+    +'<span style="font-size:11px;color:var(--muted);min-width:28px">'+(a.unidad||'')+'</span></div>'
     +'</div>';
   return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
     +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-    +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'')+'</div>'
     +inputHtml
     +'<span style="width:20px;text-align:center;font-size:14px" id="winv-flag-'+a.id+'"></span>'
     +'</div>';
