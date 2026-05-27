@@ -7086,13 +7086,14 @@ function cmpRenderArticulos(){
         }).join('');
   }
 
-  // Chips de familias con botón editar
+  // Chips de familias con botones editar y eliminar
   var chipsEl = document.getElementById('cmp-familias-chips');
   if(chipsEl){
     chipsEl.innerHTML = (cmpFamilias||[]).map(function(f){
       return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--darker);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;cursor:default">'
         +(f.emoji||'')+(f.emoji?' ':'')+f.nombre
         +'<button onclick="cmpAbrirModalFamilia('+f.id+')" style="background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px;color:var(--muted)" title="Editar familia">✏️</button>'
+        +'<button onclick="cmpEliminarFamilia('+f.id+')" style="background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px;color:var(--red)" title="Eliminar familia">🗑</button>'
         +'</span>';
     }).join('');
   }
@@ -7438,6 +7439,19 @@ function cmpGuardarFamilia(){
   cmpCerrarModales();
   cmpRenderArticulos();
   showToast(idVal ? 'Familia actualizada' : 'Familia guardada', 'green');
+}
+
+function cmpEliminarFamilia(id){
+  var fam = cmpFamilias.find(function(x){ return x.id===id; });
+  if(!fam) return;
+  if(!confirm('¿Eliminar familia "'+fam.nombre+'"? Los artículos que la tengan asignada quedarán sin familia.')) return;
+  cmpFamilias = cmpFamilias.filter(function(x){ return x.id!==id; });
+  cmpGuardarDatos();
+  cmpRenderArticulos();
+  showToast('Familia eliminada', 'orange');
+  sbDelete('cmp_familias', 'id=eq.'+id)
+    .then(function(){ console.log('[cmpEliminarFamilia] eliminada de Supabase id='+id); })
+    .catch(function(e){ console.error('[cmpEliminarFamilia] error Supabase:', e.message); });
 }
 
 // ---- PROVEEDOR ----
