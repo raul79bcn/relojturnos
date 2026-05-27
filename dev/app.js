@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.77 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.78 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.77 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.78 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -6533,6 +6533,46 @@ function winvClickFamilia(el){
   winvMostrarFamilia(el, famEnc);
 }
 
+function winvCheckDual(artId, pesoUnidad, sMin){
+  var entInput = document.getElementById('winv-ent-'+artId);
+  var fraInput = document.getElementById('winv-fra-'+artId);
+  var flag     = document.getElementById('winv-flag-'+artId);
+  if(!flag) return;
+  var empty = (!entInput||entInput.value==='') && (!fraInput||fraInput.value==='');
+  if(empty){ flag.textContent=''; return; }
+  var total = (parseInt((entInput&&entInput.value)||0)||0)*pesoUnidad + (parseFloat((fraInput&&fraInput.value)||0)||0);
+  var bajo = sMin !== null && total <= sMin;
+  flag.textContent = bajo ? '🔴' : '🟢';
+  if(entInput) entInput.style.borderColor = bajo ? 'var(--red)' : 'var(--border)';
+  if(fraInput) fraInput.style.borderColor = bajo ? 'var(--red)' : 'var(--border)';
+}
+
+function _winvRowHtml(a){
+  var sMin  = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
+  var sMinStr = sMin !== null ? sMin : 'null';
+  var hasPeso = a.peso_unidad && parseFloat(a.peso_unidad) > 0;
+  var pesoU   = hasPeso ? parseFloat(a.peso_unidad) : 1;
+  var inputHtml;
+  if(hasPeso){
+    var s = 'width:52px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:13px;outline:none;text-align:right';
+    inputHtml =
+      '<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">'
+      +'<div style="display:flex;align-items:center;gap:3px"><span style="font-size:10px;color:var(--muted)">ent.</span>'
+      +'<input type="number" min="0" step="1" placeholder="0" id="winv-ent-'+a.id+'" onchange="winvCheckDual('+a.id+','+pesoU+','+sMinStr+')" style="'+s+'"></div>'
+      +'<div style="display:flex;align-items:center;gap:3px"><span style="font-size:10px;color:var(--muted)">fra.</span>'
+      +'<input type="number" min="0" step="0.5" placeholder="0" id="winv-fra-'+a.id+'" onchange="winvCheckDual('+a.id+','+pesoU+','+sMinStr+')" style="'+s+'"></div>'
+      +'</div>';
+  } else {
+    inputHtml = '<input type="number" min="0" step="0.5" placeholder="0" id="winv-stock-'+a.id+'" onchange="winvCheckMin('+a.id+','+sMinStr+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">';
+  }
+  return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
+    +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
+    +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'')+'</div>'
+    +inputHtml
+    +'<span style="width:20px;text-align:center;font-size:14px" id="winv-flag-'+a.id+'"></span>'
+    +'</div>';
+}
+
 function winvMostrarFamilia(el, famEnc){
   var famNombre = decodeURIComponent(famEnc);
   var cont = document.getElementById('winv-contenido');
@@ -6541,16 +6581,7 @@ function winvMostrarFamilia(el, famEnc){
   var grid = document.getElementById('winv-grid');
   if(!grid) return;
 
-  var rowsHtml = arts.map(function(a){
-    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
-      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'')+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:54px;text-align:right">'+(sMin !== null ? 'min '+sMin : '')+'</div>'
-      +'<input type="number" min="0" step="0.5" placeholder="0" id="winv-stock-'+a.id+'" onchange="winvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
-      +'<span style="width:20px;text-align:center;font-size:14px" id="winv-flag-'+a.id+'"></span>'
-      +'</div>';
-  }).join('');
+  var rowsHtml = arts.map(_winvRowHtml).join('');
 
   grid.innerHTML =
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
@@ -6558,7 +6589,7 @@ function winvMostrarFamilia(el, famEnc){
     +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+famNombre+'</div>'
     +'<div style="font-size:11px;color:var(--muted)">('+arts.length+' art.)</div>'
     +'</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Rojo = por debajo del minimo</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔴 artículo bajo de stock</div>'
     +rowsHtml
     +'<button onclick="winvGuardar('+JSON.stringify(arts).replace(/"/g,"'")+')" style="display:block;width:100%;margin-top:16px;background:var(--accent);border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Guardar stock</button>';
 
@@ -6590,15 +6621,7 @@ function winvFiltrar(){
   if(!q){ winvInit('cocina', cont._empleado||'', cont._localId||1); return; }
   var arts = (cont._arts||[]).filter(function(a){ return a.nombre.toLowerCase().indexOf(q) >= 0; });
   if(!arts.length){ grid.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px">Sin resultados</div>'; return; }
-  var rowsHtml = arts.map(function(a){
-    var sMin = a.stock_minimo != null ? parseFloat(a.stock_minimo) : null;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">'
-      +'<div style="flex:1;font-size:13px;font-weight:600;color:var(--text)">'+a.nombre+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);width:36px;text-align:center">'+(a.unidad||'')+'</div>'
-      +'<input type="number" min="0" step="0.5" placeholder="0" id="winv-stock-'+a.id+'" onchange="winvCheckMin('+a.id+','+sMin+')" style="width:72px;background:var(--darker);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;outline:none;text-align:right">'
-      +'<span style="width:20px;text-align:center;font-size:14px" id="winv-flag-'+a.id+'"></span>'
-      +'</div>';
-  }).join('');
+  var rowsHtml = arts.map(_winvRowHtml).join('');
   grid.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+arts.length+' resultado(s)</div>'+rowsHtml
     +'<button onclick="winvGuardarFiltrados()" style="display:block;width:100%;margin-top:16px;background:var(--accent);border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Guardar stock</button>';
   grid._famArts = arts;
@@ -6624,9 +6647,20 @@ async function winvGuardarArts(arts){
 
   // Guardar en memoria global (no enviar aún a Supabase)
   arts.forEach(function(a){
-    var input = document.getElementById('winv-stock-'+a.id);
-    if(input && input.value !== ''){
-      winvStockData[a.id] = { val: parseFloat(input.value), nombre: a.nombre, unidad: a.unidad||'', stock_minimo: a.stock_minimo };
+    var val, hasValue;
+    var hasPeso = a.peso_unidad && parseFloat(a.peso_unidad) > 0;
+    if(hasPeso){
+      var entInput = document.getElementById('winv-ent-'+a.id);
+      var fraInput = document.getElementById('winv-fra-'+a.id);
+      hasValue = (entInput && entInput.value !== '') || (fraInput && fraInput.value !== '');
+      val = (parseInt((entInput&&entInput.value)||0)||0) * parseFloat(a.peso_unidad) + (parseFloat((fraInput&&fraInput.value)||0)||0);
+    } else {
+      var input = document.getElementById('winv-stock-'+a.id);
+      hasValue = !!(input && input.value !== '');
+      val = hasValue ? parseFloat(input.value) : NaN;
+    }
+    if(hasValue && !isNaN(val)){
+      winvStockData[a.id] = { val: val, nombre: a.nombre, unidad: a.unidad||'', stock_minimo: a.stock_minimo };
       guardados++;
     }
   });
