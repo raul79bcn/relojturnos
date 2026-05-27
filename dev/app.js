@@ -324,17 +324,19 @@ async function abrirPortalEmpleado(user){
   portalTab('cuadrante');
   await cargarPortalCuadrante(user);
   await cargarPortalContrato(user);
+  await cargarPortalDocs(user);
 }
 
 function portalTab(tab){
-  ['cuadrante','contrato','actividad','password'].forEach(function(t){
+  ['cuadrante','contrato','actividad','password','docs'].forEach(function(t){
     var el = document.getElementById('portal-'+t);
     if(el) el.style.display = t===tab?'block':'none';
   });
   document.querySelectorAll('.portal-tab').forEach(function(btn, i){
-    btn.classList.toggle('active', ['cuadrante','contrato','actividad','password'][i]===tab);
+    btn.classList.toggle('active', ['cuadrante','contrato','actividad','password','docs'][i]===tab);
   });
   if(tab==='actividad') cargarMiActividad();
+  if(tab==='docs') cargarPortalDocs(currentUser);
 }
 
 async function cargarPortalCuadrante(user){
@@ -405,6 +407,92 @@ async function cargarPortalContrato(user){
   }catch(e){
     el.innerHTML='<div style="color:#ff8080;padding:20px;text-align:center">'+t('portal_error_contrato')+'</div>';
   }
+}
+
+async function cargarPortalDocs(user){
+  var el = document.getElementById('portal-docs');
+  if(!el) return;
+  if(!user || !user.empleado_id){
+    el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay documentos disponibles.</div>';
+    return;
+  }
+  el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">Cargando documentos...</div>';
+  try{
+    var docs = await sbGet('documentos_empleados','empleado_id=eq.'+user.empleado_id+'&order=fecha_subida.desc');
+    if(!docs||!docs.length){
+      el.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center">No hay documentos disponibles aún.</div>';
+      return;
+    }
+    var tipoLabel={nomina:'Nómina',contrato:'Contrato',notificacion:'Notificación'};
+    var tipoIcon={nomina:'📄',contrato:'📋',notificacion:'🔔'};
+    var html=docs.map(function(d){
+      var fecha=d.fecha_subida?new Date(d.fecha_subida).toLocaleDateString('es-ES'):'';
+      return '<div style="display:flex;align-items:center;gap:10px;background:var(--darker);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px">'
+        +'<div style="font-size:20px">'+(tipoIcon[d.tipo]||'📎')+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-size:13px;color:var(--text)">'+(tipoLabel[d.tipo]||d.tipo)+(d.mes_anyo?' · '+d.mes_anyo:'')+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+(d.nombre_archivo||'')+' · '+fecha+'</div>'
+        +'</div>'
+        +'<button onclick="docVerODescargar(\''+d.storage_path+'\')" style="background:var(--accent);border:none;border-radius:7px;padding:5px 10px;color:#fff;font-size:11px;cursor:pointer;flex-shrink:0">Ver / Descargar</button>'
+        +'</div>';
+    }).join('');
+    el.innerHTML=html;
+  }catch(e){
+    el.innerHTML='<div style="color:var(--red);padding:20px">Error cargando documentos: '+e.message+'</div>';
+  }
+}
+
+async function docVerODescargar(path){
+  try{
+    var r=await fetch(SUPA_URL+'/storage/v1/object/sign/documentos-empleados/'+path,{
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({expiresIn:3600})
+    });
+    var data=await r.json();
+    if(data.signedURL) window.open(SUPA_URL+data.signedURL,'_blank');
+    else showToast('Error generando enlace de descarga','red');
+  }catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+async function docSubir(empId, empNombre, localId, tipo){
+  if(!empId){
+    try{
+      var rows=await sbGet('empleados','nombre=eq.'+encodeURIComponent(empNombre)+'&local_id=eq.'+localId);
+      if(rows&&rows.length) empId=rows[0].id;
+      else { showToast('Empleado no encontrado en BD','red'); return; }
+    }catch(e){ showToast('Error buscando empleado: '+e.message,'red'); return; }
+  }
+  var mesAnyo=tipo==='nomina'?new Date().toISOString().slice(0,7):null;
+  var input=document.createElement('input');
+  input.type='file';
+  input.accept='.pdf,application/pdf';
+  input.onchange=async function(){
+    if(!input.files||!input.files[0]) return;
+    var file=input.files[0];
+    var fecha=new Date().toISOString().split('T')[0];
+    var safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var path='empleado_'+empId+'/'+tipo+'/'+fecha+'_'+safeName;
+    showToast('Subiendo '+tipo+'...','green');
+    try{
+      var r=await fetch(SUPA_URL+'/storage/v1/object/documentos-empleados/'+path,{
+        method:'POST',
+        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/pdf','x-upsert':'true'},
+        body:file
+      });
+      if(!r.ok){ var err=await r.text(); throw new Error(err); }
+      await sbPost('documentos_empleados',{
+        empleado_id:empId,
+        tipo:tipo,
+        nombre_archivo:file.name,
+        storage_path:path,
+        subido_por:currentUser?currentUser.nombre:'Admin',
+        mes_anyo:mesAnyo
+      });
+      showToast('Documento subido correctamente','green');
+    }catch(e){ showToast('Error subiendo: '+e.message,'red'); console.error('[docSubir]',e); }
+  };
+  input.click();
 }
 
 async function cambiarPassword(){
@@ -2702,7 +2790,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.82 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.83 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -2882,6 +2970,9 @@ async function cargarUsuarios(){
         +'<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(u.activo?'#15351520':'#35151520')+';color:'+(u.activo?'var(--green)':'var(--red)')+';border:1px solid '+(u.activo?'var(--green)':'var(--red)')+'40;flex-shrink:0">'+(u.activo?'ACTIVO':'INACTIVO')+'</span>'
         +'<button onclick="abrirEditarUsuario('+u.id+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>'
         +(esProtegido?'':'<button onclick="eliminarUsuario('+u.id+',\''+nombreUp+'\')" style="background:none;border:1px solid #e5393540;border-radius:7px;padding:4px 9px;color:#e53935;font-size:11px;cursor:pointer;flex-shrink:0">🗑</button>')
+        +(u.rol==='empleado'?'<button onclick="docSubir('+(u.empleado_id||0)+',\''+nombreUp+'\','+(u.local_id||1)+',\'nomina\')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0" title="Subir nómina">📄</button>'
+        +'<button onclick="docSubir('+(u.empleado_id||0)+',\''+nombreUp+'\','+(u.local_id||1)+',\'contrato\')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0" title="Subir contrato">📋</button>'
+        +'<button onclick="docSubir('+(u.empleado_id||0)+',\''+nombreUp+'\','+(u.local_id||1)+',\'notificacion\')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0" title="Subir notificación">🔔</button>':'')
         +'</div>';
     }).join('');
     lista.innerHTML = html;
@@ -5016,7 +5107,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.82 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.83 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
