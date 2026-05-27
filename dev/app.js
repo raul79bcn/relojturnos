@@ -2702,7 +2702,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.66 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.67 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5016,7 +5016,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.66 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.67 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -5778,9 +5778,10 @@ async function cmpAceptarFactura(datos, provNombre){
   });
   if(provMatch){
     provId = provMatch.id;
+    console.log('[cmpAceptarFactura] proveedor encontrado en BD: id='+provId+' nombre='+provMatch.nombre);
   } else if(provNombre && provNombre !== 'Desconocido'){
+    console.log('[cmpAceptarFactura] proveedor NO encontrado, intentando insertar en Supabase:', provNombre);
     try{
-      console.log('[cmpAceptarFactura] proveedor no encontrado, insertando:', provNombre);
       var provRows = await sbPost('cmp_proveedores', { nombre: provNombre, razon_social: provNombre, local_id: localId });
       console.log('[cmpAceptarFactura] sbPost proveedor resultado:', provRows);
       var newProv = Array.isArray(provRows) ? provRows[0] : provRows;
@@ -5788,10 +5789,15 @@ async function cmpAceptarFactura(datos, provNombre){
         provId = newProv.id;
         cmpProveedores.push(newProv);
         localStorage.setItem('rt_cmp_proveedores', JSON.stringify(cmpProveedores));
+        console.log('[cmpAceptarFactura] proveedor insertado con id='+provId);
+      } else {
+        console.warn('[cmpAceptarFactura] sbPost proveedor devolvió respuesta inesperada:', provRows);
       }
     }catch(provErr){
-      console.warn('[cmpAceptarFactura] error insertando proveedor:', provErr.message);
+      console.error('[cmpAceptarFactura] ERROR insertando proveedor:', provErr.message, provErr);
     }
+  } else {
+    console.log('[cmpAceptarFactura] proveedor no se inserta: provNombre=', provNombre);
   }
 
   var errores = 0;
@@ -7386,6 +7392,9 @@ function cmpEliminarProveedor(id){
   cmpGuardarDatos();
   cmpRenderProveedores();
   showToast('Proveedor eliminado', 'orange');
+  sbDelete('cmp_proveedores', 'id=eq.'+id)
+    .then(function(){ console.log('[cmpEliminarProveedor] eliminado de Supabase id='+id); })
+    .catch(function(e){ console.error('[cmpEliminarProveedor] error Supabase:', e.message); });
 }
 
 // ---- ARTÍCULO ----
@@ -7481,6 +7490,9 @@ function cmpEliminarArticulo(id){
   cmpGuardarDatos();
   cmpRenderArticulos();
   showToast('Artículo eliminado', 'orange');
+  sbDelete('cmp_articulos', 'id=eq.'+id)
+    .then(function(){ console.log('[cmpEliminarArticulo] eliminado de Supabase id='+id); })
+    .catch(function(e){ console.error('[cmpEliminarArticulo] error Supabase:', e.message); });
 }
 
 // ---- PRECIO ----
