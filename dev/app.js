@@ -1311,7 +1311,7 @@ function _fillEmpCont(contId){
       +'</select></div>'
       +'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; '+t('p3_horas_auto')+'</div>'
-      +(contId==='empleados-list'&&emp.bdId?'<div style="margin-top:8px"><button onclick="abrirVacacionesModal('+emp.bdId+',\''+emp.nombre.replace(/\'/g,"\\\\'")+'\'')" style="background:none;border:1px solid #2a5090;border-radius:7px;padding:5px 12px;color:#5090d0;font-size:11px;cursor:pointer">🏖 Vacaciones</button></div>':'')
+      +(contId==='empleados-list'&&emp.bdId?'<div style="margin-top:8px"><button onclick="abrirVacacionesModal('+emp.bdId+',\''+emp.nombre.replace(/'/g,'&#39;')+'\')&quot;" style="background:none;border:1px solid #2a5090;border-radius:7px;padding:5px 12px;color:#5090d0;font-size:11px;cursor:pointer">🏖 Vacaciones</button></div>':'')
       +(contId==='empleados-list-17'?(function(){
           var bd=window._empleadosBDDatos&&window._empleadosBDDatos[emp.nombre];
           var bid=bd?bd.bdId:null;
@@ -2999,7 +2999,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.89 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.90 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5395,7 +5395,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.89 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.90 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
