@@ -204,6 +204,7 @@ async function logAccion(accion, detalle, localId){
 var localIdMap = {};   // {'La Cala': 1, "Roto's Burguer": 2}
 var empIdMap   = {};   // {empCounter_local_id: supabase_id}
 var currentCuadranteId = null;
+var vacacionesData = []; // periodos de vacaciones cargados para la semana actual
 
 // ===================== AUTH / LOGIN =====================
 var currentUser = null; // {id, dni, nombre, rol, local_id, empleado_id}
@@ -899,7 +900,7 @@ async function empEliminar(bdId, nombre){
 function nextStep(from){
   if(from===1){if(!getLocal()){alert(t('alert_selecciona_local'));return;}updateHeader();buildTurnosConfig();cargarConfigTurnosGuardada();renderTurnosConfigGrid();goStep(2);}
   else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
-  else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();sugerirYRenderizar();goStep(4);}
+  else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();cargarVacacionesSemana().then(sugerirYRenderizar);goStep(4);}
   else if(from===4){initPaso5();goStep(5);}
 }
 
@@ -1786,6 +1787,10 @@ function renderTurnosAsig(){
       var color=COLORS[idx%COLORS.length];
       h+='<div class="dias-grid-row"><div style="font-size:11px;font-weight:700;color:'+color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( emp.nombre||'Emp '+emp.id)+'</div>';
       DIAS.forEach(function(_,di){
+        if(emp.bdId&&getVacacionDiasEmp(emp.bdId).indexOf(di)>=0){
+          h+='<div><div style="background:#12204a;border:1px solid #2a4090;border-radius:5px;padding:3px 4px;font-size:10px;color:#5070c0;text-align:center;cursor:default">🏖 Vac.</div></div>';
+          return;
+        }
         var tv=emp.turnos?emp.turnos[di]:emp.turno;
         var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+' '+tc.ini+'–'+tc.fin+'</option>';}).join('')
           +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>½ '+t('turno_mediafiesta')+'</option>'
@@ -1970,6 +1975,94 @@ async function cargarCuadrantePrevio(){
   }
 }
 
+// ========== VACACIONES ==========
+async function cargarVacacionesSemana(){
+  var fi=document.getElementById('fecha-inicio');
+  if(!fi||!fi.value){vacacionesData=[];return;}
+  var monday=new Date(fi.value+'T00:00:00');
+  var sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  var fI=monday.toISOString().split('T')[0];
+  var fF=sunday.toISOString().split('T')[0];
+  try{
+    var rows=await sbGet('vacaciones_empleados','fecha_inicio=lte.'+fF+'&fecha_fin=gte.'+fI);
+    vacacionesData=rows||[];
+  }catch(e){vacacionesData=[];}
+}
+
+function getVacacionDiasEmp(bdId){
+  if(!bdId)return[];
+  var fi=document.getElementById('fecha-inicio');
+  if(!fi||!fi.value)return[];
+  var monday=new Date(fi.value+'T00:00:00');
+  var dias=[];
+  vacacionesData.forEach(function(v){
+    if(v.empleado_id!==bdId)return;
+    var vI=new Date(v.fecha_inicio+'T00:00:00');
+    var vF=new Date(v.fecha_fin+'T00:00:00');
+    for(var d=0;d<7;d++){
+      var dia=new Date(monday.getTime());dia.setDate(monday.getDate()+d);
+      if(dia>=vI&&dia<=vF&&dias.indexOf(d)<0)dias.push(d);
+    }
+  });
+  return dias;
+}
+
+var _vacModalEmpBdId=null,_vacModalEmpNombre='';
+function abrirVacacionesModal(empBdId,empNombre){
+  _vacModalEmpBdId=empBdId;_vacModalEmpNombre=empNombre;
+  var tit=document.getElementById('vac-modal-titulo');
+  if(tit)tit.textContent='🏖 Vacaciones — '+empNombre;
+  var hoy=new Date();var fin=new Date();fin.setDate(hoy.getDate()+7);
+  var df=document.getElementById('vac-fecha-ini');
+  var dt=document.getElementById('vac-fecha-fin');
+  if(df)df.value=hoy.toISOString().split('T')[0];
+  if(dt)dt.value=fin.toISOString().split('T')[0];
+  var mot=document.getElementById('vac-motivo');if(mot)mot.value='';
+  renderVacacionesList(empBdId);
+  document.getElementById('modal-vacaciones').style.display='flex';
+}
+function cerrarVacacionesModal(){
+  document.getElementById('modal-vacaciones').style.display='none';
+  _vacModalEmpBdId=null;
+}
+async function renderVacacionesList(bdId){
+  var el=document.getElementById('vac-lista');if(!el)return;
+  el.innerHTML='<div style="color:var(--muted);font-size:11px">Cargando...</div>';
+  try{
+    var rows=await sbGet('vacaciones_empleados','empleado_id=eq.'+bdId+'&order=fecha_inicio.asc')||[];
+    if(!rows.length){el.innerHTML='<div style="color:var(--muted);font-size:11px;text-align:center;padding:8px">Sin periodos registrados</div>';return;}
+    el.innerHTML=rows.map(function(r){
+      return'<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--card);border:1px solid var(--border);border-radius:7px;margin-bottom:5px">'
+        +'<span style="font-size:11px;flex:1;color:var(--text)">📅 '+r.fecha_inicio+' → '+r.fecha_fin+(r.motivo?' · '+r.motivo:'')+'</span>'
+        +'<button onclick="eliminarVacacion('+r.id+','+bdId+')" style="background:none;border:1px solid #e5393540;border-radius:6px;padding:3px 8px;color:#e53935;font-size:11px;cursor:pointer">🗑</button>'
+        +'</div>';
+    }).join('');
+  }catch(e){el.innerHTML='<div style="color:var(--red);font-size:11px">Error: '+e.message+'</div>';}
+}
+async function guardarVacacion(){
+  if(!_vacModalEmpBdId){showToast('Error: sin empleado','red');return;}
+  var fi=document.getElementById('vac-fecha-ini').value;
+  var ff=document.getElementById('vac-fecha-fin').value;
+  var mot=(document.getElementById('vac-motivo').value||'').trim();
+  if(!fi||!ff){showToast('Indica fechas de inicio y fin','orange');return;}
+  if(ff<fi){showToast('Fecha fin debe ser posterior al inicio','orange');return;}
+  try{
+    await sbPost('vacaciones_empleados',{empleado_id:_vacModalEmpBdId,fecha_inicio:fi,fecha_fin:ff,motivo:mot||null});
+    showToast('Vacaciones guardadas','green');
+    renderVacacionesList(_vacModalEmpBdId);
+    await cargarVacacionesSemana();
+  }catch(e){showToast('Error: '+e.message,'red');}
+}
+async function eliminarVacacion(id,bdId){
+  if(!confirm('¿Eliminar este periodo de vacaciones?'))return;
+  try{
+    await sbDelete('vacaciones_empleados','id=eq.'+id);
+    showToast('Eliminado','green');
+    renderVacacionesList(bdId);
+    await cargarVacacionesSemana();
+  }catch(e){showToast('Error: '+e.message,'red');}
+}
+
 function generarCuadrante(){
   updateHeader();
   var local=getLocal(),semana=getSemanaLabel();
@@ -1994,6 +2087,9 @@ function generarCuadrante(){
       var color=COLORS[idx%COLORS.length];
       var init=(emp.nombre||'?').substring(0,2).toUpperCase();
       var cells=(emp.turnos||[]).map(function(tc,di){
+        if(emp.bdId&&getVacacionDiasEmp(emp.bdId).indexOf(di)>=0){
+          return'<td><span class="turno-badge" style="background:#12204a;color:#5070c0;border-color:#2a4090">🏖 Vac.</span></td>';
+        }
         var info=getTInfo(tc);
         return'<td><span class="turno-badge '+info.badge+'">'+info.label+'</span></td>';
       }).join('');
@@ -2902,7 +2998,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.87 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.88 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -3075,7 +3171,8 @@ async function cargarUsuarios(){
         +(esProtegido?'':'<button onclick="eliminarUsuario('+u.id+',\''+nombreUp+'\')" style="background:none;border:1px solid #e5393540;border-radius:7px;padding:4px 9px;color:#e53935;font-size:11px;cursor:pointer;flex-shrink:0">🗑</button>')
         +(u.rol!=='directora'&&u.rol!=='directora_general'&&u.rol!=='admin'?'<button onclick="docSubir('+(u.empleado_id||0)+',\''+nombreUp+'\','+(u.local_id||1)+',\'nomina\')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0" title="Subir nómina">📄</button>'
         +'<button onclick="docSubir('+(u.empleado_id||0)+',\''+nombreUp+'\','+(u.local_id||1)+',\'contrato\')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0" title="Subir contrato">📋</button>'
-        +'<button onclick="docSubir('+(u.empleado_id||0)+',\''+nombreUp+'\','+(u.local_id||1)+',\'notificacion\')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0" title="Subir notificación">🔔</button>':'')
+        +'<button onclick="docSubir('+(u.empleado_id||0)+',\''+nombreUp+'\','+(u.local_id||1)+',\'notificacion\')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0" title="Subir notificación">🔔</button>'
+        +'<button onclick="abrirVacacionesModal('+(u.empleado_id||0)+',\''+nombreUp+'\')" style="background:none;border:1px solid #2a5090;border-radius:7px;padding:4px 9px;color:#5090d0;font-size:11px;cursor:pointer;flex-shrink:0" title="Gestionar vacaciones">🏖</button>':'')
         +'</div>';
     }).join('');
     lista.innerHTML = html;
@@ -4606,6 +4703,78 @@ function initDashboard(){
 
 // ========== API KEY MANAGER ==========
 // La key se guarda en localStorage — nunca en el repositorio
+async function generarCuadranteIA(){
+  var key=getClaudeApiKey();
+  if(!apiKeyValida(key)){mostrarModalApiKey();showToast('Introduce tu API Key de Claude primero','orange');return;}
+  var activeTurnos=turnosConfig.filter(function(t){return t.active;});
+  var diasFlojos=getDiasFlojos();
+  var diasLargos=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  var diasKey=['lun','mar','mie','jue','vie','sab','dom'];
+  var salaEmps=empleados.filter(function(emp){return emp.rol!=='Cocinero'&&emp.rol!=='Ayud. Cocina';});
+  var empData=salaEmps.map(function(emp){
+    var vacDias=emp.bdId?getVacacionDiasEmp(emp.bdId):[];
+    var tc=activeTurnos.find(function(t){return t.id===emp.turno;})||{};
+    return{nombre:emp.nombre,turno:emp.turno,turnoNombre:tc.nome||emp.turno,turnoIni:tc.ini||'',turnoFin:tc.fin||'',vacDias:vacDias};
+  });
+  var turnosInfo=activeTurnos.map(function(t){return{id:t.id,nombre:t.nome,inicio:t.ini,fin:t.fin};});
+  var ap=document.getElementById('hora-apertura').value;
+  var ci=document.getElementById('hora-cierre').value;
+  var diasFl=diasFlojos.map(function(d){return diasLargos[d];}).join(', ')||'Ninguno';
+  var userMsg='Local abierto: '+ap+' – '+ci+'\n'
+    +'Días de menor afluencia (preferibles para fiestas): '+diasFl+'\n\n'
+    +'Turnos disponibles:\n'+turnosInfo.map(function(t){return'- ID:'+t.id+' | '+t.nombre+' | '+t.inicio+'-'+t.fin;}).join('\n')+'\n\n'
+    +'Empleados sala/servicio:\n'+empData.map(function(e){
+      var vacStr=e.vacDias.length?' | VACACIONES días: '+e.vacDias.map(function(d){return diasLargos[d];}).join(','):'';
+      return'- '+e.nombre+' | Turno habitual: '+e.turnoNombre+' ('+e.turno+') '+e.turnoIni+'-'+e.turnoFin+vacStr;
+    }).join('\n')+'\n\nGenera el cuadrante óptimo.';
+  var btn=document.getElementById('btn-generar-ia');
+  var spinner=document.getElementById('ia-cuadrante-spinner');
+  if(btn){btn.disabled=true;btn.innerHTML='⏳ Generando...';}
+  if(spinner)spinner.style.display='';
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,system:SYSTEM_PROMPT_CUADRANTE,messages:[{role:'user',content:userMsg}]})
+    });
+    if(!resp.ok){var errData=await resp.json().catch(function(){return{};});throw new Error(errData.error?errData.error.message:'Error '+resp.status);}
+    var data=await resp.json();
+    var texto=data.content&&data.content[0]?data.content[0].text:'';
+    var jsonMatch=texto.match(/\[[\s\S]*\]/);
+    if(!jsonMatch)throw new Error('Respuesta sin JSON válido. Texto recibido: '+texto.substring(0,200));
+    var plan=JSON.parse(jsonMatch[0]);
+    aplicarPlanIA(plan,diasKey);
+    showToast('✨ Cuadrante generado por IA','green');
+  }catch(e){
+    showToast('Error IA: '+e.message,'red');
+    var errDiv=document.getElementById('ia-cuadrante-error');
+    if(errDiv){errDiv.style.display='';errDiv.textContent='⚠ Error: '+e.message+'. Puedes reintentar con el botón ✨';}
+    console.error('[generarCuadranteIA]',e);
+  }finally{
+    if(btn){btn.disabled=false;btn.innerHTML='✨ Generar con IA';}
+    if(spinner)spinner.style.display='none';
+  }
+}
+
+function aplicarPlanIA(plan,diasKey){
+  if(!diasKey)diasKey=['lun','mar','mie','jue','vie','sab','dom'];
+  plan.forEach(function(item){
+    var emp=empleados.find(function(e){return e.nombre===item.empleado;});
+    if(!emp)return;
+    if(!emp.turnos)emp.turnos=Array(7).fill(emp.turno);
+    diasKey.forEach(function(dk,di){
+      var cell=item[dk];if(!cell)return;
+      if(cell.tipo==='fiesta')emp.turnos[di]='fiesta';
+      else if(cell.tipo==='media_fiesta')emp.turnos[di]='mediafiesta';
+      else if(cell.tipo==='vacaciones')emp.turnos[di]='vacaciones';
+      else if(cell.tipo==='turno'&&cell.turno_id)emp.turnos[di]=cell.turno_id;
+    });
+  });
+  renderTurnosAsig();
+}
+
+var SYSTEM_PROMPT_CUADRANTE = 'Eres un gestor de cuadrantes de restaurante. Genera el cuadrante semanal óptimo siguiendo EXACTAMENTE estas reglas:\n\nCOBERTURA MÍNIMA (solo sala/servicio, nunca cocina):\n- Mínimo 2 personas en turno de mañana cada día\n- Mínimo 2 personas en turno de noche/tarde cada día\n- Mínimo 1 persona cubriendo el impás entre turnos\n- Nunca dejar ninguna franja horaria sin cobertura desde apertura hasta cierre\n- Si hay conflicto entre cobertura y fiesta, SIEMPRE priorizar la cobertura\n\nFIESTAS:\n- Cada empleado tiene exactamente 1 fiesta entera + 1 media fiesta por semana (1.5 días total)\n- Fiesta entera y media fiesta deben ser SIEMPRE consecutivas (días seguidos)\n- Concentrar fiestas preferentemente en los días flojos indicados, respetando siempre la cobertura mínima\n- Media fiesta = exactamente 4 horas trabajadas del turno habitual del empleado:\n  * Si la fiesta entera fue el día ANTERIOR: el empleado trabaja las ÚTIMAS 4 horas de su turno habitual\n  * Si la fiesta entera es el día SIGUIENTE: el empleado trabaja las PRIMERAS 4 horas de su turno habitual\n  * Ejemplo: empleado con turno noche 18:00-03:00, fiesta entera el lunes → media fiesta el martes trabajando 23:00-03:00\n  * Ejemplo: empleado con turno mañana 07:30-16:30, fiesta entera el miércoles → media fiesta el martes trabajando 07:30-11:30\n\nEXCEPCIÓN FIJA INAMOVIBLE:\n- MARILYN: jueves = fiesta entera siempre, viernes = trabaja 07:30-11:30 siempre (primeras 4h de su turno)\n- Esta excepción no puede cambiar bajo ninguna circunstancia\n\nVACACIONES:\n- Los días marcados como vacaciones para un empleado: asignar tipo vacaciones, no contar como fiesta semanal\n\nCOCINA:\n- NO asignar ningún turno a empleados de cocina, dejar vacío\n\nResponde ÚnicAMENTE con JSON válido, comenzando con [ y terminando con ]. Sin texto adicional.\nFormato exacto:\n[\n  {\n    \"empleado\": \"NOMBRE\",\n    \"lun\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"mar\": {\"tipo\": \"fiesta\"},\n    \"mie\": {\"tipo\": \"media_fiesta\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"jue\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"vie\": {\"tipo\": \"vacaciones\"},\n    \"sab\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"dom\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"}\n  }\n]';
+
 var CLAUDE_MODEL = 'claude-sonnet-4-5';
 
 function getClaudeApiKey(){
@@ -5225,7 +5394,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.87 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.88 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
@@ -7196,6 +7365,7 @@ async function abrirCuadrante(){
   try{
     var cuadId = await cargarCuadrantePrevio();
     if(cuadId && empleados.length > 0){
+      await cargarVacacionesSemana();
       sugerirYRenderizar();
       generarCuadrante();
       goStep(6);

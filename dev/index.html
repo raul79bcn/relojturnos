@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.87 – Grupo El Reloj</title>
+<title>RelojTurnos v7.88 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.87</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.88</span></div>
   </div>
 </div>
 
@@ -86,6 +86,24 @@
   </div>
 </div>
 
+<!-- MODAL VACACIONES -->
+<div id="modal-vacaciones" style="display:none;position:fixed;inset:0;background:#0009;z-index:9000;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;width:340px;max-width:95vw;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700;color:var(--text)" id="vac-modal-titulo">🏖 Vacaciones</div>
+      <button onclick="cerrarVacacionesModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Fecha inicio</label><input type="date" id="vac-fecha-ini" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 8px;color:var(--text);font-size:13px;outline:none"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Fecha fin</label><input type="date" id="vac-fecha-fin" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 8px;color:var(--text);font-size:13px;outline:none"></div>
+    </div>
+    <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Motivo (opcional)</label><input type="text" id="vac-motivo" placeholder="Vacaciones verano, baja..." style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:13px;outline:none"></div>
+    <button onclick="guardarVacacion()" style="width:100%;background:var(--accent);border:none;border-radius:8px;color:#000;font-weight:700;padding:10px;font-size:13px;cursor:pointer;margin-bottom:14px">💾 Guardar periodo</button>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Periodos registrados</div>
+    <div id="vac-lista"></div>
+  </div>
+</div>
+
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
 <div id="sidebar">
   <div id="sidebar-head">
@@ -117,7 +135,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.87 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.88 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -270,12 +288,15 @@
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <button class="btn btn-ghost btn-sm" onclick="sugerirYRenderizar()" style="border-color:var(--green);color:var(--green)" data-i18n="p4_recalcular">⚡ Recalcular fiestas</button>
         <button class="btn btn-ghost btn-sm" onclick="rotarFiestas()" style="border-color:var(--purple);color:var(--purple)" data-i18n="p4_rotar">🔀 Rotar días (+1)</button>
+        <button class="btn btn-ghost btn-sm" onclick="generarCuadranteIA()" id="btn-generar-ia" style="border-color:#a055ff;color:#a055ff">✨ Generar con IA</button>
       </div>
       <div id="p4-hints" style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--darker);border-radius:6px;border:1px solid var(--border);line-height:1.8">
         ⚡ <strong style="color:var(--green)">Recalcular</strong> — borra las fiestas actuales y las vuelve a asignar desde cero según días flojos y mínimos de personal.<br>
         🔀 <strong style="color:var(--purple)">Rotar días</strong> — desplaza los días de descanso de cada empleado +1 día, útil para que no descansen siempre el mismo día de la semana.
       </div>
       <div class="turno-legend" id="turno-legend"></div>
+      <div id="ia-cuadrante-spinner" style="display:none;color:#a055ff;font-size:12px;padding:8px 0;text-align:center">✨ Generando cuadrante optimizado con IA...</div>
+      <div id="ia-cuadrante-error" style="display:none;color:var(--red);font-size:11px;padding:6px 10px;background:#35151520;border-radius:6px;margin-bottom:8px"></div>
       <div id="turnos-asignacion"></div>
       <div class="btn-row space">
         <button class="btn btn-secondary" onclick="goStep(3)" data-i18n="p2_atras">← Atrás</button>
@@ -1773,7 +1794,7 @@
       <div style="text-align:center;color:var(--muted);padding:24px">Cargando artículos...</div>
     </div>
     <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--muted)">
-      RelojTurnos v7.87 &middot; Grupo El Reloj
+      RelojTurnos v7.88 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
@@ -1808,7 +1829,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.87 &middot; Grupo El Reloj
+      RelojTurnos v7.88 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
