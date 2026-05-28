@@ -1967,23 +1967,35 @@ function generarCuadrante(){
   var totalH=horasE.reduce(function(a,b){return a+b;},0);
   var numEventos=eventos.length;
 
-  var tbodyRows=empleados.map(function(emp,idx){
-    var color=COLORS[idx%COLORS.length];
-    var init=(emp.nombre||'?').substring(0,2).toUpperCase();
-    var cells=(emp.turnos||[]).map(function(t,di){
-      var info=getTInfo(t);
-      return'<td><span class="turno-badge '+info.badge+'">'+info.label+'</span></td>';
+  var salaEmps=[],cocinaEmps=[];
+  empleados.forEach(function(emp,idx){
+    if(emp.rol==='Cocinero'||emp.rol==='Ayud. Cocina'){cocinaEmps.push({emp:emp,idx:idx});}
+    else{salaEmps.push({emp:emp,idx:idx});}
+  });
+  var _buildEmpRows=function(list){
+    return list.map(function(item){
+      var emp=item.emp,idx=item.idx;
+      var color=COLORS[idx%COLORS.length];
+      var init=(emp.nombre||'?').substring(0,2).toUpperCase();
+      var cells=(emp.turnos||[]).map(function(tc,di){
+        var info=getTInfo(tc);
+        return'<td><span class="turno-badge '+info.badge+'">'+info.label+'</span></td>';
+      }).join('');
+      return'<tr>'
+        +'<td class="emp-name"><div style="display:flex;align-items:center;gap:6px">'
+        +'<div style="width:24px;height:24px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">'+init+'</div>'
+        +(emp.nombre||t('kpi_empleados')+' '+emp.id)
+        +'<span onclick="enviarTurnoWA('+emp.id+')" title="Enviar turno por WhatsApp" style="cursor:pointer;font-size:13px;opacity:0.75;flex-shrink:0" class="wa-btn no-print">📲</span>'
+        +'</div></td>'
+        +'<td style="font-size:13px;color:var(--muted)">'+emp.rol+'</td>'
+        +cells
+        +'<td class="col-horas" style="font-weight:700;color:var(--accent);font-size:15px">'+horasE[idx].toFixed(1)+'h</td></tr>';
     }).join('');
-    return'<tr>'
-      +'<td class="emp-name"><div style="display:flex;align-items:center;gap:6px">'
-      +'<div style="width:24px;height:24px;border-radius:50%;background:'+color+'20;color:'+color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0">'+init+'</div>'
-      +(emp.nombre||t('kpi_empleados')+' '+emp.id)
-      +'<span onclick="enviarTurnoWA('+emp.id+')" title="Enviar turno por WhatsApp" style="cursor:pointer;font-size:13px;opacity:0.75;flex-shrink:0" class="wa-btn no-print">📲</span>'
-      +'</div></td>'
-      +'<td style="font-size:13px;color:var(--muted)">'+emp.rol+'</td>'
-      +cells
-      +'<td class="col-horas" style="font-weight:700;color:var(--accent);font-size:15px">'+horasE[idx].toFixed(1)+'h</td></tr>';
-  }).join('');
+  };
+  var tbodyRows=
+    '<tr style="background:var(--darker)"><td colspan="10" style="padding:8px 12px;font-size:13px;font-weight:700;color:var(--accent);border-bottom:2px solid var(--border)">🍽 Sala / Servicio</td></tr>'
+    +_buildEmpRows(salaEmps)
+    +(cocinaEmps.length?'<tr style="background:var(--darker)"><td colspan="10" style="padding:10px 12px 8px;font-size:13px;font-weight:700;color:#ff9040;border-top:3px solid var(--border);border-bottom:2px solid var(--border)">👨‍🍳 Cocina</td></tr>'+_buildEmpRows(cocinaEmps):'');
 
   var refRows='';
   eventos.forEach(function(ev){
@@ -2874,7 +2886,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.85 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.86 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5197,7 +5209,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.85 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.86 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
