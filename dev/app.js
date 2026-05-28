@@ -1311,6 +1311,7 @@ function _fillEmpCont(contId){
       +'</select></div>'
       +'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:3px">&#128161; '+t('p3_horas_auto')+'</div>'
+      +(contId==='empleados-list'&&emp.bdId?'<div style="margin-top:8px"><button onclick="abrirVacacionesModal('+emp.bdId+',\''+emp.nombre.replace(/\'/g,"\\\\'")+'\'')" style="background:none;border:1px solid #2a5090;border-radius:7px;padding:5px 12px;color:#5090d0;font-size:11px;cursor:pointer">🏖 Vacaciones</button></div>':'')
       +(contId==='empleados-list-17'?(function(){
           var bd=window._empleadosBDDatos&&window._empleadosBDDatos[emp.nombre];
           var bid=bd?bd.bdId:null;
@@ -2998,7 +2999,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.88 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.89 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -4735,7 +4736,7 @@ async function generarCuadranteIA(){
     var resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,system:SYSTEM_PROMPT_CUADRANTE,messages:[{role:'user',content:userMsg}]})
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,system:SYSTEM_PROMPT_CUADRANTE,messages:[{role:'user',content:userMsg}]})
     });
     if(!resp.ok){var errData=await resp.json().catch(function(){return{};});throw new Error(errData.error?errData.error.message:'Error '+resp.status);}
     var data=await resp.json();
@@ -4773,7 +4774,7 @@ function aplicarPlanIA(plan,diasKey){
   renderTurnosAsig();
 }
 
-var SYSTEM_PROMPT_CUADRANTE = 'Eres un gestor de cuadrantes de restaurante. Genera el cuadrante semanal óptimo siguiendo EXACTAMENTE estas reglas:\n\nCOBERTURA MÍNIMA (solo sala/servicio, nunca cocina):\n- Mínimo 2 personas en turno de mañana cada día\n- Mínimo 2 personas en turno de noche/tarde cada día\n- Mínimo 1 persona cubriendo el impás entre turnos\n- Nunca dejar ninguna franja horaria sin cobertura desde apertura hasta cierre\n- Si hay conflicto entre cobertura y fiesta, SIEMPRE priorizar la cobertura\n\nFIESTAS:\n- Cada empleado tiene exactamente 1 fiesta entera + 1 media fiesta por semana (1.5 días total)\n- Fiesta entera y media fiesta deben ser SIEMPRE consecutivas (días seguidos)\n- Concentrar fiestas preferentemente en los días flojos indicados, respetando siempre la cobertura mínima\n- Media fiesta = exactamente 4 horas trabajadas del turno habitual del empleado:\n  * Si la fiesta entera fue el día ANTERIOR: el empleado trabaja las ÚTIMAS 4 horas de su turno habitual\n  * Si la fiesta entera es el día SIGUIENTE: el empleado trabaja las PRIMERAS 4 horas de su turno habitual\n  * Ejemplo: empleado con turno noche 18:00-03:00, fiesta entera el lunes → media fiesta el martes trabajando 23:00-03:00\n  * Ejemplo: empleado con turno mañana 07:30-16:30, fiesta entera el miércoles → media fiesta el martes trabajando 07:30-11:30\n\nEXCEPCIÓN FIJA INAMOVIBLE:\n- MARILYN: jueves = fiesta entera siempre, viernes = trabaja 07:30-11:30 siempre (primeras 4h de su turno)\n- Esta excepción no puede cambiar bajo ninguna circunstancia\n\nVACACIONES:\n- Los días marcados como vacaciones para un empleado: asignar tipo vacaciones, no contar como fiesta semanal\n\nCOCINA:\n- NO asignar ningún turno a empleados de cocina, dejar vacío\n\nResponde ÚnicAMENTE con JSON válido, comenzando con [ y terminando con ]. Sin texto adicional.\nFormato exacto:\n[\n  {\n    \"empleado\": \"NOMBRE\",\n    \"lun\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"mar\": {\"tipo\": \"fiesta\"},\n    \"mie\": {\"tipo\": \"media_fiesta\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"jue\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"vie\": {\"tipo\": \"vacaciones\"},\n    \"sab\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"dom\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"}\n  }\n]';
+var SYSTEM_PROMPT_CUADRANTE = 'Eres un gestor de cuadrantes de restaurante. Genera el cuadrante semanal óptimo siguiendo EXACTAMENTE estas reglas:\n\nCOBERTURA MÍNIMA (solo sala/servicio, nunca cocina):\n- Mínimo 2 personas en turno de mañana cada día\n- Mínimo 2 personas en turno de noche/tarde cada día\n- Mínimo 1 persona cubriendo el impás entre turnos\n- Nunca dejar ninguna franja horaria sin cobertura desde apertura hasta cierre\n- Si hay conflicto entre cobertura y fiesta, SIEMPRE priorizar la cobertura\n\nFIESTAS:\n- Cada empleado tiene exactamente 1 fiesta entera + 1 media fiesta por semana (1.5 días total)\n- Fiesta entera y media fiesta deben ser SIEMPRE consecutivas (días seguidos)\n- Concentrar fiestas preferentemente en los días flojos indicados, respetando siempre la cobertura mínima\n- Media fiesta = exactamente 4 horas trabajadas del turno habitual del empleado:\n  * Si la fiesta entera fue el día ANTERIOR: el empleado trabaja las ÚTIMAS 4 horas de su turno habitual\n  * Si la fiesta entera es el día SIGUIENTE: el empleado trabaja las PRIMERAS 4 horas de su turno habitual\n  * Ejemplo: empleado con turno noche 18:00-03:00, fiesta entera el lunes → media fiesta el martes trabajando 23:00-03:00\n  * Ejemplo: empleado con turno mañana 07:30-16:30, fiesta entera el miércoles → media fiesta el martes trabajando 07:30-11:30\n\nEXCEPCIÓN FIJA INAMOVIBLE:\n- MARILYN: jueves = fiesta entera siempre, viernes = trabaja 07:30-11:30 siempre (primeras 4h de su turno)\n- Esta excepción no puede cambiar bajo ninguna circunstancia\n\nVACACIONES:\n- Los días marcados como vacaciones para un empleado: asignar tipo vacaciones, no contar como fiesta semanal\n\nCOCINA:\n- NO asignar ningún turno a empleados de cocina, dejar vacío\n\nResponde ÚnicAMENTE con JSON válido, comenzando con [ y terminando con ]. Sin texto adicional.\nFormato exacto:\n[\n  {\n    \"empleado\": \"NOMBRE\",\n    \"lun\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"mar\": {\"tipo\": \"fiesta\"},\n    \"mie\": {\"tipo\": \"media_fiesta\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"jue\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"vie\": {\"tipo\": \"vacaciones\"},\n    \"sab\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"dom\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"}\n  }\n]\nResponde con JSON minificado en una sola l\u00ednea, sin saltos de l\u00ednea ni espacios innecesarios.';
 
 var CLAUDE_MODEL = 'claude-sonnet-4-5';
 
@@ -5394,7 +5395,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.88 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.89 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
