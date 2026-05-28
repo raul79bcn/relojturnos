@@ -1774,21 +1774,37 @@ function renderTurnosAsig(){
     +'<span style="font-size:10px"><span class="turno-badge badge-mediafiesta">\u00bd '+t('turno_mediafiesta')+'</span></span>'
     +'<span style="font-size:10px"><span class="turno-badge badge-fiesta">\ud83c\udfd6 '+t('turno_fiesta')+'</span></span>';
 
+  var salaEmps=[],cocinaEmps=[];
+  empleados.forEach(function(emp,idx){
+    if(emp.rol==='Cocinero'||emp.rol==='Ayud. Cocina'){cocinaEmps.push({emp:emp,idx:idx});}
+    else{salaEmps.push({emp:emp,idx:idx});}
+  });
+  var _buildAsigRows=function(list){
+    var h='';
+    list.forEach(function(item){
+      var emp=item.emp,idx=item.idx;
+      var color=COLORS[idx%COLORS.length];
+      h+='<div class="dias-grid-row"><div style="font-size:11px;font-weight:700;color:'+color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( emp.nombre||'Emp '+emp.id)+'</div>';
+      DIAS.forEach(function(_,di){
+        var tv=emp.turnos?emp.turnos[di]:emp.turno;
+        var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+' '+tc.ini+'–'+tc.fin+'</option>';}).join('')
+          +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>½ '+t('turno_mediafiesta')+'</option>'
+          +'<option value="fiesta"'+(tv==='fiesta'?' selected':'')+'>🏖 '+t('turno_fiesta')+'</option>';
+        h+='<div><select class="dia-select '+tv+'" onchange="updTurno('+emp.id+','+di+',this.value,this)">'+opts+'</select></div>';
+      });
+      h+='</div>';
+    });
+    return h;
+  };
   var html='<div class="dias-grid-header"><div></div>';
   DIAS_SHORT.forEach(function(d,i){html+='<div class="dia-label-top" style="'+(df.includes(i)?'color:var(--red)':'')+'">'+d+'</div>';});
   html+='</div>';
-  empleados.forEach(function(emp,idx){
-    var color=COLORS[idx%COLORS.length];
-    html+='<div class="dias-grid-row"><div style="font-size:11px;font-weight:700;color:'+color+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+( emp.nombre||'Emp '+emp.id)+'</div>';
-    DIAS.forEach(function(_,di){
-      var tv=emp.turnos?emp.turnos[di]:emp.turno;
-      var opts=activeTurnos.map(function(tc){return'<option value="'+tc.id+'"'+(tv===tc.id?' selected':'')+'>'+tc.emoji+' '+tc.nome+' '+tc.ini+'–'+tc.fin+'</option>';}).join('')
-        +'<option value="mediafiesta"'+(tv==='mediafiesta'?' selected':'')+'>\u00bd '+t('turno_mediafiesta')+'</option>'
-        +'<option value="fiesta"'+(tv==='fiesta'?' selected':'')+'>🏖 '+t('turno_fiesta')+'</option>';
-      html+='<div><select class="dia-select '+tv+'" onchange="updTurno('+emp.id+','+di+',this.value,this)">'+opts+'</select></div>';
-    });
-    html+='</div>';
-  });
+  html+='<div style="padding:5px 0 5px;font-size:12px;font-weight:700;color:var(--accent);border-bottom:1px solid var(--border);margin-bottom:8px">🍽 Sala / Servicio</div>';
+  html+=_buildAsigRows(salaEmps);
+  if(cocinaEmps.length){
+    html+='<div style="padding:10px 0 5px;font-size:12px;font-weight:700;color:#ff9040;border-top:2px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:8px">👨‍🍳 Cocina</div>';
+    html+=_buildAsigRows(cocinaEmps);
+  }
   document.getElementById('turnos-asignacion').innerHTML=html;
 }
 
@@ -2886,7 +2902,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.86 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.87 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -5209,7 +5225,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.86 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.87 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'
