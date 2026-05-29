@@ -274,3 +274,7 @@ select,input[type=text],.inp-sm{font-size:14px!important}
 .cl-tarea-check.checked{background:var(--green);border-color:var(--green);color:#fff}
 .cl-tarea-texto{flex:1;font-size:14px;font-weight:500}
 .cl-tarea-hora{font-size:11px;color:var(--muted);flex-shrink:0}
+
+/* ===== DATE PICKER dark mode (v7.93) ===== */
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7);cursor:pointer;opacity:0.8}
+input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1}

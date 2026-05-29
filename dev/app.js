@@ -2034,6 +2034,8 @@ function abrirVacacionesModal(empBdId,empNombre){
   if(df)df.value=hoy.toISOString().split('T')[0];
   if(dt)dt.value=fin.toISOString().split('T')[0];
   var mot=document.getElementById('vac-motivo');if(mot)mot.value='';
+  var oWrap=document.getElementById('vac-otro-wrap');if(oWrap)oWrap.style.display='none';
+  var oInp=document.getElementById('vac-motivo-otro');if(oInp)oInp.value='';
   renderVacacionesList(empBdId);
   document.getElementById('modal-vacaciones').style.display='flex';
 }
@@ -2055,11 +2057,16 @@ async function renderVacacionesList(bdId){
     }).join('');
   }catch(e){el.innerHTML='<div style="color:var(--red);font-size:11px">Error: '+e.message+'</div>';}
 }
+function toggleOtroMotivo(val){
+  var w=document.getElementById('vac-otro-wrap');
+  if(w)w.style.display=(val==='Otro'?'':'none');
+}
 async function guardarVacacion(){
   if(!_vacModalEmpBdId){showToast('Error: sin empleado','red');return;}
   var fi=document.getElementById('vac-fecha-ini').value;
   var ff=document.getElementById('vac-fecha-fin').value;
-  var mot=(document.getElementById('vac-motivo').value||'').trim();
+  var _motSel=(document.getElementById('vac-motivo').value||'');
+  var mot=(_motSel==='Otro'?(document.getElementById('vac-motivo-otro').value||'').trim():_motSel).trim();
   if(!fi||!ff){showToast('Indica fechas de inicio y fin','orange');return;}
   if(ff<fi){showToast('Fecha fin debe ser posterior al inicio','orange');return;}
   try{
@@ -4837,12 +4844,18 @@ async function generarCuadranteIA(){
     var cfg=getConfigEmp(emp.id);
     return{nombre:emp.nombre,turno:emp.turno,turnoNombre:tc.nome||emp.turno,turnoIni:tc.ini||'',turnoFin:tc.fin||'',vacDias:vacDias,cfg:cfg};
   });
-  var turnosInfo=activeTurnos.map(function(t){return{id:t.id,nombre:t.nome,inicio:t.ini,fin:t.fin};});
   var ap=document.getElementById('hora-apertura').value;
   var ci=document.getElementById('hora-cierre').value;
+  var _ciMin=toMin(ci);
+  var turnosInfo=activeTurnos.filter(function(t){
+    var fm=toMin(t.fin);
+    if(_ciMin<360){var fmN=(fm<360)?fm+1440:fm;return fmN<=_ciMin+1440;}
+    return fm<=_ciMin;
+  }).map(function(t){return{id:t.id,nombre:t.nome,inicio:t.ini,fin:t.fin};});
   var diasFl=diasFlojos.map(function(d){return diasLargos[d];}).join(', ')||'Ninguno';
     var userMsg=
-    'DIAS DE MENOR AFLUENCIA: '+diasFl+'\n'
+    'HORA APERTURA: '+ap+' | HORA CIERRE: '+ci+'\n'
+    +'DIAS DE MENOR AFLUENCIA: '+diasFl+'\n'
     +'TURNOS DISPONIBLES:\n'
     +turnosInfo.map(function(t){return t.id+': '+t.nombre+' '+t.inicio+'-'+t.fin;}).join('\n')+'\n'
     +'EMPLEADOS SALA/SERVICIO:\n'
@@ -4903,7 +4916,7 @@ function aplicarPlanIA(plan,diasKey){
   renderTurnosAsig();
 }
 
-var SYSTEM_PROMPT_CUADRANTE = 'Eres un gestor experto de cuadrantes de restaurante. Crea el cuadrante semanal m\u00e1s \u00f3ptimo posible.\n\nREGLAS INAMOVIBLES:\n1. Cobertura m\u00ednima CADA D\u00cdA: m\u00ednimo 2 personas franja ma\u00f1ana + 2 personas franja noche + 1 cubriendo imp\u00e1s. NUNCA dejar franja sin cobertura.\n2. Cada empleado: exactamente los dias_fiesta indicados de fiesta entera + 1 media fiesta CONSECUTIVAS.\n3. Media fiesta = horas_media_fiesta trabajadas (seg\u00fan cada empleado): si fiesta entera fue ayer \u2192 \u00faltimas Xh del turno. Si fiesta entera es ma\u00f1ana \u2192 primeras Xh del turno.\n4. Respetar EXCEPCION FIJA de cada empleado.\n5. Concentrar fiestas en d\u00edas de menor afluencia. Solo usar otros d\u00edas si cobertura m\u00ednima lo impide.\n6. Empleados DIA: asignar turnos que empiecen antes de las 17:00. Empleados NOCHE: turnos desde 17:00 o despu\u00e9s.\n7. D\u00edas marcados como vacaciones: asignar tipo vacaciones, no contar como fiesta semanal.\n\nResponde \u00danicAMENTE con JSON minificado en una sola l\u00ednea, sin texto adicional.\nFormato: [{\"empleado\":\"NOMBRE\",\"lun\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"mar\":{\"tipo\":\"fiesta\"},\"mie\":{\"tipo\":\"media_fiesta\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"jue\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"vie\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"sab\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"dom\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"}}]';
+var SYSTEM_PROMPT_CUADRANTE = 'Eres un gestor experto de cuadrantes de restaurante. Crea el cuadrante semanal m\u00e1s \u00f3ptimo posible.\n\nREGLAS INAMOVIBLES:\n1. Cobertura m\u00ednima CADA D\u00cdA: m\u00ednimo 2 personas franja ma\u00f1ana + 2 personas franja noche + 1 cubriendo imp\u00e1s. NUNCA dejar franja sin cobertura.\n2. Cada empleado: exactamente los dias_fiesta indicados de fiesta entera + 1 media fiesta CONSECUTIVAS.\n3. Media fiesta = horas_media_fiesta trabajadas (seg\u00fan cada empleado): si fiesta entera fue ayer \u2192 \u00faltimas Xh del turno. Si fiesta entera es ma\u00f1ana \u2192 primeras Xh del turno.\n4. Respetar EXCEPCION FIJA de cada empleado.\n5. Concentrar fiestas en d\u00edas de menor afluencia. Solo usar otros d\u00edas si cobertura m\u00ednima lo impide.\n6. Empleados DIA: asignar turnos que empiecen antes de las 17:00. Empleados NOCHE: turnos desde 17:00 o despu\u00e9s.\n7. D\u00edas marcados como vacaciones: asignar tipo vacaciones, no contar como fiesta semanal.\n8. NUNCA asignes un turno cuya hora de fin supere la hora de cierre del local. Usa SOLO los turnos listados en TURNOS DISPONIBLES.\n\nResponde \u00danicAMENTE con JSON minificado en una sola l\u00ednea, sin texto adicional.\nFormato: [{\"empleado\":\"NOMBRE\",\"lun\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"mar\":{\"tipo\":\"fiesta\"},\"mie\":{\"tipo\":\"media_fiesta\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"jue\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"vie\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"sab\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"dom\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"}}]';
 
 var CLAUDE_MODEL = 'claude-sonnet-4-5';
 

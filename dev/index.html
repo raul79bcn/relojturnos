@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.92 – Grupo El Reloj</title>
+<title>RelojTurnos v7.93 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.92</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.93</span></div>
   </div>
 </div>
 
@@ -94,10 +94,10 @@
       <button onclick="cerrarVacacionesModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Fecha inicio</label><input type="date" id="vac-fecha-ini" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 8px;color:var(--text);font-size:13px;outline:none"></div>
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Fecha fin</label><input type="date" id="vac-fecha-fin" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 8px;color:var(--text);font-size:13px;outline:none"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Fecha inicio</label><input type="date" id="vac-fecha-ini" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 8px;color:var(--text);font-size:13px;outline:none;color-scheme:dark"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Fecha fin</label><input type="date" id="vac-fecha-fin" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 8px;color:var(--text);font-size:13px;outline:none;color-scheme:dark"></div>
     </div>
-    <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Motivo (opcional)</label><select id="vac-motivo" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:13px;outline:none"><option value="">— (selecciona motivo)</option><option value="Vacaciones de verano">Vacaciones de verano</option><option value="Vacaciones de invierno">Vacaciones de invierno</option><option value="Fiestas pendientes">Fiestas pendientes</option><option value="Baja laboral">Baja laboral</option><option value="Baja por enfermedad">Baja por enfermedad</option><option value="Baja por accidente laboral">Baja por accidente laboral</option><option value="Permiso personal">Permiso personal</option><option value="Asuntos propios">Asuntos propios</option><option value="Maternidad / Paternidad">Maternidad / Paternidad</option><option value="Otro">Otro</option></select></div>
+    <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Motivo (opcional)</label><select id="vac-motivo" onchange="toggleOtroMotivo(this.value)" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:13px;outline:none"><option value="">— (selecciona motivo)</option><option value="Vacaciones de verano">Vacaciones de verano</option><option value="Vacaciones de invierno">Vacaciones de invierno</option><option value="Fiestas pendientes">Fiestas pendientes</option><option value="Baja laboral">Baja laboral</option><option value="Baja por enfermedad">Baja por enfermedad</option><option value="Baja por accidente laboral">Baja por accidente laboral</option><option value="Permiso personal">Permiso personal</option><option value="Asuntos propios">Asuntos propios</option><option value="Maternidad / Paternidad">Maternidad / Paternidad</option><option value="Otro">Otro</option></select><div id="vac-otro-wrap" style="display:none;margin-top:6px"><input type="text" id="vac-motivo-otro" placeholder="Escribe el motivo..." style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 8px;color:var(--text);font-size:13px;outline:none"></div></div>
     <button onclick="guardarVacacion()" style="width:100%;background:var(--accent);border:none;border-radius:8px;color:#000;font-weight:700;padding:10px;font-size:13px;cursor:pointer;margin-bottom:14px">💾 Guardar periodo</button>
     <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Periodos registrados</div>
     <div id="vac-lista"></div>
@@ -135,7 +135,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.92 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.93 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
