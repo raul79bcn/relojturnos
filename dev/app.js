@@ -745,6 +745,7 @@ async function guardarCuadranteEnBD(){
 var empleados=[], eventos=[], empCounter=0, turnosConfig=[];
 var refuerzoPersonas=[], refuerzoCounter=0;
 var mostrarHoras=true, lastLocal='';
+var configEquipo={};
 
 function toMin(t){var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
 function toStr(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
@@ -843,7 +844,7 @@ function goStep(n){
   }
   // Mostrar barra de pasos solo en el flujo Cuadrante (screens 1-6)
   var stepsBar=document.getElementById('steps-bar');
-  if(stepsBar) stepsBar.style.display=(n>=1&&n<=6)?'flex':'none';
+  if(stepsBar) stepsBar.style.display=(n>=1&&n<=3)?'flex':'none';
   // Marcar item activo en sidebar
   var snavMap={0:0,1:1,2:1,3:1,4:1,5:1,6:1,7:7,8:8,9:9,10:10,12:12,13:13,14:14,15:15,16:16,17:17};
   [0,1,7,8,9,10,12,13,14,15,16,17].forEach(function(i){
@@ -898,10 +899,24 @@ async function empEliminar(bdId, nombre){
 }
 
 function nextStep(from){
-  if(from===1){if(!getLocal()){alert(t('alert_selecciona_local'));return;}updateHeader();buildTurnosConfig();cargarConfigTurnosGuardada();renderTurnosConfigGrid();goStep(2);}
-  else if(from===2){goStep(3);cargarEmpleadosBD();renderLorenaHorario();}
-  else if(from===3){if(!empleados.length){alert('A\u00f1ade al menos un empleado');return;}empleados.forEach(function(e){if(!e.nombre)e.nombre='Empleado '+e.id;});if(!turnosConfig.length)buildTurnosConfig();cargarVacacionesSemana().then(sugerirYRenderizar);goStep(4);}
-  else if(from===4){initPaso5();goStep(5);}
+  if(from===1){
+    if(!getLocal()){alert(t('alert_selecciona_local'));return;}
+    updateHeader();buildTurnosConfig();
+    cargarEmpleadosBD().then(function(){
+      return cargarConfigEquipo();
+    }).then(function(){
+      return cargarVacacionesSemana();
+    }).then(function(){
+      renderConfigEquipo();
+      renderLorenaHorario();
+      goStep(2);
+    });
+  }
+  else if(from===2){
+    guardarConfigEquipo();
+    sugerirYRenderizar();
+    goStep(3);
+  }
 }
 
 async function cargarEmpleadosBD(){
@@ -2064,6 +2079,110 @@ async function eliminarVacacion(id,bdId){
   }catch(e){showToast('Error: '+e.message,'red');}
 }
 
+// ========== CONFIG EQUIPO v7.92 ==========
+function getConfigEmp(empLocalId){
+  if(configEquipo[empLocalId]) return configEquipo[empLocalId];
+  var emp=empleados.find(function(e){return e.id===empLocalId;});
+  var pref='dia';
+  if(emp){
+    var tc=turnosConfig.find(function(t){return t.id===emp.turno;});
+    if(tc && toMin(tc.ini)>=17*60) pref='noche';
+  }
+  return {preferencia_horaria:pref,horas_jornada:40,dias_fiesta:1.5,horas_media_fiesta:4,excepcion_fija:''};
+}
+
+function updConfigEmp(empLocalId,field,val){
+  if(!configEquipo[empLocalId]) configEquipo[empLocalId]=getConfigEmp(empLocalId);
+  configEquipo[empLocalId][field]=val;
+}
+
+async function cargarConfigEquipo(){
+  var localId=localActivoId;
+  configEquipo={};
+  if(!localId) return;
+  try{
+    var rows=await sbGet('configuracion_cuadrante','local_id=eq.'+localId);
+    rows.forEach(function(r){
+      var emp=empleados.find(function(e){return e.bdId===r.empleado_id;});
+      if(!emp) return;
+      configEquipo[emp.id]={preferencia_horaria:r.preferencia_horaria||'dia',horas_jornada:r.horas_jornada||40,dias_fiesta:r.dias_fiesta||1.5,horas_media_fiesta:r.horas_media_fiesta||4,excepcion_fija:r.excepcion_fija||''};
+    });
+  }catch(e){console.warn('cargarConfigEquipo:',e.message);}
+}
+
+async function guardarConfigEquipo(){
+  var localId=localActivoId;
+  if(!localId) return;
+  var salaEmps=empleados.filter(function(e){return e.bdId&&e.rol!=='Cocinero'&&e.rol!=='Ayud. Cocina';});
+  for(var i=0;i<salaEmps.length;i++){
+    var emp=salaEmps[i];
+    var cfg=configEquipo[emp.id]||getConfigEmp(emp.id);
+    try{
+      var existing=await sbGet('configuracion_cuadrante','empleado_id=eq.'+emp.bdId+'&local_id=eq.'+localId+'&limit=1');
+      if(existing&&existing.length){
+        await sbPatch('configuracion_cuadrante',existing[0].id,{preferencia_horaria:cfg.preferencia_horaria,horas_jornada:parseFloat(cfg.horas_jornada)||40,dias_fiesta:parseFloat(cfg.dias_fiesta)||1.5,horas_media_fiesta:parseInt(cfg.horas_media_fiesta)||4,excepcion_fija:cfg.excepcion_fija||null});
+      }else{
+        await sbPost('configuracion_cuadrante',{empleado_id:emp.bdId,local_id:localId,preferencia_horaria:cfg.preferencia_horaria,horas_jornada:parseFloat(cfg.horas_jornada)||40,dias_fiesta:parseFloat(cfg.dias_fiesta)||1.5,horas_media_fiesta:parseInt(cfg.horas_media_fiesta)||4,excepcion_fija:cfg.excepcion_fija||null});
+      }
+    }catch(e){console.warn('guardarConfigEquipo emp'+emp.bdId+':',e.message);}
+  }
+}
+
+function renderConfigEquipo(){
+  var cont=document.getElementById('config-equipo-list');
+  if(!cont) return;
+  var salaEmps=empleados.filter(function(e){return e.rol!=='Cocinero'&&e.rol!=='Ayud. Cocina';});
+  if(!salaEmps.length){
+    cont.innerHTML='<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center;grid-column:1/-1">Sin empleados de sala. Ve a Gestión del Equipo.</div>';
+    return;
+  }
+  var html='';
+  salaEmps.forEach(function(emp,idx){
+    var cfg=getConfigEmp(emp.id);
+    var color=COLORS[idx%COLORS.length];
+    var init=emp.nombre?emp.nombre.substring(0,2).toUpperCase():'??';
+    var vacDias=emp.bdId?getVacacionDiasEmp(emp.bdId):[];
+    var vacInd=vacDias.length?'<span style="background:#12204a;color:#5070c0;border:1px solid #2a4090;border-radius:4px;padding:1px 6px;font-size:9px;margin-left:6px">🏖 Vac.</span>':'';
+    html+='<div class="empleado-card">';
+    html+='<div class="empleado-header">';
+    html+='<div class="emp-avatar" style="background:'+color+'20;color:'+color+'">'+init+'</div>';
+    html+='<div style="flex:1;font-size:13px;font-weight:700;color:'+color+'">'+emp.nombre+vacInd+'</div>';
+    html+='</div>';
+    html+='<div class="form-row">';
+    html+='<div class="form-group"><label>Preferencia</label>';
+    html+='<select onchange="updConfigEmp('+emp.id+',\'preferencia_horaria\',this.value)">';
+    html+='<option value="dia"'+(cfg.preferencia_horaria==='dia'?' selected':'')+'>☀️ Día (antes 17h)</option>';
+    html+='<option value="noche"'+(cfg.preferencia_horaria==='noche'?' selected':'')+'>🌙 Noche (17h+)</option>';
+    html+='</select></div>';
+    html+='<div class="form-group"><label>H. jornada / sem</label>';
+    html+='<input type="number" min="10" max="50" step="0.5" value="'+(cfg.horas_jornada||40)+'" onchange="updConfigEmp('+emp.id+',\'horas_jornada\',this.value)" class="inp-sm"></div>';
+    html+='</div>';
+    html+='<div class="form-row">';
+    html+='<div class="form-group"><label>Días fiesta / sem</label>';
+    html+='<select onchange="updConfigEmp('+emp.id+',\'dias_fiesta\',this.value)">';
+    html+='<option value="1"'+(parseFloat(cfg.dias_fiesta)===1?' selected':'')+'>1 día</option>';
+    html+='<option value="1.5"'+(parseFloat(cfg.dias_fiesta)!==1&&parseFloat(cfg.dias_fiesta)!==2?' selected':'')+'>1,5 días ✓</option>';
+    html+='<option value="2"'+(parseFloat(cfg.dias_fiesta)===2?' selected':'')+'>2 días</option>';
+    html+='</select></div>';
+    html+='<div class="form-group"><label>H. media fiesta</label>';
+    html+='<input type="number" min="2" max="8" step="1" value="'+(cfg.horas_media_fiesta||4)+'" onchange="updConfigEmp('+emp.id+',\'horas_media_fiesta\',this.value)" class="inp-sm"></div>';
+    html+='</div>';
+    html+='<div class="form-group"><label>Excepción fija (opcional)</label>';
+    html+='<input type="text" placeholder="ej: jueves=fiesta, viernes=07:30-11:30" value="'+(cfg.excepcion_fija||'').replace(/"/g,'&quot;')+'" onchange="updConfigEmp('+emp.id+',\'excepcion_fija\',this.value)" style="width:100%;box-sizing:border-box;background:var(--darker);border:1px solid var(--border);border-radius:7px;padding:7px 8px;color:var(--text);font-size:12px;outline:none"></div>';
+    if(emp.bdId){
+      html+='<div style="margin-top:6px"><button data-bid="'+emp.bdId+'" data-nom="'+emp.nombre.replace(/"/g,'&quot;')+'" onclick="abrirVacacionesModal(parseInt(this.dataset.bid),this.dataset.nom)" style="background:none;border:1px solid #2a5090;border-radius:7px;padding:5px 12px;color:#5090d0;font-size:11px;cursor:pointer">🏖 Vacaciones</button></div>';
+    }
+    html+='</div>';
+  });
+  cont.innerHTML=html;
+}
+
+async function guardarYVerCuadrante(){
+  await guardarCuadranteEnBD();
+  generarCuadrante();
+}
+
+
 function generarCuadrante(){
   updateHeader();
   var local=getLocal(),semana=getSemanaLabel();
@@ -2999,7 +3118,7 @@ function imprimirCostes(){
     +'<td>'+(totExtras>0?totExtras.toFixed(2)+' €':'—')+'</td>'
     +'<td>'+(totSem+lorSem).toFixed(2)+' €</td></tr></tfoot></table>'
     +(extrasRows?'<h2>Extras del día registradas</h2><table><thead><tr><th>Empleado</th><th>Día</th><th>Horas</th><th>€/hora</th><th>Coste</th><th>Motivo</th></tr></thead><tbody>'+extrasRows+'</tbody></table>':'')
-    +'<p class="footer">RelojTurnos v7.91 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
+    +'<p class="footer">RelojTurnos v7.92 · '+new Date().toLocaleDateString('es-ES')+' · Coste empresa = bruto × 1,33 ÷ 4,33 · Total mes = semana × 4,33</p>'
     +'<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>'
     +'</body></html>');
   ventana.document.close();
@@ -4715,23 +4834,28 @@ async function generarCuadranteIA(){
   var empData=salaEmps.map(function(emp){
     var vacDias=emp.bdId?getVacacionDiasEmp(emp.bdId):[];
     var tc=activeTurnos.find(function(t){return t.id===emp.turno;})||{};
-    return{nombre:emp.nombre,turno:emp.turno,turnoNombre:tc.nome||emp.turno,turnoIni:tc.ini||'',turnoFin:tc.fin||'',vacDias:vacDias};
+    var cfg=getConfigEmp(emp.id);
+    return{nombre:emp.nombre,turno:emp.turno,turnoNombre:tc.nome||emp.turno,turnoIni:tc.ini||'',turnoFin:tc.fin||'',vacDias:vacDias,cfg:cfg};
   });
   var turnosInfo=activeTurnos.map(function(t){return{id:t.id,nombre:t.nome,inicio:t.ini,fin:t.fin};});
   var ap=document.getElementById('hora-apertura').value;
   var ci=document.getElementById('hora-cierre').value;
   var diasFl=diasFlojos.map(function(d){return diasLargos[d];}).join(', ')||'Ninguno';
-  var userMsg=
-    'DIAS DE MENOR AFLUENCIA (asignar fiestas aquí primero): '+diasFl+'\n'
-    +'COBERTURA MINIMA POR DIA: mínimo 2 personas turno mañana + 2 personas turno noche + 1 persona cubriendo impás entre turnos\n'
-    +'EXCEPCION FIJA INAMOVIBLE — MARILYN: jueves=fiesta entera, viernes=trabaja 07:30-11:30\n'
-    +'EMPLEADOS SALA/SERVICIO (NO incluir Cocinero ni Ayud. Cocina):\n'
-    +empData.map(function(e){
-      var vacStr=e.vacDias.length?' [VACACIONES: '+e.vacDias.map(function(d){return diasLargos[d];}).join(',')+']':'';
-      return e.nombre+' — turno habitual: '+e.turnoNombre+' '+e.turnoIni+'-'+e.turnoFin+vacStr;
-    }).join('\n')+'\n'
+    var userMsg=
+    'DIAS DE MENOR AFLUENCIA: '+diasFl+'\n'
     +'TURNOS DISPONIBLES:\n'
     +turnosInfo.map(function(t){return t.id+': '+t.nombre+' '+t.inicio+'-'+t.fin;}).join('\n')+'\n'
+    +'EMPLEADOS SALA/SERVICIO:\n'
+    +empData.map(function(e){
+      var cfg=e.cfg;
+      var vacStr=e.vacDias.length?' [VACACIONES: '+e.vacDias.map(function(d){return diasLargos[d];}).join(',')+'  ]':'';
+      var excStr=cfg.excepcion_fija?' [EXCEPCION FIJA: '+cfg.excepcion_fija+']':'';
+      return e.nombre
+        +' | preferencia: '+cfg.preferencia_horaria
+        +' | dias_fiesta: '+cfg.dias_fiesta
+        +' | horas_media_fiesta: '+cfg.horas_media_fiesta
+        +vacStr+excStr;
+    }).join('\n')+'\n'
     +'Genera el cuadrante semanal completo en JSON minificado.';
   var btn=document.getElementById('btn-generar-ia');
   var spinner=document.getElementById('ia-cuadrante-spinner');
@@ -4779,7 +4903,7 @@ function aplicarPlanIA(plan,diasKey){
   renderTurnosAsig();
 }
 
-var SYSTEM_PROMPT_CUADRANTE = 'PRIORIDAD DE FIESTAS: Los días marcados como Días de menor afluencia son los días preferentes para asignar fiestas a los empleados. DEBES llenar primero esos días con fiestas antes de usar cualquier otro día. Solo si asignar fiesta en esos días rompe la cobertura mínima puedes usar otro día. Esta es la regla más importante después de garantizar cobertura mínima.\n\nEres un gestor de cuadrantes de restaurante. Genera el cuadrante semanal óptimo siguiendo EXACTAMENTE estas reglas:\n\nCOBERTURA MÍNIMA (solo sala/servicio, nunca cocina):\n- Mínimo 2 personas en turno de mañana cada día\n- Mínimo 2 personas en turno de noche/tarde cada día\n- Mínimo 1 persona cubriendo el impás entre turnos\n- Nunca dejar ninguna franja horaria sin cobertura desde apertura hasta cierre\n- Si hay conflicto entre cobertura y fiesta, SIEMPRE priorizar la cobertura\n\nFIESTAS:\n- Cada empleado tiene exactamente 1 fiesta entera + 1 media fiesta por semana (1.5 días total)\n- Fiesta entera y media fiesta deben ser SIEMPRE consecutivas (días seguidos)\n- Concentrar fiestas preferentemente en los días flojos indicados, respetando siempre la cobertura mínima\n- Media fiesta = exactamente 4 horas trabajadas del turno habitual del empleado:\n  * Si la fiesta entera fue el día ANTERIOR: el empleado trabaja las ÚTIMAS 4 horas de su turno habitual\n  * Si la fiesta entera es el día SIGUIENTE: el empleado trabaja las PRIMERAS 4 horas de su turno habitual\n  * Ejemplo: empleado con turno noche 18:00-03:00, fiesta entera el lunes → media fiesta el martes trabajando 23:00-03:00\n  * Ejemplo: empleado con turno mañana 07:30-16:30, fiesta entera el miércoles → media fiesta el martes trabajando 07:30-11:30\n\nEXCEPCIÓN FIJA INAMOVIBLE:\n- MARILYN: jueves = fiesta entera siempre, viernes = trabaja 07:30-11:30 siempre (primeras 4h de su turno)\n- Esta excepción no puede cambiar bajo ninguna circunstancia\n\nVACACIONES:\n- Los días marcados como vacaciones para un empleado: asignar tipo vacaciones, no contar como fiesta semanal\n\nCOCINA:\n- NO asignar ningún turno a empleados de cocina, dejar vacío\n\nResponde ÚnicAMENTE con JSON válido, comenzando con [ y terminando con ]. Sin texto adicional.\nFormato exacto:\n[\n  {\n    \"empleado\": \"NOMBRE\",\n    \"lun\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"mar\": {\"tipo\": \"fiesta\"},\n    \"mie\": {\"tipo\": \"media_fiesta\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"jue\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"vie\": {\"tipo\": \"vacaciones\"},\n    \"sab\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"},\n    \"dom\": {\"tipo\": \"turno\", \"turno_id\": \"id_del_turno\", \"inicio\": \"HH:MM\", \"fin\": \"HH:MM\"}\n  }\n]\nResponde con JSON minificado en una sola l\u00ednea, sin saltos de l\u00ednea ni espacios innecesarios.';
+var SYSTEM_PROMPT_CUADRANTE = 'Eres un gestor experto de cuadrantes de restaurante. Crea el cuadrante semanal m\u00e1s \u00f3ptimo posible.\n\nREGLAS INAMOVIBLES:\n1. Cobertura m\u00ednima CADA D\u00cdA: m\u00ednimo 2 personas franja ma\u00f1ana + 2 personas franja noche + 1 cubriendo imp\u00e1s. NUNCA dejar franja sin cobertura.\n2. Cada empleado: exactamente los dias_fiesta indicados de fiesta entera + 1 media fiesta CONSECUTIVAS.\n3. Media fiesta = horas_media_fiesta trabajadas (seg\u00fan cada empleado): si fiesta entera fue ayer \u2192 \u00faltimas Xh del turno. Si fiesta entera es ma\u00f1ana \u2192 primeras Xh del turno.\n4. Respetar EXCEPCION FIJA de cada empleado.\n5. Concentrar fiestas en d\u00edas de menor afluencia. Solo usar otros d\u00edas si cobertura m\u00ednima lo impide.\n6. Empleados DIA: asignar turnos que empiecen antes de las 17:00. Empleados NOCHE: turnos desde 17:00 o despu\u00e9s.\n7. D\u00edas marcados como vacaciones: asignar tipo vacaciones, no contar como fiesta semanal.\n\nResponde \u00danicAMENTE con JSON minificado en una sola l\u00ednea, sin texto adicional.\nFormato: [{\"empleado\":\"NOMBRE\",\"lun\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"mar\":{\"tipo\":\"fiesta\"},\"mie\":{\"tipo\":\"media_fiesta\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"jue\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"vie\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"sab\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"},\"dom\":{\"tipo\":\"turno\",\"turno_id\":\"id_turno\",\"inicio\":\"HH:MM\",\"fin\":\"HH:MM\"}}]';
 
 var CLAUDE_MODEL = 'claude-sonnet-4-5';
 
@@ -5400,7 +5524,7 @@ function avImprimir(){
     + '</style></head><body>'
     + '<h1>AVISO LABORAL — ' + avEstado.empleadoNombre.toUpperCase() + '</h1>'
     + '<pre>' + txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
-    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.91 · Grupo El Reloj · '
+    + '<p style="margin-top:30px;font-size:11px;color:#888">Generado con RelojTurnos v7.92 · Grupo El Reloj · '
     + new Date().toLocaleString('es-ES') + '</p>'
     + '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'
     + '</body></html>'

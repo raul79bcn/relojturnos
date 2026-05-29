@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelojTurnos v7.91 – Grupo El Reloj</title>
+<title>RelojTurnos v7.92 – Grupo El Reloj</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
     </div>
     <div class="login-error" id="login-error" data-i18n="login_error">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()" data-i18n="login_btn">🔒 Entrar</button>
-    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.91</span></div>
+    <div class="login-footer">RelojTurnos © 2026 · Grupo El Reloj<br><span style="font-size:13px;font-weight:700;color:var(--accent);opacity:0.9">V7.92</span></div>
   </div>
 </div>
 
@@ -135,7 +135,7 @@
     <div class="snav-item" id="snav-10" onclick="goStep(10);closeSidebar()">&#127912; Ajustes</div>
   </nav>
   <div id="sidebar-footer">
-    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.91 &middot; Grupo El Reloj</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">RelojTurnos v7.92 &middot; Grupo El Reloj</div>
   </div>
 </div>
 <header style="display:none" id="app-header">
@@ -154,13 +154,13 @@
 
 <div class="container" style="display:none">
   <div class="steps" id="steps-bar" style="display:none">
-    <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text" data-i18n="nav_local">Local</span></div>
-    <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text" data-i18n="nav_turnos">Turnos</span></div>
-    <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text" data-i18n="nav_equipo">Equipo</span></div>
-    <div class="step" id="step4" onclick="goStep(4)"><span class="step-num">4</span><span class="step-text" data-i18n="nav_asignar">Asignar</span></div>
-    <div class="step" id="step5" onclick="goStep(5)"><span class="step-num">5</span><span class="step-text" data-i18n="nav_eventos">Eventos</span></div>
-    <div class="step" id="step6" onclick="goStep(6)"><span class="step-num">6</span><span class="step-text" data-i18n="nav_cuadrante">Cuadrante</span></div>
-    <!-- Steps ocultos del flujo — se mantienen para goStep() pero no se ven -->
+    <div class="step active" id="step1" onclick="goStep(1)"><span class="step-num">1</span><span class="step-text">Semana</span></div>
+    <div class="step" id="step2" onclick="goStep(2)"><span class="step-num">2</span><span class="step-text">Equipo</span></div>
+    <div class="step" id="step3" onclick="goStep(3)"><span class="step-num">3</span><span class="step-text">Generar</span></div>
+    <!-- Steps ocultos del flujo -->
+    <div class="step" id="step4" style="display:none"></div>
+    <div class="step" id="step5" style="display:none"></div>
+    <div class="step" id="step6" style="display:none"></div>
     <div class="step" id="step7" style="display:none"></div>
     <div class="step" id="step8" style="display:none"></div>
     <div class="step" id="step9" style="display:none"></div>
@@ -218,92 +218,53 @@
         </select>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="nextStep(1)" data-i18n="p1_siguiente">Siguiente → Configurar turnos</button>
+        <button class="btn btn-primary" onclick="nextStep(1)">Siguiente &#8594; Configurar equipo</button>
       </div>
+      <input type="hidden" id="horas-media-fiesta" value="4">
+      <input type="hidden" id="horas-jornada" value="40">
     </div>
   </div>
 
   <!-- PASO 2 -->
   <div class="screen" id="screen2">
     <div class="card">
-      <div class="card-title" data-i18n="p2_titulo">Configura los turnos del local</div>
-      <div class="card-sub" data-i18n="p2_sub">Turnos calculados automáticamente. Activa solo los que usa este local.</div>
-      <div class="info-box" id="info-box-turnos"></div>
-      <div class="turno-config-grid" id="turnos-config-grid"></div>
-      <hr class="divider">
-      <div class="form-row">
-        <div class="form-group">
-          <label data-i18n="p2_media_fiesta">Duración media fiesta (horas trabajadas)</label>
-          <select id="horas-media-fiesta">
-            <option value="4">4 horas</option>
-            <option value="4.5">4,5 horas</option>
-            <option value="5" selected>5 horas</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-i18n="p2_jornada">Horas jornada completa</label>
-          <select id="horas-jornada">
-            <option value="8">8 horas</option>
-            <option value="8.5">8,5 horas</option>
-            <option value="9" selected>9 horas</option>
-            <option value="9.5">9,5 horas</option>
-            <option value="10">10 horas</option>
-          </select>
-        </div>
+      <div class="card-title">&#128101; Configurar equipo</div>
+      <div class="card-sub">Ajusta los datos de cada empleado para optimizar el cuadrante</div>
+      <div id="config-equipo-list" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+      <div style="margin-top:12px;background:var(--darker);border:1px dashed var(--border);border-radius:8px;padding:10px;font-size:11px;color:var(--muted)">
+        &#128101; Datos guardados al avanzar. Para a&#241;adir o eliminar empleados ve a <button class="btn btn-ghost btn-sm" onclick="goStep(17)" style="font-size:11px;padding:3px 8px;border-color:var(--border)">Gesti&#243;n del Equipo</button>
       </div>
-      <div class="btn-row" style="margin-bottom:10px">
-        <button class="btn btn-secondary" style="flex:1;background:#1a3a1a;border-color:#2a6a2a;color:#5ddb5d" onclick="guardarConfigTurnos()">💾 Guardar configuración de turnos</button>
-      </div>
-      <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(1)" data-i18n="p2_atras">← Atrás</button>
-        <button class="btn btn-primary" onclick="nextStep(2)" data-i18n="p2_siguiente">Siguiente → Equipo</button>
+      <div class="btn-row space" style="margin-top:14px">
+        <button class="btn btn-secondary" onclick="goStep(1)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="nextStep(2)">Siguiente &#8594; Generar cuadrante</button>
       </div>
     </div>
   </div>
-
   <!-- PASO 3 -->
   <div class="screen" id="screen3">
     <div class="card">
-      <div class="card-title" data-i18n="p3_titulo">¿Quién trabaja en este local?</div>
-      <div class="card-sub" data-i18n="p3_sub">Empleados y su turno habitual. Las horas se calculan solas según los turnos asignados.</div>
-      <div id="empleados-list" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
-      <button class="btn btn-ghost btn-sm" onclick="addEmpleado()" style="margin-top:4px" data-i18n="p3_añadir">+ Añadir empleado</button>
-
-      <div style="margin-top:12px;background:var(--darker);border:1px dashed var(--border);border-radius:8px;padding:12px;font-size:12px;color:var(--muted)">
-        &#128101; El equipo se carga autom&#225;ticamente desde BD. Para editar plantilla completa ve a <button class="btn btn-ghost btn-sm" onclick="goStep(17)" style="font-size:11px;padding:3px 8px;border-color:var(--border)">Gesti&#243;n del Equipo</button>
+      <div class="card-title">&#10024; Generar y revisar cuadrante</div>
+      <div class="card-sub">Genera con IA y ajusta manualmente antes de guardar</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-ghost" id="btn-generar-ia" onclick="generarCuadranteIA()" style="border-color:#a055ff;color:#a055ff;font-size:13px;padding:10px 18px">&#10024; Generar con IA</button>
+        <button class="btn btn-ghost btn-sm" onclick="sugerirYRenderizar()" style="border-color:var(--green);color:var(--green)">&#9889; Recalcular fiestas</button>
+        <button class="btn btn-ghost btn-sm" onclick="rotarFiestas()" style="border-color:var(--purple);color:var(--purple)">&#128256; Rotar d&#237;as (+1)</button>
       </div>
-
-      <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(2)" data-i18n="p2_atras">&#8592; Atr&#225;s</button>
-        <button class="btn btn-primary" onclick="nextStep(3)" data-i18n="p3_siguiente">Siguiente &#8594; Asignar turnos</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PASO 4 -->
-  <div class="screen" id="screen4">
-    <div class="card">
-      <div class="card-title" data-i18n="p4_titulo">Asigna los turnos de la semana</div>
-      <div class="card-sub" data-i18n="p4_sub">Fiestas asignadas automáticamente según días flojos y mínimos de personal. Ajusta lo que necesites.</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="sugerirYRenderizar()" style="border-color:var(--green);color:var(--green)" data-i18n="p4_recalcular">⚡ Recalcular fiestas</button>
-        <button class="btn btn-ghost btn-sm" onclick="rotarFiestas()" style="border-color:var(--purple);color:var(--purple)" data-i18n="p4_rotar">🔀 Rotar días (+1)</button>
-        <button class="btn btn-ghost btn-sm" onclick="generarCuadranteIA()" id="btn-generar-ia" style="border-color:#a055ff;color:#a055ff">✨ Generar con IA</button>
-      </div>
-      <div id="p4-hints" style="font-size:10px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--darker);border-radius:6px;border:1px solid var(--border);line-height:1.8">
-        ⚡ <strong style="color:var(--green)">Recalcular</strong> — borra las fiestas actuales y las vuelve a asignar desde cero según días flojos y mínimos de personal.<br>
-        🔀 <strong style="color:var(--purple)">Rotar días</strong> — desplaza los días de descanso de cada empleado +1 día, útil para que no descansen siempre el mismo día de la semana.
-      </div>
-      <div class="turno-legend" id="turno-legend"></div>
-      <div id="ia-cuadrante-spinner" style="display:none;color:#a055ff;font-size:12px;padding:8px 0;text-align:center">✨ Generando cuadrante optimizado con IA...</div>
+      <div id="ia-cuadrante-spinner" style="display:none;color:#a055ff;font-size:12px;padding:8px 0;text-align:center">&#10024; Generando cuadrante optimizado con IA...</div>
       <div id="ia-cuadrante-error" style="display:none;color:var(--red);font-size:11px;padding:6px 10px;background:#35151520;border-radius:6px;margin-bottom:8px"></div>
+      <div class="turno-legend" id="turno-legend"></div>
       <div id="turnos-asignacion"></div>
-      <div class="btn-row space">
-        <button class="btn btn-secondary" onclick="goStep(3)" data-i18n="p2_atras">← Atrás</button>
-        <button class="btn btn-primary" onclick="nextStep(4)" data-i18n="p4_siguiente">Siguiente → Eventos</button>
+      <div class="btn-row space" style="margin-top:14px">
+        <button class="btn btn-secondary" onclick="goStep(2)">&#8592; Atr&#225;s</button>
+        <button class="btn btn-primary" onclick="guardarYVerCuadrante()">&#128190; Guardar y ver cuadrante</button>
       </div>
     </div>
   </div>
+
+  <!-- PASO 4 (no activo en wizard v7.92) -->
+  <div class="screen" id="screen4">
+  </div>
+
 
   <!-- PASO 5 -->
   <div class="screen" id="screen5">
@@ -366,7 +327,7 @@
   <div class="screen" id="screen6">
     <div id="cuadrante-output"></div>
     <div class="btn-row space">
-      <button class="btn btn-secondary" onclick="goStep(4)" data-i18n="p6_editar">← Editar</button>
+      <button class="btn btn-secondary" onclick="goStep(3)" data-i18n="p6_editar">← Editar</button>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-ghost btn-sm" id="btn-toggle-horas" onclick="toggleHoras()" data-i18n="p6_ocultar_horas">👁 Ocultar horas</button>
         <button class="btn btn-ghost btn-sm no-print" onclick="enviarCuadranteGrupoWA()" style="border-color:#25d366;color:#25d366" data-i18n="p6_enviar_grupo">📲 Enviar grupo WA</button>
@@ -1794,7 +1755,7 @@
       <div style="text-align:center;color:var(--muted);padding:24px">Cargando artículos...</div>
     </div>
     <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--muted)">
-      RelojTurnos v7.91 &middot; Grupo El Reloj
+      RelojTurnos v7.92 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
@@ -1829,7 +1790,7 @@
     </div>
 
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 24px">
-      RelojTurnos v7.91 &middot; Grupo El Reloj
+      RelojTurnos v7.92 &middot; Grupo El Reloj
     </div>
   </div>
 </div>
